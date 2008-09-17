@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<minf expander="example_1.0">
+<none/>
+<false/>
+<true/>
+<n>1234</n>
+<n>-12.34</n>
+<s>a string</s>
+<s>héhé !</s>
+<l>
+  <none/>
+  <false/>
+  <true/>
+  <n>1234</n>
+  <n>-12.34</n>
+  <s>a string</s>
+  <s>héhé !</s>
+  <l length="7">
+    <none/>
+    <false/>
+    <true/>
+    <n>1234</n>
+    <n>-12.34</n>
+    <s>a string</s>
+    <s>héhé !</s>
+  </l>
+  <d length="8">
+    <none name="None"/>
+    <false name="False"/>
+    <true name="True"/>
+    <n name="integer">1234</n>
+    <s name="string">a string</s>
+    <s name="unicode">héhé !</s>
+    <s name="héhé !">unicode</s>
+    <l length="7">
+      <none/>
+      <false/>
+      <true/>
+      <n>1234</n>
+      <n>-12.34</n>
+      <s>a string</s>
+      <s>héhé !</s>
+    </l>
+    <d>
+      
+    </d>
+  </d>
+</l>
+<d>
+  <none name="None"/>
+  <false name="False"/>
+  <true name="True"/>
+  <n name="integer">1234</n>
+  <s name="string">a string</s>
+  <s name="unicode">héhé !</s>
+  <l length="7" name="list">
+    <none/>
+    <false/>
+    <true/>
+    <n>1234</n>
+    <n>-12.34</n>
+    <s>a string</s>
+    <s>héhé !</s>
+  </l>
+  <f type="MyClass" name="object">
+    <n>1</n>
+    <n>2</n>
+    <n name="kwarg2">3</n>
+  </f>
+  
+  <none/>
+  <s>None</s>
+  <false/>
+  <s>False</s>
+  <true/>
+  <s>True</s>
+  <n>1234</n>
+  <s>integer</s>
+  <n>12.34</n>
+  <s>float</s>
+  <l length="7">
+    <none/>
+    <false/>
+    <true/>
+    <n>1234</n>
+    <n>-12.34</n>
+    <s>a string</s>
+    <s>héhé !</s>
+  </l>
+  <s>list</s>
+  <f type="MyClass">
+    <n>1</n>
+    <n>2</n>
+    <n name="kwarg2">3</n>
+  </f>
+  <s>object</s>
+</d>
+<f type="MyClass">
+  <n>1</n>
+  <n name="kwarg2">3</n>
+  <n name="arg2">2</n>
+</f>
+</minf>
