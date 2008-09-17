@@ -1,29 +1,29 @@
 
 
 #-----------------------------------------------------------------------------
-class CppComponent_soma( GenericMakerComponent ):
-  _name = 'soma_cpp'
+class CppComponent_somabase( GenericMakerComponent ):
+  _name = 'soma-base_cpp'
 
   def __init__( self, opts ):
-    options[ 'soma_cpp' ] = options[ 'soma' ]
-    GenericMakerComponent.__init__( self, options[ 'soma' ] )
+    options[ 'soma-base_cpp' ] = options[ 'soma-base' ]
+    GenericMakerComponent.__init__( self, options[ 'soma-base' ] )
 
 
   def dependencies( self ):
     return []
 
   def name( self ):
-    return 'soma'
+    return 'soma-base'
 
   def _libraries( self ):
-    # return [ 'soma' ]
+    # return [ 'soma-base' ]
     return []
 
   def makeDocumentation( self ):
-    print 'soma_cpp doc'
+    print 'soma-base_cpp doc'
     print self.doDoxygen()
     GenericMakerComponent.makeDocumentation( self )
-    print 'soma_cpp doc done'
+    print 'soma-base_cpp doc done'
 
   def templateConfigurationFiles( self ):
     return [ os.path.join( self.sourceDir(), i ) for i in
@@ -40,21 +40,21 @@ class CppComponent_soma( GenericMakerComponent ):
 
 
 #-----------------------------------------------------------------------------
-class SipComponent_soma( GenericMakerComponent ):
-  _name = 'soma_sip'
+class SipComponent_somabase( GenericMakerComponent ):
+  _name = 'soma-base_sip'
 
   def __init__( self, opts ):
-    options[ 'soma_sip' ] = options[ 'soma' ]
-    GenericMakerComponent.__init__( self, options[ 'soma' ] )
+    options[ 'soma-base_sip' ] = options[ 'soma-base' ]
+    GenericMakerComponent.__init__( self, options[ 'soma-base' ] )
 
   def name( self ):
-    return 'soma'
+    return 'soma-base'
 
   def _libraries( self ):
     return []
 
   def dependencies( self ):
-    return [ 'soma_cpp', 'pyaims' ]
+    return [ 'soma-base_cpp', 'pyaims' ]
 
   def postInit( self ):
     if not self._initialized:
@@ -67,7 +67,7 @@ class SipComponent_soma( GenericMakerComponent ):
     return True
 
   def pythonModule( self ):
-    return 'somasip'
+    return 'soma-basesip'
 
   def templateConfigurationFiles( self ):
     return [ os.path.join( self.sourceDir(), i ) for i in
@@ -103,15 +103,15 @@ class SipComponent_soma( GenericMakerComponent ):
 
 
 #-----------------------------------------------------------------------------
-class PythonComponent_soma( GenericMakerComponent ):
-  _name = 'soma_python'
+class PythonComponent_somabase( GenericMakerComponent ):
+  _name = 'soma-base_python'
 
   def __init__( self, opts ):
-    options[ 'soma_python' ] = options[ 'soma' ]
-    GenericMakerComponent.__init__( self, options[ 'soma' ] )
+    options[ 'soma-base_python' ] = options[ 'soma-base' ]
+    GenericMakerComponent.__init__( self, options[ 'soma-base' ] )
 
   def name( self ):
-    return 'soma'
+    return 'soma-base'
 
   def _libraries( self ):
     return []
@@ -137,11 +137,11 @@ class PythonComponent_soma( GenericMakerComponent ):
 
 
 #-----------------------------------------------------------------------------
-class Component_soma( GenericMakerComponent ):
-  _name = 'soma'
+class Component_somabase( GenericMakerComponent ):
+  _name = 'soma-base'
 
   def dependencies( self ):
-    return [ 'soma_python' ]
+    return [ 'soma-base_python' ]
 
 
   def _libraries( self ):
