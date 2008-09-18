@@ -1,4 +1,8 @@
+cmake_minimum_required( VERSION 2.6 )
+
 project( soma-base )
+
+find_package( soma-infra REQUIRED )
 
 set( CPACK_PACKAGE_NAME "${PROJECT_NAME}" )
 set( CPACK_PACKAGE_VENDOR "CEA - NeuroSpin" )
