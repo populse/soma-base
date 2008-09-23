@@ -316,7 +316,7 @@ class TgExtendedApplet( TgStandardBase, Widget ):
     <object py:if="tg.useragent.browser == 'msie'"
       id="${name}"
       name="${name}"
-      classid="clsid:CAFEEFAC-0016-0000-0000-ABCDEFFEDCBA"
+      classid="clsid:8AD9C840-044E-11D1-B3E9-00805F499D93"
       py:attrs="applet_attrs"
       >
       <param name="id" value="${name}" />
@@ -342,7 +342,7 @@ class TgExtendedApplet( TgStandardBase, Widget ):
                           ' the span input tag',
                 'applet_attrs' : 'Extra (X)HTML attributes for the applet tag',
                 'applet_params' : 'Parameters for the applet tag'}
-  applet_attrs = { 'type' : 'application/x-java-applet;version=1.5',
+  applet_attrs = { 'type' : 'application/x-java-applet;version=1.4',
                    'alt' : 'Your browser understands the &lt;APPLET&gt; tag but isn\'t running the applet, for some unknow reason.' }
   applet_params = {}
   applet_id = None

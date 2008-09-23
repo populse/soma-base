@@ -12,3 +12,4 @@ SIPINCLUDE = @soma_sip:sipinclude@
 SIP_PLATFORM = @sip:platform@
 PYTHON_LIBS = @sip:libLine@
 SIP_LIBS = @soma_sip:libBuildLine@
+SIP_OPTIONS = @sip:sip_options@
