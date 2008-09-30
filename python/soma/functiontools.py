@@ -117,7 +117,7 @@ def getArgumentsSpecification( callable ):
     except AttributeError:
       raise TypeError( _( '%s is not callable' ) % \
                           repr( callable ) )
-    return inspect.getargspec( call )
+    return getArgumentsSpecification( call )
 
 #-------------------------------------------------------------------------------
 def getCallableString( callable ):

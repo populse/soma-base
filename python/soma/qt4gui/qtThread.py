@@ -44,7 +44,7 @@ It enables to do thread safe calls because all tasks sent are executed in the sa
 
 import sys
 import threading
-from PyQt4.QtCore import QObject, QTimer, QEvent, SIGNAL
+from PyQt4.QtCore import QObject, QTimer, QEvent, SIGNAL, QCoreApplication
 from soma import singleton
 
 class FakeQtThreadCall( QObject ):
@@ -90,12 +90,14 @@ class QtThreadCall( singleton.Singleton, QObject ):
     QObject.__init__( self, None )
     self.lock = threading.RLock()
     self.actions = []
+    if QCoreApplication.instance() is None:
+      app=QCoreApplication(sys.argv)
     # look for the main thread
     mainthreadfound = False
     for thread in threading.enumerate():
       if isinstance( thread, threading._MainThread ):
         mainthreadfound = True
-        self.mainThread=threading.currentThread()
+        self.mainThread=thread
         break
     if not mainthreadfound:
       print 'Warning: main thread not found'
@@ -104,7 +106,7 @@ class QtThreadCall( singleton.Singleton, QObject ):
     if self.isInMainThread():
       self.timer = QTimer( self )
       self.connect( self.timer, SIGNAL( 'timeout()' ), self.doAction )
-      self.timer.start( 100, 0 )
+      self.timer.start( 100 )
     else:
       class CreateTimerEvent( QEvent ):
         def __init__( self, qthreadcall ):
@@ -127,7 +129,7 @@ class QtThreadCall( singleton.Singleton, QObject ):
       e.qthreadcall.timer = QTimer( e.qthreadcall )
       e.qthreadcall.connect( e.qthreadcall.timer, SIGNAL( 'timeout()' ), 
         e.qthreadcall.doAction )
-      e.qthreadcall.timer.start( 100, 0 )
+      e.qthreadcall.timer.start( 100 )
     finally:
       e.qthreadcall.lock.release()
     return true

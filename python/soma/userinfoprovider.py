@@ -5,17 +5,17 @@ from soma.signature.api import Signature, VariableSignature, Unicode, Sequence, 
 from soma.wip.configuration import ConfigurationGroup
 from soma.wip.application.api import Application
 
-def getFormatted( dataset, formats, keys, sorts ) :
+def getUsersInfo( dataset, formats, keys, sorts ) :
   '''
-  Format a dataset (i.e. a L{list} of L{list}s. For each record of
-  the dataset it applies formats. Each new record of the resulting
-  dataset is a list that contains result of the formats applied to
-  the record. In the resulting dataset their is as many columns as
-  there is formats to apply.
+  Get user infos from a dataset (i.e. a L{list} of L{list}s. For each record
+  of the dataset it applies formats. Each new record of the resulting dataset
+  is a list that contains L{UserInfo} objects, resulting of the formats applied
+  to each record.
   @type dataset : list
   @param dataset : L{list} of L{list}s that contain data
   @type formats : list.
-  @param formats : L{list} of L{string}s that contain formats to apply.
+  @param formats : L{list} of L{list} of L{string}s that contains
+                  resulting column name and formats to apply.
   @type keys : list.
   @param keys : L{list} of L{string}s that contain the keys for each
                 dataset column. The keys must be used in formats.
@@ -23,24 +23,61 @@ def getFormatted( dataset, formats, keys, sorts ) :
                 formats [ '%(cn)s-%(guid)s', '%(cn)s', '%(guid)s' ].
                 This example will result in a dataset with 3 columns.
   @type sorts : list.
-  @param sorts : L{list} of L{int}s that contain the indexes of columns to
+  @param sorts : L{list} of L{str}s that contain the name of columns to
                  use for sorting the resulting dataset.
-  @type return : L{list} of L{list}s containing the resulting data
-                 sorted using the sort indexes.
+  @return : L{list} of L{UserInfo}s sorted using the sort fields.
   '''
-  resultset = list()
+  result = list()
+  recordset = list()
+  columnset = list()
 
+  # Creates the columns list
+  for format in formats :
+    columnset.append( format[0] )
+
+  # Creates the records set
   for datarecord in dataset :
     if (len(keys) == len(datarecord)):
       resultrecord = list()
       for format in formats :
-        formatted = format % dict(zip(keys, datarecord))
-        resultrecord.append(formatted.lstrip().rstrip())
-      resultset.append(resultrecord)
+        formatvalue = format[1]
+        formatted = formatvalue % dict(zip(keys, datarecord))
+        resultrecord.append(unicode(formatted, 'utf-8').lstrip().rstrip().lower())
+      recordset.append(resultrecord)
 
-  resultset.sort(key=operator.itemgetter(*sorts))
-  return resultset
+  # Sorts the recordset
+  sortindexes = [ columnset.index( name ) for name in sorts ]
+  recordset.sort(key=operator.itemgetter(*sortindexes))
 
+  for datarecord in recordset :
+    parameters = dict()
+    for index in xrange(len(columnset)) :
+      parameters[ columnset[ index ] ] = datarecord[ index ]
+      
+    # Instanciates user info object
+    yield UserInfo( **parameters )
+
+class UserInfo( object ) :
+  '''
+  C{UserInfo} is a class that contains user information.
+  '''
+
+  def __init__( self, completename = None, lastname = '', firstname = '', login = '' ) :
+    self.completename = completename
+    self.lastname = lastname
+    self.firstname = firstname
+    self.login = login
+
+  def getCompleteName( self ) :
+    '''
+    Get the C{UserInfo} complete name (i.e. Formatted first name and last name).
+    @return : C{UserInfo} complete name.
+    '''
+    if ( self.completename is None ) :
+      return ' '.join( [ self.lastname.title(), self.firstname.title() ] )
+    else :
+      return self.completename.title()
+  
 class UserInfoProviderType :
   LDAP = 'ldap'
   NIS = 'nis'
@@ -56,7 +93,7 @@ class UserInfoProvider( object ) :
     Static method that instanciates a C{UserInfoProvider} object.
     @type providertype : L{UserInfoProviderType}
     @param providertype : type of the provider to instanciates.
-    @type return : C{UserInfoProvider} instance for the provider
+    @return : C{UserInfoProvider} instance for the provider
                    type. If providertype is None, it tries to get
                    provider type from application configuration.
     '''
@@ -73,7 +110,7 @@ class UserInfoProvider( object ) :
   def getUsers( self ) :
     '''
     Method that retrieve users info for the C{UserInfoProvider}.
-    @type return : L{list} of {list}s containing users infos.
+    @return : L{list} of {list}s containing users infos.
     '''
     pass
    
@@ -82,21 +119,47 @@ class LdapUserInfoProvider( UserInfoProvider ) :
   C{LdapUserInfoProvider} is the ldap implementation of the
   L{UserInfoProvider} class.
   '''
-  def getUsers( self, **kwargs ) :
+  def getUsers( self, server = None, base = None, filter = None, attributes = None, formats = None, sorts = None ) :
     '''
     Method that retrieve users info for the C{LdapUserInfoProvider}.
     It uses a ldap server.
-    @type return : L{list} of {list}s containing users infos.
+    @type server : L{str}
+    @param server : ldap server address to get data from.
+    @type base : L{str}
+    @param base : ldap base entity to get user info from.
+    @type filter : L{str}
+    @param filter : ldap filter to get filtered user info (example : (cn=*) ).
+    @type attributes : L{list}
+    @param attributes : list of ldap attributes to get (example : [ 'sn', 'givenName', 'uid' ] ).
+    @type formats : L{list}
+    @param formats : list of tuple that contains names of the matching user field and formats to apply
+                     (example : [ ( 'lastname', '%(sn)s %(givenName)s'), ( 'login', '%(uid)s') ] ).
+    @type sorts : L{list} of L{int}
+    @param sorts : list of sorts to apply to get user information (example : [ 0 ] ).
+                  Values are the indexes of output fields used to sort data.
+    @return : L{list} of L{list}s containing users infos.
     '''
     import ldap
     
     appli = Application()
-    server = kwargs.get('server', appli.configuration.userinfoprovider.ldap.server)
-    base = kwargs.get('base', appli.configuration.userinfoprovider.ldap.base)
-    filter = kwargs.get('filter', appli.configuration.userinfoprovider.ldap.filter)
-    attributes = kwargs.get('attributes', appli.configuration.userinfoprovider.ldap.attributes)
-    formats = kwargs.get('formats', appli.configuration.userinfoprovider.ldap.formats)
-    sorts = kwargs.get('sorts', appli.configuration.userinfoprovider.ldap.sorts)
+
+    if server is None :
+      server = appli.configuration.userinfoprovider.ldap.server
+      
+    if base is None : 
+      base = appli.configuration.userinfoprovider.ldap.base
+
+    if filter is None :
+      filter = appli.configuration.userinfoprovider.ldap.filter
+
+    if attributes is None :
+      attributes = appli.configuration.userinfoprovider.ldap.attributes
+
+    if formats is None :
+      formats = appli.configuration.userinfoprovider.ldap.formats
+
+    if sorts is None :
+      sorts = appli.configuration.userinfoprovider.ldap.sorts
         
     resultset = list()
     try :
@@ -121,30 +184,68 @@ class LdapUserInfoProvider( UserInfoProvider ) :
     except ldap.LDAPError, errormessage :
       print errormessage
 
-    return getFormatted( resultset, formats, attributes, sorts )
+    return getUsersInfo( resultset, formats, attributes, sorts )
 
 class NisUserInfoProvider( UserInfoProvider ) :
   '''
   C{NisUserInfoProvider} is the nis implementation of the
   L{UserInfoProvider} class.
   '''
-  def getUsers( self, **kwargs ) :
+  def getUsers( self, map = None, domain = None, separator = None, indexes = None, filter = None, attributes = None, formats = None, sorts = None ) :
     '''
     Method that retrieve users info for the C{NisUserInfoProvider}.
     It uses a nis server.
-    @type return : L{list} of {list}s containing users infos.
+    @type map : L{str}
+    @param map : nis map to get user info from.
+    @type domain : L{str}
+    @param domain : nis domain to get user info from.
+    @type separator : L{str}
+    @param separator : separator to use to parse nis map records.
+    @type indexes : L{list}
+    @param indexes : list of indexes of the columns to use in nis map records.
+    @type filter : L{str}
+    @param filter : regular expression used to select nis map records to get user info from.
+    @type attributes : L{list}
+    @param attributes : L{list} of attributes to use. They must match the order of indexes
+                      (for example : [ 'sn', 'givenName', 'uid' ], this means that the column
+                      corresponding to the first index value (defined by indexes) will contain the sn,
+                      the column corresponding to the second index value (defined by indexes) will
+                      contain the 'givenName', etc ... ).
+    @type formats : L{list}
+    @param formats : list of tuple that contains names of the matching user field and formats to apply
+                     (example : [ ( 'lastname', '%(sn)s %(givenName)s'), ( 'login', '%(uid)s') ] ).
+    @type sorts : L{list} of L{int}
+    @param sorts : list of sorts to apply to get user information (example : [ 0 ] ).
+                  Values are the indexes of output fields used to sort data.
+    @return : L{list} of L{list}s containing users infos.
     '''
     import nis
     import re
     appli = Application()
-    map = kwargs.get('map', appli.configuration.userinfoprovider.nis.map)
-    domain = kwargs.get('domain', appli.configuration.userinfoprovider.nis.domain)
-    separator = kwargs.get('separator', appli.configuration.userinfoprovider.nis.separator)
-    indexes = kwargs.get('indexes', appli.configuration.userinfoprovider.nis.indexes)
-    filter = kwargs.get('filter', appli.configuration.userinfoprovider.nis.filter)
-    attributes = kwargs.get('attributes', appli.configuration.userinfoprovider.nis.attributes)
-    formats = kwargs.get('formats', appli.configuration.userinfoprovider.nis.formats)
-    sorts = kwargs.get('sorts', appli.configuration.userinfoprovider.nis.sorts)
+    
+    if map is None :
+      map = appli.configuration.userinfoprovider.nis.map
+    
+    if domain is None :
+      domain = appli.configuration.userinfoprovider.nis.domain
+
+    if separator is None :
+      separator = appli.configuration.userinfoprovider.nis.separator
+
+    if indexes is None :
+      indexes = appli.configuration.userinfoprovider.nis.indexes
+    
+    if filter is None :
+      filter = appli.configuration.userinfoprovider.nis.filter
+    
+    if attributes is None :
+      attributes = appli.configuration.userinfoprovider.nis.attributes
+    
+    if formats is None :
+      formats = appli.configuration.userinfoprovider.nis.formats
+    
+    if sorts is None :
+      sorts = appli.configuration.userinfoprovider.nis.sorts
 
     resultset = list()
     for value in nis.cat(map, domain).itervalues():
@@ -154,7 +255,7 @@ class NisUserInfoProvider( UserInfoProvider ) :
         resultrecord = [ nisvalues[ index ] for index in indexes ]
         resultset.append( resultrecord )
     
-    return getFormatted( resultset, formats, attributes, sorts )
+    return getUsersInfo( resultset, formats, attributes, sorts )
 
 class LdapUserInfoProviderConfigurationGroup( ConfigurationGroup ) :
   signature = Signature(
@@ -163,8 +264,8 @@ class LdapUserInfoProviderConfigurationGroup( ConfigurationGroup ) :
     'base', Unicode, dict(defaultValue='', doc='Set ldap base here (it the ldap query for the base container object used).'),
     'filter', Unicode, dict(defaultValue='(cn=* *)', doc='Set ldap filter here.'),
     'attributes', Sequence(Unicode), dict(defaultValue=[ 'cn', 'uid' ], doc='Set ldap attributes to use here.'),
-    'formats', Sequence(Unicode), dict(defaultValue=[ '%(cn)s', '%(uid)s' ], doc='Set formats to apply here.' ),
-    'sorts', Sequence(Integer), dict(defaultValue=[0], doc='Set sort attributes here.')
+    'formats', Sequence(Sequence(Unicode)), dict(defaultValue=[ ( 'completename', '%(cn)s' ), ( 'login', '%(uid)s' ) ], doc='Set formats to apply here.' ),
+    'sorts', Sequence(Integer), dict(defaultValue=['completename'], doc='Set sort attributes here.')
   )
 
 class NisUserInfoProviderConfigurationGroup( ConfigurationGroup ) :
@@ -175,8 +276,8 @@ class NisUserInfoProviderConfigurationGroup( ConfigurationGroup ) :
     'indexes', Sequence(Integer), dict(defaultValue=[ 4, 0 ], doc='Set indexes of nis map record here.' ),
     'filter', Unicode, dict(defaultValue='^[A-Za-z]{2}\d{6}[^@]*$', doc='Set nis map record filter here.' ),
     'attributes', Sequence(Unicode), dict(defaultValue=[ 'cn', 'uid' ], doc='Set nis keys here (key order must match with indexes order).' ),
-    'formats', Sequence(Unicode), dict(defaultValue=[ '%(cn)s', '%(uid)s' ], doc='Set formats to apply here.' ),
-    'sorts', Sequence(Integer), dict(defaultValue=[0], doc='Set sort attributes here.')
+    'formats', Sequence(Sequence(Unicode)), dict(defaultValue=[ ( 'completename', '%(cn)s' ), ( 'login', '%(uid)s' ) ], doc='Set formats to apply here.' ),
+    'sorts', Sequence(Integer), dict(defaultValue=['completename'], doc='Set sort attributes here.')
   )
     
 class UserInfoProviderConfigurationGroup( ConfigurationGroup ) :

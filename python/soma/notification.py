@@ -124,7 +124,9 @@ class Notifier:
     '''
     if self._delayedNotification is None:
       #if self._listeners: print '!notify!', self, ':', args, '(' + str(len( self._listeners )), 'listeners)'
-      for listener in self._listeners:
+      # Iterate on a copy of self._listeners because this list can be modified
+      # by a listener during notification loop.
+      for listener in tuple( self._listeners ):
         #print '!notify!  -->', listener
         if isinstance( listener, Notifier ):
           listener.notify( *args )
