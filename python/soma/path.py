@@ -65,6 +65,33 @@ def split_path( path ):
   return result
   
   
+def relative_path( path, referenceDirectory ):
+  '''
+  Return a relative version of a path given a
+  reference directory.
+  
+  os.path.join( referenceDirectory, relative_path( path, referenceDirectory ) )
+  returns os.path.abspath( path )
+  
+  Example
+  =======
+    relative_path( '/usr/local/brainvisa-3.1/bin/brainvisa', '/usr/local' )
+    returns 'brainvisa-3.1/bin/brainvisa'
+    
+    relative_path( '/usr/local/brainvisa-3.1/bin/brainvisa', '/usr/local/bin' )
+    returns '../brainvisa-3.1/bin/brainvisa'
+    
+    relative_path( '/usr/local/brainvisa-3.1/bin/brainvisa', '/tmp/test/brainvisa' )
+    returns '../../../usr/local/brainvisa-3.1/bin/brainvisa'
+  '''
+  sPath = split_path( os.path.abspath( path ) )
+  sReferencePath = split_path( os.path.abspath( referenceDirectory ) )
+  i = 0
+  while i < len( sPath ) and i < len( sReferencePath ) and sPath[ i ] == sReferencePath[ i ]:
+    i += 1
+  return os.path.join( *( [ '..' ] * ( len( sReferencePath ) - i  ) ) + sPath[ i: ] )
+
+
 def no_symlink( path ):
   '''
   Read all symlinks in path to return the "real" path.
