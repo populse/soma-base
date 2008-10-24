@@ -197,6 +197,7 @@ class EditableTreeWidget(QListView):
     self.popupMenu = QPopupMenu()
     self.popupMenu.insertItem( "New",  self.menuNewItemEvent )
     self.contextMenuTarget=None
+    self.connect(self, SIGNAL( 'contextMenuRequested ( QListViewItem *, const QPoint &, int )'), self.openContextMenu)
     # keep a reference to the model for control event and register a listener to be aware of changes
     self.setModel(treeModel)
 
@@ -459,23 +460,23 @@ class EditableTreeWidget(QListView):
     else: event.ignore() # the event could be handled by a parent component
 
   #------ context menu events ------
-  def contextMenuEvent(self, event):
+  def openContextMenu(self,  item, pos, col ):
     """On right click on the mouse, a context menu opens.
     With this menu, it is possible to create a new branch.
     """
     self.contextMenuTarget=None
-    cursorPos=self.toContentsPoint(event.pos())
-    currentItem=self.itemAt(cursorPos) #item under the mouse cursor
+    #cursorPos=self.toContentsPoint(pos)
+    #currentItem=self.itemAt(cursorPos) #item under the mouse cursor
+    currentItem=item
+    accept = False
     if currentItem is not None:
       if currentItem.model.modifiable and not currentItem.model.isLeaf():
         self.contextMenuTarget=currentItem.model
-        event.accept()
-      else: event.ignore()
+        accept = True
     else:
       if self.model is not None and self.model.modifiable:
         self.contextMenuTarget=self.model
-        event.accept()
-      else: event.ignore()
+        accept = True
     #items=self.selectedItems()
     #if len(items)==1:
       #if items[0].model.modifiable:
@@ -484,7 +485,7 @@ class EditableTreeWidget(QListView):
     #elif self.model!=None and self.model.modifiable:
       #event.accept()
     #else: event.ignore()
-    if event.isAccepted():
+    if accept:
       self.popupMenu.exec_loop(QCursor.pos())
 
   def menuNewItemEvent(self):

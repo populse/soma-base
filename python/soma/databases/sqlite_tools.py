@@ -69,7 +69,14 @@ class ThreadSafeSQLiteConnection( object ):
       self._classLock.release()
 
   def __del__( self ):
-    self.close()
+    if self.__args is not None:
+      sqliteFile = self.__args[ 0 ]
+      self.close()
+      for thread in self.connections.keys():
+        connection, connectionClosed = self.connections[ thread ]
+        if connection is not None:
+          currentThread = threading.currentThread().getName()
+          print >> sys.stderr, 'WARNING: internal error: an sqlite connection on', repr( sqliteFile ), 'is opened for thread', thread, 'but the corresponding ThreadSafeSQLiteConnection instance (number ' + str( self._id ) + ') is beign deleted in thread', currentThread + '. Method currentThreadCleanup() should have been called from', thread, 'to supress this warning.'
   
   def _getConnection( self ):
     if self.__args is None:
@@ -78,13 +85,15 @@ class ThreadSafeSQLiteConnection( object ):
     #print '!ThreadSafeSQLiteConnection:' + currentThread + '! _getConnection( id =', self._id, ')', self.__args
     self._instanceLock.acquire()
     try:
-      currentThreadConnections = self.connections.setdefault( currentThread, {} )
+      #currentThreadConnections = self.connections.setdefault( currentThread, {} )
       #print '!ThreadSafeSQLiteConnection:' + currentThread + '! currentThreadConnections =', currentThreadConnections
-      connection = currentThreadConnections.get( self._id )
-      if connection is None:
+      connection, connectionClosed = self.connections.get( currentThread, ( None, True ) )
+      if connectionClosed:
+        if connection is not None:
+          connection.close()
         connection = sqlite3.connect( *self.__args, **self.__kwargs )
         #print '!ThreadSafeSQLiteConnection:' + currentThread + '! opened', connection
-        currentThreadConnections[ self._id ] = connection
+        self.connections[ currentThread ] = ( connection, False )
     finally:
         self._instanceLock.release()
     return connection
@@ -94,28 +103,29 @@ class ThreadSafeSQLiteConnection( object ):
     currentThread = threading.currentThread().getName()
     self._instanceLock.acquire()
     try:
-      currentThreadConnections = self.connections.pop( currentThread, None )
+      connection, connectionClosed = self.connections.pop( currentThread, ( None, True ) )
     finally:
       self._instanceLock.release()
-    if currentThreadConnections:
-      for connection in currentThreadConnections.itervalues():
+    if connection is not None:
         connection.close()
   
   
   def close( self ):
     if self.__args is not None:
-      sqliteFile = self.__args[ 0 ]
+      self.closeSqliteConnections()
       self.__args = None
       self.__kwargs = None
+
+
+  def closeSqliteConnections( self ):
+    if self.__args is not None:
       self.currentThreadCleanup()
       currentThread = threading.currentThread().getName()
       self._instanceLock.acquire()
       try:
         for thread in self.connections.keys():
-          currentThreadConnections = self.connections[ thread ]
-          connection = currentThreadConnections.get( self._id )
-          if connection is not None and thread != currentThread:
-            print >> sys.stderr, 'WARNING: internal error: an sqlite connection on', repr( sqliteFile ), 'is opened for thread', thread, 'but the corresponding ThreadSafeSQLiteConnection instance (number ' + str( self._id ) + ') is beign closed in thread', currentThread+ '. Method currentThreadCleanup() should have been called from', currentThread, 'to supress this warning.'
+          connection, connectionClosed = self.connections[ thread ]
+          self.connections[ thread ] = ( connection, True )
       finally:
         self._instanceLock.release()
 
