@@ -384,8 +384,8 @@ class Signature( DataType ):
   
   
   _msgCannotModify = 'Cannot modify read-only signature'
-  
-  
+
+
   def __init__( self, *args ):
     DataType.__init__( self )
     # Notifier is created on read-only Signature because listeners registration
@@ -587,7 +587,7 @@ class Signature( DataType ):
 
 
   def __repr__( self ):
-    result = 'Signature( '
+    result = self.name + '( '
     it = self.itervalues()
     it.next()
     for item in it:
@@ -604,10 +604,6 @@ class VariableSignature( Signature ):
   elements at run-time on a C{VariableSignature} instance. These changes are 
   taken into account by the notification system.
   """
-  def __init__( self, *args, **kwargs ):
-    Signature.__init__( self, *args, **kwargs )
-
-
   def __setitem__( self, key, value ):
     if key == 'signature':
       raise KeyError( _( 'Attribute named "signature" cannot be redefined.') )
@@ -633,17 +629,30 @@ class VariableSignature( Signature ):
     
 
 
+#-------------------------------------------------------------------------------
+class MetaHasSignature( type ):
+  def __init__( cls, name, bases, dict ):
+    signature = dict.get( 'signature' )
+    if signature is not None:
+      for c in bases:
+        referenceSignature = getattr( c, 'signature', None )
+        if referenceSignature is not None: break
+      if referenceSignature is not None and not isinstance( signature, referenceSignature.__class__ ):
+        raise TypeError( _( 'signature must be an instance of %s' ) % ( unicode( referenceSignature.__class__ ), ) )
+    super( MetaHasSignature, cls ).__init__( name, bases, dict )
+
 
 #-------------------------------------------------------------------------------
 class HasSignature( ObservableAttributes ):
   """
   HasSignature is the base class for all object using the signature system.
   """
+  __metaclass__ = MetaHasSignature
   
   #: The default empty signature
   signature = Signature()
   
-  
+
   def __init__( self, *args, **kwargs ):
     super( HasSignature, self ).__init__( *args, **kwargs )
     for attribute in self.signature:
