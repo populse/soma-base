@@ -110,8 +110,6 @@ class TgWindow( object ) :
   '''
   C{TgWindow} identifies a client browser.
   '''
-
-  widgets = list()
   
   def __new__( cls, windowid = None ) :
     '''
@@ -122,6 +120,10 @@ class TgWindow( object ) :
       # It is necessary to manually instanciate a TgWindowsManager
       manager = TgWindowsManager()
       cls.manager = manager
+
+    widgets = getattr( cls, 'widgets', None )
+    if widgets is None :
+      cls.widgets = list()
     
     if windowid is None :
       # Generate a new unique identifier
@@ -137,18 +139,20 @@ class TgWindow( object ) :
       manager[ windowid ] = instance
 
     return instance
-    
+        
   def addWidget( self, widget ) :
     '''
-    Add the window id for the L{TgGUI}.
+    Add widget for the L{TgGUI}.
     '''
     self.widgets.append( widget )
     
     # Add delete method
-    widget.__del__ = partial( self.removeWidget, widget )
+    method = partial( self.removeWidget, widget )
+    setattr( widget, '__del__', method )
 
   def removeWidget( self, widget = None ) :
-    self.widgets.pop()
+    if not widget is None :
+      self.widgets.remove( widget )
 
   def setWidgetValues( self, values ) :
     '''
@@ -173,7 +177,7 @@ class EditionDialog( TgRemoteForm ):
       <div py:for="field in hidden_fields"
           py:replace="field.display(value_for(field), **params_for(field))"
       />
-      <table border="0" cellspacing="0" cellpadding="2" py:attrs="table_attrs">
+      <table border="0" cellspacing="0" cellpadding="0" py:attrs="table_attrs">
           <tr py:for="i, field in enumerate(fields)"
               class="${i%2 and 'odd' or 'even'}"
           >
@@ -210,7 +214,7 @@ class EditionDialog( TgRemoteForm ):
 
     # Create associated objects
     self.__tggui = ApplicationTgGUI.instanceTgGUI( object )
-    self.__widget = self.__tggui.editionWidget( object, self.window, parent=self, live=live )
+    self.__widget = self.__tggui.editionWidget( object, self.window, parent=self, live=True )
     self.fields = [ windowidfield, self.__widget ]
 
     icon = self.__widget.icon()
@@ -261,7 +265,8 @@ class EditionDialog( TgRemoteForm ):
 
   @synchronized
   def __del__( self ):
-    self.__tggui.__del__()
+    if not self.__tggui is None :
+      self.__tggui.__del__()
   
 
 #-------------------------------------------------------------------------------

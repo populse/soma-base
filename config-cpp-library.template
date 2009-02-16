@@ -2,8 +2,9 @@ DEFINES = @defines@
 VERSION = @version@
 CONFIG  = thread
 
-INCLUDEPATH = @soma:includeBuild@
+INCLUDEPATH = @soma-base_cpp:includeBuild@
 
 BUILDMODEEXT    = @buildModeExtension@
 
 LIBS = @libDepsLine@
+

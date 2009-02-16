@@ -366,7 +366,7 @@ class Signature( DataType ):
     
     def copy( self ):
       args, kwargs = self.__getinitkwargs__()
-      return Signature.Item( *args, **kwargs )
+      return self.__class__( *args, **kwargs )
   
     def __getinitkwargs__( self ):
       d = {}
@@ -393,7 +393,7 @@ class Signature( DataType ):
     # VariableSignature
     self.on_change = Notifier( 1 )
     self.__dict__[ '_signature_data' ] = \
-      SortedDictionary( ( 'signature', Signature.Item( 'signature', self ) ) )
+      SortedDictionary( ( 'signature', self.Item( 'signature', self ) ) )
 
     i = 0
     while i < len( args ):
@@ -414,11 +414,16 @@ class Signature( DataType ):
         i += 1
 
 
+  def _copyItem( self, item ):
+    args, kwargs = item.__getinitkwargs__()
+    return self.Item( *args, **kwargs )
+
+
   def _insertElement( self, index, name, dataType, options={} ):
     if self.has_key( name ):
       raise KeyError( _( 'Element "%s" is defined twice' % ( name, ) ) )
     if isinstance( dataType, Signature.Item ):
-      item = dataType
+      item = self._copyItem( dataType )
     else:
       dataType = DataType.dataTypeInstance( dataType )
       item = self.Item( name, dataType, **options )

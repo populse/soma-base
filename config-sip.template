@@ -2,14 +2,14 @@ DEFINES = @defines@
 VERSION = @version@
 CONFIG  = thread
 
-INCLUDEPATH = @soma:includeBuild@
+INCLUDEPATH = @soma-base_sip:includeBuild@
 
 BUILDMODEEXT    = @buildModeExtension@
 
 LIBS = @libDepsLine@
 
-SIPINCLUDE = @soma_sip:sipinclude@
+SIPINCLUDE = @soma-base_sip:sipinclude@
 SIP_PLATFORM = @sip:platform@
 PYTHON_LIBS = @sip:libLine@
-SIP_LIBS = @soma_sip:libBuildLine@
+SIP_LIBS = @soma-base_sip:libBuildLine@
 SIP_OPTIONS = @sip:sip_options@

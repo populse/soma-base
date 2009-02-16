@@ -125,8 +125,11 @@ class SortedDictionary( UserDict, object ):
     returns an iterator over the sorted (key, value) pairs
     '''
     for k in self:
-      yield k, self[ k ]
-
+      try:
+        yield k, self[ k ]
+      except:
+        print '!error!', self.data.keys(), self.sortedKeys
+        raise
   def insert( self, index, key, value ):
     '''
     insert a ( C{key}, C{value} ) pair in sorted dictionary before position 
@@ -190,3 +193,20 @@ class SortedDictionary( UserDict, object ):
       result = value
     return result
   
+  def pop( self, key, default=Undefined ):
+    if default is Undefined:
+      result = self.data.pop(key)
+    else:
+      result = self.data.pop(key,Undefined)
+      if result is Undefined:
+        return default
+    self.sortedKeys.remove( key )
+    return result
+
+  def popitem( self ):
+    result = self.data.popitem()
+    try:
+      self.sortedKeys.remove( result[0] )
+    except ValueError:
+      pass
+    return result

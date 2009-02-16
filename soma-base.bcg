@@ -29,7 +29,9 @@ class CppComponent_somabase( GenericMakerComponent ):
     return [ os.path.join( self.sourceDir(), i ) for i in
              ( 'config-cpp-command.template', 
                'config-cpp-library.template', 
-               'config-cpp-plugin.template' ) ]
+               'config-cpp-plugin.template',
+               'config-cpp-libgui.template',
+               'config-sipgui.template' ) ]
 
   def filesToPack( self ):
     # avoid packaging twice...
@@ -37,6 +39,20 @@ class CppComponent_somabase( GenericMakerComponent ):
 
   def packageDocs( self ):
     pass
+
+
+#-----------------------------------------------------------------------------
+class CppGuiComponent_somabase( GenericMakerModuleComponent ):
+  _name = 'soma-base_cpp-gui'
+
+  def dependencies( self ):
+    return [ QtComponent, 'soma-base_cpp' ]
+
+  def name( self ):
+    return 'soma-base-gui'
+
+  def _libraries( self ):
+    return [ 'somaqtgui' ]
 
 
 #-----------------------------------------------------------------------------
@@ -54,7 +70,7 @@ class SipComponent_somabase( GenericMakerComponent ):
     return []
 
   def dependencies( self ):
-    return [ 'soma-base_cpp', 'pyaims' ]
+    return [ 'soma-base_cpp', SipComponent ]
 
   def postInit( self ):
     if not self._initialized:
@@ -103,6 +119,40 @@ class SipComponent_somabase( GenericMakerComponent ):
 
 
 #-----------------------------------------------------------------------------
+class SipGuiComponent_somabase( GenericMakerModuleComponent ):
+  _name = 'soma-base_sip-gui'
+
+  def name( self ):
+    return 'soma-base_sip-gui'
+
+  def _libraries( self ):
+    return []
+
+  def dependencies( self ):
+    return [ 'soma-base_cpp-gui', PyQtComponent ]
+
+  def postInit( self ):
+    if not self._initialized:
+      GenericMakerComponent.postInit( self )
+      source = os.path.join( self.sourceDir(), 'src', 'sipsomaqtgui' )
+      build = os.path.join( self.componentBuildDir(), 'src', 'sipsomaqtgui' )
+      self._data[ 'sipinclude' ] = [ '-I', build, '-I', source ]
+      self._data[ 'sipinclude' ] = SipComponent.sipinclude( self )
+      #print 'soma sipinclude:', self._data[ 'sipinclude' ]
+      qtc = getInstance( QtComponent )
+      if qtc.version()[0] < 4:
+        self._data[ 'gradwidget_sip' ] = 'gradwidget_qt3.sip'
+      else:
+        self._data[ 'gradwidget_sip' ] = 'gradwidget_qt4.sip'
+
+  def doEpydoc( self ):
+    return True
+
+  def pythonModule( self ):
+    return 'soma.qtgui.gradwidget'
+
+
+#-----------------------------------------------------------------------------
 class PythonComponent_somabase( GenericMakerComponent ):
   _name = 'soma-base_python'
 
@@ -143,6 +193,8 @@ class Component_somabase( GenericMakerComponent ):
   def dependencies( self ):
     return [ 'soma-base_python' ]
 
+  def weakDependencies( self ):
+    return [ 'soma-base_sip-gui', StdCppComponent ]
 
   def _libraries( self ):
     return []

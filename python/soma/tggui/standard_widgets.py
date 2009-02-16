@@ -387,11 +387,11 @@ class TgUploadMultipleFiles( TgStandardBase, CompoundFormField ):
                 'filesuploader_params' : 'Dictionary containing extra (X)HTML parameters for'
                           ' the filesuploader applet tag',
                           }
-  attrs = { 'style' : 'height:100px;width:290px;border-color:#000000;border-style:solid;border-width:1px;float:left;overflow:auto;',
-            'class' : 'tgdisplayselectedfiles' }
+  #attrs = { 'style' : 'height:100px;width:290px;border-color:#000000;border-style:solid;border-width:1px;float:left;overflow:auto;',
+            #'class' : 'tgdisplayselectedfiles' }
+  attrs = { 'class' : 'tgdisplayselectedfiles' }
   
-  selectfiles_attrs = { 'style' : 'height:20px;width:100px;',
-                        'class' : 'tgselectfiles',
+  selectfiles_attrs = { 'class' : 'tgselectfiles',
                         'for' : None }
                         
   selectfiles_params = { 'code' : 'InputMultipleFiles.class',
@@ -401,8 +401,10 @@ class TgUploadMultipleFiles( TgStandardBase, CompoundFormField ):
                         'onselectfiles' : 'selectedfiles()',
                         'buttontext' : 'Select...' }
                         
-  filesuploader_attrs = { 'style' : 'height:20px;width:186px;',
-                          'class' : 'tgfilesuploader',
+  #filesuploader_attrs = { 'style' : 'height:20px;width:186px;',
+                          #'class' : 'tgfilesuploader',
+                          #'for' : None }
+  filesuploader_attrs = { 'class' : 'tgfilesuploader',
                           'for' : None }
 
   filesuploader_params = { 'code' : 'UploadMultipleFiles.class',

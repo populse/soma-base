@@ -1,3 +1,4 @@
 TEMPLATE = subdirs
 #SUBDIRS = library
-#PSUBDIRS =  sip
+SUBDIRS = libsomaqtgui
+PSUBDIRS =  sipsomaqtgui

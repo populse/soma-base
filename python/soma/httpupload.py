@@ -56,36 +56,26 @@ Http upload is processed as follow :
 from __future__ import with_statement
 __docformat__ = "epytext en"
 
+import datetime
 import turbogears
 import os
+import thread
 import threading
 import tempfile
 import sha
+import signal
 import string
+import sys
+import traceback
 
-from mutex import mutex
 from threading import RLock
 from Queue import Queue
 from xml.dom import minidom, Node
 
 from soma.decorators import synchronized
-from soma.functiontools import partial
 from soma.uuid import Uuid
+from soma.enum import Enum
 from soma.singleton import Singleton
-
-# Thread file builders :
-builders = []
-
-def startFileBuilders( count = 4 ) :
-  '''
-    Start builder threads. These threads will reconstruct files when upload is complete.
-    @type  count: integer
-    @param count: number of L{FileBuilder} threads to start.
-  '''
-  for x in xrange ( count ):
-    builder = FileBuilder()
-    builders.append( builder )
-    builder.start()
 
 def displayFileBuilderInfos():
   '''
@@ -104,9 +94,14 @@ def checkSha1( content, sha1 ) :
     @return: True if the content matches the sha1 key, False otherwise.
   '''
   digest = sha.new( content )
-  #print 'digest.hexdigest() : ', digest.hexdigest(), ', sha1 : ', sha1
   return ( digest.hexdigest() == sha1 )
-
+  
+@synchronized
+def checkDirectory( directory ) :
+  # Creates the needed directories
+  if not os.path.exists( directory ) :
+    os.makedirs( os.path.realpath( directory ) )
+      
 def walkTree(node):
   '''
     Walk trough an xml tree node.
@@ -213,23 +208,113 @@ def processHttpUploadQuery( *args, **kwargs ) :
 
   return result
 
+LogLevel = Enum( 'NONE',
+                 'ERROR',
+                 'WARNING',
+                 'INFO',
+                 'DEBUG' )
+
+class LogManager( Singleton ) :
+  
+  def __singleton_init__( self ):
+    super( Singleton, self ).__init__()
+    self._loglock = RLock()
+    self._startdate = datetime.datetime.now()
+    self._initialized = False
+
+  def logReset( self ):
+    '''
+    Get log reset from configuration file.
+    '''
+    return turbogears.config.get( 'httpupload.logreset', True )
+  
+  def logLevel( self ):
+    '''
+    Get log level from configuration file.
+    '''
+    defaultvalue = LogLevel.INFO
+    value = turbogears.config.get( 'httpupload.loglevel', str( defaultvalue ) )
+    return getattr( LogLevel, value, defaultvalue )
+
+  def logFile( self ):
+    '''
+    Get log file from configuration file.
+    '''
+    value = turbogears.config.get( 'httpupload.logfile', '/var/log/httpupload_%(startdate)s.log' )
+    return value % { 'startdate' : self._startdate.isoformat() }
+  
+  def writeLogInfo( self, value, filepath = None, mode = 'a+b', level = LogLevel.INFO ):
+
+    if not self._initialized :
+      self._initialized = True
+      if self.logReset() :
+        mode = 'w+b'
+      
+      
+    if filepath is None :
+      filepath = self.logFile()
+      
+    if level <= self.logLevel() :
+      self.write( '%s %s %s : %s [ %s ]\n' %
+                  ( datetime.datetime.now().isoformat(' '),
+                    self.__module__,
+                    level,
+                    value,
+                    threading.currentThread().getName() ),
+                filepath,
+                mode )
+    
+  def write( self, value, filepath, mode ):
+    checkDirectory( os.path.dirname( filepath ) )
+    with self._loglock :
+      file = open( filepath, mode )
+      file.write( value )
+      file.close()
+
+logmanager = LogManager()
+    
 #------------------------------------------------------------------------------
 class ResourceManager( Singleton ) :
   '''
   Register the resources directories and manages concurrent resource
-  accesses using L{mutex.mutex}.
+  accesses using locks.
   '''
   defaultdirectories = { 'httpupload.dirtempfilefragments' : os.path.join( tempfile.gettempdir(), 'uploaddata' ),
                          'httpupload.dirbasefileoutput' : os.path.join( tempfile.gettempdir(), 'database' ) }
-  resourcemutexs = dict()
-  managermutex = mutex()
+  
+  def __singleton_init__( self ):
+    super( Singleton, self ).__init__()
+
+    self.resourcelocks = dict()
+    self.builders = list()
 
   @synchronized
-  def checkDirectory( self, directory ) :
-    # Creates the needed directories
-    if not os.path.exists( directory ) :
-      os.makedirs( os.path.realpath( directory ) )
-        
+  def startFileBuilders( self, count = 4 ) :
+    '''
+      Start builder threads. These threads will reconstruct files when upload is complete.
+      @type  count: integer
+      @param count: number of L{FileBuilder} threads to start.
+    '''
+    if len( self.builders ) == 0 :
+      logmanager.writeLogInfo( 'Module started' )
+            
+      for x in xrange ( count ):
+        builder = FileBuilder()
+        self.builders.append( builder )
+        builder.setDaemon( True )
+        builder.start()
+
+      logmanager.writeLogInfo( '%s file builders started' % (count, ), level = LogLevel.DEBUG )
+
+  @synchronized
+  def stopFileBuilders( self ) :
+    '''
+      Stop builder threads.
+    '''
+    while ( len( self.builders ) > 0 ):
+      builder = self.builders.pop()
+      builder.shutdown()   
+
   def getDirectory( self, key ) :
     '''
     Get the managed directories
@@ -242,26 +327,26 @@ class ResourceManager( Singleton ) :
       defaultvalue = self.defaultdirectories[ key ]
 
     result = turbogears.config.get( key, defaultvalue )
-    self.checkDirectory( result )
+    checkDirectory( result )
     return result
 
   @synchronized
-  def getResourceMutex( self, resourcekey ) :
+  def getResourceLock( self, resourcekey ) :
     '''
-    Get a new resource mutex if not already exists,
+    Get a new resource lock if not already exists,
     otherwise get the existing one.
     @type  resourcekey: string
-    @param resourcekey: resource key to get mutex for.
-    @return: resource mutex.
+    @param resourcekey: resource key to get lock for.
+    @return: resource lock.
     '''
-    if resourcekey in self.resourcemutexs :
-      resourcemutex = self.resourcemutexs[ resourcekey ]
+    if resourcekey in self.resourcelocks :
+      resourcelock = self.resourcelocks[ resourcekey ]
     else :
-      resourcemutex = mutex()
-      self.resourcemutexs[ resourcekey ] = resourcemutex
+      resourcelock = RLock()
+      self.resourcelocks[ resourcekey ] = resourcelock
 
-    return resourcemutex
-  
+    return resourcelock
+
   @synchronized
   def getObjectLock( self, value ) :
     '''
@@ -313,9 +398,8 @@ class ResourceManager( Singleton ) :
     '''
 
     # First we check that some file builders have been started, if not we start some.
-    if len( builders ) == 0 :
-      startFileBuilders()
-
+    self.startFileBuilders()
+    
     if isheader :
       mustuploaddata = False
       
@@ -339,7 +423,7 @@ class ResourceManager( Singleton ) :
           mustuploaddata = True
         else :
           # Check file build availability
-          filebuilderinfo.checkFileBuild()          
+          filebuilderinfo.checkFileBuild()
 
       # Data part must be transfered only when data is missing and resulting file does not exists
       result = getUploadResponseDocument( mustuploaddata )
@@ -395,83 +479,57 @@ class FileBuilder( threading.Thread ) :
   '''
   Builder L{threading.Thread} for files that were uploaded by fragments.
   '''
+
   def __init__(self):
     threading.Thread.__init__(self)
-    self._running = False
-  
-  def stop(self):
-    '''
-    Stop the current C{FileBuilder}.
-    '''
-    self._running = False
-    exit()
+    self._finished = threading.Event()
+    self._interval = 1.0
 
-  def run ( self ):
+  def setInterval( self, interval ):
     '''
-    Run the C{FileBuilder}. C{FileBuilder} get the L{FileBuilderInfo} from the queue.
-    If one is present it tries to rebuild the matching file.
+    Set the number of seconds we sleep between executing our task
     '''
+    self._interval = interval
+
+  def shutdown( self ):
+    '''
+    Stop this thread
+    '''
+    self._finished.set()
+
+  def run(self):
     
-    # Have our thread serve "forever":
-    self._running = True
-    
-    while self._running:
+    while 1:
+        
+      if self._finished.isSet():
+        return
+      
       # Get a file builder info out of the queue
       filebuilderinfo = filebuilderinfomanager.getQueue().get()
-      filebuilderinfo.setIsInQueue( False )
 
       # Check if we actually have filebuilderinfo to rebuild file
       if filebuilderinfo != None:
-        filename = filebuilderinfo.getResultFileName()
-        directory = filebuilderinfo.getResultDirectory()
-        resourcemanager.checkDirectory( directory )
-          
-        try :
-          filepath = os.path.realpath( os.path.join( directory, filename ) )
-          function = partial( self._buildFile, filebuilderinfo, filepath )
-          resourcemutex = resourcemanager.getResourceMutex( filepath )
-          resourcemutex.lock( function, None )
-          resourcemutex.unlock()
 
-        except Exception, error :
-          print 'An error occured : ', error
+        # Build result file
+        filebuilderinfo.buildResultFile()
 
-  def _buildFile( self, filebuilderinfo, filepath, *args ) :
-    '''
-    Build a file from a L{FileBuilderInfo}. This method can not be executed
-    by multiple L{threading.Thread} simultaneously.
-    @type filebuilderinfo : FileBuilderInfo
-    @param filebuilderinfo : L{FileBuilderInfo} that contains all informations
-            about the file to rebuild (fragments, length, name).
-    @type filepath : string
-    @param filepath : path of the file to rebuild.
-    '''
-    # First we check that file has not been built by another thread
-    if ( filebuilderinfo.checkFileIntegrity() and ( not filebuilderinfo.checkResultFile() ) ) :
-      #print 'Thread : \'', self.getName(), '\', before reconstruction of file : \'', filepath, '\''
-      filefragments = filebuilderinfo.getFileFragments()
-      file = open( filepath, "w+b" )
-      for filefragmentkey in sorted(filefragments.iterkeys()) :
-        filefragment = filefragments[ filefragmentkey ]
-        file.write( filefragment.readLocalData() )
-      
-      file.close()
+        # Remove file builder info
+        filebuilderinfomanager.removeFileBuilderInfo( filebuilderinfo )
 
-      # Remove file builder info
-      filebuilderinfomanager.removeFileBuilderInfo( filebuilderinfo )
-
-      #print 'Thread : \'', self.getName(), '\', file : \'', filepath, '\' sucessfully reconstructed.'
-    #else :
-      #print 'Thread : \'', self.getName(), '\', file : \'', filepath, '\' was already rebuilt'
-
+      # sleep for interval or until shutdown
+      self._finished.wait( self._interval )
 
 #------------------------------------------------------------------------------
 class FileBuilderInfoManager( Singleton ) :
   '''
   Class to manage L{FileBuilderInfo}.
   '''
-  filebuilderinfos = dict()
-  queue = Queue()
+
+  def __singleton_init__( self ):
+    super( Singleton, self ).__init__()
+    
+    self.filebuilderinfos = dict()
+    self.queue = Queue()
 
   def getFileBuilderInfo( self, uploadid, basedirectory, filename, filelength, new = True, default = None ) :
     '''
@@ -492,18 +550,19 @@ class FileBuilderInfoManager( Singleton ) :
                      if the 'new' parameter is set to False.
     @return : the matching L{FileBuilderInfo}.
     '''
-    result = None
-
+    
     # Get the file builder info from file fragment
-    filehash = FileBuilderInfo.getHash( uploadid, filename, filelength )
+    filehash = FileBuilderInfo.getHash( uploadid, basedirectory, filename, filelength )
 
-    if filehash in self.filebuilderinfos :
-      result = self.filebuilderinfos[ filehash ]
-    elif new :
-      result = FileBuilderInfo( uploadid, basedirectory, filename, filelength )
-      self.addFileBuilderInfo( result )
-    else :
-      result = default
+    objectlock = resourcemanager.getObjectLock( self )
+    with objectlock :
+      if filehash in self.filebuilderinfos :
+        result = self.filebuilderinfos[ filehash ]
+      elif new :
+        result = FileBuilderInfo( uploadid, basedirectory, filename, filelength )
+        self.filebuilderinfos[ filehash ] = result
+      else :
+        result = default
 
     return result
 
@@ -545,17 +604,6 @@ class FileBuilderInfoManager( Singleton ) :
     filebuilderinfo.addToQueue( self.queue )
 
   @synchronized
-  def addFileBuilderInfo( self, filebuilderinfo ) :
-    '''
-    Add a L{FileBuilderInfo} to the L{dict} of managed ones.
-    @type filename : FileBuilderInfo
-    @param filename : L{FileBuilderInfo} to add to the L{dict} of managed ones.
-    '''
-    objectlock = resourcemanager.getObjectLock( self )
-    with objectlock :
-      self.filebuilderinfos[ filebuilderinfo.getFileHash() ] = filebuilderinfo
-
-  @synchronized
   def removeFileBuilderInfo( self, filebuilderinfo ) :
     '''
     Add a L{FileBuilderInfo} to the L{dict} of managed ones.
@@ -564,23 +612,42 @@ class FileBuilderInfoManager( Singleton ) :
     '''
     objectlock = resourcemanager.getObjectLock( self )
     with objectlock :
-      self.filebuilderinfos.pop( filebuilderinfo.getFileHash() )
+    
+      if filebuilderinfo.getFileHash() in self.filebuilderinfos :
+        self.filebuilderinfos.pop( filebuilderinfo.getFileHash() )
 
-    # Remove unused fragments local data
-    for filefragment in filebuilderinfo.getFileFragments().itervalues() :
-      filebuilderinfos = self.getFileBuilderInfosFromKey( filefragment.getSha1() )
+      # Remove unused fragments local data
+      locks = list()
 
-      if len(filebuilderinfos) == 0 :
-        # No file builder info uses file fragment local data anymore so we can delete it
-        filefragment.deleteLocalData()
+      for info in self.filebuilderinfos.values() :
+        # Add a lock for each file builder info in order that they can not be modified
+        lock = resourcemanager.getObjectLock( info )
+        locks.append( lock )
+        lock.acquire()
+      
+      for filefragment in filebuilderinfo.getFileFragments().values() :
+        filebuilderinfos = self.getFileBuilderInfosFromKey( filefragment.getSha1() )
+
+        if len(filebuilderinfos) == 0 :
+          # No file builder info uses file fragment local data anymore so we can delete it
+          filefragment.deleteLocalData()
+
+      for lock in locks :
+        # Release locks
+        lock.release()
 
 filebuilderinfomanager = FileBuilderInfoManager()
-  
+
 #------------------------------------------------------------------------------
+FileBuilderInfoStatus = Enum( 'BUILDING',
+                              'BUILT',
+                              'NOT_BUILT' )
+                              
 class FileBuilderInfo :
   '''
   Class to get info about uploaded file.
   '''
+
   def __init__( self, uploadid, basedirectory, filename, filelength ) :
     '''
     Initialize L{FileBuilderInfo} using its file name and file length.
@@ -593,12 +660,11 @@ class FileBuilderInfo :
     @type filelength : long
     @param filelength : file length.
     '''
-    self.isinqueue = False
+    self.status = FileBuilderInfoStatus.NOT_BUILT
     self.uploadid = uploadid
     self.basedirectory = basedirectory
     self.filename = filename
     self.filelength = filelength
-    self.managermutex = mutex()
     self.filefragments = dict()
 
   def checkFileFragment( self, filefragment ) :
@@ -616,22 +682,130 @@ class FileBuilderInfo :
     @type queue : L{queue.Queue}
     @param queue : L{queue.Queue} to add C{FileBuilderInfo} to.
     '''
-    objectlock = resourcemanager.getObjectLock( self )
-    with objectlock :
-      if not self.isinqueue :
-        self.isinqueue = True
-        queue.put( self )
+    if self.status == FileBuilderInfoStatus.NOT_BUILT :
+      self.status = FileBuilderInfoStatus.BUILDING
+      queue.put( self )
+      loginfopath = os.path.join( self.uploadid, self.basedirectory, self.getResultFileName() )
+      logmanager.writeLogInfo( 'Queued \'%s\'' % ( loginfopath, ) )
 
-  def setIsInQueue( self, value ):
+  def checkFileBuild( self ) :
     '''
-    Set the C{FileBuilderInfo} is in queue status.
-    @type value : L{bool}
-    @param value: L{bool} that specify if the C{FileBuilderInfo} is in queue or not.
+    Check if the current C{FileBuilderInfo} is complete and contains all needed informations
+    to be rebuilt. If it is the case, the current C{FileBuilderInfo} is transfered to the queue
+    of C{FileBuilderInfo} to be rebuilt.
     '''
     objectlock = resourcemanager.getObjectLock( self )
     with objectlock :
-      if self.isinqueue :
-        self.isinqueue = value
+      if ( self.checkFileIntegrity() and ( not self.checkResultFile() ) ) :
+        filebuilderinfomanager.transferToQueue( self )
+        return True
+      else :
+        return False
+
+  def checkResultFile( self ) :
+    '''
+    Check that result file exists and has a rigth length.
+    @return : True if the result file exists with the rigth length, False otherwise.
+    '''
+    result = False
+    filename = self.getResultFileName()
+    filefragments = self.filefragments
+    
+    try :
+      directory = self.getResultDirectory()
+      filepath = os.path.realpath( os.path.join( directory, filename ) )
+      
+      objectlock = resourcemanager.getResourceLock( filepath )
+      with objectlock :
+        if os.path.exists( filepath ) :
+          if ( os.path.getsize( filepath ) == self.getFileLength() ) :
+            result = True
+    except Exception, error :
+      logmanager.writeLogInfo( 'Error occured checking result file. %s. %s' % (error, traceback.format_exc() ), level = LogLevel.ERROR )
+
+    return result
+
+  def checkFileIntegrity( self ) :
+    '''
+    Check that all required L{FileFragment}s exist and have the correct length.
+    @return : True if all required L{FileFragment}s exist and have the correct
+            length, False otherwise.
+    '''
+    offsetcheck = 0
+    fragmentlength = 0
+
+    # Check file fragments contiguity
+    for fragmentkey in sorted( self.filefragments.iterkeys() ) :
+      fragment = self.filefragments[ fragmentkey ]
+      fragmentoffset = fragment.getOffset()
+      fragmentlength = fragment.getLength()
+      if ( ( not ( offsetcheck >= fragmentoffset ) ) or ( not fragment.hasValidSizeLocalData() ) ):
+        return False
+
+      offsetcheck += fragmentlength
+
+    return ( offsetcheck == self.filelength )
+
+  def setStatus( self, value ):
+    '''
+    Set the C{FileBuilderInfo} status.
+    @type value : L{FileBuilderInfoStatus}
+    @param value: L{FileBuilderInfoStatus} that specify if the C{FileBuilderInfo} status.
+    '''
+    objectlock = resourcemanager.getObjectLock( self )
+    with objectlock :
+      self.status = value
+
+  def buildResultFile( self ) :
+    '''
+    Build a file from a L{FileBuilderInfo}. This method can not be executed
+    by multiple L{threading.Thread} simultaneously.
+    @type filebuilderinfo : FileBuilderInfo
+    @param filebuilderinfo : L{FileBuilderInfo} that contains all informations
+            about the file to rebuild (fragments, length, name).
+    @type filepath : string
+    @param filepath : path of the file to rebuild.
+    '''
+    filename = self.getResultFileName()
+    directory = self.getResultDirectory()
+    loginfopath = os.path.join( self.uploadid, self.basedirectory, filename )
+    
+    checkDirectory( directory )
+
+    objectlock = resourcemanager.getObjectLock( self )
+    with objectlock :
+      try :
+        filepath = os.path.realpath( os.path.join( directory, filename ) )
+
+        # First we check file integrity
+        if self.checkFileIntegrity() :
+
+          # Check that result file has not been built by another thread
+          if not self.checkResultFile() :
+            filefragments = self.filefragments
+            resourcelock = resourcemanager.getResourceLock( filepath )
+            with resourcelock :
+              file = open( filepath, "w+b" )
+              for filefragmentkey in sorted( filefragments.iterkeys() ) :
+                filefragment = filefragments[ filefragmentkey ]
+                fragmentcontent = filefragment.readLocalData()
+
+                if not fragmentcontent is None :
+                  file.write( fragmentcontent )
+
+              file.close()
+
+            logmanager.writeLogInfo( 'Rebuilt \'%s\'' % ( loginfopath, ) )
+
+            self.status = FileBuilderInfoStatus.BUILT
+
+        else :
+          logmanager.writeLogInfo( 'Rebuild corrupted \'%s\'' % ( loginfopath, ), level = LogLevel.WARNING )
+          self.status = FileBuilderInfoStatus.NOT_BUILT
+          
+      except Exception, error :
+        logmanager.writeLogInfo( 'Error occured building \'%s\'. %s. %s' % ( loginfopath, error, traceback.format_exc() ), level = LogLevel.ERROR )
+        self.status = FileBuilderInfoStatus.NOT_BUILT
 
   def getFileFragments( self ) :
     '''
@@ -653,7 +827,7 @@ class FileBuilderInfo :
         if filefragment.sha1 == filefragmentsha1 :
           return filefragment
 
-    return None
+      return None
 
   def getResultFileName( self ) :
     '''
@@ -682,62 +856,6 @@ class FileBuilderInfo :
       # File fragments are ordered using their offset
       self.filefragments[ filefragment.getOffset() ] = filefragment
 
-  def checkFileBuild( self ) :
-    '''
-    Check if the current C{FileBuilderInfo} is complete and contains all needed informations
-    to be rebuilt. If it is the case, the current C{FileBuilderInfo} is transfered to the queue
-    of C{FileBuilderInfo} to be rebuilt.
-    '''
-
-    if ( self.checkFileIntegrity() and ( not self.checkResultFile() ) ) :
-      filebuilderinfomanager.transferToQueue( self )
-
-  def checkResultFile( self ) :
-    '''
-    Check that result file exists and has a rigth length.
-    @return : True if the result file exists with the rigth length, False otherwise.
-    '''
-    result = False
-    filename = self.getResultFileName()
-    filefragments = self.getFileFragments()
-    
-    objectlock = resourcemanager.getObjectLock( self )
-    with objectlock :
-      try :
-        directory = resourcemanager.getDirectory('httpupload.dirbasefileoutput')
-        filepath = os.path.realpath( os.path.join( directory, filename ) )
-        if os.path.exists( filepath ) :
-          if ( os.path.getsize( filepath ) == self.getFileLength() ) :
-            result = True
-      except Exception, error :
-        #continue
-        pass
-
-    return result
-
-  def checkFileIntegrity( self ) :
-    '''
-    Check that all required L{FileFragment}s exist and have the correct length.
-    @return : True if all required L{FileFragment}s exist and have the correct
-            length, False otherwise.
-    '''
-    offsetcheck = 0
-    fragmentlength = 0
-
-    objectlock = resourcemanager.getObjectLock( self )
-    with objectlock :
-      # Check file fragments contiguity
-      for fragmentkey in sorted(self.filefragments.iterkeys()) :
-        fragment = self.filefragments[fragmentkey]
-        fragmentoffset = fragment.getOffset()
-        fragmentlength = fragment.getLength()
-        if ( ( not ( offsetcheck >= fragmentoffset ) ) or ( not fragment.hasValidSizeLocalData() ) ):
-          return False
-
-        offsetcheck += fragmentlength
-
-    return ( offsetcheck == self.filelength )
-
   def getFileName( self ):
     '''
     Get the considered file name for the current C{FileBuilderInfo}.
@@ -764,7 +882,7 @@ class FileBuilderInfo :
     Get the considered file hash for the current C{FileBuilderInfo}.
     @return : L{string} containing the considered file hash for the current C{FileBuilderInfo}.
     '''
-    return FileBuilderInfo.getHash( self.uploadid, self.filename, self.filelength )
+    return FileBuilderInfo.getHash( self.uploadid, self.basedirectory, self.filename, self.filelength )
     
   def __str__( self ):
     '''
@@ -772,12 +890,15 @@ class FileBuilderInfo :
     @return : L{string} representing the current C{FileBuilderInfo}.
     '''
     result = '--> filebuilderinfo - filename : ' + self.filename + ', filebuilderinfo.filelength : ' + unicode(self.filelength) + '\n'
-    for filefragment in self.filefragments.itervalues() :
-      result += '  --> filebuilderinfo - filefragment : ' + str(filefragment) + '\n'
+
+    objectlock = resourcemanager.getObjectLock( self )
+    with objectlock :
+      for filefragment in self.filefragments.itervalues() :
+        result += '  --> filebuilderinfo - filefragment : ' + str(filefragment) + '\n'
     return result
 
   @staticmethod
-  def getHash( uploadid, filename, filelength ):
+  def getHash( uploadid, basedirectory, filename, filelength ):
     '''
     Get the hash for a file name and length.
     @type filename : string
@@ -786,7 +907,7 @@ class FileBuilderInfo :
     @param filename : file length to use for creating the hash.
     @return : the hash for a file name and length.
     '''
-    return repr( [ filename, filelength, uploadid ] )
+    return repr( [ basedirectory, filename, filelength, uploadid ] )
 
 
 #------------------------------------------------------------------------------
@@ -812,12 +933,14 @@ class FileFragment :
     @param filepath : path of the file to check for the C{FileFragment}.
     @return : True if the file exists and matches the C{FileFragment} SHA-1 key, False otherwise.
     '''
-    if ( os.path.exists( filepath ) ) :
-      # Read file content and check that sha1 key is correct
-      file = open( filepath, 'r+b' )
-      filecontent = file.read()
+    if ( ( len( filepath ) > 0 ) and os.path.exists( filepath ) ) :
+      resourcelock = resourcemanager.getResourceLock( filepath )
+      with resourcelock :
+        # Read file content and check that sha1 key is correct
+        file = open( filepath, 'r+b' )
+        filecontent = file.read()
 
-      return checkSha1( filecontent, self.sha1 )
+        return checkSha1( filecontent, self.sha1 )
 
     else :
       return False
@@ -834,61 +957,37 @@ class FileFragment :
       # Try to write data to the data directory
       directory = resourcemanager.getDirectory( 'httpupload.dirtempfilefragments' )
       filepath = os.path.realpath( os.path.join( directory, datafile.filename ) )
-      # This prevents multithread conflicts for writing in the same file at the same time
-      function = partial( self._writeLocalData, filepath, datafile )
-      resourcemutex = resourcemanager.getResourceMutex( filepath )
-      resourcemutex.lock( function, None )
-      resourcemutex.unlock()
+      if not self._checkFile( filepath ) :
+        resourcelock = resourcemanager.getResourceLock( filepath )
+        with resourcelock :
+          file = open( filepath, "w+b" )
+          file.write( datafile.value )
+          file.close()
 
       return True
 
     except Exception, error :
       # If write in this directory fails we try the next directory
-      #continue
-      pass
+      logmanager.writeLogInfo( 'Error occured writing fragment data. %s. %s' % (error, traceback.format_exc() ), level = LogLevel.ERROR )
 
     return False
-
-  def _writeLocalData( self, filepath, datafile, *args ) :
-    '''
-    Write data to a file from L{cgi.FieldStorage}. The L{cgi.FieldStorage} comes
-    from a parsed http request.
-    @type filepath : string
-    @param filepath : path of the file to write data in.
-    @type datafile : cgi.FieldStorage
-    @param datafile : L{cgi.FieldStorage} containing the data for the C{FileFragment}.
-    '''
-    objectlock = resourcemanager.getObjectLock( self )
-    with objectlock :
-      if not self._checkFile( filepath ) :
-        #print 'Writing data for \'', filepath, '\'...'
-        file = open( filepath, "w+b" )
-        file.write( datafile.value )
-        file.close()
-
+  
   def readLocalData( self ) :
     '''
     Read data for the C{FileFragment} from a local file.
     @return : L{string} containing the data for the C{FileFragment}.
     '''
-    objectlock = resourcemanager.getObjectLock( self )
-    with objectlock :
-      filepath = self.getValidLocalDataPath()
-      file = open( filepath, "r+b" )
-      return file.read()
+    filepath = self.getValidLocalDataPath()
+    
+    resourcelock = resourcemanager.getResourceLock( filepath )
+    with resourcelock :
+      if ( len(filepath) > 0 ) :
+        file = open( filepath, "r+b" )
+        return file.read()
+      else :
+        return None
 
   def deleteLocalData( self ) :
-    '''
-    Delete data for the C{FileFragment} local file.
-    '''
-    # This prevents multithread conflicts for writing in the same file at the same time
-    filepath = self.getValidLocalDataPath()
-    function = partial( self._deleteLocalData, filepath )
-    resourcemutex = resourcemanager.getResourceMutex( filepath )
-    resourcemutex.lock( function, None )
-    resourcemutex.unlock()
-        
-  def _deleteLocalData( self, filepath, *args ) :
     '''
     Delete data for the C{FileFragment} local file.
     @type filepath : string
@@ -897,10 +996,13 @@ class FileFragment :
     objectlock = resourcemanager.getObjectLock( self )
     with objectlock :
       try :
-        if len(filepath) > 0 :
-          os.remove( filepath )
+        filepath = self.getValidLocalDataPath()
+        resourcelock = resourcemanager.getResourceLock( self )
+        with resourcelock :
+          if len(filepath) > 0 :
+            os.remove( filepath )
       except Exception, error :
-        print 'File \'' + filepath + '\' can not be removed.'
+        logmanager.writeLogInfo( 'Error occured deleting fragment data. %s. %s' % (error, traceback.format_exc() ), level = LogLevel.ERROR )
 
   def parseFromXml( self, document ) :
     '''
@@ -974,15 +1076,13 @@ class FileFragment :
     '''
     foundfile = ''
 
-    objectlock = resourcemanager.getObjectLock( self )
-    with objectlock :
-      directory = resourcemanager.getDirectory( 'httpupload.dirtempfilefragments' )
-      if os.path.exists( directory ) :
-        filepath = os.path.realpath( os.path.join( directory, self.sha1 ) )
+    directory = resourcemanager.getDirectory( 'httpupload.dirtempfilefragments' )
+    if os.path.exists( directory ) :
+      filepath = os.path.realpath( os.path.join( directory, self.sha1 ) )
 
-        if os.path.exists( filepath ) :
-          foundfile = filepath
-      return foundfile
+      if os.path.exists( filepath ) :
+        foundfile = filepath
+    return foundfile
 
   def hasValidSizeLocalData( self ) :
     '''
@@ -991,9 +1091,8 @@ class FileFragment :
     @return : True if the current C{FileFragment} has valid local data using data size, False otherwise.
     '''
     filepath = self.getValidLocalDataPath()
-    
-    objectlock = resourcemanager.getObjectLock( self )
-    with objectlock :
+    resourcelock = resourcemanager.getResourceLock( filepath )
+    with resourcelock :
       if ( len(filepath) > 0 ):
         return ( os.path.getsize( filepath ) == self.getLength() )
       else :
@@ -1005,7 +1104,8 @@ class FileFragment :
     and sha1 key.
     @return : True if the current C{FileFragment} has valid local data, False otherwise.
     '''
-    return ( self._checkFile( self.getValidLocalDataPath() ) )
+    filepath = self.getValidLocalDataPath()
+    return self._checkFile( filepath )
 
   def __str__( self ) :
     '''

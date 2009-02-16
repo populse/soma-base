@@ -47,7 +47,12 @@ import soma
 #: Directory where soma icons files are stored
 somaIconsDirectory = sorted( glob.glob( os.path.join( *( 
  split_path( soma.__file__ )[:-3] + [ 'share', 'soma-*', 'icons' ]) \
-  ) ) )[ 0 ]
+  ) ) )
+if somaIconsDirectory:
+  somaIconsDirectory = somaIconsDirectory[ 0 ]
+else:
+  somaIconsDirectory = ''
+
 
 #-------------------------------------------------------------------------------
 def findIconFile( fileName ):
