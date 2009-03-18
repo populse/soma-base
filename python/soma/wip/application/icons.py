@@ -60,7 +60,7 @@ def findIconFile( fileName ):
   Find an icon file in user, application and site "icons" directories.
   Return C{None} if the file has not been found.
   '''
-  app = Application()
+  app = Application("soma", "")
   for dir in ( app.directories.user, app.directories.application,
                app.directories.site, somaIconsDirectory ):
     file = os.path.join( dir, 'icons', fileName )

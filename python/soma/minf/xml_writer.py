@@ -168,12 +168,14 @@ class MinfXMLWriter( MinfWriter ):
         self._encodeAndWriteLine( '<'+ numberTag + attributesXML + '>' + unicode( minfNode ) + '</' + \
                         numberTag + '>', level )
       elif isinstance( minfNode, ( str, unicode ) ):
-        try:
-          self._encodeAndWriteLine( '<' + stringTag + attributesXML + '>' + \
-            xml_escape( minfNode, xml_replacement ) + '</' + stringTag + '>', level )
-        except UnicodeDecodeError:
-          self._encodeAndWriteLine( '<' + stringTag + attributesXML + '>' + \
-            xml_escape( minfNode.decode( 'iso-8859-1' ), xml_replacement ) + '</' + stringTag + '>', level )
+        
+        if type(minfNode) is str:
+          try:
+            minfNode=minfNode.decode("utf-8")
+          except UnicodeDecodeError:
+            minfNode=minfNode.decode("iso-8859-1")
+        self._encodeAndWriteLine( '<' + stringTag + attributesXML + '>' + \
+          xml_escape( minfNode, xml_replacement ) + '</' + stringTag + '>', level )
       elif hasattr( minfNode, '__minfxml__' ):
         minfNode.__minfxml__( self, attributes, level )
       else:

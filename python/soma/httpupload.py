@@ -101,8 +101,24 @@ def checkDirectory( directory ) :
   # Creates the needed directories
   if not os.path.exists( directory ) :
     os.makedirs( os.path.realpath( directory ) )
-      
-def walkTree(node):
+
+def getDirectoryFilesSize( directory ) :
+  result = 0
+  
+  for root, dirs, files in os.walk( directory ):
+    result += sum(os.lstat( os.path.join(root, name) )[6] for name in files )
+
+  return result
+  
+def getDirectoryFilesCount( directory ) :
+  result = 0
+  
+  for root, dirs, files in os.walk( directory ):
+    result += len( files )
+
+  return result
+
+def walkTree( node ):
   '''
     Walk trough an xml tree node.
     @type  node: Node
@@ -186,6 +202,21 @@ def getFileBuildLengthResponseDocument( filelength ) :
 
   return document
 
+def getFileBuildCountResponseDocument( buildcount ) :
+  '''
+    Create xml file build count response document.
+    @type  filelength: long
+    @param filelength: specify the file upload build count.
+    @return: xml document containing the response.
+  '''
+
+  document = minidom.Document()
+  node = document.createElement( 'uploadtask' )
+  node.setAttribute( 'buildcount', unicode( buildcount ) )
+  document.appendChild( node )
+
+  return document
+
 def processHttpUploadQuery( *args, **kwargs ) :
   '''
     Main httpupload function entry. It processes arguments and
@@ -203,8 +234,13 @@ def processHttpUploadQuery( *args, **kwargs ) :
     result = resourcemanager.processFileStorage( file, isheader )
 
   elif 'query' in kwargs :
-    # return an empty string
-    result = resourcemanager.getFileBuildLength( kwargs['uploadid'], kwargs['basedirectory'], kwargs['filename'], kwargs['filelength'] )
+    if kwargs.get( 'query' ) == 'getuploadbuildcount' :
+      result = resourcemanager.getUploadBuildCount( kwargs['uploadid'] )
+    else :
+      # return an empty string
+      #result = resourcemanager.getFileBuildLength( kwargs['uploadid'], kwargs['basedirectory'], kwargs['filename'], kwargs['filelength'] )
+      result = resourcemanager.getUploadBuildLength( kwargs['uploadid'] )
+      
 
   return result
 
@@ -222,6 +258,13 @@ class LogManager( Singleton ) :
     self._startdate = datetime.datetime.now()
     self._initialized = False
 
+  @synchronized
+  def setLogLevel( self, level ):
+    '''
+    Set log level from configuration file.
+    '''
+    self._loglevel = level
+    
   def logReset( self ):
     '''
     Get log reset from configuration file.
@@ -232,15 +275,19 @@ class LogManager( Singleton ) :
     '''
     Get log level from configuration file.
     '''
-    defaultvalue = LogLevel.INFO
-    value = turbogears.config.get( 'httpupload.loglevel', str( defaultvalue ) )
-    return getattr( LogLevel, value, defaultvalue )
+    if not hasattr( self, '_loglevel' ) :
+      value = turbogears.config.get( 'httpupload.loglevel' )
+      result = LogLevel.__dict__.get( value, LogLevel.INFO )
+      self.setLogLevel( result )
+    else :
+      result = self._loglevel
+    return result
 
   def logFile( self ):
     '''
     Get log file from configuration file.
     '''
-    value = turbogears.config.get( 'httpupload.logfile', '/var/log/httpupload_%(startdate)s.log' )
+    value = turbogears.config.get( 'httpupload.logfile', '/var/log/serverpack/httpupload/httpupload_%(startdate)s.log' )
     return value % { 'startdate' : self._startdate.isoformat() }
   
   def writeLogInfo( self, value, filepath = None, mode = 'a+b', level = LogLevel.INFO ):
@@ -255,14 +302,21 @@ class LogManager( Singleton ) :
       filepath = self.logFile()
       
     if level <= self.logLevel() :
-      self.write( '%s %s %s : %s [ %s ]\n' %
-                  ( datetime.datetime.now().isoformat(' '),
-                    self.__module__,
-                    level,
-                    value,
-                    threading.currentThread().getName() ),
-                filepath,
-                mode )
+      try :      
+        self.write( '%s %s %s : %s [ %s ]\n' %
+                    ( datetime.datetime.now().isoformat(' '),
+                      self.__module__,
+                      level,
+                      value,
+                      threading.currentThread().getName() ),
+                  filepath,
+                  mode )
+      except Exception, error :
+        if ( self.loglevel() != LogLevel.NONE ) :
+          print 'Log was desactivated due to errors. %s. %s' % (error, traceback.format_exc() )
+          
+          # Desactivate log level for write
+          self.setLogLevel( LogLevel.NONE )
     
   def write( self, value, filepath, mode ):
     checkDirectory( os.path.dirname( filepath ) )
@@ -289,12 +343,15 @@ class ResourceManager( Singleton ) :
     self.builders = list()
 
   @synchronized
-  def startFileBuilders( self, count = 4 ) :
+  def startFileBuilders( self, count = None ) :
     '''
       Start builder threads. These threads will reconstruct files when upload is complete.
       @type  count: integer
       @param count: number of L{FileBuilder} threads to start.
     '''
+    if count is None :
+      count = int(turbogears.config.get( 'httpupload.threadcount', '4' ))
+      
     if len( self.builders ) == 0 :
       logmanager.writeLogInfo( 'Module started' )
             
@@ -361,7 +418,29 @@ class ResourceManager( Singleton ) :
       setattr( value, '__objectlock', objectlock )
 
     return objectlock
-
+  
+  def getResultUploadDirectory( self, uploadid ) :
+    '''
+    Get upload directory path for an upload id.
+    @type uploadid : string
+    @param uploadid : upload id.
+    @type return : L{string} containing the upload directory path.
+    '''
+    dirbasefileoutput = self.getDirectory( 'httpupload.dirbasefileoutput' )
+    return os.path.realpath( os.path.join( dirbasefileoutput, uploadid ) )
+    
+  def getResultDirectory( self, uploadid, basedirectory ) :
+    '''
+    Get result directory path of the file to rebuild.
+    @type uploadid : string
+    @param uploadid : upload id.
+    @type basedirectory : string
+    @param basedirectory : relative base directory path.
+    @type return : L{string} containing the result directory path.
+    '''
+    uploaddirectory = self.getResultUploadDirectory( uploadid )
+    return os.path.realpath( os.path.join( uploaddirectory, basedirectory ) )
+  
   @staticmethod
   def getResultFileName( filename, filelength ) :
     '''
@@ -374,18 +453,6 @@ class ResourceManager( Singleton ) :
     '''
     #return string.join( [ filename, unicode( filelength ) ] , '_' )
     return filename
-
-  @staticmethod
-  def getResultDirectory( uploadid, basedirectory ) :
-    '''
-    Get result directory path of the file to rebuild.
-    @type uploadid : string
-    @param uploadid : upload id.
-    @type basedirectory : string
-    @param basedirectory : relative base directory path.
-    @type return : L{string} containing the result directory path.
-    '''
-    return os.path.realpath( os.path.join( resourcemanager.getDirectory( 'httpupload.dirbasefileoutput' ), uploadid, basedirectory ) )
 
   def processFileStorage( self, filestorage, isheader ) :
     '''
@@ -401,29 +468,33 @@ class ResourceManager( Singleton ) :
     self.startFileBuilders()
     
     if isheader :
-      mustuploaddata = False
-      
-      # Create filefragment for the header
-      filefragment = FileFragment( filestorage )
-      filebuilderinfo = filebuilderinfomanager.getFileBuilderInfo( filefragment.getUploadId(),
-                                                                   filefragment.getBaseDirectory(),
-                                                                   filefragment.getFileName(),
-                                                                   filefragment.getFileLength() )
-      filebuilderinfo.addFileFragment( filefragment )
-      
-      # Check that the file fragment has not been already uploaded
-      isdatafilefragmentvalid = filefragment.hasValidLocalData()
-      isresultfilevalid = filebuilderinfo.checkResultFile()
-
-      if not isresultfilevalid :
-        # Result file is not valid locally
+      if len(filestorage.value) > 0 :
+        mustuploaddata = False
         
-        if not isdatafilefragmentvalid :
-          # In that case data for file fragment must be uploaded
-          mustuploaddata = True
-        else :
-          # Check file build availability
-          filebuilderinfo.checkFileBuild()
+        # Create filefragment for the header
+        filefragment = FileFragment( filestorage )
+        filebuilderinfo = filebuilderinfomanager.getFileBuilderInfo( filefragment.getUploadId(),
+                                                                    filefragment.getBaseDirectory(),
+                                                                    filefragment.getFileName(),
+                                                                    filefragment.getFileLength() )
+        filebuilderinfo.addFileFragment( filefragment )
+        
+        # Check that the file fragment has not been already uploaded
+        isdatafilefragmentvalid = filefragment.hasValidLocalData()
+        isresultfilevalid = filebuilderinfo.checkResultFile()
+
+        if not isresultfilevalid :
+          # Result file is not valid locally
+          
+          if not isdatafilefragmentvalid :
+            # In that case data for file fragment must be uploaded
+            mustuploaddata = True
+          else :
+            # Check file build availability
+            filebuilderinfo.checkFileBuild()
+      else :
+        # An error occured so that we are not able to know if the fragment must be uploaded again
+        mustuploaddata = None
 
       # Data part must be transfered only when data is missing and resulting file does not exists
       result = getUploadResponseDocument( mustuploaddata )
@@ -447,6 +518,41 @@ class ResourceManager( Singleton ) :
 
     return result.toxml()
 
+  def getUploadBuildLength( self, uploadid ) :
+    '''
+    Get the length of built files for an upload.
+    @type uploadid : string
+    @param uploadid : upload id.
+    '''
+    directory = self.getResultUploadDirectory( uploadid )
+
+    if ( os.path.exists( directory ) ) :
+      processedfilesize = getDirectoryFilesSize( directory )
+    else :
+      processedfilesize = 0
+     
+    result = getFileBuildLengthResponseDocument( processedfilesize )
+    
+    return result.toxml()
+
+
+  def getUploadBuildCount( self, uploadid ) :
+    '''
+    Get the count of built files for an upload.
+    @type uploadid : string
+    @param uploadid : upload id.
+    '''
+    directory = self.getResultUploadDirectory( uploadid )
+
+    if ( os.path.exists( directory ) ) :
+      processedfilecount = getDirectoryFilesCount( directory )
+    else :
+      processedfilecount = 0
+
+    result = getFileBuildCountResponseDocument( processedfilecount )
+    return result.toxml()
+    
+    
   def getFileBuildLength( self, uploadid, basedirectory, filename, filelength ) :
     '''
     Get the status for a file information.
@@ -964,7 +1070,7 @@ class FileFragment :
           file.write( datafile.value )
           file.close()
 
-      return True
+        return True
 
     except Exception, error :
       # If write in this directory fails we try the next directory
@@ -977,7 +1083,7 @@ class FileFragment :
     Read data for the C{FileFragment} from a local file.
     @return : L{string} containing the data for the C{FileFragment}.
     '''
-    filepath = self.getValidLocalDataPath()
+    filepath = self.getLocalDataPath()
     
     resourcelock = resourcemanager.getResourceLock( filepath )
     with resourcelock :
@@ -996,10 +1102,10 @@ class FileFragment :
     objectlock = resourcemanager.getObjectLock( self )
     with objectlock :
       try :
-        filepath = self.getValidLocalDataPath()
-        resourcelock = resourcemanager.getResourceLock( self )
+        filepath = self.getLocalDataPath()
+        resourcelock = resourcemanager.getResourceLock( filepath )
         with resourcelock :
-          if len(filepath) > 0 :
+          if ( len(filepath) > 0 ) and os.path.exists( filepath ) :
             os.remove( filepath )
       except Exception, error :
         logmanager.writeLogInfo( 'Error occured deleting fragment data. %s. %s' % (error, traceback.format_exc() ), level = LogLevel.ERROR )
@@ -1069,20 +1175,18 @@ class FileFragment :
     '''
     return self.sha1
 
-  def getValidLocalDataPath( self ) :
+  def getLocalDataPath( self ) :
     '''
-    Get a local data path for C{FileFragment}. Checks on the file existence.
-    @return : L{string} containing the found local data path or empty L{string} if not found.
+    Get a local data path for C{FileFragment}.
+    @return : L{string} containing the local data path.
     '''
     foundfile = ''
 
     directory = resourcemanager.getDirectory( 'httpupload.dirtempfilefragments' )
     if os.path.exists( directory ) :
       filepath = os.path.realpath( os.path.join( directory, self.sha1 ) )
-
-      if os.path.exists( filepath ) :
-        foundfile = filepath
-    return foundfile
+      
+    return filepath
 
   def hasValidSizeLocalData( self ) :
     '''
@@ -1090,10 +1194,10 @@ class FileFragment :
     and the size of the file.
     @return : True if the current C{FileFragment} has valid local data using data size, False otherwise.
     '''
-    filepath = self.getValidLocalDataPath()
+    filepath = self.getLocalDataPath()
     resourcelock = resourcemanager.getResourceLock( filepath )
     with resourcelock :
-      if ( len(filepath) > 0 ):
+      if ( len(filepath) > 0 ) and os.path.exists( filepath ) :
         return ( os.path.getsize( filepath ) == self.getLength() )
       else :
         return False
@@ -1104,7 +1208,7 @@ class FileFragment :
     and sha1 key.
     @return : True if the current C{FileFragment} has valid local data, False otherwise.
     '''
-    filepath = self.getValidLocalDataPath()
+    filepath = self.getLocalDataPath()
     return self._checkFile( filepath )
 
   def __str__( self ) :
@@ -1112,4 +1216,4 @@ class FileFragment :
     Get a L{string} representing the current C{FileFragment}.
     @return : L{string} representing the current C{FileFragment}.
     '''
-    return 'self.filename : ' + self.filename + ', self.filelength : ' + unicode(self.filelength) + ', self.offset : ' + unicode(self.offset) + ', self.length : ' + unicode(self.length) + ', self.sha1 : ' + self.sha1 + ', self.getValidLocalDataPath() : ' + self.getValidLocalDataPath()
+    return 'self.filename : ' + self.filename + ', self.filelength : ' + unicode(self.filelength) + ', self.offset : ' + unicode(self.offset) + ', self.length : ' + unicode(self.length) + ', self.sha1 : ' + self.sha1 + ', self.getLocalDataPath() : ' + self.getLocalDataPath()

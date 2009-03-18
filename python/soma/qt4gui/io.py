@@ -42,10 +42,7 @@ import errno
 import time
 import sys
 
-if sys.modules.has_key( 'PyQt4' ):
-  from PyQt4.QtCore import QObject, QSocketNotifier, SIGNAL
-else:
-  from qt import QObject, QSocketNotifier, SIGNAL
+from PyQt4.QtCore import QObject, QSocketNotifier, SIGNAL
 
 class Socket( QObject ):
     """

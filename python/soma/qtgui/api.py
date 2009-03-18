@@ -1,5 +1,4 @@
-
-# -*- coding: utf-8 -*-
+# -*- coding: iso-8859-1 -*-
 
 #  This software and supporting documentation were developed by
 #  NeuroSpin and IFR 49
@@ -31,9 +30,23 @@
 # knowledge of the CeCILL license version 2 and that you accept its terms.
 
 '''
-See L{soma.qtgui} module for documentation.
+This module provides a switch between qt3 and qt4. If PyQt4 is loaded, this module loads soma.qt4gui.api.*, else it loads soma.qt3gui.api.*. 
+It also provides en alias name for classes that have not the same name in qt3 and qt4 version : ApplicationQtGUI and QTGUI.
 
+@author: Dominique Geffroy
 @organization: U{NeuroSpin<http://www.neurospin.org>} and U{IFR 49<http://www.ifr49.org>}
 @license: U{CeCILL version 2<http://www.cecill.info/licences/Licence_CeCILL_V2-en.html>}
 '''
 __docformat__ = "epytext en"
+import sys
+
+if sys.modules.has_key( 'PyQt4' ):
+  from soma.qt4gui.api import *
+  ApplicationQtGUI=ApplicationQt4GUI
+  QtGUI=Qt4GUI
+else:
+  from soma.qt3gui.api import *
+  ApplicationQtGUI=ApplicationQt3GUI
+  QtGUI=Qt3GUI
+  
+

@@ -415,9 +415,10 @@ class TgUploadMultipleFiles( TgStandardBase, CompoundFormField ):
                           'onuploadstart' : 'uploadstarted()',
                           'onuploadend' : 'uploadended()',
                           'not_started' : 'Upload not started',
-                          'uploading' : 'Uploading fragments ...',
+                          'uploading' : 'Uploading files ...',
                           'building' : 'Building files ...',
                           'waiting_before_retry' : 'Waiting before retry ...',
+                          'waiting_system' : 'Waiting before upload ...',
                           'failed' : 'Upload failed',
                           'successful' : 'Upload succeeded' }
 

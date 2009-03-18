@@ -67,10 +67,12 @@ class Uuid( object ):
       self.__uuid = struct.pack( 'QQ', random.randrange( 2**64-1 ),
                                  random.randrange( 2**64-1 ) )
     else:
-      self.__uuid = binascii.unhexlify( uuid[0:8] + uuid[9:13] + \
-                                        uuid[14:18] + uuid[19:23] +\
-                                        uuid[24:36] )
-
+      try:
+        self.__uuid = binascii.unhexlify( uuid[0:8] + uuid[9:13] + \
+                                          uuid[14:18] + uuid[19:23] +\
+                                          uuid[24:36] )
+      except:
+        raise ValueError( "Invalid uuid string %s" % ( repr( uuid ), ) )
 
   def __getinitargs__( self ):
     return ( str( self ), )
