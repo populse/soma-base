@@ -1,6 +1,6 @@
 cmake_minimum_required( VERSION 2.6 )
 
-SOMA_PROJECT( "soma-base" 4 0 0 "CEA - IFR 49" )
+SOMA_PROJECT()
 
 find_package( PythonInterp REQUIRED )
 find_package( Epydoc )
