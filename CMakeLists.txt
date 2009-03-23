@@ -3,8 +3,11 @@ cmake_minimum_required( VERSION 2.6 )
 SOMA_PROJECT()
 
 find_package( PythonInterp REQUIRED )
+SOMA_ADD_RUNTIME_DEPENDENCY( THIRDPARTY PythonInterp REQUIRED )
+
 find_package( Epydoc )
 find_package( Dot )
+
 
 SOMA_COPY_PYTHON_DIRECTORY( "${CMAKE_CURRENT_SOURCE_DIR}/python"
                             ${PROJECT_NAME} )
