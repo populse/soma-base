@@ -45,12 +45,12 @@ __docformat__ = "epytext en"
 
 import os
 from StringIO import StringIO
-from qt import QListView, QListViewItem, QListViewItemIterator, QPixmap, QTextDrag, QPoint, QString, Qt, QPopupMenu, QPainter, QPen, QCursor, QRect, QToolTip, QSizePolicy, QImage, QEvent, qApp, QObject, QKeyEvent,  QTimer, SIGNAL
+from PyQt4.Qt import QTreeWidget, QTreeWidgetItem, QListWidget, QListWidgetItem, QTreeWidgetItemIterator, QPixmap, QDrag, QPoint, QString,Qt, QMenu, QPainter, QPen, QCursor, QRect, QSizePolicy, QIcon, QEvent, qApp, QObject, QKeyEvent,  QTimer, SIGNAL, QMimeData, QApplication
 import copy
 from soma.notification import ObservableList, EditableTree
 from soma.minf.api import defaultReducer, createMinfWriter, iterateMinf, minfFormat
 from soma.wip.application.api import findIconFile
-from soma.qt3gui.api import defaultIconSize
+from soma.qt4gui.api import defaultIconSize
 
 
 #----------------------------------------------------------------------------
@@ -110,7 +110,7 @@ ctrlKeyListener = KeyStateFilter(Qt.Key_Control)
 QTimer.singleShot(0, ctrlKeyListener.install)
 
 #----------------------------------------------------------------------------
-class EditableTreeWidget(QListView):
+class EditableTreeWidget(QTreeWidget):
   """A widget to represent a tree represented by an EditableTree object.
   The tree can be modifiable by manipulating items in the widget :
     - add new item
@@ -175,30 +175,34 @@ class EditableTreeWidget(QListView):
     @type iconSize: couple of integers or None
     @param iconSize: force items icon resizing.
     """
-    QListView.__init__( self, parent)
-    self.addColumn("")
+    QTreeWidget.__init__( self, parent)
+    self.setColumnCount(1)
     self.setColumnWidth(0, self.width())
     self.setRootIsDecorated(True)
-    self.setItemMargin(self.MARGIN)
-    self.setSorting(-1) # disable sort
+    #self.setItemMargin(self.MARGIN)
+    #self.setSortingEnabled(False) # disable sort
     self.setSizePolicy( QSizePolicy( QSizePolicy.Preferred, QSizePolicy.Preferred ) )
     self.iconSize=iconSize
     # enable several items selection using ctrl and shift keys.
-    self.setSelectionMode(QListView.Extended)
+    self.setSelectionMode(QTreeWidget.ExtendedSelection)
     self.setAcceptDrops(True)
     # draggedItems attribute stores the items which are currently dragged
     self.draggedItems=[]
     self.draggedItemParent=[] # and their parents in current tree
+    self.dragStartPosition=0
     # current drop zones (used in drawContentsOffset to highlight current dropzone)
     self.dropOn=None # dragged item will be dropped in this item's children
     self.dropAfter=None # dragged item will be dropped after this item (sibling)
     self.dropBefore=None # dragged item will be dropped before this item
     # Popup Menu
-    self.popupMenu = QPopupMenu()
-    self.popupMenu.insertItem( "New",  self.menuNewItemEvent )
+    self.popupMenu = QMenu()
+    self.popupMenu.addAction( "New",  self.menuNewItemEvent )
     self.contextMenuTarget=None
+    
     # keep a reference to the model for control event and register a listener to be aware of changes
     self.setModel(treeModel)
+    
+    self.connect(self, SIGNAL("itemChanged( QTreeWidgetItem *, int )"), self.itemRenamed)
 
   def setModel(self, m):
     """Construct the children of the tree reading the model given.
@@ -209,8 +213,9 @@ class EditableTreeWidget(QListView):
     self.model=m
     self.controller=EditableTreeController(m)
     if m!=None:
-      self.setCaption(m.name)
-      self.setColumnText(0, m.name)
+      self.setWindowTitle(m.name)
+      self.setHeaderLabel(m.name)
+      self.setAcceptDrops(m.modifiable)
       self.model.addListener(self.updateContent)
       self.model.onAttributeChange("name", self.updateName)
       # create child items with data in the tree model
@@ -220,65 +225,71 @@ class EditableTreeWidget(QListView):
           lastChild=EditableTreeWidget.Leaf(self, item, lastChild, self.iconSize)
         else: 
           lastChild=EditableTreeWidget.Branch(self, item, lastChild, self.iconSize)
+  
+  def itemRenamed(self, item, col):
+    if item and getattr(item, "okRename", None):
+      item.okRename(col)
     
   def getChild(self, n):
     """Return the nth child item
     If n<=0 return the first child, if n>=nb children, return the last child
     @rtype: EditableTreeWidget.Item
     """
-    child=self.firstChild()
-    while n > 0:
-      child=child.nextSibling()
-      n-=1
-    return child
+    if n<=0:
+      n=0
+    else:
+      nbItems=self.topLevelItemCount()
+      if n>=nbItems:
+        n=nbItems-1
+    return self.topLevelItem(n)
 
   def getLastChild(self):
     """Return the last child item.
     @rtype: EditableTreeWidget.Item
     """
-    lastChild=None
-    child=self.firstChild()
-    while child:
-      lastChild=child
-      child=child.nextSibling()
-    return lastChild
+    return self.topLevelItem(self.topLevelItemCount()-1)
 
   def toContentsPoint(self, point):
     """Translates coordinates in the frame in coordinates in the content of the list (without header).
     @rtype: QPoint"""
     #viewportPoint=self.contentsToViewport(point) to get the item at position we need the position in the entire list not in the visible content (viewport)
-    return point - QPoint(0, self.header().height())
+    return point # - QPoint(0, self.header().height())
+  # headerItem().sizeHint().height() ?
 
-  def selectedItems(self):
-    """
-    Gets items that are currently selected in the listview (as we are in extended selection mode).
+  # already implemented in QTreeWidget
+  #def selectedItems(self):
+    #"""
+    #Gets items that are currently selected in the listview (as we are in extended selection mode).
     
-    @rtype: list of EditableTreeWidget.Item
-    @return: items currently selected
-    """
-    items=[]
-    it = QListViewItemIterator(self, QListViewItemIterator.Selected)
-    while it.current() :
-        items.append( it.current() )
-        it+=1
-    return items
+    #@rtype: list of EditableTreeWidget.Item
+    #@return: items currently selected
+    #"""
+    #items=[]
+    #it = QListViewItemIterator(self, QListViewItemIterator.Selected)
+    #while it.current() :
+        #items.append( it.current() )
+        #it+=1
+    #return items
     
   #------ Drag&Drop ------
-  def acceptDrop(self, event):
+  def mousePressEvent(self, event):
+    if (event.button() == Qt.LeftButton):
+      self.dragStartPosition = QPoint(event.pos())
+    QTreeWidget.mousePressEvent(self, event)
+    
+  def mouseMoveEvent(self, event):
     """
-    @rtype: boolean"""
-    return self.model.modifiable
-
-  def dragObject(self):
-    """
-    The dragObject is shown during the drag.
-    This method is called when a set of items is dragged.
+    The QDrag object is shown during the drag.
+    This method is called when the mouse moves, this can be the beginning of a drag if the left button is clicked and the distance between the current position and the dragStartPosition is sufficient.
     draggedItems attribute is set with selected item's model.
     It constructs a minf (xml) representation of drag objects which will be provided to the target drop zone.
-    
-    @rtype: QTextDrag (text/xml)
-    @return: a drag object containing the minf representation of the selected items' models.
     """
+    if (not (event.buttons() & Qt.LeftButton)):
+      return
+    if ((event.pos() - self.dragStartPosition).manhattanLength()
+          < QApplication.startDragDistance()):
+      return
+    
     items=self.selectedItems()
     # keep a reference to the current dragged item
     d=None
@@ -302,17 +313,20 @@ class EditableTreeWidget(QListView):
         writer.close()
       #else: itemMinf=item.name
       # create a QTextDrag object with mime type text/xml containing the minf string
-      d=QTextDrag(itemMinf, self)
-      d.setSubtype("xml")
+      d=QDrag(self)
       icon = findIconFile( firstItem.icon )
       if icon: # adding an icon which will be visible on drag move, it will be the first item's icon
-        d.setPixmap( QPixmap( icon ) )
-    return d
-
+        d.setPixmap(QPixmap(icon))
+      mimeData = QMimeData()
+      mimeData.setText(itemMinf)
+      d.setMimeData(mimeData);
+      dropAction = d.exec_();
+    #QTreeWidget.mouseMoveEvent(self, event)
+      
   def dragEnterEvent(self, event):
     """This method is called when a drag enter in the widget. The source of the drag can be this widget or antoher.
     The event contains the encoding of the drag object.
-    If the event's source is the current window, the event always accepted.
+    If the event's source is the current window, the event is always accepted.
     Else, try to decode text event as minf representation of an item and set self.draggedItem.
     """
     # if source of event is this widget, draggedItem is already set.
@@ -321,8 +335,8 @@ class EditableTreeWidget(QListView):
     else: #must decode the event. If it is minf format, read it and initialize draggedItem
       self.draggedItems=[]
       self.draggedItemsParent=[]
-      textEvent = QString()
-      if QTextDrag.decode(event, textEvent, "xml"):
+      if event.mimeData().hasText():
+        textEvent=event.mimeData().text()
         textEventBuf=StringIO(textEvent)
         # check if it is the expected minf format
         format, reduction=minfFormat(textEventBuf)
@@ -342,13 +356,13 @@ class EditableTreeWidget(QListView):
     self.dropOn=None
     self.dropAfter=None
     self.dropBefore=None
-    self.triggerUpdate()
+    self.viewport().update()
 
   def dragMoveEvent(self, event):
     """When the drag moves, the current dropzone can change.
     According to cursor position (on, before, after an item),
     attributes that store current dropzone are updated (dropBefore, dropAfter, dropOn).
-    Method triggerUpdate is called in order to refresh painting with dropzone highlighting.
+    Method update is called in order to refresh painting with dropzone highlighting.
     """
     # draggedItem must be set, otherwise it isn't a correct drag
     dropzonesChanged=False
@@ -360,11 +374,11 @@ class EditableTreeWidget(QListView):
       currentItem=self.itemAt(cursorPos) #item under the mouse cursor
       if currentItem!=None: #cursor on an item
         currentItemContainer=currentItem.container()
-        rect = self.itemRect(currentItem)
+        rect = self.visualItemRect(currentItem)
         if currentItem.model not in self.draggedItems: #the item under the mouse isn't one of dragged items
           # if the cursor is in the top margin of item, insert before item
           if (cursorPos.y() < rect.top()+self.MARGIN):
-            if currentItemContainer.acceptDrop(event): # container must accept drop
+            if currentItemContainer.acceptDrops(): # container must accept drop
               # in theory, it is possible to pass to accept method a rectangle for which the event is accepted,
               # in order to speed up the process event but this doesn't work :
               # when using this hint, dropzones highlighting is not always updated...
@@ -377,7 +391,7 @@ class EditableTreeWidget(QListView):
               dropzonesChanged=self.setDropzones(None, None, None)
           #if the cursor is in the bottom margin of the item -> drop after this item
           elif (cursorPos.y()>rect.bottom()-self.MARGIN):
-            if currentItemContainer.acceptDrop(event):
+            if currentItemContainer.acceptDrops():
               #event.accept(QRect(rect.left(), rect.bottom()-self.MARGIN, rect.width(), self.MARGIN))
               event.accept()
               dropzonesChanged=self.setDropzones(currentItemContainer, None, currentItem)
@@ -386,7 +400,7 @@ class EditableTreeWidget(QListView):
               event.ignore()
               dropzonesChanged=self.setDropzones(None, None, None)
           # else if the cursor is on an item which accept drop
-          elif currentItem.acceptDrop(event):
+          elif currentItem.acceptDrops():
             #event.accept(QRect(rect.left(), rect.top()+self.MARGIN, rect.width(), rect.height()-2*self.MARGIN))
             event.accept()
             dropzonesChanged=self.setDropzones(currentItem, None, None)
@@ -398,14 +412,14 @@ class EditableTreeWidget(QListView):
           #event.ignore(rect)
           event.ignore()
           dropzonesChanged=self.setDropzones(None, None, None)
-      elif self.acceptDrop(event): #if the cursor is not on an item, the dropzone is the listview (at the end of the list)
+      elif self.acceptDrops(): #if the cursor is not on an item, the dropzone is the listview (at the end of the list)
         event.accept()
         dropzonesChanged=self.setDropzones(self, None, self.getLastChild())
       else:
         event.ignore()
         dropzonesChanged=self.setDropzones(None, None, None)
       if dropzonesChanged:
-        self.triggerUpdate()
+        self.viewport().update()
 
   def setDropzones(self, dropOn, dropBefore, dropAfter):
     """Sets dropOn, dropBefore and dropAfter attributes with parameter values.
@@ -431,7 +445,7 @@ class EditableTreeWidget(QListView):
     self.dropOn=None
     self.dropAfter=None
     self.dropBefore=None
-    self.triggerUpdate()
+    self.viewport().update()
 
   def deleteDraggedItems(self):
     """Called when the item have been moved in another tree widget (drop+moveMode)"""
@@ -485,7 +499,7 @@ class EditableTreeWidget(QListView):
       #event.accept()
     #else: event.ignore()
     if event.isAccepted():
-      self.popupMenu.exec_loop(QCursor.pos())
+      self.popupMenu.exec_(QCursor.pos())
 
   def menuNewItemEvent(self):
     """
@@ -513,91 +527,95 @@ class EditableTreeWidget(QListView):
       # widget items are replaced by new items with new model items
       # from position, all items must be replaced with new value
       # ->remove and then insert new
-      item=self.getChild(position)
+      i=position+1
       for modelItem in items:
-        next=item.nextSibling()
-        self.takeItem(item)
-        item=next
+        self.takeTopLevelItem(i)
+        i+=1
       self.insert(items, position)
     #else: print action, "unknown action"
 
   def updateName(self, newName):
-    self.setCaption(newName)
-    self.setColumnText(0, newName)
+    self.setWindowTitle(newName)
+    self.setHeaderLabel(newName)
 
   def insert(self, items, position=None):
     """Insertion of items at position in the model
     -> create view items for all items and insert them at position in self.
     Inserted item becomes the selected item."""
     #insert at position = insert before item at position = insert after item at position-1
-    if position==0:
-      itemBefore=None
-    else: itemBefore=self.getChild(position-1)
     for item in items:
       if item.isLeaf(): # append item to keep the same order as in the model
-        itemBefore=EditableTreeWidget.Leaf(self, item, itemBefore, self.iconSize)
-      else: itemBefore=EditableTreeWidget.Branch(self, item, itemBefore, self.iconSize)
+        itemBefore=EditableTreeWidget.Leaf(None, item, None, self.iconSize)
+      else: itemBefore=EditableTreeWidget.Branch(None, item, None, self.iconSize)
+      self.insertTopLevelItem(position, itemBefore)
       if item.unamed and self.hasFocus(): 
-        itemBefore.startRename(0)
+        self.editItem(itemBefore, 0)
         item.unamed=False
-    self.setSelected(itemBefore, True)
+    #print "current item : ", self.currentItem()
+    #print "set current item : ", itemBefore, itemBefore.text(0)
+    self.setCurrentItem(itemBefore, 0)
+    itemBefore.setSelected(True)
 
   def remove(self, items, position):
     """Removes items in the list from position.
     If the list is empty, one item is removed.
     If position is undefined, removes items whose model is in the list"""
-    if position!=None:
-      item=self.getChild(position)
-    else: item=self.firstChild()
+    if not position:
+      position=0
     if len(items)==0:
-      self.takeItem(item)
+      self.takeTopLevelItem(position)
     else:
       for modelItem in items:
         found=False
-        while not found and item:
-          next=item.nextSibling()
+        i=0
+        while not found and i<self.topLevelItemCount():
+          item=self.topLevelItem(i)
           if item.model is modelItem:
-            self.takeItem(item)
+            self.takeTopLevelItem(i)
             found=True
-          item=next
+          i+=1
 
   #------ Refresh painting ------
-  def drawContentsOffset(self, painter, ox, oy, cx, cy, cw, ch ):
-    """This method is called to paint the component.
-    To refresh the view, call self.triggerUpdate.
+  def paintEvent(self, event):
+    """This method is called to paint the tree.
+    To refresh the view, call self.update.
     It is redefined in order to highlight drop zone during the drag of an item
     Three types of dropzone are defined :
       - before an item (cursor is in the top of the item's rectangle) -> draw a line on top
       - after an item (cursor is in the bottom of the item's rectangle) -> draw a line on bottom
       - on an item -> draw a rectangle around item
     """
-    QListView.drawContentsOffset(self, painter, ox, oy, cx, cy, cw, ch )
+    QTreeWidget.paintEvent(self, event)
+    painter=QPainter()
+    painter.begin(self.viewport())
     if self.dropBefore!=None: # draw a line in the top of the item
-      rect=self.itemRect(self.dropBefore)
+      rect=self.visualItemRect(self.dropBefore)
       # offset of the item = depth * offset in relation to parent
-      offset=self.dropBefore.depth()*self.treeStepSize()
+      #offset=self.indentation()
       painter.setBrush(Qt.black)
       # the line has the same offset as the item
-      painter.drawRect(rect.left()+offset, rect.top(), rect.width()-offset, self.MARGIN)
+      painter.drawRect(rect.left(), rect.top(), rect.width(), self.MARGIN)
     elif self.dropAfter!=None: # draw a line in the bottom of the item and its visible content
-      rect=self.itemRect(self.dropAfter) # this rect only contains the item, not its content
+      rect=self.visualItemRect(self.dropAfter) # this rect only contains the item, not its content
       # inc the height to include item's content
-      rect.setHeight( (min( self.dropAfter.totalHeight(), self.viewport().height() - rect.y() ) ) ) # stay in the viewport to keep the line visible
-      offset=self.dropAfter.depth()*self.treeStepSize()
+      #rect.setHeight( (min( self.dropAfter.totalHeight(), self.viewport().height() - rect.y() ) ) ) # stay in the viewport to keep the line visible
+      #offset=self.indentation()
       painter.setBrush(Qt.black)
       #print "draw drop after", self.dropAfter.getText(), rect.left(), rect.top(), rect.width(), rect.height()
-      painter.drawRect(rect.left()+offset, rect.bottom()-self.MARGIN+1, rect.width()-offset, self.MARGIN)
+      painter.drawRect(rect.left(), rect.bottom()-self.MARGIN+1, rect.width(), self.MARGIN)
     elif self.dropOn!=None: #draw the rectangle containing the item
       if self.dropOn!=self:
-        rect=self.itemRect(self.dropOn)
+        rect=self.visualItemRect(self.dropOn)
       else: #ajout dans le listview alors qu'il est vide
         rect=QRect(0, 0, self.columnWidth(0), self.MARGIN)
       #print "draw drop on", self.dropOn.getText(), rect.left(), rect.top(), rect.width(), rect.height()
       painter.setPen(QPen(Qt.black, self.MARGIN, Qt.SolidLine))
       painter.drawRect(rect)
-
+    painter.end()
+    
+    
   #----------------------------------------------------------------------------
-  class Item(QListViewItem):
+  class Item(QTreeWidgetItem):
     """Item is the base class for elements of EditableTreeWidget. """
     def __init__( self, parent, treeItemModel, after=None, iconSize=defaultIconSize):
       """
@@ -608,31 +626,32 @@ class EditableTreeWidget(QListView):
       @type after: item
       @param after: the item after which current item must be added in the parent
       """
-      if after!=None:
-        QListViewItem.__init__( self, parent, after, treeItemModel.name )
-      else: QListViewItem.__init__( self, parent, treeItemModel.name )
+      QTreeWidgetItem.__init__( self, parent, [treeItemModel.name] )
       icon = None
       if treeItemModel.icon:
         icon = findIconFile( treeItemModel.icon )
       if icon:
         image=QImage( icon )
         if iconSize:
-          pix=QPixmap(image.smoothScale( *iconSize ))
+          pix=QPixmap(image.scaled( *iconSize ))
         else: pix=QPixmap(image)
-        self.setPixmap(0,pix)
-      self.setDragEnabled(treeItemModel.copyEnabled)
-      self.setDropEnabled(treeItemModel.modifiable)
+        self.setIcon(0,pix)
+      if not treeItemModel.copyEnabled:
+        self.setFlags(self.flags() & ~Qt.ItemIsDragEnabled)
+      if not treeItemModel.modifiable:
+        self.setFlags(self.flags() & ~Qt.ItemIsDropEnabled)
       # rename is enabled only if the item is modifiable
-      self.setRenameEnabled(0, treeItemModel.modifiable)
+      if treeItemModel.modifiable:
+        self.setFlags(self.flags() | Qt.ItemIsEditable)
       treeItemModel.onAttributeChange("name", self.updateName)
       treeItemModel.onAttributeChange("valid", self.updateVisibiliy)
-      self.setVisible(treeItemModel.valid)
+      self.setHidden(not treeItemModel.valid)
       #if not treeItemModel.valid:
         #self.setText(0, self.getText()+"-hid")
       self.model=treeItemModel
 
-    def acceptDrop(self, mime):
-      return self.dropEnabled()
+    def acceptDrops(self):
+      return ((self.flags() & Qt.ItemIsDropEnabled) == Qt.ItemIsDropEnabled)
 
     def getText(self):
       return self.text(0)
@@ -640,17 +659,20 @@ class EditableTreeWidget(QListView):
     def container(self):
       """Return the parent item or the listview that contains the element if it is a top level element
       @rtype: EditableTreeWidget.Branch or EditableTreeWidget"""
-      container=self.parent()
-      # fonction parent returns only QListViewItem, if the item is a direct child of the listview, parent return null
-      if container==None:
-        container=self.listView()
-      return container
+      parent = self.parent()
+      if parent is None:
+        parent = self.treeWidget()
+      return parent
 
     def okRename(self, col):
-      """This method is called when user renames the item.
+      """It is the called associated to the signal QTreeWidget.itemChanged(item, col). It is called when user renames the item.
       The name must be changed in the model."""
-      QListViewItem.okRename(self, col)
-      self.model.name=unicode(self.getText())
+      if getattr(self, "model", None):
+        newText=unicode(self.getText())
+        if self.model.name != newText:
+          if self.model.name == self.model.tooltip:
+            self.model.tooltip=newText
+          self.model.name=newText
     
     def updateName(self, newName):
       """
@@ -663,7 +685,7 @@ class EditableTreeWidget(QListView):
       Called when the model notifies that its valid attribute value has changed.
       """
       #pass
-      self.setVisible(newValue)
+      self.setHidden(not newValue)
       #self.setText(0, self.getText()+"-hid")
       #print "change visibility to ", newValue, " for ", self.getText()
   #----------------------------------------------------------------------------
@@ -672,7 +694,6 @@ class EditableTreeWidget(QListView):
     It can have children."""
     def __init__( self, parent, treeItemModel, after=None, iconSize=defaultIconSize):
       EditableTreeWidget.Item.__init__(self, parent, treeItemModel, after, iconSize)
-      self.setExpandable(True)
       self.iconSize=iconSize
       treeItemModel.addListener(self.updateContent)
       #create child items
@@ -687,11 +708,11 @@ class EditableTreeWidget(QListView):
       If n<=0 return the first child, if n>=nb children, return the last child
       @rtype: EditableTreeWidget.Item
       """
-      child=self.firstChild()
-      while n > 0:
-        child=child.nextSibling()
-        n-=1
-      return child
+      if n<0:
+        n=0
+      elif n>=self.childCount():
+        n=self.childCount()-1
+      return self.child(n)
 
     #------ Update on model changes ------
     def updateContent(self, action, items, position=None):
@@ -707,11 +728,8 @@ class EditableTreeWidget(QListView):
         # widget items are replaced by new items with new model items
         # from position, all items must be replaced with new value
         #remove and then insert new
-        item=self.getChild(position)
         for modelItem in items:
-          next=item.nextSibling()
-          self.takeItem(item)
-          item=next
+          self.takeChild(position) # when an item is removed, position becomes the index of the next item
         self.insert(items, position)
       #else: print "unknown action"
       #print str(self.listView())
@@ -720,47 +738,50 @@ class EditableTreeWidget(QListView):
       """Insertion of items at position in the model
       -> create view items for all items and insert them at position in self
       insert at position = insert before item at position = insert after item at position-1"""
-      if position==0:
-        itemBefore=None
-      else: itemBefore=self.getChild(position-1)
-      listview=self.listView()
+      i=position
       for item in items:
         if item.isLeaf(): # append item to keep the same order as in the model
-          itemBefore=EditableTreeWidget.Leaf(self, item, itemBefore, self.iconSize)
-        else: itemBefore=EditableTreeWidget.Branch(self, item, itemBefore, self.iconSize)
-        if item.unamed and listview.hasFocus(): 
-          itemBefore.startRename(0)
+          newItem=EditableTreeWidget.Leaf(None, item, None, self.iconSize)
+        else: newItem=EditableTreeWidget.Branch(None, item, None, self.iconSize)
+        self.insertChild(i, newItem)
+        i+=1
+        if item.unamed and self.treeWidget().hasFocus(): 
+          newItem.startRename(0)
           item.unamed=False
-      self.setOpen(True)
-      listview.setSelected(itemBefore, True)
+      self.setExpanded(True)
+      #print "current item : ", self.treeWidget().currentItem()
+      #print "set current item : ", newItem, newItem.text(0)
+      self.treeWidget().setCurrentItem(newItem, 0)
+      newItem.setSelected(True)
       
     def remove(self, items, position):
       """Remove items in the list from position
       if the list is empty, remove one item
       if position is undefined, remove items whose model is in the list"""
-      if position!=None:
-        item=self.getChild(position)
-      else: item=self.firstChild()
+      if position is None:
+        position=0
       if len(items)==0:
-        self.takeItem(item)
+        self.takeChild(position)
       else:
         for modelItem in items:
           found=False
-          while not found and item:
-            next=item.nextSibling()
+          i=position
+          while not found and i<self.childCount():
+            item=self.child(i)
             if item.model is modelItem:
-              self.takeItem(item)
+              self.takeChild(i)
               found=True
-            item=next
+            else: # if we remove an item, the index stay the same, no need to increment it
+              i+=1
 
   #----------------------------------------------------------------------------
   class Leaf( Item ):
     """Item that represents a tree leaf. It doesn't have children."""
     def __init__( self, parent, treeItemModel, after=None, iconSize=defaultIconSize):
       EditableTreeWidget.Item.__init__(self, parent, treeItemModel, after, iconSize)
-      self.setExpandable(False)
-      self.setDropEnabled(False)
-      
+      #self.setExpandable(False)
+      #self.setDropEnabled(False)
+      self.setFlags( self.flags() & ~Qt.ItemIsDropEnabled )
     # This method could be used to change text color of items : 
     #def paintCell(self, painter, colorGroup, column, width, alignment ):
       #cg=qt.QColorGroup(colorGroup)
@@ -897,7 +918,7 @@ class EditableTreeController:
       target[newItem.id]=newItem
 
 #----------------------------------------------------------------------------
-class ObservableListWidget(QListView):
+class ObservableListWidget(QListWidget):
   """A widget to represent an ObservableList.
   The list is modifiable by manipulating items in the widget :
     - add new item
@@ -920,7 +941,7 @@ class ObservableListWidget(QListView):
   Inner classes :
     - Item
 
-  Inherits qt component QListView.
+  Inherits qt component QListWidget.
 
   @type model: ObservableList with an attribute name
   @ivar model: the list which this widget is a graphic representation.
@@ -937,13 +958,11 @@ class ObservableListWidget(QListView):
     @type iconSize: couple of integers or None
     @param iconSize: force items icon resizing.
     """
-    QListView.__init__( self, parent)
-    self.addColumn("")
-    self.setRootIsDecorated(False) # this is not a tree, there is only one level
-    self.setSorting(-1) # disable sort
+    QListWidget.__init__( self, parent)
+    self.setColumnCount(1)
+    self.setHeaderLabels([""])
     self.iconSize=iconSize
-    # enable display of tooltips on items
-    self.tooltipsViewer=ListViewToolTip(self.viewport())
+    self.connect(self, SIGNAL("currentTextChanged ( const QString & )", self.currentItemRenamed))
     # keep a reference to the model for control event and register a listener to be aware of changes
     self.setModel(model)
 
@@ -955,32 +974,32 @@ class ObservableListWidget(QListView):
     self.clear()
     self.model=m
     if m:
-      self.setColumnText(0, m.name)
+      self.setHeaderLabels( [m.name] )
       self.model.addListener(self.updateContent)
       # create child items with data in the tree model
       lastChild=None
       for item in self.model:
         lastChild=ObservableListWidget.Item(self, item, lastChild, self.iconSize) # append item to keep the same order as in the model
 
+  def currentItemRenamed(self, newText):
+    if self.currentItem() is not None:
+      self.currentItem().okRename(self, newText)
+    
   def getChild(self, n):
     """Return the nth child item
     If n<=0 return the first child, if n>=nb children, return the last child
     @rtype: ObservableListWidget.Item"""
-    child=self.firstChild()
-    while n > 0:
-      child=child.nextSibling()
-      n-=1
-    return child
+    if n<0:
+      n=0
+    elif n>=self.count():
+      n=self.count()-1
+    return self.itemAt(n)
 
   def getLastChild(self):
     """Return the last child item.
     @rtype: ObservableListWidget.Item
     """
-    child=self.firstChild()
-    while child:
-      lastChild=child
-      child=child.nextSibling()
-    return lastChild
+    return self.itemAt( self.count() - 1)
 
   #------ Update on model changes ------
   def updateContent(self, action, items, position=None):
@@ -997,11 +1016,10 @@ class ObservableListWidget(QListView):
       # widget items are replaced by new items with new model items
       # from position, all items must be replaced with new value
       # ->remove and then insert new
-      item=self.getChild(position)
+      if not position:
+        position=0
       for modelItem in items:
-        next=item.nextSibling()
-        self.takeItem(item)
-        item=next
+        self.takeItem(position)
       self.insert(items, position)
     #else: print action, "unknown action"
 
@@ -1010,37 +1028,38 @@ class ObservableListWidget(QListView):
       -> create view items for all items and insert them at position in self.
       Inserted item becomes the selected item."""
     #insert at position = insert before item at position = insert after item at position-1
-    if position==0:
-      itemBefore=None
-    else: itemBefore=self.getChild(position-1)
+    i=position
     for item in items:
-      itemBefore=ObservableListWidget.Item(self, item, itemBefore, self.iconSize)
+      widgetItem=ObservableListWidget.Item(None, item, None, self.iconSize)
+      self.insert(item, i)
+      i+=1
       if item.unamed:
-        itemBefore.startRename(0)
+        widgetitem.editItem(0)
         item.unamed=False
-    self.setSelected(itemBefore, True)
+    self.setCurrentItem(widgetItem)
 
   def remove(self, items, position):
     """Removes items in the list from position.
     If the list is empty, one item is removed.
     If position is undefined, removes items whose model is in the list"""
-    if position:
-      item=self.getChild(position)
-    else: item=self.firstChild()
+    if position is None:
+      position =0
     if len(items)==0:
-      self.takeItem(item)
+      self.takeItem(position)
     else:
       for modelItem in items:
         found=False
-        while not found and item:
-          next=item.nextSibling()
+        i=position
+        while not found and i<=self.count():
+          item=self.child(i)
           if item.model is modelItem:
-            self.takeItem(item)
+            self.takeItem(i)
             found=True
-          item=next
+          else:
+            i+=1
 
   #----------------------------------------------------------------------------
-  class Item(QListViewItem):
+  class Item(QListWidgetItem):
     """Item is the base class for elements of ObservableListWidget.
     Treats renaming events if the item is modifiable.
     """
@@ -1053,43 +1072,43 @@ class ObservableListWidget(QListView):
       @type after: item
       @param after: the item after which current item must be added in the parent
       """
-      if after:
-        QListViewItem.__init__( self, parent, after, model.name )
-      else: QListViewItem.__init__( self, parent, model.name )
+      QListWidgetItem.__init__( self, parent )
       icon = None
       if model.icon:
-        icon = findIconFile( model.icon )
+        icon = findIconFile( model.icon ) # QIcon
       if icon:
-        image=QImage( icon )
         if iconSize:
-          pix=QPixmap(image.smoothScale( *iconSize ))
-        else: pix=QPixmap(image)
-        self.setPixmap(0,pix)
-      self.setRenameEnabled(0, model.modifiable)
+          pix=QIcon(QImage(icon).scaled( *iconSize ))
+        self.setIcon(0,icon)
+      self.setText(0, model.name)
+      self.setToolTip(model.tooltip)
+      if not model.modifiable:
+        self.setFlags(self.flags() & ~Qt.ItemIsEditable)
       self.model=model
       self.model.onAttributeChange("name", self.updateName)
 
     def getText(self):
       return self.text(0)
 
-    def okRename(self, col):
+    def okRename(self, newText):
       """This method is called when user renames the item.
       The name must be changed in the model."""
-      QListViewItem.okRename(self, col)
-      newName=unicode(self.getText())
-      if self.model.name==self.model.tooltip:
-        self.model.tooltip=newName
-      self.model.name=newName
+      if getattr(self, "model", None):
+        if self.model.name != newText:
+          if self.model.name==self.model.tooltip:
+            self.model.tooltip=newText
+          self.model.name=newText
 
     #------ Update on model changes ------
     def updateName(self, newName):
       """This method is called when the model notifies that its name attribute has changed :
       The view should update its content to reflect the changes"""
       self.setText(0, newName)
+      self.setToolTip(self.model.tooltip)
       #else: print "unknown action"
       
 #----------------------------------------------------------------------------
-class TreeListWidget(QListView):
+class TreeListWidget(QListWidget):
   """
   This widget represents a list of EditableTree.
   The given model is an ObservableSortedDictionary (trees are referenced by their id).
@@ -1112,7 +1131,7 @@ class TreeListWidget(QListView):
   Inner classes :
     - Item
 
-  Inherits qt component QListView.
+  Inherits qt component QListWidget.
 
   @type model: ObservableSortedDictionary
   @ivar model: the EditableTree map which this widget is a graphic representation.
@@ -1133,17 +1152,15 @@ class TreeListWidget(QListView):
     @type iconSize: couple of integers or None
     @param iconSize: force items icon resizing.
     """
-    QListView.__init__( self, parent)
-    self.addColumn("")
-    self.setRootIsDecorated(False) # the content of the trees will not be shown, there is only one level
-    self.setSorting(-1) # disable sort
+    QListWidget.__init__( self, parent)
+    self.setColumnCount(1)
     self.iconSize=iconSize
     # enable display of tooltips on items
-    self.tooltipsViewer=ListViewToolTip(self.viewport())
     # the listview accept drops to enable adding items in trees by dropping items on the item representing the tree
     self.setAcceptDrops(True)
     self.draggedItems=[]
     self.dropOn=None
+    self.connect(self, SIGNAL("currentTextChanged ( const QString & )"), self.currentItemRenamed )
     # keep a reference to the model for control event and register a listener to be aware of changes
     self.setModel(model)
 
@@ -1158,35 +1175,35 @@ class TreeListWidget(QListView):
     self.clear()
     self.model=m
     if m:
-      self.setColumnText(0, m.name)
+      self.setHeaderLabels([m.name])
       self.model.addListener(self.updateContent)
       # create child items with data in the tree model
       lastChild=None
       for item in self.model.values():
         lastChild=self.Item(self, item, lastChild, self.iconSize) # append item to keep the same order as in the model
 
+  def currentItemRenamed(self, newText):
+    if self.currentItem() is not None:
+      self.currentItem().okRename(newText)
+    
   def getChild(self, n):
     """
     Return the nth child item
     If n<=0 return the first child, if n>=nb children, return the last child
     @rtype: TreeListWidget.Item
     """
-    child=self.firstChild()
-    while n > 0:
-      child=child.nextSibling()
-      n-=1
-    return child
+    if n<0:
+      n=0
+    elif n>=self.count():
+      n=self.count() - 1
+    return self.child(n)
 
   def getLastChild(self):
     """
     Return the last child item.
     @rtype: TreeListWidget.Item
     """
-    child=self.firstChild()
-    while child:
-      lastChild=child
-      child=child.nextSibling()
-    return lastChild
+    return self.child(self.count()-1)
   
   #------ Drag&drop control  ------
   def dragEnterEvent(self, event):
@@ -1198,8 +1215,8 @@ class TreeListWidget(QListView):
     # accept drag if it contains instances of EditableTree.Item
     self.draggedItems=[]
     textEvent = QString()
-    if QTextDrag.decode(event, textEvent, "xml"):
-      textEventBuf=StringIO(textEvent)
+    if event.mimeData().hasText():
+      textEventBuf=StringIO(event.mimeData().text())
       # check if it is the expected minf format
       format, reduction=minfFormat(textEventBuf)
       if format=="XML":
@@ -1268,11 +1285,8 @@ class TreeListWidget(QListView):
       # widget items are replaced by new items with new model items
       # from position, all items must be replaced with new value
       # ->remove and then insert new
-      item=self.getChild(position)
       for modelItem in items:
-        next=item.nextSibling()
-        self.takeItem(item)
-        item=next
+        self.takeItem(position)
       self.insert(items, position)
     #else: print action, "unknown action"
 
@@ -1281,37 +1295,38 @@ class TreeListWidget(QListView):
       -> create view items for all items and insert them at position in self.
       Inserted item becomes the selected item."""
     #insert at position = insert before item at position = insert after item at position-1
-    if position==0:
-      itemBefore=None
-    else: itemBefore=self.getChild(position-1)
+    i=position
     for item in items:
-      itemBefore=self.Item(self, item, itemBefore, self.iconSize)
+      newItem=self.Item(None, item, None, self.iconSize)
+      self.insertItem(newItem, i)
+      i+=1
       if item.unamed:
-        itemBefore.startRename(0)
+        self.editItem(newItem, 0)
         item.unamed=False
-    self.setSelected(itemBefore, True)
+    self.setCurrentItem(newItem)
 
   def remove(self, items, position):
     """Removes items in the list from position.
     If the list is empty, one item is removed.
     If position is undefined, removes items whose model is in the list"""
-    if position:
-      item=self.getChild(position)
-    else: item=self.firstChild()
+    if position is None:
+      position =0
     if len(items)==0:
-      self.takeItem(item)
+      self.takeItem(position)
     else:
       for modelItem in items:
         found=False
-        while not found and item:
-          next=item.nextSibling()
+        i=position
+        while not found and i<self.count():
+          item=self.itemAt(i)
           if item.model is modelItem:
-            self.takeItem(item)
+            self.takeItem(i)
             found=True
-          item=next
+          else:
+            i+=1
 
   #----------------------------------------------------------------------------
-  class Item(QListViewItem):
+  class Item(QListWidgetItem):
     """
     Item is the base class for elements of TreeListWidget.
     Treats renaming events if the item is modifiable.
@@ -1325,20 +1340,19 @@ class TreeListWidget(QListView):
       @type after: item
       @param after: the item after which current item must be added in the parent
       """
-      if after:
-        QListViewItem.__init__( self, parent, after, model.name )
-      else:
-        QListViewItem.__init__( self, parent, model.name )
+      QListWidgetItem.__init__( self, parent )
+      self.setText(0, model.name)
+      self.setToolTip(model.tooltip)
       if model.icon:
         icon = findIconFile( model.icon )
       if icon:
-        image=QImage( icon )
         if iconSize:
-          pix=QPixmap(image.smoothScale( *iconSize ))
-        else: pix=QPixmap(image)
-        self.setPixmap(0,pix)
-      self.setRenameEnabled(0, bool( model.modifiable ) )
-      self.setVisible(model.valid)
+          icon=QIcon(QPixmap(icon).scaled( *iconSize ))
+        self.setIcon(0,pix)
+      if not model.modifiable:
+        self.setFlags(self.flags() & ~Qt.ItemIsEditable)
+      if not model.valid:
+        self.setHidden(True)
       self.model=model
       self.model.onAttributeChange("name", self.updateName)
       self.model.onAttributeChange("valid", self.updateVisibility)
@@ -1346,16 +1360,16 @@ class TreeListWidget(QListView):
     def getText(self):
       return self.text(0)
 
-    def okRename(self, col):
+    def okRename(self, newText):
       """
       This method is called when user renames the item.
       The name must be changed in the model.
       """
-      QListViewItem.okRename(self, col)
-      newName=unicode(self.getText())
-      if self.model.name==self.model.tooltip:
-        self.model.tooltip=newName
-      self.model.name=newName # the model will notify the change and updateName will be called
+      if getattr(self, "model", None):
+        if self.model.name != newText:
+          if self.model.name==self.model.tooltip:
+            self.model.tooltip=newText
+          self.model.name=newText # the model will notify the change and updateName will be called
 
     #------ Update on model changes ------
     def updateName(self, newName):
@@ -1364,6 +1378,7 @@ class TreeListWidget(QListView):
       The view should update its content to reflect the changes.
       """
       self.setText(0, newName)
+      self.setToolTip(self.model.tooltip)
       #else: print "unknown action"
       
     def updateVisibility(self, newValue):
@@ -1371,23 +1386,4 @@ class TreeListWidget(QListView):
       Called when the model notifies that its valid attribute value has changed.
       """
       #pass
-      self.setVisible(newValue)
-
-#----------------------------------------------------------------------------
-class ListViewToolTip(QToolTip):
-  """This class enable to show tooltips associated to items of a listview.
-  Simply create an instance of this class giving the viewport of the listview as parent,
-  and if the mouse stay on an item which tooltip attribute is not None, the tooltip is shown.
-  """
-  def __init__(self, parent):
-    QToolTip.__init__(self, parent)
-
-  def maybeTip(self, pos):
-    """Called when the mouse stay at a point of this object's parent."""
-    # this object is a child of the viewport, not directly of the listview otherwise this method isn't called when the mouse is on the list content.
-    viewport=self.parentWidget()
-    listview=viewport.parent()
-    #cursorPos=w.toContentsPoint(pos)
-    currentItem=listview.itemAt(pos) #item under the mouse cursor
-    if (currentItem != None) and (getattr(currentItem, "model", None) != None) and (getattr(currentItem.model, "tooltip", None) != None): # (currentItem.model.tooltip != None):
-      self.tip(listview.itemRect(currentItem), currentItem.model.tooltip)
+      self.setHidden(not newValue)

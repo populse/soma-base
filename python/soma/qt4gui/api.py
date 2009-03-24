@@ -66,7 +66,7 @@ largeIconSize = ( 22, 22 )
 from soma.qt4gui.automatic import ApplicationQt4GUI, Qt4GUI, WidgetGeometryUpdater
 from soma.qt4gui.timered_widgets import QLineEditModificationTimer, TimeredQLineEdit
 #from soma.qt4gui.vscrollframe import VScrollFrame
-#from soma.qt4gui.list_tree_widgets import ObservableListWidget, EditableTreeWidget, TreeListWidget
+from soma.qt4gui.list_tree_widgets import ObservableListWidget, EditableTreeWidget, TreeListWidget
 from soma.qt4gui.qtThread import QtThreadCall, FakeQtThreadCall
 #from soma.qt4gui.file_dialog import QFileDialogWithSignals
 from soma.qt4gui.icons import getPixmap
