@@ -631,10 +631,10 @@ class EditableTreeWidget(QTreeWidget):
       if treeItemModel.icon:
         icon = findIconFile( treeItemModel.icon )
       if icon:
-        image=QImage( icon )
+        image=QPixmap( icon )
         if iconSize:
-          pix=QPixmap(image.scaled( *iconSize ))
-        else: pix=QPixmap(image)
+          pix=QIcon(image.scaled( *iconSize ))
+        else: pix=QIcon(image)
         self.setIcon(0,pix)
       if not treeItemModel.copyEnabled:
         self.setFlags(self.flags() & ~Qt.ItemIsDragEnabled)
@@ -1078,7 +1078,7 @@ class ObservableListWidget(QListWidget):
         icon = findIconFile( model.icon ) # QIcon
       if icon:
         if iconSize:
-          pix=QIcon(QImage(icon).scaled( *iconSize ))
+          pix=QIcon(QPixmap(icon).scaled( *iconSize ))
         self.setIcon(0,icon)
       self.setText(0, model.name)
       self.setToolTip(model.tooltip)
@@ -1153,7 +1153,7 @@ class TreeListWidget(QListWidget):
     @param iconSize: force items icon resizing.
     """
     QListWidget.__init__( self, parent)
-    self.setColumnCount(1)
+    #self.setColumnCount(1)
     self.iconSize=iconSize
     # enable display of tooltips on items
     # the listview accept drops to enable adding items in trees by dropping items on the item representing the tree
@@ -1175,7 +1175,7 @@ class TreeListWidget(QListWidget):
     self.clear()
     self.model=m
     if m:
-      self.setHeaderLabels([m.name])
+      #self.setHeaderLabels([m.name])
       self.model.addListener(self.updateContent)
       # create child items with data in the tree model
       lastChild=None
@@ -1341,14 +1341,16 @@ class TreeListWidget(QListWidget):
       @param after: the item after which current item must be added in the parent
       """
       QListWidgetItem.__init__( self, parent )
-      self.setText(0, model.name)
+      self.setText(model.name)
       self.setToolTip(model.tooltip)
       if model.icon:
         icon = findIconFile( model.icon )
       if icon:
         if iconSize:
-          icon=QIcon(QPixmap(icon).scaled( *iconSize ))
-        self.setIcon(0,pix)
+          pix=QIcon(QPixmap(icon).scaled( *iconSize ))
+        else:
+          pix=QIcon(icon)
+        self.setIcon(pix)
       if not model.modifiable:
         self.setFlags(self.flags() & ~Qt.ItemIsEditable)
       if not model.valid:
@@ -1358,7 +1360,7 @@ class TreeListWidget(QListWidget):
       self.model.onAttributeChange("valid", self.updateVisibility)
 
     def getText(self):
-      return self.text(0)
+      return self.text()
 
     def okRename(self, newText):
       """
@@ -1377,7 +1379,7 @@ class TreeListWidget(QListWidget):
       This method is called when the model notifies that its name attribute has changed :
       The view should update its content to reflect the changes.
       """
-      self.setText(0, newName)
+      self.setText(newName)
       self.setToolTip(self.model.tooltip)
       #else: print "unknown action"
       
