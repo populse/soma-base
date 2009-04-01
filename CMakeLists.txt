@@ -1,5 +1,7 @@
 cmake_minimum_required( VERSION 2.6 )
 
+find_package( soma-infra REQUIRED )
+
 SOMA_PROJECT()
 
 find_package( PythonInterp REQUIRED )
