@@ -62,7 +62,7 @@ __docformat__ = "epytext en"
 #: Default size for icons
 defaultIconSize = ( 16, 16 )
 largeIconSize = ( 22, 22 )
-
+bigIconSize = ( 32, 32 )
 from soma.qt4gui.automatic import ApplicationQt4GUI, Qt4GUI, WidgetGeometryUpdater
 from soma.qt4gui.timered_widgets import QLineEditModificationTimer, TimeredQLineEdit
 #from soma.qt4gui.vscrollframe import VScrollFrame

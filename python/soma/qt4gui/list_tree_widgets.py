@@ -45,69 +45,12 @@ __docformat__ = "epytext en"
 
 import os
 from StringIO import StringIO
-from PyQt4.Qt import QTreeWidget, QTreeWidgetItem, QListWidget, QListWidgetItem, QTreeWidgetItemIterator, QPixmap, QDrag, QPoint, QString,Qt, QMenu, QPainter, QPen, QCursor, QRect, QSizePolicy, QIcon, QEvent, qApp, QObject, QKeyEvent,  QTimer, SIGNAL, QMimeData, QApplication
+from PyQt4.Qt import QTreeWidget, QTreeWidgetItem, QListWidget, QListWidgetItem, QPixmap, QDrag, QPoint, QString,Qt, QMenu, QPainter, QPen, QCursor, QRect, QSizePolicy, QSize, QIcon, QEvent, qApp, QObject, QKeyEvent,  QTimer, SIGNAL, QMimeData, QApplication
 import copy
 from soma.notification import ObservableList, EditableTree
 from soma.minf.api import defaultReducer, createMinfWriter, iterateMinf, minfFormat
 from soma.wip.application.api import findIconFile
 from soma.qt4gui.api import defaultIconSize
-
-
-#----------------------------------------------------------------------------
-class KeyStateFilter(QObject):
-    """
-    An event filter that stores the state of a key (pressed or not).
-    This filter must be installed on an object using targeObject.installEventFilter(filter) method. So when an event occurs on targetObject, eventFilter method of filter is called before watchedObject receives the event. if eventFilter returns True, watchedObject will not receive the event. 
-    This filter is installed on QApplication in order to see all events. On Key event related to the listen key, it updates its pressed variable. 
-    @type key: int 
-    @ivar key: The key that is listened for. For example Qt.Key_Control.
-    @type pressed: bool
-    @ivar pressed: True if the key is currently pressed, False if the key is currently released.
-    """
-    def __init__(self, key, *args):
-        QObject.__init__(self, *args)
-        self.key=key
-        self.pressed=False
-
-    def eventFilter(self, watched, e):
-      """
-      This method is called when an event occurs on the watched object.
-      It updates pressed attribute and calls parent's eventFilter method, so it doesn't block any event. 
-      @type watched: QObject
-      @param watched: the object on which this filter is installed. Here it is qApp.
-      @type e: QEvent
-      @param e: the event that occurs.
-      
-      @rtype: bool
-      @return: True if the event is filter, so is not transmit to watched object.
-      """
-      if isinstance(e, QKeyEvent):
-        if e.key() == self.key:
-          if e.type() == QEvent.KeyPress:
-              self.pressed=True
-          elif e.type() == QEvent.KeyRelease:
-            self.pressed=False
-      return QObject.eventFilter(self, watched, e)
-
-    def install(self):
-      """
-      Installs this filter on qApplication. 
-      This filter will be removed when application is about to quit.
-      """
-      qApp.installEventFilter(self)
-      # remove the filter before quitting the application, else it generates exceptions
-      self.connect(qApp, SIGNAL('aboutToQuit()'), self.remove)
-
-    def remove(self):
-      """
-      Removes this filter from QApplication.
-      """
-      qApp.removeEventFilter(self)
-
-# Create a KeyStateFilter for ctrl key
-ctrlKeyListener = KeyStateFilter(Qt.Key_Control)
-# When qr event loop will be started, the filter will be installed on qApplication, so it filters all events
-QTimer.singleShot(0, ctrlKeyListener.install)
 
 #----------------------------------------------------------------------------
 class EditableTreeWidget(QTreeWidget):
@@ -182,6 +125,7 @@ class EditableTreeWidget(QTreeWidget):
     #self.setItemMargin(self.MARGIN)
     #self.setSortingEnabled(False) # disable sort
     self.setSizePolicy( QSizePolicy( QSizePolicy.Preferred, QSizePolicy.Preferred ) )
+    self.setIconSize(QSize(*iconSize))
     self.iconSize=iconSize
     # enable several items selection using ctrl and shift keys.
     self.setSelectionMode(QTreeWidget.ExtendedSelection)
@@ -198,11 +142,12 @@ class EditableTreeWidget(QTreeWidget):
     self.popupMenu = QMenu()
     self.popupMenu.addAction( "New",  self.menuNewItemEvent )
     self.contextMenuTarget=None
-    
+    self.setContextMenuPolicy(Qt.CustomContextMenu)
     # keep a reference to the model for control event and register a listener to be aware of changes
     self.setModel(treeModel)
     
     self.connect(self, SIGNAL("itemChanged( QTreeWidgetItem *, int )"), self.itemRenamed)
+    self.connect(self, SIGNAL( 'customContextMenuRequested ( const QPoint & )'), self.openContextMenu)
 
   def setModel(self, m):
     """Construct the children of the tree reading the model given.
@@ -439,7 +384,7 @@ class EditableTreeWidget(QTreeWidget):
       dropBeforeModel=None
       if self.dropAfter!=None: dropAfterModel=self.dropAfter.model
       if self.dropBefore!=None: dropBeforeModel=self.dropBefore.model
-      self.controller.drop(event.source(), self, self.draggedItems, self.draggedItemsParent, self.dropOn.model, dropAfterModel, dropBeforeModel)
+      self.controller.drop(event.source(), self, self.draggedItems, self.draggedItemsParent, self.dropOn.model, dropAfterModel, dropBeforeModel, ((event.keyboardModifiers() & Qt.ControlModifier) == Qt.ControlModifier) )
     self.draggedItems = []
     self.draggedItemsParent=[]
     self.dropOn=None
@@ -473,23 +418,22 @@ class EditableTreeWidget(QTreeWidget):
     else: event.ignore() # the event could be handled by a parent component
 
   #------ context menu events ------
-  def contextMenuEvent(self, event):
+  def openContextMenu(self, point):
     """On right click on the mouse, a context menu opens.
     With this menu, it is possible to create a new branch.
     """
     self.contextMenuTarget=None
-    cursorPos=self.toContentsPoint(event.pos())
+    cursorPos=self.toContentsPoint(point)
     currentItem=self.itemAt(cursorPos) #item under the mouse cursor
+    accept=False
     if currentItem is not None:
       if currentItem.model.modifiable and not currentItem.model.isLeaf():
         self.contextMenuTarget=currentItem.model
-        event.accept()
-      else: event.ignore()
+        accept=True
     else:
       if self.model is not None and self.model.modifiable:
         self.contextMenuTarget=self.model
-        event.accept()
-      else: event.ignore()
+        accept=True
     #items=self.selectedItems()
     #if len(items)==1:
       #if items[0].model.modifiable:
@@ -498,7 +442,7 @@ class EditableTreeWidget(QTreeWidget):
     #elif self.model!=None and self.model.modifiable:
       #event.accept()
     #else: event.ignore()
-    if event.isAccepted():
+    if accept:
       self.popupMenu.exec_(QCursor.pos())
 
   def menuNewItemEvent(self):
@@ -627,15 +571,10 @@ class EditableTreeWidget(QTreeWidget):
       @param after: the item after which current item must be added in the parent
       """
       QTreeWidgetItem.__init__( self, parent, [treeItemModel.name] )
-      icon = None
       if treeItemModel.icon:
-        icon = findIconFile( treeItemModel.icon )
-      if icon:
-        image=QPixmap( icon )
-        if iconSize:
-          pix=QIcon(image.scaled( *iconSize ))
-        else: pix=QIcon(image)
-        self.setIcon(0,pix)
+        iconPath = findIconFile( treeItemModel.icon )
+        if iconPath:
+          self.setIcon(0, QIcon(iconPath))
       if not treeItemModel.copyEnabled:
         self.setFlags(self.flags() & ~Qt.ItemIsDragEnabled)
       if not treeItemModel.modifiable:
@@ -796,7 +735,7 @@ class EditableTreeController:
   def __init__(self, m):
           self.model=m
 
-  def drop(self, sourceTreeWidget, targetTreeWidget, draggedItems, draggedItemsParent, dropOn, dropAfter, dropBefore):
+  def drop(self, sourceTreeWidget, targetTreeWidget, draggedItems, draggedItemsParent, dropOn, dropAfter, dropBefore, copyMode):
     """
     Called when an item is dropped. It is copied or moved in target model.
     The copy of item will be modifiable even if source item is not.
@@ -816,7 +755,6 @@ class EditableTreeController:
     @type dropBefore: EditableTree.Item
     @param dropBefore: item before which dragged item is dropped
     """
-    copyMode=ctrlKeyListener.pressed
     insertedItem=None
     insertIndex=None
     if sourceTreeWidget==targetTreeWidget: # inner drop
@@ -918,7 +856,7 @@ class EditableTreeController:
       target[newItem.id]=newItem
 
 #----------------------------------------------------------------------------
-class ObservableListWidget(QListWidget):
+class ObservableListWidget(QTreeWidget):
   """A widget to represent an ObservableList.
   The list is modifiable by manipulating items in the widget :
     - add new item
@@ -941,7 +879,7 @@ class ObservableListWidget(QListWidget):
   Inner classes :
     - Item
 
-  Inherits qt component QListWidget.
+  Inherits qt component QTreeWidget.
 
   @type model: ObservableList with an attribute name
   @ivar model: the list which this widget is a graphic representation.
@@ -958,11 +896,13 @@ class ObservableListWidget(QListWidget):
     @type iconSize: couple of integers or None
     @param iconSize: force items icon resizing.
     """
-    QListWidget.__init__( self, parent)
+    QTreeWidget.__init__( self, parent)
     self.setColumnCount(1)
     self.setHeaderLabels([""])
     self.iconSize=iconSize
-    self.connect(self, SIGNAL("currentTextChanged ( const QString & )", self.currentItemRenamed))
+    self.setIconSize(QSize(*iconSize))
+    self.connect(self, SIGNAL("currentItemChanged (  QTreeWidgetItem *, QTreeWidgetItem * )", self.currentItemRenamed))
+    self.setContextMenuPolicy(Qt.CustomContextMenu)
     # keep a reference to the model for control event and register a listener to be aware of changes
     self.setModel(model)
 
@@ -981,9 +921,9 @@ class ObservableListWidget(QListWidget):
       for item in self.model:
         lastChild=ObservableListWidget.Item(self, item, lastChild, self.iconSize) # append item to keep the same order as in the model
 
-  def currentItemRenamed(self, newText):
+  def currentItemRenamed(self, current, previous):
     if self.currentItem() is not None:
-      self.currentItem().okRename(self, newText)
+      self.currentItem().okRename()
     
   def getChild(self, n):
     """Return the nth child item
@@ -991,15 +931,15 @@ class ObservableListWidget(QListWidget):
     @rtype: ObservableListWidget.Item"""
     if n<0:
       n=0
-    elif n>=self.count():
-      n=self.count()-1
-    return self.itemAt(n)
+    elif n>=self.topLevelItemCount():
+      n=self.topLevelItemCount()-1
+    return self.topLevelItem(n)
 
   def getLastChild(self):
     """Return the last child item.
     @rtype: ObservableListWidget.Item
     """
-    return self.itemAt( self.count() - 1)
+    return self.topLevelItem( self.topLevelItemCount() - 1)
 
   #------ Update on model changes ------
   def updateContent(self, action, items, position=None):
@@ -1019,7 +959,7 @@ class ObservableListWidget(QListWidget):
       if not position:
         position=0
       for modelItem in items:
-        self.takeItem(position)
+        self.takeTopLevelItem(position)
       self.insert(items, position)
     #else: print action, "unknown action"
 
@@ -1031,7 +971,7 @@ class ObservableListWidget(QListWidget):
     i=position
     for item in items:
       widgetItem=ObservableListWidget.Item(None, item, None, self.iconSize)
-      self.insert(item, i)
+      self.insertTopLevelItem( i, item )
       i+=1
       if item.unamed:
         widgetitem.editItem(0)
@@ -1045,21 +985,21 @@ class ObservableListWidget(QListWidget):
     if position is None:
       position =0
     if len(items)==0:
-      self.takeItem(position)
+      self.takeTopLevelItem(position)
     else:
       for modelItem in items:
         found=False
         i=position
-        while not found and i<=self.count():
-          item=self.child(i)
+        while not found and i<=self.topLevelItemcount():
+          item=self.topLevelItem(i)
           if item.model is modelItem:
-            self.takeItem(i)
+            self.takeTopLevelItem(i)
             found=True
           else:
             i+=1
 
   #----------------------------------------------------------------------------
-  class Item(QListWidgetItem):
+  class Item(QTreeWidgetItem):
     """Item is the base class for elements of ObservableListWidget.
     Treats renaming events if the item is modifiable.
     """
@@ -1072,16 +1012,13 @@ class ObservableListWidget(QListWidget):
       @type after: item
       @param after: the item after which current item must be added in the parent
       """
-      QListWidgetItem.__init__( self, parent )
-      icon = None
+      QTreeWidgetItem.__init__( self, parent )
       if model.icon:
-        icon = findIconFile( model.icon ) # QIcon
-      if icon:
-        if iconSize:
-          pix=QIcon(QPixmap(icon).scaled( *iconSize ))
-        self.setIcon(0,icon)
+        iconPath = findIconFile( model.icon ) # QIcon
+        if iconPath:
+          self.setIcon(0, QIcon(iconPath))
       self.setText(0, model.name)
-      self.setToolTip(model.tooltip)
+      self.setToolTip(0, model.tooltip)
       if not model.modifiable:
         self.setFlags(self.flags() & ~Qt.ItemIsEditable)
       self.model=model
@@ -1090,10 +1027,11 @@ class ObservableListWidget(QListWidget):
     def getText(self):
       return self.text(0)
 
-    def okRename(self, newText):
+    def okRename(self):
       """This method is called when user renames the item.
       The name must be changed in the model."""
       if getattr(self, "model", None):
+        newText=self.text(0)
         if self.model.name != newText:
           if self.model.name==self.model.tooltip:
             self.model.tooltip=newText
@@ -1104,11 +1042,11 @@ class ObservableListWidget(QListWidget):
       """This method is called when the model notifies that its name attribute has changed :
       The view should update its content to reflect the changes"""
       self.setText(0, newName)
-      self.setToolTip(self.model.tooltip)
+      self.setToolTip(0, self.model.tooltip)
       #else: print "unknown action"
       
 #----------------------------------------------------------------------------
-class TreeListWidget(QListWidget):
+class TreeListWidget(QTreeWidget):
   """
   This widget represents a list of EditableTree.
   The given model is an ObservableSortedDictionary (trees are referenced by their id).
@@ -1131,7 +1069,7 @@ class TreeListWidget(QListWidget):
   Inner classes :
     - Item
 
-  Inherits qt component QListWidget.
+  Inherits qt component QTreeWidget.
 
   @type model: ObservableSortedDictionary
   @ivar model: the EditableTree map which this widget is a graphic representation.
@@ -1152,15 +1090,18 @@ class TreeListWidget(QListWidget):
     @type iconSize: couple of integers or None
     @param iconSize: force items icon resizing.
     """
-    QListWidget.__init__( self, parent)
-    #self.setColumnCount(1)
+    QTreeWidget.__init__( self, parent)
+    self.setColumnCount(1)
     self.iconSize=iconSize
+    self.setIconSize(QSize(*iconSize))
+    self.setRootIsDecorated(False) # it is not really a tree but a list, keep a QTreeWidget to keep columns
     # enable display of tooltips on items
     # the listview accept drops to enable adding items in trees by dropping items on the item representing the tree
     self.setAcceptDrops(True)
     self.draggedItems=[]
     self.dropOn=None
-    self.connect(self, SIGNAL("currentTextChanged ( const QString & )"), self.currentItemRenamed )
+    self.connect(self, SIGNAL("currentItemChanged ( QTreeWidgetItem *, QTreeWidgetItem * )"), self.currentItemRenamed )
+    self.setContextMenuPolicy(Qt.CustomContextMenu)
     # keep a reference to the model for control event and register a listener to be aware of changes
     self.setModel(model)
 
@@ -1175,16 +1116,16 @@ class TreeListWidget(QListWidget):
     self.clear()
     self.model=m
     if m:
-      #self.setHeaderLabels([m.name])
+      self.setHeaderLabels([m.name])
       self.model.addListener(self.updateContent)
       # create child items with data in the tree model
       lastChild=None
       for item in self.model.values():
         lastChild=self.Item(self, item, lastChild, self.iconSize) # append item to keep the same order as in the model
 
-  def currentItemRenamed(self, newText):
+  def currentItemRenamed(self, current, previous):
     if self.currentItem() is not None:
-      self.currentItem().okRename(newText)
+      self.currentItem().okRename()
     
   def getChild(self, n):
     """
@@ -1194,16 +1135,16 @@ class TreeListWidget(QListWidget):
     """
     if n<0:
       n=0
-    elif n>=self.count():
-      n=self.count() - 1
-    return self.child(n)
+    elif n>=self.topLevelItemCount():
+      n=self.topLevelItemCount() - 1
+    return self.topLevelItem(n)
 
   def getLastChild(self):
     """
     Return the last child item.
     @rtype: TreeListWidget.Item
     """
-    return self.child(self.count()-1)
+    return self.topLevelItem(self.topLevelItemCount()-1)
   
   #------ Drag&drop control  ------
   def dragEnterEvent(self, event):
@@ -1286,7 +1227,7 @@ class TreeListWidget(QListWidget):
       # from position, all items must be replaced with new value
       # ->remove and then insert new
       for modelItem in items:
-        self.takeItem(position)
+        self.takeTopLevelItemItem(position)
       self.insert(items, position)
     #else: print action, "unknown action"
 
@@ -1298,7 +1239,7 @@ class TreeListWidget(QListWidget):
     i=position
     for item in items:
       newItem=self.Item(None, item, None, self.iconSize)
-      self.insertItem(newItem, i)
+      self.insertTopLevelItem(i, newItem)
       i+=1
       if item.unamed:
         self.editItem(newItem, 0)
@@ -1312,21 +1253,21 @@ class TreeListWidget(QListWidget):
     if position is None:
       position =0
     if len(items)==0:
-      self.takeItem(position)
+      self.takeTopLevelItem(position)
     else:
       for modelItem in items:
         found=False
         i=position
         while not found and i<self.count():
-          item=self.itemAt(i)
+          item=self.topLevelItem(i)
           if item.model is modelItem:
-            self.takeItem(i)
+            self.takeTopLevelItem(i)
             found=True
           else:
             i+=1
 
   #----------------------------------------------------------------------------
-  class Item(QListWidgetItem):
+  class Item(QTreeWidgetItem):
     """
     Item is the base class for elements of TreeListWidget.
     Treats renaming events if the item is modifiable.
@@ -1340,17 +1281,13 @@ class TreeListWidget(QListWidget):
       @type after: item
       @param after: the item after which current item must be added in the parent
       """
-      QListWidgetItem.__init__( self, parent )
-      self.setText(model.name)
-      self.setToolTip(model.tooltip)
+      QTreeWidgetItem.__init__( self, parent )
+      self.setText(0, model.name)
+      self.setToolTip(0, model.tooltip)
       if model.icon:
-        icon = findIconFile( model.icon )
-      if icon:
-        if iconSize:
-          pix=QIcon(QPixmap(icon).scaled( *iconSize ))
-        else:
-          pix=QIcon(icon)
-        self.setIcon(pix)
+        iconPath = findIconFile( model.icon )
+        if iconPath:
+          self.setIcon(0, QIcon(iconPath))
       if not model.modifiable:
         self.setFlags(self.flags() & ~Qt.ItemIsEditable)
       if not model.valid:
@@ -1360,14 +1297,15 @@ class TreeListWidget(QListWidget):
       self.model.onAttributeChange("valid", self.updateVisibility)
 
     def getText(self):
-      return self.text()
+      return self.text(0)
 
-    def okRename(self, newText):
+    def okRename(self):
       """
       This method is called when user renames the item.
       The name must be changed in the model.
       """
       if getattr(self, "model", None):
+        newText=self.text(0)
         if self.model.name != newText:
           if self.model.name==self.model.tooltip:
             self.model.tooltip=newText
@@ -1379,8 +1317,8 @@ class TreeListWidget(QListWidget):
       This method is called when the model notifies that its name attribute has changed :
       The view should update its content to reflect the changes.
       """
-      self.setText(newName)
-      self.setToolTip(self.model.tooltip)
+      self.setText(0, newName)
+      self.setToolTip(0, self.model.tooltip)
       #else: print "unknown action"
       
     def updateVisibility(self, newValue):

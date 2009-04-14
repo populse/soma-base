@@ -62,6 +62,7 @@ __docformat__ = "epytext en"
 #: Default size for icons
 defaultIconSize = ( 16, 16 )
 largeIconSize = ( 22, 22 )
+bigIconSize = ( 32, 32 )
 from soma.qt3gui.designer import createWidget, WidgetFactory, CustomizedQWidgetFactory
 from soma.qt3gui.automatic import ApplicationQt3GUI, Qt3GUI, WidgetGeometryUpdater
 from soma.qt3gui.timered_widgets import QLineEditModificationTimer, TimeredQLineEdit

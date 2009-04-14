@@ -107,33 +107,34 @@ class EditionDialog( QtGui.QDialog ):
     self.setModal(modal)
     # window modal means that the dialog will block only its parent windows in modal mode, which is set automatically when calling exec_ method
     self.setWindowModality(QtCore.Qt.WindowModal)
-    layout = QtGui.QVBoxLayout( self )
+    layout = QtGui.QVBoxLayout( )
     layout.setMargin(11)
     layout.setSpacing(6)
+    self.setLayout(layout)
     
     self.__qtgui = ApplicationQt4GUI.instanceQt4GUI( object )
-    self.__widget = self.__qtgui.editionWidget( object, parent=self, live=live )
+    self.__widget = self.__qtgui.editionWidget( object, parent=None, live=live )
     layout.addWidget( self.__widget )
-
+    self.__widget.setSizePolicy(QtGui.QSizePolicy(QtGui.QSizePolicy.Preferred, QtGui.QSizePolicy.Expanding))
     icon = self.__widget.windowIcon()
     if icon is not None:
       self.setWindowIcon( icon )
     
     self.setWindowTitle( self.__widget.windowTitle() )
     
-    layout1 = QtGui.QHBoxLayout(None)
+    layout1 = QtGui.QHBoxLayout()
     layout1.setMargin(0)
     layout1.setSpacing(6)
     layout.addLayout( layout1 )
     spacer1 = QtGui.QSpacerItem(31,20,QtGui.QSizePolicy.Expanding,QtGui.QSizePolicy.Minimum)
     layout1.addItem(spacer1)
 
-    self.btnOk = QtGui.QPushButton( _( '&Ok' ), self )
+    self.btnOk = QtGui.QPushButton( _( '&Ok' ) )
     self.btnOk.setDefault( True )
     layout1.addWidget( self.btnOk )
     self.connect( self.btnOk, QtCore.SIGNAL( 'clicked()' ), QtCore.SLOT( 'accept()' ) )
     
-    self.btnCancel = QtGui.QPushButton( _( '&Cancel' ), self )
+    self.btnCancel = QtGui.QPushButton( _( '&Cancel' ) )
     layout1.addWidget( self.btnCancel )
     self.connect( self.btnCancel, QtCore.SIGNAL( 'clicked()' ), QtCore.SLOT( 'reject()' ) )
 

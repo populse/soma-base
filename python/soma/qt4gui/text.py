@@ -44,15 +44,19 @@ class TextEditWithSearch(QtGui.QTextEdit):
     super(TextEditWithSearch, self).__init__(*args)
     self.searchText=""
   
-  def contextMenuEvent(self, event):
+  def customMenu(self):
     menu=self.createStandardContextMenu()
     menu.addSeparator()
-    menu.addAction("Search", self.search)#, QtGui.QKeySequence.Find) # Key_Control
-    menu.addAction("Search next", self.searchNext)#, QtCore.Qt.CTRL + QtCore.Qt.Key_N)
-    menu.exec_(event.globalPos());
+    menu.addAction("Find", self.search, QtGui.QKeySequence.Find) # Key_Control
+    menu.addAction("Find next", self.searchNext, QtGui.QKeySequence.FindNext)
+    return menu
+  
+  def contextMenuEvent(self, event):
+    menu=self.customMenu()
+    menu.exec_(event.globalPos())
   
   def search(self):
-    (res, ok)=QtGui.QInputDialog.getText(self, "Search", "Text to search :", QtGui.QLineEdit.Normal, self.searchText)
+    (res, ok)=QtGui.QInputDialog.getText(self, "Find", "Text to find :", QtGui.QLineEdit.Normal, self.searchText)
     if ok:
       self.searchText=res
     if self.searchText and ok:
@@ -69,16 +73,20 @@ class TextBrowserWithSearch(QtGui.QTextBrowser):
   def __init__(self, *args):
     super(TextBrowserWithSearch, self).__init__(*args)
     self.searchText=""
-    
-  def contextMenuEvent(self, event):
+  
+  def customMenu(self):
     menu=self.createStandardContextMenu()
     menu.addSeparator()
-    menu.addAction("Search", self.search)#, QtCore.Qt.CTRL + QtCore.Qt.Key_F ) # Key_Control
-    menu.addAction("Search next", self.searchNext)#, QtCore.Qt.CTRL + QtCore.Qt.Key_N)
+    menu.addAction("Find", self.search, QtGui.QKeySequence.Find ) # Key_Control
+    menu.addAction("Find next", self.searchNext, QtGui.QKeySequence.FindNext)
+    return menu
+  
+  def contextMenuEvent(self, event):
+    menu=self.customMenu()
     menu.exec_(event.globalPos());
   
   def search(self):
-    (res, ok)=QtGui.QInputDialog.getText(self, "Search", "Text to search :", QtGui.QLineEdit.Normal, self.searchText)
+    (res, ok)=QtGui.QInputDialog.getText(self, "Find", "Text to find :", QtGui.QLineEdit.Normal, self.searchText)
     if ok:
       self.searchText=res
     if self.searchText and ok:
