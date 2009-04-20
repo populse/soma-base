@@ -1,5 +1,4 @@
 
-
 #-----------------------------------------------------------------------------
 class CppComponent_somabase( GenericMakerComponent ):
   _name = 'soma-base_cpp'
@@ -12,7 +11,7 @@ class CppComponent_somabase( GenericMakerComponent ):
   def dependencies( self ):
     return []
 
-  def name( self ):
+  def sourceName( self ):
     return 'soma-base'
 
   def _libraries( self ):
@@ -48,8 +47,8 @@ class CppGuiComponent_somabase( GenericMakerModuleComponent ):
   def dependencies( self ):
     return [ QtComponent, 'soma-base_cpp' ]
 
-  def name( self ):
-    return 'soma-base-gui'
+  def sourceName( self ):
+    return 'soma-base'
 
   def _libraries( self ):
     return [ 'somaqtgui' ]
@@ -63,7 +62,7 @@ class SipComponent_somabase( GenericMakerComponent ):
     options[ 'soma-base_sip' ] = options[ 'soma-base' ]
     GenericMakerComponent.__init__( self, options[ 'soma-base' ] )
 
-  def name( self ):
+  def sourceName( self ):
     return 'soma-base'
 
   def _libraries( self ):
@@ -79,11 +78,11 @@ class SipComponent_somabase( GenericMakerComponent ):
       build = os.path.join( self.componentBuildDir(), 'src', 'sip' )
       self._data[ 'sipinclude' ] = SipComponent.sipinclude( self )
 
-  #def doEpydoc( self ):
-    #return True
+  def doEpydoc( self ):
+    return True
 
-  #def pythonModule( self ):
-    #return 'soma.somabasesip'
+  def pythonModule( self ):
+    return 'soma-basesip'
 
   def templateConfigurationFiles( self ):
     return [ os.path.join( self.sourceDir(), i ) for i in
@@ -122,8 +121,8 @@ class SipComponent_somabase( GenericMakerComponent ):
 class SipGuiComponent_somabase( GenericMakerModuleComponent ):
   _name = 'soma-base_sip-gui'
 
-  def name( self ):
-    return 'soma-base_sip-gui'
+  def sourceName( self ):
+    return 'soma-base'
 
   def _libraries( self ):
     return []
@@ -160,7 +159,7 @@ class PythonComponent_somabase( GenericMakerComponent ):
     options[ 'soma-base_python' ] = options[ 'soma-base' ]
     GenericMakerComponent.__init__( self, options[ 'soma-base' ] )
 
-  def name( self ):
+  def sourceName( self ):
     return 'soma-base'
 
   def _libraries( self ):
@@ -194,7 +193,7 @@ class Component_somabase( GenericMakerComponent ):
     return [ 'soma-base_python' ]
 
   def weakDependencies( self ):
-    return [ 'soma-base_sip-gui', StdCppComponent ]
+    return []
 
   def _libraries( self ):
     return []
@@ -211,3 +210,4 @@ class Component_somabase( GenericMakerComponent ):
 
   def makeDoxygenDocumentation( self ):
     pass
+
