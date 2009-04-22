@@ -7,7 +7,6 @@ class CppComponent_somabase( GenericMakerComponent ):
     options[ 'soma-base_cpp' ] = options[ 'soma-base' ]
     GenericMakerComponent.__init__( self, options[ 'soma-base' ] )
 
-
   def dependencies( self ):
     return []
 
