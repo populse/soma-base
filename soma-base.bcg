@@ -18,6 +18,12 @@ class CppComponent_somabase( GenericMakerComponent ):
     # return [ 'soma-base' ]
     return []
 
+  def shareDir( self ):
+    return os.path.join( 'share', 'soma-' + self.version() )
+
+  def docDir( self ):
+    return os.path.join( 'share', 'doc', 'soma-' + self.version() )
+
   def makeDocumentation( self ):
     print 'soma-base_cpp doc'
     print self.doDoxygen()
@@ -53,6 +59,12 @@ class CppGuiComponent_somabase( GenericMakerModuleComponent ):
   def _libraries( self ):
     return [ 'somaqtgui' ]
 
+  def shareDir( self ):
+    return os.path.join( 'share', 'soma-' + self.version() )
+
+  def docDir( self ):
+    return os.path.join( 'share', 'doc', 'soma-' + self.version() )
+
 
 #-----------------------------------------------------------------------------
 class SipComponent_somabase( GenericMakerComponent ):
@@ -70,6 +82,12 @@ class SipComponent_somabase( GenericMakerComponent ):
 
   def dependencies( self ):
     return [ 'soma-base_cpp', SipComponent ]
+
+  def shareDir( self ):
+    return os.path.join( 'share', 'soma-' + self.version() )
+
+  def docDir( self ):
+    return os.path.join( 'share', 'doc', 'soma-' + self.version() )
 
   def postInit( self ):
     if not self._initialized:
@@ -130,6 +148,12 @@ class SipGuiComponent_somabase( GenericMakerModuleComponent ):
   def dependencies( self ):
     return [ 'soma-base_cpp-gui', PyQtComponent ]
 
+  def shareDir( self ):
+    return os.path.join( 'share', 'soma-' + self.version() )
+
+  def docDir( self ):
+    return os.path.join( 'share', 'doc', 'soma-' + self.version() )
+
   def postInit( self ):
     if not self._initialized:
       GenericMakerComponent.postInit( self )
@@ -168,6 +192,12 @@ class PythonComponent_somabase( GenericMakerComponent ):
   def dependencies( self ):
     return []
 
+  def shareDir( self ):
+    return os.path.join( 'share', 'soma-' + self.version() )
+
+  def docDir( self ):
+    return os.path.join( 'share', 'doc', 'soma-' + self.version() )
+
   def doEpydoc( self ):
     return True
 
@@ -197,6 +227,12 @@ class Component_somabase( GenericMakerComponent ):
 
   def _libraries( self ):
     return []
+
+  def shareDir( self ):
+    return os.path.join( 'share', 'soma-' + self.version() )
+
+  def docDir( self ):
+    return os.path.join( 'share', 'doc', 'soma-' + self.version() )
 
   def templateConfigurationFiles( self ):
     return []
