@@ -186,7 +186,6 @@ class ConfigurationWidget( qt.QWidget ):
     super( ConfigurationWidget, self ).__init__( parent, flags )
     if name:
       self.setObjectName(name)
-    print "init configuration widget"
     icon = qt.QPixmap()
     icon.loadFromData( self.icon_data,"PNG" )
     self.setWindowTitle( _( 'Configuration' ) )
@@ -228,7 +227,6 @@ class ConfigurationWidget( qt.QWidget ):
 class Configuration_Qt4GUI( Qt4GUI ):
 
   def editionWidget( self, object, parent=None, name=None, live=False ):
-    print "edition widget Configuration_Qt4GUI"
     self.__widget = ConfigurationWidget( parent=parent, name=name )
     self.__widget.wstPanels.removeWidget( self.__widget.wstPanels.widget( 0 ) )
     self.__panels = []

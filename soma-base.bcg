@@ -79,11 +79,11 @@ class SipComponent_somabase( GenericMakerComponent ):
       build = os.path.join( self.componentBuildDir(), 'src', 'sip' )
       self._data[ 'sipinclude' ] = SipComponent.sipinclude( self )
 
-  def doEpydoc( self ):
-    return True
+  #def doEpydoc( self ):
+    #return True
 
-  def pythonModule( self ):
-    return 'soma-basesip'
+  #def pythonModule( self ):
+    #return 'soma.somabasesip'
 
   def templateConfigurationFiles( self ):
     return [ os.path.join( self.sourceDir(), i ) for i in
