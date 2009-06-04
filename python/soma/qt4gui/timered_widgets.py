@@ -82,19 +82,20 @@ class QLineEditModificationTimer( QtCore.QObject ):
                   self._userModification )
     self.connect( self.qLineEdit, QtCore.SIGNAL( 'lostFocus()' ), 
                   self._noMoreUserModification,  )
-    self.connect( self.__timer, QtCore.SIGNAL( 'timeout()' ), 
-                  QtCore.SIGNAL( 'userModification' ) )
+    self.connect( self.__timer, QtCore.SIGNAL( 'timeout()' ), self.modificationTimeout )
 
 
   def _userModification( self ):
     if not self.__internalModification:
       self.__timer.start( self.timerInterval )
 
-
+  def modificationTimeout(self):
+    self.emit( QtCore.SIGNAL( 'userModification' ) )
+    
   def _noMoreUserModification( self ):
     if self.__timer.isActive():
       self.__timer.stop()
-      self.emit( QtCore.SIGNAL( 'userModification' ), () )
+      self.emit( QtCore.SIGNAL( 'userModification' ) )
 
 
   def stopInternalModification( self ):

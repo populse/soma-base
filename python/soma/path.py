@@ -117,12 +117,8 @@ def no_symlink( path ):
   return p
 
 
-if platform.system() == 'windows':
-  #: Character used to separate directories in environment variables such as PATH
-  path_separator = ';'
-else:
-  #: Character used to separate directories in environment variables such as PATH
-  path_separator = ':'
+#: Character used to separate directories in environment variables such as PATH
+path_separator = os.pathsep
 
 
 def find_in_path( file, path = None ):

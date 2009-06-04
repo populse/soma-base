@@ -126,11 +126,16 @@ class ObservableSingleton( Singleton ):
   onCreateNotifiers={}
   #soma.notification.Notifier()
   
-  def __new__( cls, create=True, *args, **kwargs ):
+  def __new__( cls, *args, **kwargs ):
+    '''If the keyword arg create is set to False, then a new instance is
+    not created event if the singleton has not been instantiated yet.
+    '''
     instance=None
+    create = kwargs.get( 'create', True )
     if '_singleton_instance' not in cls.__dict__:
       if create:
-        instance = super(ObservableSingleton, cls).__new__( cls )
+        instance = super(ObservableSingleton, cls).__new__( cls, *args,
+          **kwargs )
         notifier = cls.onCreateNotifiers.get(str(cls))
         if notifier is not None:
           notifier.notify(instance)
@@ -146,7 +151,7 @@ class ObservableSingleton( Singleton ):
       cls.onCreateNotifiers[className] = notifier
     notifier.add(listener)
   addCreateListener=classmethod(addCreateListener)
-      
+
   def removeCreateListener(cls, listener):
     className=str(cls)
     notifier=cls.onCreateNotifiers.get(className)
