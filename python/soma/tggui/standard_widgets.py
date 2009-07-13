@@ -398,7 +398,7 @@ class TgUploadMultipleFiles( TgStandardBase, CompoundFormField ):
                         'archive' : '/static/applets/brainvisaweb-applets.jar',
                         'scriptable' : 'true',
                         'mayscript' : 'true',
-                        'onselectfiles' : 'selectedfiles()',
+                        'onselectfiles' : 'soma.tggui.upload.selectedfiles()',
                         'buttontext' : 'Select...' }
                         
   #filesuploader_attrs = { 'style' : 'height:20px;width:186px;',
@@ -412,8 +412,8 @@ class TgUploadMultipleFiles( TgStandardBase, CompoundFormField ):
                           'scriptable' : 'true',
                           'mayscript' : 'true',
                           'inputmultiplefilesappletname' : None,
-                          'onuploadstart' : 'uploadstarted()',
-                          'onuploadend' : 'uploadended()',
+                          'onuploadstart' : 'soma.tggui.upload.uploadstarted()',
+                          'onuploadend' : 'soma.tggui.upload.uploadended()',
                           'not_started' : 'Upload not started',
                           'uploading' : 'Uploading files ...',
                           'building' : 'Building files ...',
@@ -425,7 +425,7 @@ class TgUploadMultipleFiles( TgStandardBase, CompoundFormField ):
   def __init__(self, *args, **kw):
     super(TgStandardBase, self).__init__(*args, **kw)
     
-    self.javascript = [ mochikit, JSLink( 'static', 'js/library.js' ), JSLink( 'static', 'js/uploadmultiplefiles.js', location = js_location.bodybottom ) ]
+    self.javascript = [ mochikit, JSLink( 'static', 'js/soma.js' ) ]
     self.selectfiles_attrs[ 'for' ] = self.field_id
     self.selectfiles_widget = TgExtendedApplet()
     self.selectfiles_widget.applet_attrs = dict( self.selectfiles_widget.applet_attrs.items() + self.selectfiles_attrs.items() )

@@ -202,11 +202,7 @@ class EditionDialog( TgRemoteForm ):
   def __init__( self, object, parent = None, name = None, live=False, modal=False, wflags=0 ):
     super( EditionDialog, self ).__init__( name = name, submit_text = 'Ok' )
 
-    self.javascript = [ mochikit, JSLink( 'static', 'js/library.js' ), JSLink( 'static', 'js/editiondialog.js', location = js_location.bodybottom ) ]
-    
-    if ( live ) :
-      # Add this part only if live is activated for the dialog
-      self.javascript += [ JSLink( 'static', 'js/editiondialoglive.js', location = js_location.bodybottom ) ]
+    self.javascript = [ mochikit, JSLink( 'static', 'js/soma.js' ) ]
     
     # Add a window id hidden field
     self.window = TgWindow()
@@ -333,3 +329,24 @@ class TgGUI( GUI ):
     if ( getattr( self, 'window', None ) is not None  ) :
       # Register the current widget for the known window
       self.window.addWidget( self )
+      
+  def findValueFromParams( self, params, widgetid, widgetname, default = None ) :
+      '''
+      Get the value for the widget from given parameters.
+      @param params: parameters to get widget value from.
+      @type widgetid: String
+      @param widgetid: id of the widget to find value for.
+      @type widgetname: String
+      @param widgetname: name of the widget to find value for.
+      @return: value for the widget from parameters.
+      '''
+      if ( isinstance( params, dict ) ):
+        if ( widgetid in params ) :
+          result = params[ widgetid ]
+        elif ( widgetname in params ) : 
+          result = params[ widgetname ]
+        else :
+          result = default
+      else :
+        result = params
+      return result

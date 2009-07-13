@@ -53,7 +53,7 @@ class HasSignatureEditionWidget( TgFieldSet ):
 
     super(HasSignatureEditionWidget, self).__init__()
     self.css = [ CSSLink('static', 'css/hassignature.css') ]
-    self.javascript = [mochikit, JSLink( 'static', 'js/library.js' ), JSLink( 'static', 'js/hassignature.js', location = js_location.bodybottom ) ]
+    self.javascript = [mochikit, JSLink( 'static', 'js/soma.js' ) ]
 
     self._tggui = tggui
     self._live = live

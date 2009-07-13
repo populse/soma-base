@@ -67,52 +67,23 @@ class Bytes_TgGUI( TgGUI ):
         
     if live:
       self._widget.onAttributeChange( 'default', self._userModification )
-    #if live:
-      #self._widget = TimeredQLineEdit( parent, name )
-      #if value is not None:
-        #self._widget.startInternalModification()
-        #self._widget.setText( repr( value + '"' )[ 1: -2 ] )
-        #self._widget.stopInternalModification()
-      #self._widget.connect( self._widget, qt.PYSIGNAL( 'userModification' ), 
-                            #self._userModification )
-    #else:
-    #self._widget.name = self.widgetid
-    #self._widget.label = self._name
 
     return self._widget
   
   
   def closeEditionWidget( self, editionWidget ):
-    #if self._live:
-      #self._widget.disconnect( self._widget, qt.PYSIGNAL( 'userModification' ), 
-                               #self._userModification )
-    #editionWidget.close()
-    #editionWidget.deleteLater()
-    #self._widget = None
     pass
-  
   
   def getPythonValue( self, editionWidget ):
     return eval( "'" + unicode( editionWidget.text() ) + "'" )
 
   def updateEditionWidget( self, editionWidget, value ):
-    #editionWidget.startInternalModification()
     editionWidget.setText( repr( value + '"' )[ 1: -2 ] )
-    #editionWidget.stopInternalModification()
 
   def unserializeEditionWidgetValue( self, value, notifyObject = False ):
-    print 'bytes_tggui->unserializeEditionWidgetValue->value : ', value
     if ( self._widget is not None ) :
-      #self._widget.startInternalModification()
-      widgetid = self._widget.widgetid
-      if ( isinstance( value, dict ) ):
-        if ( widgetid in value ) :
-          self._widget.setText( unicode( value[ widgetid ] ) )
-        else :
-          self._widget.setText( '' )
-      else :
-        self._widget.setText( unicode( value ) )
-      #self._widget.stopInternalModification()
-
+      res = self.findValueFromParams( value, self._widget.widgetid, self._name, default = '' )
+      self._widget.setText( unicode( res ) )
+      
   def _userModification( self, ):
     self.onWidgetChange.notify( self._widget )

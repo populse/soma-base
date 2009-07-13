@@ -111,10 +111,12 @@ class Choice_TgGUI( TgGUI ):
   def unserializeEditionWidgetValue( self, value, notifyObject = False ):
     if ( self._widget is not None ) :
       tools.unlockWidget( self._widget )
-      widgetid = self._widget.widgetid
-      if ( isinstance( value, dict ) ):
-        if ( widgetid in value ) :
-          self._widget.default = unicode( value[ widgetid ] )
-      else :
-        self._widget.default = unicode( value )
-
+      index = None
+      res = self.findValueFromParams( value, self._widget.widgetid, self._name )
+      try :
+          index = int(res)
+      except Exception, e :
+          index = self.dataTypeInstance.findIndex( res )
+      
+      if not index is None :
+        self._widget.default = unicode( index )

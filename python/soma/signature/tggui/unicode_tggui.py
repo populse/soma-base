@@ -96,14 +96,8 @@ class Unicode_TgGUI( TgGUI ):
 
   def unserializeEditionWidgetValue( self, value, notifyObject = False ):
     if ( self._widget is not None ) :
-      widgetid = self._widget.widgetid
-      if ( isinstance( value, dict ) ):
-        if ( widgetid in value ) :
-          self._widget.setText( unicode( value[ widgetid ] ) )
-        else :
-          self._widget.setText( '' )
-      else :
-         self._widget.setText( unicode( value ) )
+      res = self.findValueFromParams( value, self._widget.widgetid, self._name, default = '' )
+      self._widget.setText( unicode( res ) )
       
   def _userModification( self, *args, **kwargs ):
     self.onWidgetChange.notify( self._widget )

@@ -79,25 +79,15 @@ class Boolean_TgGUI( TgGUI ):
     return bool( editionWidget.default )
 
   def updateEditionWidget( self, editionWidget, value ):
-    #editionWidget.startInternalModification()
     tools.unlockWidget( self._widget )
     editionWidget.default = value
-    #editionWidget.stopInternalModification()
     
   def unserializeEditionWidgetValue( self, value, notifyObject = False ):
     if ( self._widget is not None ) :
-      #self._widget.startInternalModification()
       tools.unlockWidget( self._widget )
 
-      widgetid = self._widget.widgetid
-      if ( isinstance( value, dict ) ):
-        if ( widgetid in value ) :
-          self._widget.default = bool( value[ widgetid ] )
-        else :
-          self._widget.default = False
-      else :
-        self._widget.default = bool( value )
-      #self._widget.stopInternalModification()
-
+      res = self.findValueFromParams( value, self._widget.widgetid, self._name, default = False )
+      self._widget.default = bool( res )
+      
   def _userModification( self, newValue, oldValue ):
     self.onWidgetChange.notify( self._widget )
