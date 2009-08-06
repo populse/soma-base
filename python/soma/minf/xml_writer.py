@@ -95,14 +95,14 @@ class MinfXMLWriter( MinfWriter ):
   def write( self, value ):
     minfNodeIterator = self.reducer.reduce( value )
     for minfNode in minfNodeIterator:
-      self._write( minfNodeIterator, minfNode, 0, '' )
+      self._write( minfNodeIterator, minfNode, 0, None )
       
   
   def _write( self, minfNodeIterator, minfNode, level, name ):
     if minfNode is Undefined:
       minfNode = minfNodeIterator.next()
     attributes = {}
-    if name:
+    if name is not None:
       attributes[ nameAttribute ] = name
     if isinstance( minfNode, StartStructure ):
       if minfNode.type == listStructure:
@@ -142,13 +142,13 @@ class MinfXMLWriter( MinfWriter ):
             self._write( minfNodeIterator, Undefined, level+1, minfNode )
           elif minfNode is None:
             if not stringNaming:
-              self._write( minfNodeIterator, minfNode, level+1, '' )
-            self._write( minfNodeIterator, Undefined, level+1, '' )
+              self._write( minfNodeIterator, minfNode, level+1, None )
+            self._write( minfNodeIterator, Undefined, level+1, None )
           else:
-            self._write( minfNodeIterator, minfNode, level+1, '' )
-            self._write( minfNodeIterator, Undefined, level+1, '' )
+            self._write( minfNodeIterator, minfNode, level+1, None )
+            self._write( minfNodeIterator, Undefined, level+1, None )
         else:
-          self._write( minfNodeIterator, minfNode, level+1, '' )
+          self._write( minfNodeIterator, minfNode, level+1, None )
     elif isinstance( minfNode, EndStructure ):
       raise MinfError( _( 'Unexpected Minf structure ending: %s' ) % ( minfNode.type, ) )
       level -= 1
