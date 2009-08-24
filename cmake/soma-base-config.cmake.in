@@ -1,18 +1,24 @@
-set( _project "@PROJECT_NAME@" )
-string( TOUPPER "@PROJECT_NAME@" _uproject )
+# Defines the following variables:
+#   @PROJECT_NAME@_VERSION_MAJOR
+#   @PROJECT_NAME@_VERSION_MINOR
+#   @PROJECT_NAME@_VERSION_PATCH
+#   @PROJECT_NAME@_VERSION
+#   @PROJECT_NAME_UPPER@_BINARY_DIR
+#   @PROJECT_NAME_UPPER@_FOUND
 
-set( ${_project}_VERSION_MAJOR @soma-base_VERSION_MAJOR@ )
-set( ${_project}_VERSION_MINOR @soma-base_VERSION_MINOR@ )
-set( ${_project}_VERSION_PATCH @soma-base_VERSION_PATCH@ )
-set( ${_project}_VERSION @soma-base_VERSION@ )
+# Set version variables
+set( @PROJECT_NAME@_VERSION_MAJOR @BRAINVISA_PACKAGE_VERSION_MAJOR@ )
+set( @PROJECT_NAME@_VERSION_MINOR @BRAINVISA_PACKAGE_VERSION_MINOR@ )
+set( @PROJECT_NAME@_VERSION_PATCH @BRAINVISA_PACKAGE_VERSION_PATCH@ )
+set( @PROJECT_NAME@_VERSION @BRAINVISA_PACKAGE_VERSION_MAJOR@.@BRAINVISA_PACKAGE_VERSION_MINOR@.@BRAINVISA_PACKAGE_VERSION_PATCH@ )
+# Set @PROJECT_NAME_UPPER@_BINARY_DIR
+get_filename_component( @PROJECT_NAME_UPPER@_BINARY_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH )
+get_filename_component( @PROJECT_NAME_UPPER@_BINARY_DIR "${@PROJECT_NAME_UPPER@_BINARY_DIR}" PATH )
+get_filename_component( @PROJECT_NAME_UPPER@_BINARY_DIR "${@PROJECT_NAME_UPPER@_BINARY_DIR}" PATH )
+get_filename_component( @PROJECT_NAME_UPPER@_BINARY_DIR "${@PROJECT_NAME_UPPER@_BINARY_DIR}" PATH )
 
 find_package( PythonInterp REQUIRED )
 find_package( Epydoc )
 find_package( Dot )
 
-get_filename_component( ${_uproject}_BINARY_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH )
-get_filename_component( ${_uproject}_BINARY_DIR "${${_uproject}_BINARY_DIR}" PATH )
-get_filename_component( ${_uproject}_BINARY_DIR "${${_uproject}_BINARY_DIR}" PATH )
-get_filename_component( ${_uproject}_BINARY_DIR "${${_uproject}_BINARY_DIR}" PATH )
-
-set( ${_uproject}_FOUND true )
+set( @PROJECT_NAME_UPPER@_FOUND true )

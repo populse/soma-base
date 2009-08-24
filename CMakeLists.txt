@@ -5,8 +5,6 @@ find_package( brainvisa-cmake REQUIRED )
 BRAINVISA_PROJECT()
 
 find_package( PythonInterp REQUIRED )
-BRAINVISA_ADD_RUNTIME_DEPENDENCY( THIRDPARTY PythonInterp REQUIRED )
-
 find_package( Epydoc )
 find_package( Dot )
 
