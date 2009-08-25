@@ -8,6 +8,11 @@ find_package( PythonInterp REQUIRED )
 find_package( Epydoc )
 find_package( Dot )
 
+BRAINVISA_DEPENDENCY( RUN DEPENDS python RUN "= 2.6" )
+BRAINVISA_DEPENDENCY( RUN RECOMMENDS turlututu RUN )
+BRAINVISA_DEPENDENCY( RUN SUGGESTS ipython DEV )
+BRAINVISA_DEPENDENCY( RUN ENHANCES nothing RUN )
+BRAINVISA_DEPENDENCY( DEV DEPENDS python DEV ">= 2.4;<< 3.0" )
 
 BRAINVISA_COPY_PYTHON_DIRECTORY( "${CMAKE_CURRENT_SOURCE_DIR}/python"
                             ${PROJECT_NAME} )
