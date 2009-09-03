@@ -67,6 +67,7 @@ import signal
 import string
 import sys
 import traceback
+import gc
 
 from threading import RLock
 from Queue import Queue
@@ -77,6 +78,21 @@ from soma.uuid import Uuid
 from soma.enum import Enum
 from soma.singleton import Singleton
 
+
+#def displayHttpUploadDebugInfos() :
+    #print '1 - resourcemanager -> resourcelocks : ', len(resourcemanager.resourcelocks)
+    #print '                    -> builders : ', len(resourcemanager.builders)
+    #print '2 - filebuilderinfomanager -> filebuilderinfos : ', len(FileBuilderInfoManager().filebuilderinfos)
+    #print '                           -> queue : ', FileBuilderInfoManager().queue.qsize()
+    
+    #try :
+        ## Try to get more debug information
+        #import objgraph
+        #print '3 - objgraph -> filebuilderinfos : ', objgraph.count('FileBuilderInfo')
+        #print '             -> filefragments', objgraph.count('FileFragment')
+    #except Exception, e :
+        #pass
+    
 def displayFileBuilderInfos():
   '''
     Display current registered {FileBuilderInfo}s.
@@ -240,8 +256,7 @@ def processHttpUploadQuery( *args, **kwargs ) :
       # return an empty string
       #result = resourcemanager.getFileBuildLength( kwargs['uploadid'], kwargs['basedirectory'], kwargs['filename'], kwargs['filelength'] )
       result = resourcemanager.getUploadBuildLength( kwargs['uploadid'] )
-      
-
+  
   return result
 
 LogLevel = Enum( 'NONE',
@@ -253,7 +268,8 @@ LogLevel = Enum( 'NONE',
 class LogManager( Singleton ) :
   
   def __singleton_init__( self ):
-    super( Singleton, self ).__init__()
+    super( LogManager, self ).__init__()
+    
     self._loglock = RLock()
     self._startdate = datetime.datetime.now()
     self._initialized = False
@@ -288,6 +304,7 @@ class LogManager( Singleton ) :
     Get log file from configuration file.
     '''
     value = turbogears.config.get( 'httpupload.logfile', '/var/log/serverpack/httpupload/httpupload_%(startdate)s.log' )
+    value = os.path.expandvars( value )
     return value % { 'startdate' : self._startdate.isoformat() }
   
   def writeLogInfo( self, value, filepath = None, mode = 'a+b', level = LogLevel.INFO ):
@@ -337,7 +354,7 @@ class ResourceManager( Singleton ) :
                          'httpupload.dirbasefileoutput' : os.path.join( tempfile.gettempdir(), 'database' ) }
   
   def __singleton_init__( self ):
-    super( Singleton, self ).__init__()
+    super( ResourceManager, self ).__init__()
 
     self.resourcelocks = dict()
     self.builders = list()
@@ -384,6 +401,7 @@ class ResourceManager( Singleton ) :
       defaultvalue = self.defaultdirectories[ key ]
 
     result = turbogears.config.get( key, defaultvalue )
+    result = os.path.expandvars( result )
     checkDirectory( result )
     return result
 
@@ -404,6 +422,17 @@ class ResourceManager( Singleton ) :
 
     return resourcelock
 
+  @synchronized
+  def deleteResourceLock( self, resourcekey ) :
+    '''
+    Delete resource lock if exists,
+    @type  resourcekey: string
+    @param resourcekey: resource key to delete lock for.
+    @return: resource lock.
+    '''
+    if resourcekey in self.resourcelocks :
+      del self.resourcelocks[ resourcekey ]
+    
   @synchronized
   def getObjectLock( self, value ) :
     '''
@@ -587,7 +616,9 @@ class FileBuilder( threading.Thread ) :
   '''
 
   def __init__(self):
-    threading.Thread.__init__(self)
+    #threading.Thread.__init__(self)
+    super( FileBuilder, self ).__init__()
+    
     self._finished = threading.Event()
     self._interval = 1.0
 
@@ -621,6 +652,11 @@ class FileBuilder( threading.Thread ) :
 
         # Remove file builder info
         filebuilderinfomanager.removeFileBuilderInfo( filebuilderinfo )
+        
+        del filebuilderinfo
+
+        # Force garbage collection
+        gc.collect()
 
       # sleep for interval or until shutdown
       self._finished.wait( self._interval )
@@ -632,7 +668,7 @@ class FileBuilderInfoManager( Singleton ) :
   '''
 
   def __singleton_init__( self ):
-    super( Singleton, self ).__init__()
+    super( FileBuilderInfoManager, self ).__init__()
     
     self.filebuilderinfos = dict()
     self.queue = Queue()
@@ -749,11 +785,11 @@ FileBuilderInfoStatus = Enum( 'BUILDING',
                               'BUILT',
                               'NOT_BUILT' )
                               
-class FileBuilderInfo :
+class FileBuilderInfo(object) :
   '''
   Class to get info about uploaded file.
   '''
-
+      
   def __init__( self, uploadid, basedirectory, filename, filelength ) :
     '''
     Initialize L{FileBuilderInfo} using its file name and file length.
@@ -766,6 +802,8 @@ class FileBuilderInfo :
     @type filelength : long
     @param filelength : file length.
     '''
+    super(FileBuilderInfo, self).__init__()
+    
     self.status = FileBuilderInfoStatus.NOT_BUILT
     self.uploadid = uploadid
     self.basedirectory = basedirectory
@@ -826,6 +864,8 @@ class FileBuilderInfo :
         if os.path.exists( filepath ) :
           if ( os.path.getsize( filepath ) == self.getFileLength() ) :
             result = True
+      resourcemanager.deleteResourceLock( filepath )
+      
     except Exception, error :
       logmanager.writeLogInfo( 'Error occured checking result file. %s. %s' % (error, traceback.format_exc() ), level = LogLevel.ERROR )
 
@@ -901,6 +941,7 @@ class FileBuilderInfo :
 
               file.close()
 
+            resourcemanager.deleteResourceLock( filepath )
             logmanager.writeLogInfo( 'Rebuilt \'%s\'' % ( loginfopath, ) )
 
             self.status = FileBuilderInfoStatus.BUILT
@@ -1017,7 +1058,7 @@ class FileBuilderInfo :
 
 
 #------------------------------------------------------------------------------
-class FileFragment :
+class FileFragment(object) :
   '''
   Class to get file fragment information. A C{FileFragment} correponds to a part of a file.
   '''
@@ -1029,6 +1070,7 @@ class FileFragment :
     @type headerfile : cgi.FieldStorage
     @param headerfile : L{cgi.FieldStorage} from the parsed http request.
     '''
+    super(FileFragment, self).__init__()
     header = minidom.parseString( headerfile.value )
     self.parseFromXml( header )
 
@@ -1046,7 +1088,9 @@ class FileFragment :
         file = open( filepath, 'r+b' )
         filecontent = file.read()
 
-        return checkSha1( filecontent, self.sha1 )
+        result = checkSha1( filecontent, self.sha1 )
+      resourcemanager.deleteResourceLock( filepath )
+      return result
 
     else :
       return False
@@ -1069,7 +1113,9 @@ class FileFragment :
           file = open( filepath, "w+b" )
           file.write( datafile.value )
           file.close()
-
+        
+        resourcemanager.deleteResourceLock( filepath )
+        
         return True
 
     except Exception, error :
@@ -1089,9 +1135,12 @@ class FileFragment :
     with resourcelock :
       if ( len(filepath) > 0 ) :
         file = open( filepath, "r+b" )
-        return file.read()
+        result = file.read()
       else :
-        return None
+        result = None
+    
+    resourcemanager.deleteResourceLock( filepath )
+    return result
 
   def deleteLocalData( self ) :
     '''
@@ -1107,6 +1156,7 @@ class FileFragment :
         with resourcelock :
           if ( len(filepath) > 0 ) and os.path.exists( filepath ) :
             os.remove( filepath )
+        resourcemanager.deleteResourceLock( filepath )
       except Exception, error :
         logmanager.writeLogInfo( 'Error occured deleting fragment data. %s. %s' % (error, traceback.format_exc() ), level = LogLevel.ERROR )
 
@@ -1198,9 +1248,12 @@ class FileFragment :
     resourcelock = resourcemanager.getResourceLock( filepath )
     with resourcelock :
       if ( len(filepath) > 0 ) and os.path.exists( filepath ) :
-        return ( os.path.getsize( filepath ) == self.getLength() )
+        result = ( os.path.getsize( filepath ) == self.getLength() )
       else :
-        return False
+        result = False
+    resourcemanager.deleteResourceLock( filepath )
+    
+    return result
       
   def hasValidLocalData( self ) :
     '''

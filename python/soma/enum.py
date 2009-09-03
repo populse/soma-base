@@ -46,6 +46,7 @@ original arguments used to create the enumeration::
     >>> shirt_colour.index
     2
 """
+import math
 
 __author_name__ = "Ben Finney"
 __author_email__ = "ben+python@benfinney.id.au"
@@ -81,6 +82,16 @@ class EnumBadKeyError(TypeError, EnumException):
     def __str__(self):
         return "Enumeration keys must be strings: %s" % (self.key,)
 
+class EnumMissingKeyError(TypeError, EnumException):
+    """ Raised when creating an Enum with non-string keys """
+
+    def __init__(self, enumtype, key):
+        self.__enumtype = enumtype
+        self.key = key
+
+    def __str__(self):
+        return "Enumeration key '%s' does not exists in enumeration : %s" % (self.key, self.__enumtype)
+
 class EnumImmutableError(TypeError, EnumException):
     """ Raised when attempting to modify an Enum """
 
@@ -89,8 +100,64 @@ class EnumImmutableError(TypeError, EnumException):
 
     def __str__(self):
         return "Enumeration does not allow modification"
+    
 
+class EnumValues(object):
+    """ Values of an enumerated type """
+
+    def __init__(self, enumtype, values = 0):
+        """ Set up a new instance """
+        super(EnumValues, self).__init__()
+        
+        self.__enumtype = enumtype
+        self.__values = 0
+        
+        if not hasattr(values, '__iter__') :
+            values = [values]
+        
+        for value in values :
+            try :
+                self.__values |= int(value)
+            except Exception, e:
+                try :
+                    self |= self.__enumtype.__dict__.get( value )
+                except Exception, e:
+                    try :
+                        self |= value
+                    except Exception, e:
+                        raise EnumMissingKeyError( values, self.__enumtype )
 
+    def __contains__(self, enumval) :
+        if (enumval not in self.__enumtype) :
+            raise EnumMissingKeyError(self.__enumtype, enumval)
+        
+        return int(self.__values) & int( math.pow(2, enumval.index) )
+
+    def __ior__( self, enumval ) :
+        if (enumval not in self.__enumtype) :
+            raise EnumMissingKeyError(self.__enumtype, enumval)
+        
+        self.__values |= int( math.pow(2, enumval.index) )
+        return self
+
+    def __ixor__( self, enumval ) :
+        if (enumval not in self.__enumtype) :
+            raise EnumMissingKeyError(self.__enumtype, enumval)
+        
+        self.__values ^= int( math.pow(2, enumval.index) )
+        return self
+    
+    def __iter__( self ):
+        for value in self.__enumtype :
+            if value in self :
+                yield value
+        
+    def empty( self ):
+        return (self.__values == 0 )
+    
+    def __str__( self ):
+        return str(list(iter(self)))
+            
 class EnumValue(object):
     """ A specific value of an enumerated type """
 
@@ -135,7 +202,6 @@ class EnumValue(object):
             result = NotImplemented
 
         return result
-
 
 class Enum(object):
     """ Enumerated type """
