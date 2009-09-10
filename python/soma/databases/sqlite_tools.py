@@ -69,6 +69,10 @@ class ThreadSafeSQLiteConnection( object ):
       self._classLock.release()
 
   def __del__( self ):
+    if threading is None:
+      # The interpretor is exiting and we cannot access threading
+      # module. We cannot do anything.
+      return
     if self.__args is not None:
       sqliteFile = self.__args[ 0 ]
       self.close()
