@@ -61,8 +61,7 @@ class Singleton( object ):
   '''
   def __new__( cls, *args, **kwargs ):
     if '_singleton_instance' not in cls.__dict__:
-      cls._singleton_instance = super(Singleton, cls).__new__( cls, *args,
-        **kwargs )
+      cls._singleton_instance = super(Singleton, cls).__new__( cls )
       singletonInit = getattr( cls._singleton_instance, 
                                '__singleton_init__', None )
       if singletonInit is not None:
