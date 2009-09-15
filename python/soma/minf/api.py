@@ -171,7 +171,18 @@ def iterateMinf( source, targets=None ):
   source.unread( start )
   if start == 'attri':
     d = {}
-    exec source.read() in d
+    try:
+      exec source.read() in d
+    except Exception, e:
+      x = source
+      if hasattr( source, '_BufferAndFile__file' ):
+        x = source._BufferAndFile__file
+      x = 'Error in iterateMinf while reading ' + str(x) + ': '
+      msg = x + e.message
+      # e.message = msg
+      # e.args = ( x + e.args[0], ) + e.args[1:] 
+      print x
+      raise
     minf = d[ 'attributes' ]
     if targets is not None:
       result = targets.next()

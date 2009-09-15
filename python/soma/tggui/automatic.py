@@ -46,8 +46,10 @@ import __builtin__
 if not hasattr( __builtin__, 'set' ):
   from sets import Set as set
 
+import gc
 import cherrypy, turbogears
 import turbogears.widgets
+from cherrypy import session
 from turbogears.widgets.base import JSLink, js_location, mochikit
 from turbogears.widgets import Label, FormFieldsContainer, HiddenField
 from turbogears.util import to_unicode
@@ -59,6 +61,7 @@ from soma.tggui.standard_widgets import TgRemoteForm
 from soma.translation import translate as _
 from soma.notification import Notifier
 from soma.undefined import Undefined
+from soma.singleton import Singleton
 from soma.signature.api import DataType
 from soma.uuid import Uuid
 from soma.functiontools import partial
@@ -66,28 +69,11 @@ from soma.functiontools import partial
 import sys, os, os.path, urllib
 import sip
 
-class TgWindowsManager( object ) :
+class TgWindowsManager( Singleton ) :
   '''
   C{TgWindowsManager} class manages opened windows for a session.
   '''
   windows = dict()
-  
-  def __new__( cls, session = cherrypy.session ):
-    '''
-    Only instanciates a new C{TgWindowsManager} class if none exists for the current session.
-    '''
-    if 'windows' in session :
-      instance = session[ 'windows' ]
-    else :
-      instance = None
-
-    if instance is None :
-      instance = object.__new__( cls )
-      session.acquire_lock()
-      session[ 'windows' ] = instance
-      session.release_lock()
-      
-    return instance
 
   def setWidgetValues( self, values, windowkey = 'windowid' ) :
     '''
@@ -101,9 +87,13 @@ class TgWindowsManager( object ) :
       if windowid in windows :
         window = windows[ windowid ]
         window.setWidgetValues( values )
+        
+  #def __del__(self):
+    #print 'TgWindowManager deleted'
     
   __getitem__ = windows.__getitem__
   __setitem__ = windows.__setitem__
+  __delitem__ = windows.__delitem__
   __contains__ = windows.__contains__
 
 class TgWindow( object ) :
@@ -120,10 +110,6 @@ class TgWindow( object ) :
       # It is necessary to manually instanciate a TgWindowsManager
       manager = TgWindowsManager()
       cls.manager = manager
-
-    widgets = getattr( cls, 'widgets', None )
-    if widgets is None :
-      cls.widgets = list()
     
     if windowid is None :
       # Generate a new unique identifier
@@ -134,10 +120,11 @@ class TgWindow( object ) :
       instance = manager[ windowid ]
     else :
       # Get a new window instance
-      instance = object.__new__( cls )
+      instance = super(TgWindow, cls).__new__(cls)
       instance.windowid = windowid
+      instance.widgets = list()
       manager[ windowid ] = instance
-
+      
     return instance
         
   def addWidget( self, widget ) :
@@ -163,6 +150,27 @@ class TgWindow( object ) :
 
       if unserializeMethod is not None :
         unserializeMethod.__call__( values, True )
+        
+  def close(self) :
+    try :
+        # Remove references to the widgets
+        while(len(self.widgets) > 0):
+          value = self.widgets[-1]
+          self.removeWidget(value)
+          delattr(value, '__del__')
+        
+        # Remove the reference to the current window from the window manager
+        del self.manager[ self.windowid ]
+            
+        # Remove the reference 
+        gc.collect()
+        
+    except Exception, e :
+        print 'Error while closing : ', e
+    
+    
+  #def __del__(self):   
+    #print 'TgWindow deleted'
 
 #------------------------------------------------------------------------------
 class EditionDialog( TgRemoteForm ):
@@ -246,8 +254,10 @@ class EditionDialog( TgRemoteForm ):
   @synchronized
   def cleanup( self, alsoDelete=False ):
     self.__tggui.closeEditionWidget( self.__widget )
-    self.__widget = None
+    self.__tggui.close()
     self.__tggui = None
+    self.window = None
+    self.__widget = None
   
   @synchronized
   def setObject( self, object ):
@@ -258,12 +268,6 @@ class EditionDialog( TgRemoteForm ):
     self.delayAttributeNotification( ignoreDoubles=True )
     self.window.setWidgetValues( values )
     self.restartAttributeNotification()
-
-  @synchronized
-  def __del__( self ):
-    if not self.__tggui is None :
-      self.__tggui.__del__()
-  
 
 #-------------------------------------------------------------------------------
 class ApplicationTgGUI( ApplicationBaseGUI ):
@@ -288,6 +292,8 @@ class ApplicationTgGUI( ApplicationBaseGUI ):
     children widgets and objects created with a default edition dialog.
     '''
     dialog.cleanup()
+    del dialog
+    gc.collect()
 
   def edit( self, object, live=True, parent=None ):
     return self.createEditionDialog( object, parent=parent, live=live )
@@ -329,6 +335,12 @@ class TgGUI( GUI ):
     if ( getattr( self, 'window', None ) is not None  ) :
       # Register the current widget for the known window
       self.window.addWidget( self )
+      
+  def close( self ):
+    if ( getattr( self, 'window', None ) is not None  ) :
+      self.window.removeWidget( self )
+      self.window.close()
+      self.window = None
       
   def findValueFromParams( self, params, widgetid, widgetname, default = None ) :
       '''

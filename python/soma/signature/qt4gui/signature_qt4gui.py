@@ -142,7 +142,7 @@ class HasSignatureEditionWidget( QtGui.QGroupBox ):
       if not signatureItem.visible: continue
       qtgui = self._qtgui._createAttributeQt4GUI( signatureItem.type, object, 
                                                   attributeName )
-      attributeWidget = qtgui.editionWidget( getattr( object, attributeName ),
+      attributeWidget = qtgui.editionWidget( getattr( object, attributeName, None ),
                                              parent=self, name=attributeName,
                                              live=live )
       labelWidget = qtgui.labelWidget( object, attributeName, attributeWidget,
