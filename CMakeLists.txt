@@ -19,6 +19,8 @@ BRAINVISA_INSTALL( FILES "${CMAKE_BINARY_DIR}/include/soma/config.h"
                    DESTINATION "include/soma"
                    COMPONENT ${PROJECT_NAME}-devel )
 
+set( SOMA-BASE_DEFINITIONS "-DUSE_SOMA_CONFIG" )
+
 BRAINVISA_COPY_PYTHON_DIRECTORY( "${CMAKE_CURRENT_SOURCE_DIR}/python"
                             ${PROJECT_NAME} )
 BRAINVISA_COPY_DIRECTORY( "${CMAKE_CURRENT_SOURCE_DIR}/share" 
