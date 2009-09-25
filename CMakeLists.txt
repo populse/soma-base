@@ -7,8 +7,19 @@ find_package( Epydoc )
 find_package( Dot )
 
 BRAINVISA_DEPENDENCY( DEV DEPENDS "${BRAINVISA_PACKAGE_NAME}" RUN "= ${${BRAINVISA_PACKAGE_NAME}_VERSION}" )
-BRAINVISA_DEPENDENCY( RUN DEPENDS python RUN "= ${PYTHON_SHORT_VERSION}" )
+BRAINVISA_DEPENDENCY( RUN DEPENDS python RUN ">= ${PYTHON_SHORT_VERSION}" )
 BRAINVISA_DEPENDENCY( DEV DEPENDS python DEV ">= 2.4;<< 3.0" )
+
+configure_file( "${CMAKE_CURRENT_SOURCE_DIR}/config/config.py.in" "${CMAKE_BINARY_DIR}/python/soma/config.py" @ONLY )
+BRAINVISA_INSTALL( FILES "${CMAKE_BINARY_DIR}/python/soma/config.py"
+                   DESTINATION "python/soma"
+                   COMPONENT ${PROJECT_NAME} )
+configure_file( "${CMAKE_CURRENT_SOURCE_DIR}/config/config.h.in" "${CMAKE_BINARY_DIR}/include/soma/config.h" @ONLY )
+BRAINVISA_INSTALL( FILES "${CMAKE_BINARY_DIR}/include/soma/config.h"
+                   DESTINATION "include/soma"
+                   COMPONENT ${PROJECT_NAME}-devel )
+
+set( SOMA-BASE_DEFINITIONS "-DUSE_SOMA_CONFIG" )
 
 BRAINVISA_COPY_PYTHON_DIRECTORY( "${CMAKE_CURRENT_SOURCE_DIR}/python"
                             ${PROJECT_NAME} )
