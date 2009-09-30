@@ -48,7 +48,7 @@ from soma.tggui import tools
 #-------------------------------------------------------------------------------
 class Bytes_TgGUI( TgGUI ):
   def __init__( self, instance ):
-    TgGUI.__init__( self, instance )
+    super(Bytes_TgGUI, self).__init__( instance )
     self._widget = None
   
   

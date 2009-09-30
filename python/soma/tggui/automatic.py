@@ -87,9 +87,6 @@ class TgWindowsManager( Singleton ) :
       if windowid in windows :
         window = windows[ windowid ]
         window.setWidgetValues( values )
-        
-  #def __del__(self):
-    #print 'TgWindowManager deleted'
     
   __getitem__ = windows.__getitem__
   __setitem__ = windows.__setitem__
@@ -120,7 +117,7 @@ class TgWindow( object ) :
       instance = manager[ windowid ]
     else :
       # Get a new window instance
-      instance = super(TgWindow, cls).__new__(cls)
+      instance = super( TgWindow, cls ).__new__( cls )
       instance.windowid = windowid
       instance.widgets = list()
       manager[ windowid ] = instance
@@ -167,7 +164,6 @@ class TgWindow( object ) :
         
     except Exception, e :
         print 'Error while closing : ', e
-    
     
   #def __del__(self):   
     #print 'TgWindow deleted'
@@ -256,6 +252,7 @@ class EditionDialog( TgRemoteForm ):
     self.__tggui.closeEditionWidget( self.__widget )
     self.__tggui.close()
     self.__tggui = None
+    self.window.close()
     self.window = None
     self.__widget = None
   
@@ -339,7 +336,6 @@ class TgGUI( GUI ):
   def close( self ):
     if ( getattr( self, 'window', None ) is not None  ) :
       self.window.removeWidget( self )
-      self.window.close()
       self.window = None
       
   def findValueFromParams( self, params, widgetid, widgetname, default = None ) :

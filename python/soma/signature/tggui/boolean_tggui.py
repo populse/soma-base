@@ -47,7 +47,7 @@ from soma.tggui import tools
 #-------------------------------------------------------------------------------
 class Boolean_TgGUI( TgGUI ):
   def __init__( self, instance ):
-    TgGUI.__init__( self, instance )
+    super(Boolean_TgGUI, self).__init__( instance )
     self._widget = None
   
   def editionWidget( self, value, window, parent=None, name=None, live=False ):

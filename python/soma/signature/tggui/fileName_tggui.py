@@ -33,6 +33,7 @@
 # knowledge of the CeCILL license version 2 and that you accept its terms.
 
 import os.path
+import base64
 
 from soma.wip.application.api import Application
 from soma.translation import translate as _
@@ -67,7 +68,7 @@ class FileName_TgGUI( Unicode_TgGUI ):
 
   def getPythonValue( self, editionWidget ):
     foundValue = self.dataTypeInstance.convert( unicode( editionWidget.default ) )
-    filepath = os.path.join( uploaddirectory, foundValue )
+    filepath = os.path.join( uploaddirectory, base64.b64decode( foundValue ) )
     foundValue = Application().temporary.createSelfDestroyed( foundValue )
     return foundValue
 
@@ -76,15 +77,15 @@ class Sequence_FileName_TgGUI( FileName_TgGUI ):
   def setObject( self, editionWidget, object ):
     values = list()
     for value in Sequence_Unicode_TgGUI.valuesFromText( unicode( editionWidget.default ) ) :
-      filepath = os.path.join( uploaddirectory, value )
+      filepath = os.path.join( uploaddirectory, base64.b64decode( value ) )
       values.append( Application().temporary.createSelfDestroyed( filepath ) )
     object[:] = values
 
   def updateEditionWidget( self, editionWidget, value ):
     if self._live:
       editionWidget.startInternalModification()
-      editionWidget.value = ' '.join( ["'" + i.replace( "'", "\\'" ) + "'" for i in value] )
+      editionWidget.value = ' '.join( ["'" + i + "'" for i in value] )
       editionWidget.stopInternalModification()
     else:
-      editionWidget.value = ' '.join( value )
+      editionWidget.value = ' '.join( ["'" + i + "'" for i in value] )
 

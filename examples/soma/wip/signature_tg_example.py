@@ -150,7 +150,7 @@ class Coordinate3D_TgGUI( TgGUI ):
   This class redefine completely the GUI for Coordinate3D
   '''
   def __init__( self, instance ):
-    TgGUI.__init__( self, instance )
+    super( Coordinate3D_TgGUI, self ).__init__( instance )
     
   def editionWidget( self, value, window, parent=None, name=None, live=False ):
     TgGUI.editionWidget( self, value, window, parent, name, live )

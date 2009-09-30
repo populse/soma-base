@@ -45,6 +45,7 @@ from turbogears.util            import Bunch
 from turbogears.widgets.base    import JSLink, js_location, mochikit
 from turbogears.widgets         import Widget, CompoundFormField, RemoteForm, TextField, CheckBox, SingleSelectField, FieldSet
 from turbogears.widgets.forms   import update_path, get_path, build_name_from_path
+from soma.decorators            import synchronized
 from soma.tggui                 import tools
 from soma.notification          import ObservableAttributes
 from soma.uuid                  import Uuid
@@ -104,6 +105,7 @@ class TgStandardBase( TgBase, TgAutoNamed, ObservableAttributes ) :
                           ' the label input tag' }
   label_attrs = {}
   
+  @synchronized
   def __setattr__( self, name, value ):
     '''
     @see:
@@ -423,7 +425,7 @@ class TgUploadMultipleFiles( TgStandardBase, CompoundFormField ):
                           'successful' : 'Upload succeeded' }
 
   def __init__(self, *args, **kw):
-    super(TgStandardBase, self).__init__(*args, **kw)
+    super(TgUploadMultipleFiles, self).__init__(*args, **kw)
     
     self.javascript = [ mochikit, JSLink( 'static', 'js/soma.js' ) ]
     self.selectfiles_attrs[ 'for' ] = self.field_id
@@ -464,3 +466,4 @@ class TgRemoteForm( TgStandardBase, RemoteForm ):
   '''
   Create a C{TgRemoteForm} instance.
   '''
+  pass

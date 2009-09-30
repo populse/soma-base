@@ -48,7 +48,7 @@ from soma.tggui.api import TgGUI, TgTextField
 #-------------------------------------------------------------------------------
 class Unicode_TgGUI( TgGUI ):
   def __init__( self, instance ):
-    TgGUI.__init__( self, instance )
+    super(Unicode_TgGUI, self).__init__( instance )
     self._widget = None
   
   

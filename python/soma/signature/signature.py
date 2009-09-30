@@ -324,7 +324,6 @@ class Signature( DataType ):
     def setType( self, dataType ):
       newValue = DataType.dataTypeInstance( dataType )
       self.__dict__[ 'type' ] = newValue
-      
     
     def getType( self ):
       try:

@@ -61,7 +61,7 @@ class Sequence_TgGUI( TgGUI ):
       return tgGUI( dataTypeInstance )
   
   def __init__( self, dataTypeInstance, horizontal=True ) :
-    TgGUI.__init__( self, dataTypeInstance )
+    super(Sequence_TgGUI, self).__init__( dataTypeInstance )
     
     self._widget = None
     self._elementsGUI = []

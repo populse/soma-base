@@ -49,7 +49,7 @@ from soma.tggui import tools
 #-------------------------------------------------------------------------------
 class Choice_TgGUI( TgGUI ):
   def __init__( self, instance ):
-    TgGUI.__init__( self, instance )
+    super(Choice_TgGUI, self).__init__( instance )
     self._widget = None
     self.__ignoreModification = False
 
@@ -96,8 +96,13 @@ class Choice_TgGUI( TgGUI ):
     editionWidget.close()
 
   def getPythonValue( self, attributeWidget ):
-    return self.dataTypeInstance.values[ int(attributeWidget.default) ]
+    try :
+      result = self.dataTypeInstance.values[ int(attributeWidget.default) ]
+    except Exception, e :
+      result = 0
 
+    return result
+    
   def _userModification( self ):
     self.onWidgetChange.notify( self._widget )
   

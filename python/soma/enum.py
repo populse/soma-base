@@ -133,6 +133,17 @@ class EnumValues(object):
         
         return int(self.__values) & int( math.pow(2, enumval.index) )
 
+    def __eq__( self, enumval ) :
+        if ( type(enumval) == EnumValues ) and ( enumval.__enumtype == self.__enumtype ) :
+            return ( self.__values == enumval.__values )
+        elif (enumval in self.__enumtype) :
+            return ( self.__values == int( math.pow(2, enumval.index) ) )
+        else :
+            raise EnumMissingKeyError(self.__enumtype, enumval)
+        
+    def __ne__( self, enumval ) :
+        return not (self == enumval)
+    
     def __ior__( self, enumval ) :
         if (enumval not in self.__enumtype) :
             raise EnumMissingKeyError(self.__enumtype, enumval)
@@ -152,6 +163,9 @@ class EnumValues(object):
             if value in self :
                 yield value
         
+    def __len__( self ):
+        return len(list(iter(self)))
+    
     def empty( self ):
         return (self.__values == 0 )
     
