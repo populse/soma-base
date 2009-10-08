@@ -33,13 +33,38 @@
 # knowledge of the CeCILL-B license and that you accept its terms.
 
 '''
-@author: Yann Cointepas
+
+@author: Dominique Geffroy
 @organization: U{NeuroSpin<http://www.neurospin.org>} and U{IFR 49<http://www.ifr49.org>}
 @license: U{CeCILL version 2<http://www.cecill.info/licences/Licence_CeCILL_V2-en.html>}
 '''
 __docformat__ = "epytext en"
 
+from soma.singleton import Singleton
+import os
 
-from soma.wip.application.plugins import Plugin, Plugins
-from soma.wip.application.application import Application
-from soma.wip.application.icons import findIconFile, somaIconsDirectory
+class BrainvisaSystemEnv(Singleton):
+  """
+  This class gets the value of the variables BRAINVISA_SYSTEM_... if they are defined. These variables store the value of system environment variables that have been modified in brainvisa context. 
+  The method getVariables returns a map of variable -> value to restore the system value of these environment variables.
+  """
+  
+  def __singleton_init__(self):
+    """
+    Define system environment variables that have to be passed to external command to restore environment if it have been modified at brainvisa startup
+    """
+    self.variables=None
+    # if the variable BRAINVISA_SYSTEM_VARIABLES is defined, we are in a brainvisa package and some environment variable have been modified at startup
+    brainvisaSysVarList=os.getenv('BRAINVISA_SYSTEM_VARIABLES')
+    if brainvisaSysVarList:
+      # this map will contain {variable : old value} for all varialbes modified at startup
+      self.variables={}
+      # the old value of these variables was stored in variables BRAINVISA_SYSTEM_VARIABLE
+      for sysVar in brainvisaSysVarList.split(" "):
+        bvSysVar="BRAINVISA_SYSTEM_"+sysVar
+        self.variables[sysVar]=os.getenv(bvSysVar)
+
+  def getVariables(self):
+    return self.variables
+  
+  
