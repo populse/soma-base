@@ -25,6 +25,7 @@ set( @PROJECT_NAME_UPPER@_USE_FILE "${@PROJECT_NAME_UPPER@_BINARY_DIR}/share/@PR
 find_package( PythonInterp REQUIRED )
 find_package( Epydoc )
 find_package( Dot )
+BRAINVISA_FIND_PACKAGE( brainvisa-share )
 
 set( @PROJECT_NAME_UPPER@_DEFINITIONS "@SOMA-BASE_DEFINITIONS@" )
 set( @PROJECT_NAME_UPPER@_INCLUDE_DIRS

@@ -6,6 +6,13 @@ find_package( python REQUIRED )
 find_package( Epydoc )
 find_package( Dot )
 
+BRAINVISA_FIND_PACKAGE( brainvisa-share )
+if( BRAINVISA-SHARE_FOUND )
+  include( "${BRAINVISA-SHARE_USE_FILE}" )
+else()
+  message( "WARNING: project brainvisa-share has not been found. Some programs that require access to shared directories may fail to run." )
+endif()
+
 BRAINVISA_DEPENDENCY( DEV DEPENDS "${BRAINVISA_PACKAGE_NAME}" RUN "= ${${BRAINVISA_PACKAGE_NAME}_VERSION}" )
 BRAINVISA_DEPENDENCY( RUN DEPENDS python RUN ">= ${PYTHON_SHORT_VERSION}" )
 BRAINVISA_DEPENDENCY( DEV DEPENDS python DEV ">= 2.4;<< 3.0" )
