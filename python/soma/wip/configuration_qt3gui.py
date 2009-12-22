@@ -205,7 +205,7 @@ class ConfigurationWidget( qt.QWidget ):
     self.lbxPanels.setFrameShape( qt.QListBox.NoFrame )
     self.lbxPanels.setFrameShadow( qt.QListBox.Plain )
     self.lbxPanels.setMargin( 6 )
-    self.lbxPanels.setResizePolicy( qt.QListBox.AutoOneFit )
+    #self.lbxPanels.setResizePolicy( qt.QListBox.AutoOneFit )
 
     self.scv = qt.QScrollView( self.splitter )
     self.scv.setResizePolicy( qt.QScrollView.AutoOneFit )
@@ -219,8 +219,11 @@ class ConfigurationWidget( qt.QWidget ):
   
   
   def sizeHint( self ):
-    size = qt.QWidget.sizeHint( self )
-    return qt.QSize(size.width()*1.1,size.height()*1.1)
+    lbxSize=self.lbxPanels.sizeHint()
+    wstSize=self.wstPanels.sizeHint()
+    return qt.QSize(lbxSize.width()+self.splitter.handleWidth()+wstSize.width(), wstSize.height())
+    #size = qt.QWidget.sizeHint( self )
+    #return qt.QSize(size.width()*1.1,size.height()*1.1)
 
 
 #------------------------------------------------------------------------------
