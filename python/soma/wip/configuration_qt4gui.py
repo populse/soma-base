@@ -222,8 +222,11 @@ class ConfigurationWidget( qt.QWidget ):
     ConfigurationLayout.addWidget(self.splitter)
   
   def sizeHint( self ):
-    size = qt.QWidget.sizeHint( self )
-    return qt.QSize(size.width()*1.1,size.height()*1.3)
+    lbxSize=self.lbxPanels.sizeHint()
+    wstSize=self.wstPanels.sizeHint()
+    return qt.QSize( lbxSize.width()+self.splitter.handleWidth()+wstSize.width(), wstSize.height() )
+    #size = qt.QWidget.sizeHint( self )
+    #return qt.QSize(size.width()*1.1,size.height()*1.3)
 
 
 #------------------------------------------------------------------------------
