@@ -173,8 +173,7 @@ class GenericHandlers :
 
       # Changes child objects locals declaration
       for ( childName, childObject ) in object.__dict__.items() :
-        if not childName.startswith("__") \
-          and hasattr( childObject, '__module__' ) :
+        if not childName.startswith("__"):
 
           locals[ childName ] = childObject
 
