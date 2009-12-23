@@ -172,9 +172,11 @@ class GenericHandlers :
     if object is not None :
 
       # Changes child objects locals declaration
-      for ( childName, childObject ) in object.__dict__.items() :
-        if not childName.startswith("__") \
-          and hasattr( childObject, '__module__' ) :
+      for childName in object.__dict__.keys() :
+        # in sip >= 4.8, obj.__dict__[key] and getattr(obj, key)
+        # do *not* return the same thing for functions !
+        childObject = getattr( object, childName )
+        if not childName.startswith("__"):
 
           locals[ childName ] = childObject
 
@@ -195,7 +197,8 @@ class GenericHandlers :
           try:
             childObject.__module__ = newName
             if hasattr( childObject, '__dict__' ):
-              for x, y in childObject.__dict__.iteritems():
+              for x in childObject.__dict__.keys():
+                y = getattr( childObject, x )
                 if not x.startswith( '__' ) \
                   and y not in stack and y not in done:
                   stack.append( y )
