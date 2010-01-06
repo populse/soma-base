@@ -1,4 +1,4 @@
-# -*- coding: iso-8859-1 -*-
+# -*- coding: utf-8 -*-
 
 #  This software and supporting documentation are distributed by
 #      Institut Federatif de Recherche 49
@@ -46,6 +46,7 @@ import htmlentitydefs
 #------------------------------------------------------------------------------
 #: mapping of charaters to be escaped for HTML
 _htmlEscape = None
+_lesserHtmlEscape = None
 
 def htmlEscape( msg ):
   """
@@ -56,3 +57,13 @@ def htmlEscape( msg ):
   if _htmlEscape is None:
     _htmlEscape=dict( [ (ord(j.decode('iso-8859-1')),u'&'+i+u';') for i,j in htmlentitydefs.entitydefs.iteritems() if len(j)==1] )
   return unicode( msg ).translate( _htmlEscape )
+
+def lesserHtmlEscape( msg ):
+  """
+  Replace special characters in the message by their correponding html entity.
+  @rtype : unicode
+  """
+  global _lesserHtmlEscape
+  if _lesserHtmlEscape is None:
+    _lesserHtmlEscape=dict( [ (ord(j.decode('iso-8859-1')),u'&'+i+u';') for i,j in htmlentitydefs.entitydefs.iteritems() if len(j)==1 and j not in ( u'"', u'é', u'à', u'è', u'â', u'ê', u'ô', u'î', u'û', u'ù', u'ö', )] )
+  return unicode( msg ).translate( _lesserHtmlEscape )
