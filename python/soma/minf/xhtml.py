@@ -1,4 +1,4 @@
-# -*- coding: iso-8859-1 -*-
+# -*- coding: utf-8 -*-
 
 #  This software and supporting documentation are distributed by
 #      Institut Federatif de Recherche 49
@@ -49,6 +49,7 @@ from cStringIO import StringIO
 from soma.translation import translate as _
 from soma.minf.api import readMinf
 from soma.minf.xml_tags import minfTag, expanderAttribute, xhtmlTag
+from soma.html import lesserHtmlEscape
 from xml.sax.saxutils import quoteattr as xml_quoteattr
 
 #------------------------------------------------------------------------------
@@ -103,7 +104,7 @@ class XHTML:
           result += '/>'
         return result
     else:
-      return item
+      return lesserHtmlEscape( item )
   _itemXML = staticmethod( _itemXML )
 
   
