@@ -78,14 +78,23 @@ class ThreadSafeProxy( object ):
       ThreadSafeProxy._threadCall.setProcessingThread( ThreadSafeProxy._thread )
       ThreadSafeProxy._thread.start()
   
-  
+  #_dbg = 0
   @staticmethod
   def pyroThreadCall( *args, **kwargs ):
     '''
     Calls a function from the Pyro thread.
     '''
     ThreadSafeProxy._createThread()
-    print '!pyroThreadCall!', args, kwargs
+    #n = ThreadSafeProxy._dbg
+    #ThreadSafeProxy._dbg += 1
+    #if isinstance( f, Pyro.core._RemoteMethod ):
+      #sf = '<' + f._RemoteMethod__name + '>'
+    #else:
+      #sf = repr( f )
+    #print '!pyroThreadCall! -->', n, sf, args, kwargs
+    #result = ThreadSafeProxy._threadCall.call( f, *args, **kwargs )
+    #print '!pyroThreadCall! <--', n, result
+    #return result
     return ThreadSafeProxy._threadCall.call( *args, **kwargs )
   
   
