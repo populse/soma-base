@@ -85,11 +85,11 @@ class SingleThreadCalls:
     @param thread: Processing thread. If C{None}, C{threading.currentThread()} 
     is used.
     '''
-    self._lock = threading.Lock()
     self._queue = []
     if thread is None:
       thread = threading.currentThread()
     self._thread = thread
+    self._condition = threading.Condition()
   
   
   def setProcessingThread( self, thread ):
@@ -100,11 +100,11 @@ class SingleThreadCalls:
     @type  thread: C{threading.Thread} instance
     @param thread: Processing thread
     '''
-    self._lock.acquire()
+    self._condition.acquire()
     try:
       self._thread = thread
     finally:
-      self._lock.release()
+      self._condition.release()
   
   
   def call( self, function, *args, **kwargs ):
@@ -127,11 +127,12 @@ class SingleThreadCalls:
       semaphore = threading.Semaphore( 0 )
       semaphore._result = None
       semaphore._exception = None
-      self._lock.acquire()
+      self._condition.acquire()
       try:
         self._queue.append( ( self._executeAndNotify, (semaphore, function, args, kwargs), {} ) )
+        self._condition.notify()
       finally:
-        self._lock.release()
+        self._condition.release()
       semaphore.acquire()
       if semaphore._exception is not None:
         e = semaphore._exception
@@ -167,11 +168,12 @@ class SingleThreadCalls:
     if threading.currentThread() is self._thread:
       apply( function, args, kwargs )
     else:
-      self._lock.acquire()
+      self._condition.acquire()
       try:
         self._queue.append( ( function, args, kwargs ) )
+        self._condition.notify()
       finally:
-        self._lock.release()
+        self._condition.release()
 
 
   def stop( self ):
@@ -182,11 +184,12 @@ class SingleThreadCalls:
     will be processed but functions registered after the special value will be 
     ignored.
     '''
-    self._lock.acquire()
+    self._condition.acquire()
     try:
       self._queue.append( None )
+      self._condition.notify()
     finally:
-      self._lock.release()
+      self._condition.release()
   
 
   def processFunctions( self, blocking=False ):
@@ -208,12 +211,12 @@ class SingleThreadCalls:
   
     @see: L{processingLoop}
     '''
-    if self._lock.acquire( blocking ):
+    if self._condition.acquire( blocking ):
       try:
         actions = self._queue
         self._queue = []
       finally:
-        self._lock.release()
+        self._condition.release()
       result = 0
       for action in actions:
         if action is None:
@@ -225,15 +228,14 @@ class SingleThreadCalls:
     return 0
 
 
-  def processingLoop( self, idletime=0.05 ):
+  def processingLoop( self ):
     '''
     Continuously execute L{processFunctions} until it returns C{None}
     @see: L{processFunctions}
     '''
     actionCount = 0
+    self._condition.acquire()
     while actionCount is not None:
+      self._condition.wait()
       actionCount = self.processFunctions()
-      if actionCount == 0:
-        # if no action was on the queue, then sleep a little bit not to
-        # use a full CPU
-        time.sleep( idletime )
+    self._condition.release()
