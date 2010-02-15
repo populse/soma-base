@@ -57,7 +57,7 @@ until the call is done and the result available).
 '''
 __docformat__ = "epytext en"
 
-import threading, time
+import threading #, time
 
 class SingleThreadCalls:
   '''
@@ -233,7 +233,7 @@ class SingleThreadCalls:
     actionCount = 0
     while actionCount is not None:
       actionCount = self.processFunctions()
-      if actionCount == 0:
-        # if no action was on the queue, then sleep a little bit not to
-        # use a full CPU
-        time.sleep( idletime )
+      #if actionCount == 0:
+        ## if no action was on the queue, then sleep a little bit not to
+        ## use a full CPU
+        #time.sleep( idletime )
