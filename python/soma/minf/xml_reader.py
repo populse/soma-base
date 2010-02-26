@@ -60,7 +60,7 @@ from soma.minf.xhtml import XHTML
 # This module only contains a definition of XML tags and attributes.
 # It is designed to allow "import *".
 from soma.minf.xml_tags import *
-
+from cStringIO import StringIO
 
 #------------------------------------------------------------------------------
 class MinfXMLReader( MinfReader, ErrorHandler ):
@@ -101,17 +101,17 @@ class MinfXMLReader( MinfReader, ErrorHandler ):
     self._minfStarted = False
     self._minfFinished = False
     self._nodeIdentifier = 0
-    buffer = ''
+    buffer = []
     while not self._nodesToProduce:
       line = source.readline()
-      buffer += line
+      buffer.append( line )
       if not line:
         # end of file
         break
       self._sax_parser.feed( line )
     if self._nodesToProduce:
-      return ( self._nodesToProduce[ 0 ].attributes[ 'reduction' ], buffer )
-    return ( None, buffer )
+      return ( self._nodesToProduce[ 0 ].attributes[ 'reduction' ], ''.join(buffer) )
+    return ( None, ''.join(buffer) )
 
 
   def nodeIterator( self, source ):
@@ -202,21 +202,22 @@ class FalseXMLHandler( XMLHandler ):
 class NumberXMLHandler( XMLHandler ):
   def __init__( self, parser, parent, name, attributes ):
     XMLHandler.__init__( self, parser, parent, name, attributes )
-    self._stringValue = ''
+    self._stringValue = []
   
   
   def characters( self, parser, content ):
-    self._stringValue += content
+    self._stringValue.append(content)
   
   
   def endElement( self, parser, name ):
+    stringValue=''.join(self._stringValue)
     try: 
-      value = int( self._stringValue )
+      value = int( stringValue )
     except:
       try: 
-        value = long( self._stringValue )
+        value = long( stringValue )
       except:
-        value = float( self._stringValue )
+        value = float( stringValue )
     parser._nodesToProduce.append( value )
     XMLHandler.endElement( self, parser, name )
 
@@ -225,15 +226,15 @@ class NumberXMLHandler( XMLHandler ):
 class StringXMLHandler( XMLHandler ):
   def __init__( self, parser, parent, name, attributes ):
     XMLHandler.__init__( self, parser, parent, name, attributes )
-    self._value = ''
+    self._value = []
   
   
   def characters( self, parser, content ):
-    self._value += content
+    self._value.append(content)
   
   
   def endElement( self, parser, name ):
-    parser._nodesToProduce.append( self._value )
+    parser._nodesToProduce.append( ''.join(self._value) )
     XMLHandler.endElement( self, parser, name )
 
 
@@ -337,18 +338,18 @@ class ReferenceXMLHandler( XMLHandler ):
 class XHTMLHandler( XMLHandler ):
   def __init__( self, parser, parent, name, attributes ):
     self.stack = [ XHTML( name, attributes ) ]
-    self._characters = ''
+    self._characters = []
     XMLHandler.__init__( self, parser, parent, name, attributes )
 
 
   def characters( self, parser, content ):
-    self._characters += content
+    self._characters.append(content)
   
   
   def startElement( self, parser, name, attributes ):
-    c = self._characters
+    c = ''.join(self._characters)
     if c: self.stack[ -1 ].content.append( c )
-    self._characters = ''
+    self._characters = []
     newItem = XHTML( name, attributes )
     self.stack[ -1 ].content.append( newItem )
     self.stack.append( newItem )
@@ -356,8 +357,8 @@ class XHTMLHandler( XMLHandler ):
     
   def endElement( self, parser, name ):
     item = self.stack.pop()
-    c = self._characters
-    self._characters = ''
+    c = ''.join(self._characters)
+    self._characters = []
     if c: item.content.append( c )
     if not self.stack:
       parser._nodesToProduce.append( item )
