@@ -144,7 +144,7 @@ class SingleThreadCalls:
   
   def _executeAndNotify( semaphore, function, args, kwargs ):
     try:
-      result = apply(  function, args, kwargs )
+      result = function( *args, **kwargs )
       semaphore._result = result
       semaphore._exception = None
       semaphore.release()
@@ -235,6 +235,7 @@ class SingleThreadCalls:
     '''
     actionCount = 0
     self._condition.acquire()
+    self.processFunctions()
     while actionCount is not None:
       self._condition.wait()
       actionCount = self.processFunctions()

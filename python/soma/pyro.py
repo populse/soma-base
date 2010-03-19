@@ -64,7 +64,8 @@ class ThreadSafeProxy( object ):
       
       threadSafeProxy = ThreadSafeProxy( Pyro.core.getProxyFromURI( 'PYRO://127.0.0.1:7766/84a68da2260374b1b334d9591c4fd84f' ) )
     '''
-    object.__setattr__( self, '_proxy', proxy )
+    newProxy = self.pyroThreadCall( proxy.__class__, proxy.URI )
+    object.__setattr__( self, '_proxy', newProxy )
   
   
   @staticmethod
@@ -75,6 +76,7 @@ class ThreadSafeProxy( object ):
     if ThreadSafeProxy._thread is None:
       ThreadSafeProxy._threadCall = SingleThreadCalls()
       ThreadSafeProxy._thread = threading.Thread( target=ThreadSafeProxy._threadCall.processingLoop )
+      ThreadSafeProxy._thread.setDaemon( True )
       ThreadSafeProxy._threadCall.setProcessingThread( ThreadSafeProxy._thread )
       ThreadSafeProxy._thread.start()
   
