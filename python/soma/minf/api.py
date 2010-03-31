@@ -173,7 +173,11 @@ def iterateMinf( source, targets=None ):
   start = source.read( 5 )
   source.unread( start )
   if start == 'attri':
-    d = {}
+    try:
+      import numpy
+      d = { 'nan' : numpy.nan }
+    except:
+      d = { 'nan' : None }
     try:
       exec source.read() in d
     except Exception, e:
