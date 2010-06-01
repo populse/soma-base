@@ -1,33 +1,33 @@
-#  This software and supporting documentation are distributed by
-#      Institut Federatif de Recherche 49
-#      CEA/NeuroSpin, Batiment 145,
-#      91191 Gif-sur-Yvette cedex
-#      France
-#
-# This software is governed by the CeCILL-B license under
-# French law and abiding by the rules of distribution of free software.
-# You can  use, modify and/or redistribute the software under the 
-# terms of the CeCILL-B license as circulated by CEA, CNRS
-# and INRIA at the following URL "http://www.cecill.info". 
+#  This software and supporting documentation are distributed by 
+#      Institut Federatif de Recherche 49 
+#      CEA/NeuroSpin, Batiment 145, 
+#      91191 Gif-sur-Yvette cedex 
+#      France 
 # 
-# As a counterpart to the access to the source code and  rights to copy,
-# modify and redistribute granted by the license, users are provided only
-# with a limited warranty  and the software's author,  the holder of the
-# economic rights,  and the successive licensors  have only  limited
-# liability.
-#
-# In this respect, the user's attention is drawn to the risks associated
-# with loading,  using,  modifying and/or developing or reproducing the
-# software by the user in light of its specific status of free software,
-# that may mean  that it is complicated to manipulate,  and  that  also
-# therefore means  that it is reserved for developers  and  experienced
-# professionals having in-depth computer knowledge. Users are therefore
-# encouraged to load and test the software's suitability as regards their
-# requirements in conditions enabling the security of their systems and/or 
-# data to be ensured and,  more generally, to use and operate it in the 
-# same conditions as regards security.
-#
-# The fact that you are presently reading this means that you have had
+# This software is governed by the CeCILL-B license under 
+# French law and abiding by the rules of distribution of free software. 
+# You can  use, modify and/or redistribute the software under the  
+# terms of the CeCILL-B license as circulated by CEA, CNRS 
+# and INRIA at the following URL "http://www.cecill.info".  
+#  
+# As a counterpart to the access to the source code and  rights to copy, 
+# modify and redistribute granted by the license, users are provided only 
+# with a limited warranty  and the software's author,  the holder of the 
+# economic rights,  and the successive licensors  have only  limited 
+# liability. 
+# 
+# In this respect, the user's attention is drawn to the risks associated 
+# with loading,  using,  modifying and/or developing or reproducing the 
+# software by the user in light of its specific status of free software, 
+# that may mean  that it is complicated to manipulate,  and  that  also 
+# therefore means  that it is reserved for developers  and  experienced 
+# professionals having in-depth computer knowledge. Users are therefore 
+# encouraged to load and test the software's suitability as regards their 
+# requirements in conditions enabling the security of their systems and/or  
+# data to be ensured and,  more generally, to use and operate it in the  
+# same conditions as regards security. 
+# 
+# The fact that you are presently reading this means that you have had 
 # knowledge of the CeCILL-B license and that you accept its terms.
 import operator
 import types
@@ -110,6 +110,7 @@ class UserInfo( object ) :
       return self.completename.title()
   
 class UserInfoProviderType :
+  BASIC = 'basic'
   LDAP = 'ldap'
   NIS = 'nis'
 
@@ -135,8 +136,10 @@ class UserInfoProvider( object ) :
 
     if ( providertype == UserInfoProviderType.NIS ) :
       return NisUserInfoProvider()
-    else :
+    elif ( providertype == UserInfoProviderType.LDAP ) :
       return LdapUserInfoProvider()
+    else:
+      return BasicUserInfoProvider()
       
   def getUsers( self ) :
     '''
@@ -144,7 +147,46 @@ class UserInfoProvider( object ) :
     @return : L{list} of {list}s containing users infos.
     '''
     pass
-   
+
+class BasicUserInfoProvider( UserInfoProvider ) :
+  '''
+  C{BasicUserInfoProvider} is the basic implementation of the
+  L{UserInfoProvider} class.
+  '''
+  def getUsers( self, users = None, attributes = None, formats = None, sorts = None  ) :
+    '''
+    Method that retrieve users info for the C{BasicUserInfoProvider}.
+    It uses a ldap server.
+    @type users : L{list} of L{list}s.
+    @param users : users to use.
+    @type attributes : L{list}
+    @param attributes : list of basic attributes to get (example : [ 'sn', 'givenName', 'uid' ] ).
+    @type formats : L{list}
+    @param formats : list of tuple that contains names of the matching user field and formats to apply
+                     (example : [ ( 'lastname', '%(sn)s %(givenName)s'), ( 'login', '%(uid)s') ] ).
+    @type sorts : L{list} of L{int}
+    @param sorts : list of sorts to apply to get user information (example : [ 0 ] ).
+                  Values are the indexes of output fields used to sort data.
+    @return : L{list} of L{list}s containing users infos.
+    '''
+    
+    appli = Application()
+
+    if users is None :
+      users = appli.configuration.userinfoprovider.basic.users
+
+    if attributes is None :
+      attributes = appli.configuration.userinfoprovider.basic.attributes
+
+    if formats is None :
+      formats = appli.configuration.userinfoprovider.basic.formats
+
+    if sorts is None :
+      sorts = appli.configuration.userinfoprovider.basic.sorts
+
+    return getUsersInfo( users, formats, attributes, sorts )
+
+
 class LdapUserInfoProvider( UserInfoProvider ) :
   '''
   C{LdapUserInfoProvider} is the ldap implementation of the
@@ -311,11 +353,21 @@ class NisUserInfoProviderConfigurationGroup( ConfigurationGroup ) :
     'sorts', Sequence(Integer), dict(defaultValue=['completename'], doc='Set sort attributes here.')
   )
     
+
+class BasicUserInfoProviderConfigurationGroup( ConfigurationGroup ) :
+  signature = Signature(
+    'users', Sequence(Sequence(Unicode)), dict(defaultValue=[], doc='Set users to use here.' ),
+    'attributes', Sequence(Unicode), dict(defaultValue=[ 'cn', 'uid' ], doc='Set basic keys here (key order must match with indexes order).' ),
+    'formats', Sequence(Sequence(Unicode)), dict(defaultValue=[ ( 'completename', '%(cn)s' ), ( 'login', '%(uid)s' ) ], doc='Set formats to apply here.' ),
+    'sorts', Sequence(Integer), dict(defaultValue=['completename'], doc='Set sort attributes here.')
+  )
+  
 class UserInfoProviderConfigurationGroup( ConfigurationGroup ) :
   signature = Signature(
-    'uses', Choice( UserInfoProviderType.LDAP, UserInfoProviderType.NIS ), dict(defaultValue = UserInfoProviderType.LDAP ),
+    'uses', Choice( UserInfoProviderType.BASIC, UserInfoProviderType.LDAP, UserInfoProviderType.NIS ), dict(defaultValue = UserInfoProviderType.BASIC ),
     'ldap', LdapUserInfoProviderConfigurationGroup, dict(defaultValue = LdapUserInfoProviderConfigurationGroup() ),
-    'nis', NisUserInfoProviderConfigurationGroup, dict(defaultValue = NisUserInfoProviderConfigurationGroup() )
+    'nis', NisUserInfoProviderConfigurationGroup, dict(defaultValue = NisUserInfoProviderConfigurationGroup() ),
+    'basic', BasicUserInfoProviderConfigurationGroup, dict(defaultValue = BasicUserInfoProviderConfigurationGroup() )
   )
 
 def initializeUserInfoProvider():
