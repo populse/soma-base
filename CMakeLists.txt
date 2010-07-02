@@ -6,7 +6,7 @@ find_package( python REQUIRED )
 find_package( Epydoc )
 find_package( Dot )
 
-BRAINVISA_FIND_PACKAGE( brainvisa-share )
+BRAINVISA_FIND_PACKAGE( brainvisa-share QUIET )
 if( BRAINVISA-SHARE_FOUND )
   include( "${BRAINVISA-SHARE_USE_FILE}" )
 else()
