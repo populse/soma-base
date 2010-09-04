@@ -24,7 +24,7 @@ BRAINVISA_INSTALL( FILES "${CMAKE_BINARY_DIR}/python/soma/config.py"
 configure_file( "${CMAKE_CURRENT_SOURCE_DIR}/config/config.h.in" "${CMAKE_BINARY_DIR}/include/soma/config.h" @ONLY )
 BRAINVISA_INSTALL( FILES "${CMAKE_BINARY_DIR}/include/soma/config.h"
                    DESTINATION "include/soma"
-                   COMPONENT ${PROJECT_NAME}-devel )
+                   COMPONENT ${PROJECT_NAME}-dev )
 
 set( SOMA-BASE_DEFINITIONS "-DUSE_SOMA_CONFIG" )
 
