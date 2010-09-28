@@ -1,5 +1,4 @@
-# -*- coding: iso-8859-1 -*-
-
+# -*- coding: utf-8 -*-
 #  This software and supporting documentation are distributed by
 #      Institut Federatif de Recherche 49
 #      CEA/NeuroSpin, Batiment 145,
@@ -389,7 +388,7 @@ class Signature( DataType ):
 
 
   def __init__( self, *args ):
-    DataType.__init__( self )
+    super( Signature, self ).__init__()
     # Notifier is created on read-only Signature because listeners registration
     # can be done on Signature and copied when Signature is changed to
     # VariableSignature
