@@ -96,7 +96,7 @@ class SipComponent_somabase( GenericMakerComponent ):
       self._data[ 'sipinclude' ] = SipComponent.sipinclude( self )
 
   def doEpydoc( self ):
-    return True
+    return False
 
   def pythonModule( self ):
     return 'soma-basesip'
@@ -168,7 +168,7 @@ class SipGuiComponent_somabase( GenericMakerModuleComponent ):
         self._data[ 'gradwidget_sip' ] = 'gradwidget_qt4.sip'
 
   def doEpydoc( self ):
-    return True
+    return False
 
   def pythonModule( self ):
     return 'soma.qtgui.gradwidget'
