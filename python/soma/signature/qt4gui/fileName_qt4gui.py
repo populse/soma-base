@@ -87,9 +87,9 @@ class FileName_Qt4GUI( Unicode_Qt4GUI ):
     if self.dataTypeInstance.directoryOnly:
       value = QFileDialog.getExistingDirectory ( self._widget, 'Select a directory', '', QFileDialog.ShowDirsOnly | QFileDialog.DontUseNativeDialog )
     elif self.dataTypeInstance.readOnly:
-      value = QFileDialog.getOpenFileName ( self._widget, 'Select a file', '', '', 0, qt.QFileDialog.DontUseNativeDialog )
+      value = QFileDialog.getOpenFileName ( self._widget, 'Select a file', '', '', 0, QFileDialog.DontUseNativeDialog )
     else:
-      value = QFileDialog.getSaveFileName ( self._widget, 'Select a file', '', '', 0, qt.QFileDialog.DontUseNativeDialog )
+      value = QFileDialog.getSaveFileName ( self._widget, 'Select a file', '', '', 0, QFileDialog.DontUseNativeDialog )
     self._lineEdit.setText( unicode( value ) )
 
 
