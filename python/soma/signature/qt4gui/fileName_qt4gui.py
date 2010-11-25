@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 #  This software and supporting documentation are distributed by
 #      Institut Federatif de Recherche 49
 #      CEA/NeuroSpin, Batiment 145,
@@ -84,11 +85,11 @@ class FileName_Qt4GUI( Unicode_Qt4GUI ):
   
   def _browseClicked( self ):
     if self.dataTypeInstance.directoryOnly:
-      value = QFileDialog.getExistingDirectory ( self._widget, 'Select a directory', '' )
+      value = QFileDialog.getExistingDirectory ( self._widget, 'Select a directory', '', QFileDialog.ShowDirsOnly | QFileDialog.DontUseNativeDialog )
     elif self.dataTypeInstance.readOnly:
-      value = QFileDialog.getOpenFileName ( self._widget, 'Select a file', '', '' )
+      value = QFileDialog.getOpenFileName ( self._widget, 'Select a file', '', '', 0, QFileDialog.DontUseNativeDialog )
     else:
-      value = QFileDialog.getSaveFileName ( self._widget, 'Select a file', '', '', )
+      value = QFileDialog.getSaveFileName ( self._widget, 'Select a file', '', '', 0, QFileDialog.DontUseNativeDialog )
     self._lineEdit.setText( unicode( value ) )
 
 
