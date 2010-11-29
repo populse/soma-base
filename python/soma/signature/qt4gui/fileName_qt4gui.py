@@ -89,7 +89,7 @@ class FileName_Qt4GUI( Unicode_Qt4GUI ):
     elif self.dataTypeInstance.readOnly:
       value = QFileDialog.getOpenFileName ( self._widget, 'Select a file', '', '', 0, QFileDialog.DontUseNativeDialog )
     else:
-      value = QFileDialog.getSaveFileName ( self._widget, 'Select a file', '', '', 0, QFileDialog.DontUseNativeDialog )
+      value = QFileDialog.getSaveFileName ( self._widget, 'Select a file', '', '', None, QFileDialog.DontUseNativeDialog )
     self._lineEdit.setText( unicode( value ) )
 
 
