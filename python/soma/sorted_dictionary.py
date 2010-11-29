@@ -1,4 +1,4 @@
-# -*- coding: iso-8859-1 -*-
+# -*- coding: utf-8 -*-
 
 #  This software and supporting documentation are distributed by
 #      Institut Federatif de Recherche 49
@@ -133,6 +133,7 @@ class SortedDictionary( UserDict, object ):
       except:
         print '!error!', self.data.keys(), self.sortedKeys
         raise
+
   def insert( self, index, key, value ):
     '''
     insert a ( C{key}, C{value} ) pair in sorted dictionary before position 
@@ -164,6 +165,7 @@ class SortedDictionary( UserDict, object ):
     del self.sortedKeys[:]
     self.data.clear()
 
+
   def sort(self, func=None):
     """Sorts the dictionary using function func to compare keys.
 
@@ -171,6 +173,7 @@ class SortedDictionary( UserDict, object ):
     @param func: comparison function, return -1 if e1<e2, 1 if e1>e2, 0 if e1==e2
     """
     self.sortedKeys.sort(func)
+
 
   def compValues(self, key1, key2):
     """
@@ -195,7 +198,8 @@ class SortedDictionary( UserDict, object ):
       self[ key ] = value
       result = value
     return result
-  
+
+
   def pop( self, key, default=Undefined ):
     if default is Undefined:
       result = self.data.pop(key)
@@ -205,6 +209,7 @@ class SortedDictionary( UserDict, object ):
         return default
     self.sortedKeys.remove( key )
     return result
+
 
   def popitem( self ):
     result = self.data.popitem()
