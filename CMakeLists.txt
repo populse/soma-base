@@ -41,6 +41,6 @@ BRAINVISA_COPY_DIRECTORY( "${CMAKE_CURRENT_SOURCE_DIR}/examples/soma"
                           ${PROJECT_NAME}-doc )
 BRAINVISA_GENERATE_EPYDOC_DOC( "${CMAKE_BINARY_DIR}/python/soma"
   "share/doc/soma-${BRAINVISA_PACKAGE_VERSION_MAJOR}.${BRAINVISA_PACKAGE_VERSION_MINOR}/epydoc"
-  EXCLUDE soma.aims* )
+  EXCLUDE "soma.aims*" "soma.*.qt3gui" )
 
 BRAINVISA_CREATE_CMAKE_CONFIG_FILES()
