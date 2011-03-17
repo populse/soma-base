@@ -87,7 +87,12 @@ class FileName_Qt4GUI( Unicode_Qt4GUI ):
     if self.dataTypeInstance.directoryOnly:
       value = QFileDialog.getExistingDirectory ( self._widget, 'Select a directory', '', QFileDialog.ShowDirsOnly | QFileDialog.DontUseNativeDialog )
     elif self.dataTypeInstance.readOnly:
-      value = QFileDialog.getOpenFileName ( self._widget, 'Select a file', '', '', 0, QFileDialog.DontUseNativeDialog )
+      # workaround a bug in PyQt ? Param 5 doesn't work; try to use kwargs
+      import sipconfig
+      if sipconfig.Configuration().sip_version >= 0x040a00:
+        value = QFileDialog.getOpenFileName ( self._widget, 'Select a file', '', '', options=QFileDialog.DontUseNativeDialog )
+      else:
+        value = QFileDialog.getOpenFileName ( self._widget, 'Select a file', '', '', 0, QFileDialog.DontUseNativeDialog )
     else:
       # workaround a bug in PyQt ? Param 5 doesn't work; try to use kwargs
       import sipconfig
