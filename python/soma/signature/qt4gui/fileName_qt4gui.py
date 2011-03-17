@@ -89,7 +89,12 @@ class FileName_Qt4GUI( Unicode_Qt4GUI ):
     elif self.dataTypeInstance.readOnly:
       value = QFileDialog.getOpenFileName ( self._widget, 'Select a file', '', '', 0, QFileDialog.DontUseNativeDialog )
     else:
-      value = QFileDialog.getSaveFileName ( self._widget, 'Select a file', '', '', None, QFileDialog.DontUseNativeDialog )
+      # workaround a bug in PyQt ? Param 5 doesn't work; try to use kwargs
+      import sipconfig
+      if sipconfig.Configuration().sip_version >= 0x040a00:
+        value = QFileDialog.getSaveFileName ( self._widget, 'Select a file', '', '', options=QFileDialog.DontUseNativeDialog )
+      else:
+        value = QFileDialog.getSaveFileName ( self._widget, 'Select a file', '', '', None, QFileDialog.DontUseNativeDialog )
     self._lineEdit.setText( unicode( value ) )
 
 
