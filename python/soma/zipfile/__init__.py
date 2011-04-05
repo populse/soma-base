@@ -9,14 +9,12 @@ if ver >= 0x0206:
   f, pathname, description = imp.find_module( 'zipfile',
     [ os.path.dirname( os.__file__ ) ] )
   try:
-    print 'import system zipfile'
     zipfile = imp.load_module( 'zipfile', f, pathname, description )
     globals().update( zipfile.__dict__ )
   finally:
     f.close()
     del f, pathname, description, imp
 else:
-  print 'copy of zipfile of python 2.6'
   from zipfile import *
 del zipfile, ver, sys, os
 
