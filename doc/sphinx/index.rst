@@ -1,5 +1,6 @@
-Soma-base
-=========
+
+Soma-base documentation
+=======================
 
 Many miscelaneous all-purpose classes and functions...
 
