@@ -35,11 +35,12 @@
 '''
 Utility functions for HTML format.
 
-@author: Yann Cointepas
-@organization: U{NeuroSpin<http://www.neurospin.org>} and U{IFR 49<http://www.ifr49.org>}
-@license: U{CeCILL version 2<http://www.cecill.info/licences/Licence_CeCILL_V2-en.html>}
+- author: Yann Cointepas
+- organization: `NeuroSpin <http://www.neurospin.org>`_ and 
+  `IFR 49 <http://www.ifr49.org>`_
+- license: `CeCILL version 2 <http://www.cecill.info/licences/Licence_CeCILL_V2-en.html>`_
 '''
-__docformat__ = "epytext en"
+__docformat__ = 'restructuredtext en'
 
 import htmlentitydefs
 
@@ -51,7 +52,8 @@ _lesserHtmlEscape = None
 def htmlEscape( msg ):
   """
   Replace special characters in the message by their correponding html entity.
-  @rtype : unicode
+  
+  - returns: *unicode*
   """
   global _htmlEscape
   if _htmlEscape is None:
@@ -61,7 +63,8 @@ def htmlEscape( msg ):
 def lesserHtmlEscape( msg ):
   """
   Replace special characters in the message by their correponding html entity.
-  @rtype : unicode
+  
+  - returns: *unicode*
   """
   global _lesserHtmlEscape
   if _lesserHtmlEscape is None:

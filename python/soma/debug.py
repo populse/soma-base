@@ -35,11 +35,12 @@
 '''
 Utility classes and functions for debugging.
 
-@author: Yann Cointepas
-@organization: U{NeuroSpin<http://www.neurospin.org>} and U{IFR 49<http://www.ifr49.org>}
-@license: U{CeCILL version 2<http://www.cecill.info/licences/Licence_CeCILL_V2-en.html>}
+- author: Yann Cointepas
+- organization: `NeuroSpin <http://www.neurospin.org>`_ and 
+  `IFR 49 <http://www.ifr49.org>`_
+- license: `CeCILL version 2 <http://www.cecill.info/licences/Licence_CeCILL_V2-en.html>`_
 '''
-__docformat__ = "epytext en"
+__docformat__ = 'restructuredtext en'
 
 import sys
 from soma.functiontools import getArgumentsSpecification
@@ -50,11 +51,12 @@ def functionCallInfo( frame=None ):
   '''
   Return a dictionary that gives information about a frame corresponding to a function call.
   The directory contains the following items:
-    'function': name of the function called
-    'filename': name of the python file containing the function
-    'lineno': line number executed in 'filename'
-    'arguments': arguments passed to the function. It is a list containing pairs of 
-                 (argument name, argument value).
+
+  - 'function': name of the function called
+  - 'filename': name of the python file containing the function
+  - 'lineno': line number executed in 'filename'
+  - 'arguments': arguments passed to the function. It is a list containing 
+    pairs of (argument name, argument value).
   '''
   try:
     if frame is None:

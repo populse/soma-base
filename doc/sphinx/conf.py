@@ -215,3 +215,16 @@ extlinks = {
   'graphdox '),
 }
 
+import soma
+docpath = os.path.join( os.path.dirname( os.path.dirname( os.path.dirname( \
+  soma.__file__ ) ) ), 'share', 'doc' )
+
+intersphinx_mapping = {
+  'somabase': ( os.path.join( docpath, 'soma-base-' + version + '/sphinx' ), None ),
+  'somaqtgui': ( os.path.join( docpath, 'soma-qtgui-' + version + '/sphinx' ), None ),
+  'pyaims': ( os.path.join( docpath, 'pyaims-' + version + '/sphinx' ), None ),
+  'pyana': ( os.path.join( docpath, 'pyanatomist-' + version + '/sphinx' ), None ),
+  'somaworkflow': ( os.path.join( docpath, 'soma-workflow-1.0/sphinx' ), None ),
+  'python': ('http://docs.python.org', None),
+}
+

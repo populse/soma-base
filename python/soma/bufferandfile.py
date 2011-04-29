@@ -33,14 +33,15 @@
 # knowledge of the CeCILL-B license and that you accept its terms.
 
 '''
-L{BufferAndFile} instances are used to read data from a file (for instance
-for identification) and "put back" the data on the file. 
+:py:class:`BufferAndFile` instances are used to read data from a file (for 
+instance for identification) and "put back" the data on the file. 
 
-@author: Yann Cointepas
-@organization: U{NeuroSpin<http://www.neurospin.org>} and U{IFR 49<http://www.ifr49.org>}
-@license: U{CeCILL version 2<http://www.cecill.info/licences/Licence_CeCILL_V2-en.html>}
+- author: Yann Cointepas
+- organization: `NeuroSpin <http://www.neurospin.org>`_ and 
+  `IFR 49 <http://www.ifr49.org>`_
+- license: `CeCILL version 2 <http://www.cecill.info/licences/Licence_CeCILL_V2-en.html>`_
 '''
-__docformat__ = "epytext en"
+__docformat__ = 'restructuredtext en'
 
 #------------------------------------------------------------------------------
 class BufferAndFile( object ):
@@ -50,8 +51,8 @@ class BufferAndFile( object ):
   that is "read" by all subsequent read acces until it is empty. When the
   buffer is empty, reading is done directly on the attached file object.
   
-  Example:
-  
+  Example::
+      
     from soma.bufferandfile import BufferAndFile
     
     # Open a file with a buffer
@@ -63,13 +64,15 @@ class BufferAndFile( object ):
     if start == '<?xml':
       # Use the file in an XML parser
       ...
-    elif start == '\x89HDF\r':
+    elif start == '&HDF':
       # Use the file in an HDF5 parser
       ...
+
   '''
   def __init__( self, fileObject ):
     '''
-    Create a file-like object that adds an L{unread} method to an opened C{fileObject}. 
+    Create a file-like object that adds an :py:meth:`unread` method to an 
+    opened ``fileObject``.
     '''
     super( BufferAndFile, self).__init__()
     self.__buffer = ''
@@ -102,6 +105,9 @@ class BufferAndFile( object ):
     return result
   
   def read( self, size=None ):
+    '''
+    Read the file
+    '''
     if size is None:
       result = self.__buffer + self.__file.read()
     else:
@@ -116,6 +122,9 @@ class BufferAndFile( object ):
   
   
   def readline( self, size=None ):
+    '''
+    Read one text line
+    '''
     bufferEndOfLine = self.__buffer.find( '\n' )
     if size is None:
       if bufferEndOfLine < 0:
@@ -142,22 +151,31 @@ class BufferAndFile( object ):
   
   
   def __iter__( self ):
+    '''
+    Iteration protocol
+    '''
     return self
   
   
   def next( self ):
+    '''
+    Iteration protocol
+    '''
     line = self.readline()
     if not line: raise StopIteration
     return line
 
 
   def tell( self ):
+    '''
+    POsition in file
+    '''
     return self.__file.tell() - len( self.__buffer )
   
   
   def seek( self, offset, whence=0 ):
     '''
-    If C{whence} is 0 or 2 (absolute seek positioning) or if offset is
+    If ``whence`` is 0 or 2 (absolute seek positioning) or if offset is
     negative, internal buffer is cleared and seek is done directly on the
     internal file object. Otherwise (relative seek with a positive offset),
     internal buffer is taken into account.
@@ -176,7 +194,8 @@ class BufferAndFile( object ):
   
   def open( *args, **kwargs ):
     '''
-    Open a file with built-in C{open} and create a L{BufferAndFile} instance.
+    Open a file with built-in :py:func:`python:open` and create a 
+    :py:class:`BufferAndFile` instance.
     '''
     return BufferAndFile( open( *args, **kwargs ) )
   open = staticmethod( open )

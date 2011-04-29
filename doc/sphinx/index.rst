@@ -31,6 +31,8 @@ SubModule: ``decorators``
 
 .. automodule:: soma.decorators
   :members:
+  
+  .. autofunction:: soma.decorators.synchronized
 
 
 SubModule: ``enum``
