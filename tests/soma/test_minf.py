@@ -1,4 +1,4 @@
-# -*- coding: iso-8859-1 -*-
+# -*- coding: utf-8 -*-
 
 #  This software and supporting documentation are distributed by
 #      Institut Federatif de Recherche 49
@@ -99,7 +99,7 @@ class TestMinf( unittest.TestCase ):
     def __hash__( self ):
       '''
       Defining this method is a trick to allow to make two different
-      instances of MyClass beign identical when used as dictionary key
+      instances of MyClass being identical when used as dictionary key
       as long as they have the same content. It allows to use operator
       == on two dictionaries that have MyClass instance as key, in that
       case the keys are compared by their contents (instead of their

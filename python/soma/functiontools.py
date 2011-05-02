@@ -35,11 +35,12 @@
 '''
 Utility classes and functions for Python callable.
 
-@author: Yann Cointepas
-@organization: U{NeuroSpin<http://www.neurospin.org>} and U{IFR 49<http://www.ifr49.org>}
-@license: U{CeCILL version 2<http://www.cecill.info/licences/Licence_CeCILL_V2-en.html>}
+- author: Yann Cointepas
+- organization: `NeuroSpin <http://www.neurospin.org>`_ and 
+  `IFR 49 <http://www.ifr49.org>`_
+- license: `CeCILL version 2 <http://www.cecill.info/licences/Licence_CeCILL_V2-en.html>`_
 '''
-__docformat__ = "epytext en"
+__docformat__ = 'restructuredtext en'
 
 import inspect
 
@@ -54,7 +55,7 @@ try:
 except ImportError:
   class partial( object ):
     '''
-    Python 2.5 introduced a very useful function: C{functools.partial},
+    Python 2.5 introduced a very useful function: :py:func:`functools.partial`,
     this is an implementation that is compatible with Python 2.3 (if
     functools.partial exists, it is used directly).
     
@@ -64,6 +65,7 @@ except ImportError:
     for more information.
     
     Example::
+
       from soma.functiontools import partial
       
       def f( a, b, c ):
@@ -87,20 +89,23 @@ except ImportError:
 #-------------------------------------------------------------------------------
 def getArgumentsSpecification( callable ):
   '''
-  This is an extension of Python module C{inspect.getargspec} that accepts 
-  classes and return only information about the parameters that can be used in 
-  a call to C{callable} (I{e.g.} the first C{self} parameter of bound methods is
-  ignored). If C{callable} has not an appropriate type, a C{TypeError}
-  exception is raised.
+  This is an extension of Python module :py:mod:`inspect.getargspec` that 
+  accepts classes and returns only information about the parameters that can 
+  be used in a call to *callable* (*e.g.* the first *self* parameter of bound 
+  methods is ignored). If *callable* has not an appropriate type, a 
+  :py:class:`TypeError` exception is raised.
+
+  - callable: *function*, *method*, *class* or *instance*
+
+    callable to inspect
+
+  - returns: *tuple* of four elements
   
-  @type  callable: function, method, class or instance
-  @param callable: callable to inspect
-  @rtype: tuple of four elements
-  @return: As C{inspect.getargspec}, returns 
-  C{(args, varargs, varkw, defaults)} where C{args} is a list of the argument
-  names (it may contain nested lists). C{varargs} and C{varkw} are the names of
-  the C{*} and C{**} arguments or C{None}.C{defaults} is an n-tuple of the
-  default values of the last I{n} arguments.
+    As :py:func:`inspect.getargspec`, returns 
+    *(args, varargs, varkw, defaults)* where *args* is a list of the argument
+    names (it may contain nested lists). *varargs* and *varkw* are the names 
+    of the ``*`` and ``**`` arguments or *None*. *defaults* is an n-tuple of 
+    the default values of the last *n* arguments.
   '''
   if inspect.isfunction( callable ):
     return inspect.getargspec( callable )
@@ -127,10 +132,13 @@ def getCallableString( callable ):
   '''
   Returns a translated human readable string representing a callable.
   
-  @type  callable: function, method, class or instance
-  @param callable: callable to inspect
-  @rtype: string
-  @return: type and name of the callable
+  - callable: *function*, *method*, *class* or *instance*
+  
+    callable to inspect
+  
+  - returns: *string*
+  
+    type and name of the callable
   '''
   if inspect.isfunction( callable ):
     name = _( 'function %s' ) % ( callable.__name__, )
@@ -146,15 +154,20 @@ def getCallableString( callable ):
 #-------------------------------------------------------------------------------
 def hasParameter( callable, parameterName ):
   '''
-  Return True if C{callable} can be called with a parameter named
-  C{parameterName}. Otherwise, returns C{False}.
+  Return True if *callable* can be called with a parameter named
+  *parameterName*. Otherwise, returns *False*.
   
-  @type  callable: function, method, class or instance
-  @param callable: callable to inspect
-  @type  parameterName: string
-  @param parameterName: name of the parameter
-  @rtype: bool
-  @see: L{getArgumentsSpecification}
+  - callable: *function*, *method*, *class* or *instance*
+  
+    callable to inspect
+  
+  - parameterName: *string*
+  
+    name of the parameter
+  
+  - returns: *bool*
+  
+  see: :py:func:`getArgumentsSpecification`
   '''
   args, varargs, varkw, defaults = getArgumentsSpecification( callable )
   return varkw is not None or parameterName in args
@@ -163,13 +176,18 @@ def hasParameter( callable, parameterName ):
 def numberOfParameterRange( callable ):
   '''
   Return the minimum and maximum number of parameter that can be used to call a
-  function. If the maximum number of argument is not defined, it is set to None.
+  function. If the maximum number of argument is not defined, it is set to 
+  None.
   
-  @type  callable: function, method, class or instance
-  @param callable: callable to inspect
-  @rtype: tuple of two elements
-  @return: (minimum, maximum)
-  @see: L{getArgumentsSpecification}
+  - callable: *function*, *method*, *class* or *instance*
+  
+    callable to inspect
+  
+  - returns: *tuple* of two elements
+  
+    (minimum, maximum)
+  
+  see: :py:func:`getArgumentsSpecification`
   '''
   args, varargs, varkw, defaults = getArgumentsSpecification( callable )
   if defaults is None or len( defaults ) > len( args ):
@@ -187,13 +205,18 @@ def numberOfParameterRange( callable ):
 #-------------------------------------------------------------------------------
 def checkParameterCount( callable, paramCount ):
   '''
-  Check that a callable can be called with C{paramCount} arguments. If not, a
+  Check that a callable can be called with *paramCount* arguments. If not, a
   RuntimeError is raised.
-  @type  callable: function, method, class or instance
-  @param callable: callable to inspect
-  @type  paramCount: integer
-  @param paramCount: number of parameters
-  @see: L{getArgumentsSpecification}
+  
+  - callable: *function*, *method*, *class* or *instance*
+  
+    callable to inspect
+  
+  - paramCount: *integer*
+  
+    number of parameters
+  
+  see: :py:func:`getArgumentsSpecification`
   '''
   minimum, maximum = numberOfParameterRange( callable )
   if ( maximum is not None and paramCount > maximum ) or \

@@ -36,6 +36,9 @@
 This module contains classes used to upload files using http protocol.
 Http upload is processed as follow :
   - xml fragment header is uploaded. It is a file field that contains xml document formatted as follow :
+
+  .. code-block:: xml
+
     <fragment>
       <filename>filename</filename>
       <filelength>4096</filelength>
@@ -52,15 +55,16 @@ Http upload is processed as follow :
   - if file is complete (i.e. : all the file fragments have been receive), it is added to a queue for
     being rebuilt.
 
-@author: Nicolas Souedet
-@organization: U{NeuroSpin<http://www.neurospin.org>} and U{IFR 49<http://www.ifr49.org>}
-@license: U{CeCILL version 2<http://www.cecill.info/licences/Licence_CeCILL_V2-en.html>}
+- author: Nicolas Souedet
+- organization: `NeuroSpin <http://www.neurospin.org>`_ and 
+  `IFR 49 <http://www.ifr49.org>`_
+- license: `CeCILL version 2 <http://www.cecill.info/licences/Licence_CeCILL_V2-en.html>`_
 '''
 from __future__ import with_statement
-__docformat__ = "epytext en"
+__docformat__ = 'restructuredtext en'
 
 import datetime
-import turbogears
+#import turbogears
 import os
 import thread
 import threading
@@ -98,7 +102,7 @@ from soma.singleton import Singleton
     
 def displayFileBuilderInfos():
   '''
-    Display current registered {FileBuilderInfo}s.
+    Display current registered :py:class:`FileBuilderInfo`s.
   '''
   for filebuilderinfo in FileBuilderInfoManager().filebuilderinfos.itervalues() :
     print filebuilderinfo
@@ -106,22 +110,32 @@ def displayFileBuilderInfos():
 def checkSha1( content, sha1 ) :
   '''
     Check that a string content matches a particular SHA-1 key.
-    @type  content: string
-    @param content: content to check.
-    @type  sha1: string
-    @param sha1: sha1 key to check.
-    @return: True if the content matches the sha1 key, False otherwise.
+    
+    - content: string
+    
+      content to check.
+    
+    - sha1: string
+    
+      sha1 key to check.
+    
+    - returns: True if the content matches the sha1 key, False otherwise.
   '''
   digest = sha.new( content )
   return ( digest.hexdigest() == sha1 )
   
 @synchronized
 def checkDirectory( directory ) :
-  # Creates the needed directories
+  '''
+  Creates the needed directories
+  '''
   if not os.path.exists( directory ) :
     os.makedirs( os.path.realpath( directory ) )
 
 def getDirectoryFilesSize( directory ) :
+  '''
+  getDirectoryFilesSize
+  '''
   result = 0
   
   for root, dirs, files in os.walk( directory ):
@@ -130,6 +144,9 @@ def getDirectoryFilesSize( directory ) :
   return result
   
 def getDirectoryFilesCount( directory ) :
+  '''
+  getDirectoryFilesCount
+  '''
   result = 0
   
   for root, dirs, files in os.walk( directory ):
@@ -140,9 +157,12 @@ def getDirectoryFilesCount( directory ) :
 def walkTree( node ):
   '''
     Walk trough an xml tree node.
-    @type  node: Node
-    @param node: xml tree node to go trough.
-    @return: Generator to walk the xml tree node.
+    
+    - node: Node
+    
+      xml tree node to go trough.
+    
+    - returns: Generator to walk the xml tree node.
   '''
   if (node.nodeType == Node.ELEMENT_NODE) :
     yield node
@@ -153,11 +173,16 @@ def walkTree( node ):
 def showNode( node, showattributes = False ):
   '''
     Get xml node content as string value.
-    @type  node: Node
-    @param node: xml node to go trough.
-    @type  showattributes: bool
-    @param showattributes: specify if attributes must be shown.
-    @return: L{string} containing the result of the node display.
+    
+    - node: Node
+    
+      xml node to go trough.
+    
+    - showattributes: bool
+    
+      specify if attributes must be shown.
+    
+    - returns: *string* containing the result of the node display.
   '''
   content = []
 
@@ -176,9 +201,12 @@ def showNode( node, showattributes = False ):
 def getTextValue( node ) :
   '''
     Recursively get xml node text content as string value.
-    @type  node: Node
-    @param node: xml node to go trough.
-    @return: L{string} containing the result of the node as text value.
+    
+    - node: Node
+    
+      xml node to go trough.
+    
+    - returns: *string* containing the result of the node as text value.
   '''
   output = ''
   for currentnode in walkTree( node ):
@@ -194,9 +222,12 @@ def getTextValue( node ) :
 def getUploadResponseDocument( upload ) :
   '''
     Create xml upload response document.
-    @type  upload: bool
-    @param upload: specify if the data upload must be done or not.
-    @return: xml document containing the response.
+    
+    - upload: bool
+    
+      specify if the data upload must be done or not.
+    
+    - returns: xml document containing the response.
   '''
 
   document = minidom.Document()
@@ -209,9 +240,12 @@ def getUploadResponseDocument( upload ) :
 def getFileBuildLengthResponseDocument( filelength ) :
   '''
     Create xml file build length response document.
-    @type  filelength: long
-    @param filelength: specify the file upload build length.
-    @return: xml document containing the response.
+    
+    - filelength: long
+    
+      specify the file upload build length.
+    
+    - returns: xml document containing the response.
   '''
 
   document = minidom.Document()
@@ -224,9 +258,12 @@ def getFileBuildLengthResponseDocument( filelength ) :
 def getFileBuildCountResponseDocument( buildcount ) :
   '''
     Create xml file build count response document.
-    @type  filelength: long
-    @param filelength: specify the file upload build count.
-    @return: xml document containing the response.
+    
+    - filelength: long
+    
+      specify the file upload build count.
+    
+    - returns: xml document containing the response.
   '''
 
   document = minidom.Document()
@@ -240,7 +277,8 @@ def processHttpUploadQuery( *args, **kwargs ) :
   '''
     Main httpupload function entry. It processes arguments and
     saves uploaded file on the server using it.
-    @return: L{string} containing the response.
+    
+    - returns: *string* containing the response.
   '''
   result = ''
 
@@ -267,8 +305,11 @@ LogLevel = Enum( 'NONE',
                  'WARNING',
                  'INFO',
                  'DEBUG' )
+'''LogLevel'''
 
 class LogManager( Singleton ) :
+  '''LogManager
+  '''
   
   def __singleton_init__( self ):
     super( LogManager, self ).__init__()
@@ -311,6 +352,7 @@ class LogManager( Singleton ) :
     return value % { 'startdate' : self._startdate.isoformat() }
   
   def writeLogInfo( self, value, filepath = None, mode = 'a+b', level = LogLevel.INFO ):
+    '''writeLogInfo'''
 
     if not self._initialized :
       self._initialized = True
@@ -339,6 +381,7 @@ class LogManager( Singleton ) :
           self.setLogLevel( LogLevel.NONE )
     
   def write( self, value, filepath, mode ):
+    '''write'''
     checkDirectory( os.path.dirname( filepath ) )
     with self._loglock :
       file = open( filepath, mode )
@@ -366,8 +409,10 @@ class ResourceManager( Singleton ) :
   def startFileBuilders( self, count = None ) :
     '''
       Start builder threads. These threads will reconstruct files when upload is complete.
-      @type  count: integer
-      @param count: number of L{FileBuilder} threads to start.
+      
+      - count: integer
+      
+        number of :py:class:`FileBuilder` threads to start.
     '''
     if count is None :
       count = int(turbogears.config.get( 'httpupload.threadcount', '4' ))
@@ -395,7 +440,8 @@ class ResourceManager( Singleton ) :
   def getDirectory( self, key ) :
     '''
     Get the managed directories
-    @return: managed directory list.
+    
+    - returns: managed directory list.
     '''
     result = None
     defaultvalue = None
@@ -413,9 +459,12 @@ class ResourceManager( Singleton ) :
     '''
     Get a new resource lock if not already exists,
     otherwise get the existing one.
-    @type  resourcekey: string
-    @param resourcekey: resource key to get lock for.
-    @return: resource lock.
+    
+    - resourcekey: string
+    
+      resource key to get lock for.
+    
+    - returns: resource lock.
     '''
     if resourcekey in self.resourcelocks :
       resourcelock = self.resourcelocks[ resourcekey ]
@@ -429,9 +478,12 @@ class ResourceManager( Singleton ) :
   def deleteResourceLock( self, resourcekey ) :
     '''
     Delete resource lock if exists,
-    @type  resourcekey: string
-    @param resourcekey: resource key to delete lock for.
-    @return: resource lock.
+    
+    - resourcekey: string
+    
+      resource key to delete lock for.
+    
+    - returns: resource lock.
     '''
     if resourcekey in self.resourcelocks :
       del self.resourcelocks[ resourcekey ]
@@ -439,10 +491,13 @@ class ResourceManager( Singleton ) :
   @synchronized
   def getObjectLock( self, value ) :
     '''
-    Get the L{threading.RLock} for the object.
-    @type  value: oject
-    @param value: object to get L{threading.RLock} for.
-    @return: L{threading.RLock} for the object.
+    Get the :py:class:`threading.RLock` for the object.
+    
+    - value: oject
+    
+      object to get :py:class:`threading.RLock` for.
+    
+    - returns: :py:class:`threading.RLock` for the object.
     '''
     objectlock = getattr( value, '__objectlock', None )
     if objectlock is None :
@@ -454,9 +509,12 @@ class ResourceManager( Singleton ) :
   def getResultUploadDirectory( self, uploadid ) :
     '''
     Get upload directory path for an upload id.
-    @type uploadid : string
-    @param uploadid : upload id.
-    @type return : L{string} containing the upload directory path.
+    
+    - uploadid : string
+    
+      upload id.
+    
+    - returns: *string* containing the upload directory path.
     '''
     dirbasefileoutput = self.getDirectory( 'httpupload.dirbasefileoutput' )
     return os.path.realpath( os.path.join( dirbasefileoutput, uploadid ) )
@@ -464,11 +522,16 @@ class ResourceManager( Singleton ) :
   def getResultDirectory( self, uploadid, basedirectory ) :
     '''
     Get result directory path of the file to rebuild.
-    @type uploadid : string
-    @param uploadid : upload id.
-    @type basedirectory : string
-    @param basedirectory : relative base directory path.
-    @type return : L{string} containing the result directory path.
+    
+    - uploadid : string
+    
+      upload id.
+    
+    - basedirectory : string
+    
+      relative base directory path.
+    
+    - returns: *string* containing the result directory path.
     '''
     uploaddirectory = self.getResultUploadDirectory( uploadid )
     return os.path.realpath( os.path.join( uploaddirectory, basedirectory ) )
@@ -477,23 +540,32 @@ class ResourceManager( Singleton ) :
   def getResultFileName( filename, filelength ) :
     '''
     Get result file name for the file name and length. i.e. the name of the file to rebuild.
-    @type filename : string
-    @param filename : file name.
-    @type filelength : long
-    @param filelength : file length.
-    @type return : L{string} containing the result file name.
+    
+    - filename : string
+    
+      file name.
+    
+    - filelength : long
+    
+      file length.
+    
+    - returns: *string* containing the result file name.
     '''
     #return string.join( [ filename, unicode( filelength ) ] , '_' )
     return filename
 
   def processFileStorage( self, filestorage, isheader ) :
     '''
-    Process a L{cgi.FileStorage} field of an http request to get file fragment information.
-    @type  filestorage: cgi.FileStorage
-    @param filestorage: L{cgi.FileStorage} field of an http request to get file fragment information.
-      It can contains either header information or data.
-    @type  isheader: bool
-    @param isheader: specify if the filestorage contains header information or data.
+    Process a :py:class:`cgi.FileStorage` field of an http request to get file fragment information.
+    
+    - filestorage: :py:class:`cgi.FileStorage`
+    
+      cgi.FileStorage field of an http request to get file fragment information.
+      It can contain either header information or data.
+    
+    - isheader: bool
+    
+      specify if the filestorage contains header information or data.
     '''
 
     # First we check that some file builders have been started, if not we start some.
@@ -553,8 +625,10 @@ class ResourceManager( Singleton ) :
   def getUploadBuildLength( self, uploadid ) :
     '''
     Get the length of built files for an upload.
-    @type uploadid : string
-    @param uploadid : upload id.
+    
+    - uploadid : string
+    
+      upload id.
     '''
     directory = self.getResultUploadDirectory( uploadid )
 
@@ -571,8 +645,10 @@ class ResourceManager( Singleton ) :
   def getUploadBuildCount( self, uploadid ) :
     '''
     Get the count of built files for an upload.
-    @type uploadid : string
-    @param uploadid : upload id.
+    
+    - uploadid : string
+    
+      upload id.
     '''
     directory = self.getResultUploadDirectory( uploadid )
 
@@ -588,14 +664,22 @@ class ResourceManager( Singleton ) :
   def getFileBuildLength( self, uploadid, basedirectory, filename, filelength ) :
     '''
     Get the status for a file information.
-    @type uploadid : string
-    @param uploadid : upload id.
-    @type basedirectory : string
-    @param basedirectory : relative directory path.
-    @type filename : string
-    @param filename : file name.
-    @type filelength : long
-    @param filelength : file length.
+    
+    - uploadid : string
+    
+      upload id.
+    
+    - basedirectory : string
+    
+      relative directory path.
+    
+    - filename : string
+    
+      file name.
+    
+    - filelength : long
+    
+      file length.
     '''
     resultfilename = self.getResultFileName( filename, filelength )
     directory = self.getResultDirectory( uploadid, basedirectory )
@@ -615,7 +699,7 @@ resourcemanager = ResourceManager()
 #------------------------------------------------------------------------------
 class FileBuilder( threading.Thread ) :
   '''
-  Builder L{threading.Thread} for files that were uploaded by fragments.
+  Builder :py:class:`threading.Thread` for files that were uploaded by fragments.
   '''
 
   def __init__(self):
@@ -638,6 +722,7 @@ class FileBuilder( threading.Thread ) :
     self._finished.set()
 
   def run(self):
+    '''run'''
     
     while 1:
         
@@ -667,7 +752,7 @@ class FileBuilder( threading.Thread ) :
 #------------------------------------------------------------------------------
 class FileBuilderInfoManager( Singleton ) :
   '''
-  Class to manage L{FileBuilderInfo}.
+  Class to manage :py:class:`FileBuilderInfo`.
   '''
 
   def __singleton_init__( self ):
@@ -678,22 +763,35 @@ class FileBuilderInfoManager( Singleton ) :
 
   def getFileBuilderInfo( self, uploadid, basedirectory, filename, filelength, new = True, default = None ) :
     '''
-    Get a L{FileBuilderInfo} using its file name and file length. If the L{FileBuilderInfo}
-    does not exist yet, it is added.
-    @type uploadid : string
-    @param uploadid : file name.
-    @type basedirectory : string
-    @param basedirectory : base directory.
-    @type filename : string
-    @param filename : file name.
-    @type filelength : long
-    @param filelength : file length.
-    @type new : boolean
-    @param new : specify to add a new L{FileBuilderInfo} if None exists for the file name and length.
-    @type default : object
-    @param default : default value if None exists for the file name and length. This value is used only
-                     if the 'new' parameter is set to False.
-    @return : the matching L{FileBuilderInfo}.
+    Get a :py:class:`FileBuilderInfo` using its file name and file length. If the :py:class:`FileBuilderInfo` does not exist yet, it is added.
+    
+    - uploadid : string
+    
+      file name.
+    
+    - basedirectory : string
+    
+      base directory.
+    
+    - filename : string
+    
+      file name.
+    
+    - filelength : long
+    
+      file length.
+    
+    - new : boolean
+
+      specify to add a new :py:class:`FileBuilderInfo` if None exists for the 
+      file name and length.
+    
+    - default : object
+      
+      default value if None exists for the file name and length. This value is 
+      used only if the 'new' parameter is set to False.
+    
+    - returns: the matching :py:class:`FileBuilderInfo`.
     '''
     
     # Get the file builder info from file fragment
@@ -713,11 +811,16 @@ class FileBuilderInfoManager( Singleton ) :
 
   def getFileBuilderInfosFromKey( self, filefragmentsha1 ) :
     '''
-    Get a L{FileBuilderInfo} list using the sha1 key of L{FileFragment}.
-    It retrieves all L{FileBuilderInfo} that contains a L{FileFragment} with the matching sha1 key.
-    @type filefragmentsha1 : string
-    @param filefragmentsha1 : sha1 key for the L{FileFragment}.
-    @return : the matching L{FileBuilderInfo} list.
+    Get a :py:class:`FileBuilderInfo` list using the sha1 key of 
+    :py:class:`FileFragment`.
+    It retrieves all :py:class:`FileBuilderInfo` that contains a 
+    :py:class:`FileFragment` with the matching sha1 key.
+    
+    -  filefragmentsha1 : string
+    
+      sha1 key for the :py:class:`FileFragment`.
+    
+    - returns: the matching :py:class:`FileBuilderInfo` list.
     '''
     result = list()
 
@@ -735,25 +838,32 @@ class FileBuilderInfoManager( Singleton ) :
 
   def getQueue( self ) :
     '''
-    Get the L{Queue.Queue} that is used to put L{FileBuilderInfo} once they are complete.
-    @return : the L{Queue.Queue} that is used to put L{FileBuilderInfo} once they are complete.
+    Get the :py:class:`Queue.Queue` that is used to put 
+    :py:class:`FileBuilderInfo` once they are complete.
+    
+    - returns: the :py:class:`Queue.Queue` that is used to put 
+      :py:class:`FileBuilderInfo` once they are complete.
     '''
     return self.queue
 
   def transferToQueue( self, filebuilderinfo ) :
     '''
-    Transfer a L{FileBuilderInfo} to the L{Queue.Queue}.
-    @type filename : FileBuilderInfo
-    @param filename : L{FileBuilderInfo} to put in L{Queue.Queue}.
+    Transfer a :py:class:`FileBuilderInfo` to the :py:class:`Queue.Queue`.
+    
+    -  filename : FileBuilderInfo
+    
+      :py:class:`FileBuilderInfo` to put in :py:class:`Queue.Queue`.
     '''
     filebuilderinfo.addToQueue( self.queue )
 
   @synchronized
   def removeFileBuilderInfo( self, filebuilderinfo ) :
     '''
-    Add a L{FileBuilderInfo} to the L{dict} of managed ones.
-    @type filename : FileBuilderInfo
-    @param filename : L{FileBuilderInfo} to add to the L{dict} of managed ones.
+    Remove a :py:class:`FileBuilderInfo` from the *dict* of managed ones.
+    
+    - filename : FileBuilderInfo
+    
+      :py:class:`FileBuilderInfo` to remove from the *dict* of managed ones.
     '''
     objectlock = resourcemanager.getObjectLock( self )
     with objectlock :
@@ -782,11 +892,13 @@ class FileBuilderInfoManager( Singleton ) :
         lock.release()
 
 filebuilderinfomanager = FileBuilderInfoManager()
+'''filebuilderinfomanager'''
 
 #------------------------------------------------------------------------------
 FileBuilderInfoStatus = Enum( 'BUILDING',
                               'BUILT',
                               'NOT_BUILT' )
+'''FileBuilderInfoStatus'''
                               
 class FileBuilderInfo(object) :
   '''
@@ -795,15 +907,23 @@ class FileBuilderInfo(object) :
       
   def __init__( self, uploadid, basedirectory, filename, filelength ) :
     '''
-    Initialize L{FileBuilderInfo} using its file name and file length.
-    @type uploadid : string
-    @param uploadid : unique identifier for the upload.
-    @type basedirectory : string
-    @param basedirectory : relative base directory.
-    @type filename : string
-    @param filename : file name.
-    @type filelength : long
-    @param filelength : file length.
+    Initialize :py:class:`FileBuilderInfo` using its file name and file length.
+    
+    - uploadid : string
+    
+      unique identifier for the upload.
+    
+    - basedirectory : string
+    
+      relative base directory.
+    
+    - filename : string
+    
+      file name.
+    
+    - filelength : long
+    
+      file length.
     '''
     super(FileBuilderInfo, self).__init__()
     
@@ -816,18 +936,23 @@ class FileBuilderInfo(object) :
 
   def checkFileFragment( self, filefragment ) :
     '''
-    Check that L{FileFragment} matches the file to which it belongs.
-    @type filefragment : L{FileFragment}
-    @param filefragment : L{FileFragment} to check that it belongs current C{FileBuilderInfo}.
-    @type return : True if the L{FileFragment} belongs to the C{FileBuilderInfo}, False otherwise.
+    Check that :py:class:`FileFragment` matches the file to which it belongs.
+    
+    - filefragment : :py:class:`FileFragment`
+    
+      :py:class:`FileFragment` to check that it belongs current :py:class:`FileBuilderInfo`.
+    
+    - returns: True if the :py:class:`FileFragment` belongs to the :py:class:`FileBuilderInfo`, False otherwise.
     '''
     return ( ( filefragment.getUploadId() == self.uploadid ) and ( filefragment.getFileName() == self.filename ) and ( filefragment.getFileLength() == self.filelength ) )
 
   def addToQueue( self, queue ):
     '''
-    Add C{FileBuilderInfo} to the L{queue.Queue} if not already added.
-    @type queue : L{queue.Queue}
-    @param queue : L{queue.Queue} to add C{FileBuilderInfo} to.
+    Add :py:class:`FileBuilderInfo` to the :py:class:`queue.Queue` if not already added.
+    
+    -  queue : :py:class:`queue.Queue`
+    
+      :py:class:`queue.Queue` to add :py:class:`FileBuilderInfo` to.
     '''
     if self.status == FileBuilderInfoStatus.NOT_BUILT :
       self.status = FileBuilderInfoStatus.BUILDING
@@ -837,9 +962,10 @@ class FileBuilderInfo(object) :
 
   def checkFileBuild( self ) :
     '''
-    Check if the current C{FileBuilderInfo} is complete and contains all needed informations
-    to be rebuilt. If it is the case, the current C{FileBuilderInfo} is transfered to the queue
-    of C{FileBuilderInfo} to be rebuilt.
+    Check if the current :py:class:`FileBuilderInfo` is complete and contains 
+    all needed information to be rebuilt. If it is the case, the current 
+    :py:class:`FileBuilderInfo` is transfered to the queue
+    of :py:class:`FileBuilderInfo` to be rebuilt.
     '''
     objectlock = resourcemanager.getObjectLock( self )
     with objectlock :
@@ -852,7 +978,8 @@ class FileBuilderInfo(object) :
   def checkResultFile( self ) :
     '''
     Check that result file exists and has a rigth length.
-    @return : True if the result file exists with the rigth length, False otherwise.
+    
+    - returns: True if the result file exists with the rigth length, False otherwise.
     '''
     result = False
     filename = self.getResultFileName()
@@ -876,9 +1003,11 @@ class FileBuilderInfo(object) :
 
   def checkFileIntegrity( self ) :
     '''
-    Check that all required L{FileFragment}s exist and have the correct length.
-    @return : True if all required L{FileFragment}s exist and have the correct
-            length, False otherwise.
+    Check that all required :py:class:`FileFragment`s exist and have the 
+    correct length.
+    
+    - returns: True if all required :py:class:`FileFragment`s exist and have 
+      the correct length, False otherwise.
     '''
     offsetcheck = 0
     fragmentlength = 0
@@ -897,9 +1026,12 @@ class FileBuilderInfo(object) :
 
   def setStatus( self, value ):
     '''
-    Set the C{FileBuilderInfo} status.
-    @type value : L{FileBuilderInfoStatus}
-    @param value: L{FileBuilderInfoStatus} that specify if the C{FileBuilderInfo} status.
+    Set the :py:class:`FileBuilderInfo` status.
+    
+    - value : :py:class:`FileBuilderInfoStatus`
+    
+      :py:class:`FileBuilderInfoStatus` that specify if the 
+      :py:class:`FileBuilderInfo` status.
     '''
     objectlock = resourcemanager.getObjectLock( self )
     with objectlock :
@@ -907,13 +1039,17 @@ class FileBuilderInfo(object) :
 
   def buildResultFile( self ) :
     '''
-    Build a file from a L{FileBuilderInfo}. This method can not be executed
-    by multiple L{threading.Thread} simultaneously.
-    @type filebuilderinfo : FileBuilderInfo
-    @param filebuilderinfo : L{FileBuilderInfo} that contains all informations
-            about the file to rebuild (fragments, length, name).
-    @type filepath : string
-    @param filepath : path of the file to rebuild.
+    Build a file from a :py:class:`FileBuilderInfo`. This method can not be 
+    executed by multiple :py:class:`threading.Thread` simultaneously.
+    
+    - filebuilderinfo : FileBuilderInfo
+    
+      :py:class:`FileBuilderInfo` that contains all information
+      about the file to rebuild (fragments, length, name).
+    
+    - filepath : string
+    
+      path of the file to rebuild.
     '''
     filename = self.getResultFileName()
     directory = self.getResultDirectory()
@@ -959,17 +1095,22 @@ class FileBuilderInfo(object) :
 
   def getFileFragments( self ) :
     '''
-    Get L{FileFragment} for the current C{FileBuilderInfo}.
-    @type return : L{dict} containing the L{FileFragment}s.
+    Get :py:class:`FileFragment` for the current :py:class:`FileBuilderInfo`.
+    
+    - returns: *dict* containing the :py:class:`FileFragment`s.
     '''
     return self.filefragments
 
   def getFileFragment( self, filefragmentsha1 ) :
     '''
-    Get L{FileFragment} using its sha1 key for the current C{FileBuilderInfo}.
-    @type filefragmentsha1 : string
-    @param filefragmentsha1 : sha1 key for the L{FileFragment}.
-    @type return : the found L{FileFragment} or None if not found.
+    Get :py:class:`FileFragment` using its sha1 key for the current 
+    :py:class:`FileBuilderInfo`.
+    
+    - filefragmentsha1 : string
+    
+      sha1 key for the :py:class:`FileFragment`.
+    
+    - returns: the found :py:class:`FileFragment` or None if not found.
     '''
     objectlock = resourcemanager.getObjectLock( self )
     with objectlock :
@@ -981,25 +1122,32 @@ class FileBuilderInfo(object) :
 
   def getResultFileName( self ) :
     '''
-    Get result file name for the current C{FileBuilderInfo}. i.e. the name
-    of the file rebuilt.
-    @type return : L{string} containing the result file name for the current C{FileBuilderInfo}.
+    Get result file name for the current :py:class:`FileBuilderInfo`. i.e. the 
+    name of the file rebuilt.
+    
+    - returns: *string* containing the result file name for the current 
+      :py:class:`FileBuilderInfo`.
     '''
     return resourcemanager.getResultFileName( self.getFileName(), self.getFileLength() )
 
   def getResultDirectory( self ) :
     '''
-    Get result directory for the current C{FileBuilderInfo}. i.e. the name
-    of the directory where the file will be rebuild.
-    @type return : L{string} containing the result directory for the current C{FileBuilderInfo}.
+    Get result directory for the current :py:class:`FileBuilderInfo`. i.e. the 
+    name of the directory where the file will be rebuild.
+    
+    - returns: *string* containing the result directory for the current 
+      :py:class:`FileBuilderInfo`.
     '''
     return resourcemanager.getResultDirectory( self.getUploadId(), self.basedirectory )
 
   def addFileFragment( self, filefragment ) :
     '''
-    Add L{FileFragment} to the current C{FileBuilderInfo}. i.e.
-    @type filefragment : L{FileFragment}
-    @param filefragment : L{FileFragment} to add to the current C{FileBuilderInfo}.
+    Add :py:class:`FileFragment` to the current :py:class:`FileBuilderInfo`. 
+
+    - filefragment : :py:class:`FileFragment`
+    
+      :py:class:`FileFragment` to add to the current 
+      :py:class:`FileBuilderInfo`.
     '''
     objectlock = resourcemanager.getObjectLock( self )
     with objectlock :
@@ -1008,36 +1156,45 @@ class FileBuilderInfo(object) :
 
   def getFileName( self ):
     '''
-    Get the considered file name for the current C{FileBuilderInfo}.
-    @return : L{string} containing the considered file name for the current C{FileBuilderInfo}.
+    Get the considered file name for the current :py:class:`FileBuilderInfo`.
+    
+    - returns: *string* containing the considered file name for the current 
+      :py:class:`FileBuilderInfo`.
     '''
     return self.filename
 
   def getFileLength( self ):
     '''
-    Get the considered file length for the current C{FileBuilderInfo}.
-    @return : L{long} containing the considered file length for the current C{FileBuilderInfo}.
+    Get the considered file length for the current :py:class:`FileBuilderInfo`.
+    
+    - returns: *long* containing the considered file length for the current 
+      :py:class:`FileBuilderInfo`.
     '''
     return self.filelength
 
   def getUploadId( self ):
     '''
-    Get the upload id for the current C{FileBuilderInfo}.
-    @return : L{string} containing the upload id for the current C{FileBuilderInfo}.
+    Get the upload id for the current :py:class:`FileBuilderInfo`.
+    
+    - returns: *string* containing the upload id for the current 
+      :py:class:`FileBuilderInfo`.
     '''
     return self.uploadid
   
   def getFileHash( self ):
     '''
-    Get the considered file hash for the current C{FileBuilderInfo}.
-    @return : L{string} containing the considered file hash for the current C{FileBuilderInfo}.
+    Get the considered file hash for the current :py:class:`FileBuilderInfo`.
+    
+    - returns: *string* containing the considered file hash for the current 
+      :py:class:`FileBuilderInfo`.
     '''
     return FileBuilderInfo.getHash( self.uploadid, self.basedirectory, self.filename, self.filelength )
     
   def __str__( self ):
     '''
-    Get the string current C{FileBuilderInfo}.
-    @return : L{string} representing the current C{FileBuilderInfo}.
+    Get the string current :py:class:`FileBuilderInfo`.
+    
+    - returns: *string* representing the current :py:class:`FileBuilderInfo`.
     '''
     result = '--> filebuilderinfo - filename : ' + self.filename + ', filebuilderinfo.filelength : ' + unicode(self.filelength) + '\n'
 
@@ -1051,11 +1208,16 @@ class FileBuilderInfo(object) :
   def getHash( uploadid, basedirectory, filename, filelength ):
     '''
     Get the hash for a file name and length.
-    @type filename : string
-    @param filename : file name to use for creating the hash.
-    @type filename : long
-    @param filename : file length to use for creating the hash.
-    @return : the hash for a file name and length.
+    
+    - filename : string
+    
+      file name to use for creating the hash.
+    
+    - filename : long
+    
+      file length to use for creating the hash.
+    
+    - returns: the hash for a file name and length.
     '''
     return repr( [ basedirectory, filename, filelength, uploadid ] )
 
@@ -1063,15 +1225,17 @@ class FileBuilderInfo(object) :
 #------------------------------------------------------------------------------
 class FileFragment(object) :
   '''
-  Class to get file fragment information. A C{FileFragment} correponds to a part of a file.
+  Class to get file fragment information. A FileFragment correponds to a part of a file.
   '''
   header = None
 
   def __init__( self, headerfile ) :
     '''
-    Initialize the C{FileFragment}.
-    @type headerfile : cgi.FieldStorage
-    @param headerfile : L{cgi.FieldStorage} from the parsed http request.
+    Initialize the :py:class:`FileFragment`.
+    
+    - headerfile : cgi.FieldStorage
+    
+      :py:class:`cgi.FieldStorage` from the parsed http request.
     '''
     super(FileFragment, self).__init__()
     header = minidom.parseString( headerfile.value )
@@ -1079,10 +1243,15 @@ class FileFragment(object) :
 
   def _checkFile( self, filepath ) :
     '''
-    Check that the file exists and that the C{FileFragment} SHA-1 key matches for its content.
-    @type filepath : string
-    @param filepath : path of the file to check for the C{FileFragment}.
-    @return : True if the file exists and matches the C{FileFragment} SHA-1 key, False otherwise.
+    Check that the file exists and that the :py:class:`FileFragment` SHA-1 key 
+    matches for its content.
+    
+    - filepath : string
+    
+      path of the file to check for the :py:class:`FileFragment`.
+    
+    - returns: True if the file exists and matches the :py:class:`FileFragment` 
+      SHA-1 key, False otherwise.
     '''
     if ( ( len( filepath ) > 0 ) and os.path.exists( filepath ) ) :
       resourcelock = resourcemanager.getResourceLock( filepath )
@@ -1100,11 +1269,16 @@ class FileFragment(object) :
 
   def writeLocalData( self, datafile ) :
     '''
-    Write data to a local file from L{cgi.FieldStorage}. The L{cgi.FieldStorage} comes
-    from a parsed http request.
-    @type datafile : cgi.FieldStorage
-    @param datafile : L{cgi.FieldStorage} containing the data for the C{FileFragment}.
-    @return : True if the data were written to the local file without any issue, False otherwise.
+    Write data to a local file from :py:class:`cgi.FieldStorage`. The 
+    :py:class:`cgi.FieldStorage` comes from a parsed http request.
+    
+    - datafile : cgi.FieldStorage
+    
+      :py:class:`cgi.FieldStorage` containing the data for the 
+      :py:class:`FileFragment`.
+    
+    - returns: True if the data were written to the local file without any 
+      issue, False otherwise.
     '''
     try :
       # Try to write data to the data directory
@@ -1129,8 +1303,9 @@ class FileFragment(object) :
   
   def readLocalData( self ) :
     '''
-    Read data for the C{FileFragment} from a local file.
-    @return : L{string} containing the data for the C{FileFragment}.
+    Read data for the :py:class:`FileFragment` from a local file.
+    
+    - returns: *string* containing the data for the :py:class:`FileFragment`.
     '''
     filepath = self.getLocalDataPath()
     
@@ -1147,9 +1322,11 @@ class FileFragment(object) :
 
   def deleteLocalData( self ) :
     '''
-    Delete data for the C{FileFragment} local file.
-    @type filepath : string
-    @param filepath : L{string} containing the file path to delete.
+    Delete data for the :py:class:`FileFragment` local file.
+    
+    - filepath : string
+    
+      *string* containing the file path to delete.
     '''
     objectlock = resourcemanager.getObjectLock( self )
     with objectlock :
@@ -1165,9 +1342,12 @@ class FileFragment(object) :
 
   def parseFromXml( self, document ) :
     '''
-    Parses C{FileFragment} from an xml document.
-    @type document : xml.dom.minidom.Document
-    @param document : L{xml.dom.minidom.Document} containing the parsed xml header for the current C{FileFragment}.
+    Parses :py:class:`FileFragment` from an xml document.
+    
+    - document : xml.dom.minidom.Document
+    
+      :py:class:`xml.dom.minidom.Document` containing the parsed xml header for 
+      the current :py:class:`FileFragment`.
     '''
     self.filename = getTextValue(document.getElementsByTagName( 'filename' ) [ 0 ])
     self.basedirectory = getTextValue(document.getElementsByTagName( 'basedirectory' ) [ 0 ])
@@ -1179,59 +1359,75 @@ class FileFragment(object) :
 
   def getBaseDirectory( self ):
     '''
-    Get the base directory for the current C{FileFragment}.
-    @return : L{string} containing the base directory for the current C{FileFragment}.
+    Get the base directory for the current :py:class:`FileFragment`.
+    
+    - returns: *string* containing the base directory for the current 
+      :py:class:`FileFragment`.
     '''
     return self.basedirectory
   
   def getFileName( self ):
     '''
-    Get the file name for the current C{FileFragment}.
-    @return : L{string} containing the file name for the current C{FileFragment}.
+    Get the file name for the current :py:class:`FileFragment`.
+    
+    - returns: *string* containing the file name for the current 
+      :py:class:`FileFragment`.
     '''
     return self.filename
 
   def getFileLength( self ):
     '''
-    Get the file length for the current C{FileFragment}.
-    @return : L{string} containing the file length for the current C{FileFragment}.
+    Get the file length for the current :py:class:`FileFragment`.
+    
+    - returns: *string* containing the file length for the current 
+      :py:class:`FileFragment`.
     '''
     return self.filelength
 
   def getOffset( self ):
     '''
-    Get the offset of the current C{FileFragment} (i.e. the index of the first C{FileFragment}
-    data character in the result file).
-    @return : L{long} containing the fragment offset of the current C{FileFragment}.
+    Get the offset of the current :py:class:`FileFragment` (i.e. the index of 
+    the first :py:class:`FileFragment` data character in the result file).
+    
+    - returns: *long* containing the fragment offset of the current 
+      :py:class:`FileFragment`.
     '''
     return self.offset
 
   def getLength( self ):
     '''
-    Get the length of the current C{FileFragment} (i.e. the length of the C{FileFragment} data).
-    @return : L{long} containing the length of the current C{FileFragment}.
+    Get the length of the current :py:class:`FileFragment` (i.e. the length of 
+    the :py:class:`FileFragment` data).
+    
+    - returns: *long* containing the length of the current 
+    :py:class:`FileFragment`.
     '''
     return self.length
 
   def getUploadId( self ):
     '''
-    Get the upload id for the current C{FileFragment}.
-    @return : L{string} containing the upload id for the current C{FileFragment}.
+    Get the upload id for the current :py:class:`FileFragment`.
+    
+    - returns: *string* containing the upload id for the current 
+      :py:class:`FileFragment`.
     '''
     return self.uploadid
   
   def getSha1( self ):
     '''
-    Get the sha1 key of the current C{FileFragment} (the sha1 key is used to process check sum
-    on the C{FileFragment} data).
-    @return : L{string} containing the sha1 key of the current C{FileFragment}.
+    Get the sha1 key of the current :py:class:`FileFragment` (the sha1 key is 
+    used to process check sum on the :py:class:`FileFragment` data).
+    
+    - returns: *string* containing the sha1 key of the current 
+    :py:class:`FileFragment`.
     '''
     return self.sha1
 
   def getLocalDataPath( self ) :
     '''
-    Get a local data path for C{FileFragment}.
-    @return : L{string} containing the local data path.
+    Get a local data path for :py:class:`FileFragment`.
+    
+    - returns: *string* containing the local data path.
     '''
     foundfile = ''
 
@@ -1243,9 +1439,11 @@ class FileFragment(object) :
 
   def hasValidSizeLocalData( self ) :
     '''
-    Check that the current C{FileFragment} has valid local data. Checks the file existence
-    and the size of the file.
-    @return : True if the current C{FileFragment} has valid local data using data size, False otherwise.
+    Check that the current :py:class:`FileFragment` has valid local data. 
+    Checks the file existence and the size of the file.
+    
+    - returns: True if the current :py:class:`FileFragment` has valid local 
+      data using data size, False otherwise.
     '''
     filepath = self.getLocalDataPath()
     resourcelock = resourcemanager.getResourceLock( filepath )
@@ -1260,16 +1458,19 @@ class FileFragment(object) :
       
   def hasValidLocalData( self ) :
     '''
-    Check that the current C{FileFragment} has valid local data. Checks the file existence
-    and sha1 key.
-    @return : True if the current C{FileFragment} has valid local data, False otherwise.
+    Check that the current :py:class:`FileFragment` has valid local data. 
+    Checks the file existence and sha1 key.
+    
+    - returns: True if the current :py:class:`FileFragment` has valid local 
+      data, False otherwise.
     '''
     filepath = self.getLocalDataPath()
     return self._checkFile( filepath )
 
   def __str__( self ) :
     '''
-    Get a L{string} representing the current C{FileFragment}.
-    @return : L{string} representing the current C{FileFragment}.
+    Get a *string* representing the current :py:class:`FileFragment`.
+    
+    - returns: *string* representing the current :py:class:`FileFragment`.
     '''
     return 'self.filename : ' + self.filename + ', self.filelength : ' + unicode(self.filelength) + ', self.offset : ' + unicode(self.offset) + ', self.length : ' + unicode(self.length) + ', self.sha1 : ' + self.sha1 + ', self.getLocalDataPath() : ' + self.getLocalDataPath()

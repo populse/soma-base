@@ -34,18 +34,19 @@
 
 '''
 
-@author: Dominique Geffroy
-@organization: U{NeuroSpin<http://www.neurospin.org>} and U{IFR 49<http://www.ifr49.org>}
-@license: U{CeCILL version 2<http://www.cecill.info/licences/Licence_CeCILL_V2-en.html>}
+- author: Dominique Geffroy
+- organization: `NeuroSpin <http://www.neurospin.org>`_ and 
+  `IFR 49 <http://www.ifr49.org>\\_
+- license: `CeCILL version 2 <http://www.cecill.info/licences/Licence_CeCILL_V2-en.html>`_
 '''
-__docformat__ = "epytext en"
+__docformat__ = 'restructuredtext en'
 
 from soma.singleton import Singleton
 import os
 
 class BrainvisaSystemEnv(Singleton):
   """
-  This class gets the value of the variables BRAINVISA_SYSTEM_... if they are defined. These variables store the value of system environment variables that have been modified in brainvisa context. 
+  This class gets the value of the variables ``BRAINVISA_SYSTEM_``... if they are defined. These variables store the value of system environment variables that have been modified in brainvisa context. 
   The method getVariables returns a map of variable -> value to restore the system value of these environment variables.
   """
   
@@ -65,6 +66,9 @@ class BrainvisaSystemEnv(Singleton):
         self.variables[sysVar]=os.getenv(bvSysVar)
 
   def getVariables(self):
+    '''
+    Returns the dictionary of BRAINVISA_SYSTEM_* variables
+    '''
     return self.variables
   
   

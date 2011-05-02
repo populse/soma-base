@@ -35,23 +35,25 @@
 '''
 Singleton pattern.
 
-@author: Yann Cointepas
-@organization: U{NeuroSpin<http://www.neurospin.org>} and U{IFR 49<http://www.ifr49.org>}
-@license: U{CeCILL version 2<http://www.cecill.info/licences/Licence_CeCILL_V2-en.html>}
+- author: Yann Cointepas
+- organization: `NeuroSpin <http://www.neurospin.org>`_ and 
+  `IFR 49 <http://www.ifr49.org>`_
+- license: `CeCILL version 2 <http://www.cecill.info/licences/Licence_CeCILL_V2-en.html>`_
 '''
-__docformat__ = "epytext en"
+__docformat__ = 'restructuredtext en'
 
 class Singleton( object ):
   '''
-  Implements the singleton pattern. A class deriving from C{Singleton} can
+  Implements the singleton pattern. A class deriving from ``Singleton`` can
   have only one instance. The first instanciation will create an object and
-  other instanciations return the same object. Note that the C{__init__} 
+  other instanciations return the same object. Note that the :py:meth:`__init__`
   method (if any) is still called at each instanciation (on the same object).
-  Therefore, C{Singleton} derived class should define C{__singleton_init__} 
-  instead of C{__init__} because the former is only called once.
+  Therefore, :py:class:`Singleton` derived classes should define 
+  :py:meth:`__singleton_init__`
+  instead of :py:meth:`__init__` because the former is only called once.
   
   Example::
-  
+
     from singleton import Singleton
     
     class MyClass( Singleton ):
@@ -61,6 +63,7 @@ class Singleton( object ):
     o1 = MyClass()
     o2 = MyClass()
     print o1 is o2
+  
   '''
   def __new__( cls, *args, **kwargs ):
     if '_singleton_instance' not in cls.__dict__:
@@ -73,6 +76,7 @@ class Singleton( object ):
 
   def __init__( self, *args, **kwargs ):
     '''
-    C{__init__} method of L{Singleton} derived class should do nothing. Derived
-    classes must define C{__singleton_init__} instead of C{__init__}.
+    The __init__ method of :py:class:`Singleton` derived class should do 
+    nothing. 
+    Derived classes must define :py:meth:`__singleton_init__` instead of __init__.
     '''

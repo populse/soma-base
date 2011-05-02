@@ -35,13 +35,14 @@
 '''
 This module contains decorators.
 
-@author: Nicolas Souedet
-@organization: U{NeuroSpin<http://www.neurospin.org>} and U{IFR 49<http://www.ifr49.org>}
-@license: U{CeCILL version 2<http://www.cecill.info/licences/Licence_CeCILL_V2-en.html>}
+- author: Nicolas Souedet
+- oganization: `NeuroSpin <http://www.neurospin.org>`_ and 
+  `IFR 49 <http://www.ifr49.org>`_
+- license: `CeCILL version 2 <http://www.cecill.info/licences/Licence_CeCILL_V2-en.html>`_
 ''' 
 from __future__ import with_statement
 
-__docformat__ = "epytext en"
+__docformat__ = 'restructuredtext en'
 
 def synchronized(function):
    from threading import RLock
