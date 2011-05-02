@@ -1,4 +1,4 @@
-# -*- coding: iso-8859-1 -*-
+# -*- coding: utf-8 -*-
 
 #  This software and supporting documentation are distributed by
 #      Institut Federatif de Recherche 49
@@ -83,7 +83,7 @@ class ThreadSafeSQLiteConnection( object ):
         connection, connectionClosed = self.connections[ thread ]
         if connection is not None:
           currentThread = threading.currentThread().getName()
-          print >> sys.stderr, 'WARNING: internal error: an sqlite connection on', repr( sqliteFile ), 'is opened for thread', thread, 'but the corresponding ThreadSafeSQLiteConnection instance (number ' + str( self._id ) + ') is beign deleted in thread', currentThread + '. Method currentThreadCleanup() should have been called from', thread, 'to supress this warning.'
+          print >> sys.stderr, 'WARNING: internal error: an sqlite connection on', repr( sqliteFile ), 'is opened for thread', thread, 'but the corresponding ThreadSafeSQLiteConnection instance (number ' + str( self._id ) + ') is being deleted in thread', currentThread + '. Method currentThreadCleanup() should have been called from', thread, 'to supress this warning.'
   
   def _getConnection( self ):
     if self.__args is None:

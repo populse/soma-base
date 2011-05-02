@@ -87,7 +87,7 @@ SubModule: ``importer``
 SubModule: ``minf``
 -------------------
 
-.. automodule:: soma.minf
+.. automodule:: soma.minf.api
   :members:
 
 

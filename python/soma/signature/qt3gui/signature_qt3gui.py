@@ -1,4 +1,4 @@
-# -*- coding: iso-8859-1 -*-
+# -*- coding: utf-8 -*-
 
 #  This software and supporting documentation are distributed by
 #      Institut Federatif de Recherche 49
@@ -50,7 +50,7 @@ from soma.qt3gui.api import ApplicationQt3GUI, Qt3GUI
 #-------------------------------------------------------------------------------
 class HasSignatureEditionWidget( qt.QGroupBox ):
   _live = True
-  # QPixmap instance cannot be build before a QApplication is beign created.
+  # QPixmap instance cannot be build before a QApplication is being created.
   # (it simply exits the program). But for documentation with epydoc, all
   # modules are loaded without C{QApplication}. Therefore, the creation of
   # the following two static QPixmap instances has been put in __init__.
