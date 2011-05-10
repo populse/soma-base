@@ -1,4 +1,4 @@
-# -*- coding: iso-8859-1 -*-
+# -*- coding: utf-8 -*-
 
 #  This software and supporting documentation are distributed by
 #      Institut Federatif de Recherche 49
@@ -149,7 +149,7 @@ Data type classes
 @license: U{CeCILL version 2<http://www.cecill.info/licences/Licence_CeCILL_V2-en.html>}
 '''
 
-__docformat__ = "epytext en"
+__docformat__ = "restructuredtext en"
 
 from soma.signature.signature import DataType, ClassDataType, Signature, \
                                      VariableSignature, HasSignature, Undefined
