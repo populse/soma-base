@@ -46,7 +46,7 @@ import os
 
 class BrainvisaSystemEnv(Singleton):
   """
-  This class gets the value of the variables ``BRAINVISA_SYSTEM_``... if they are defined. These variables store the value of system environment variables that have been modified in brainvisa context. 
+  This class gets the value of the variables ``BRAINVISA_UNENV_``... if they are defined. These variables store the value of system environment variables that have been modified in brainvisa context. 
   The method getVariables returns a map of variable -> value to restore the system value of these environment variables.
   """
   
@@ -55,19 +55,18 @@ class BrainvisaSystemEnv(Singleton):
     Define system environment variables that have to be passed to external command to restore environment if it have been modified at brainvisa startup
     """
     self.variables=None
-    # if the variable BRAINVISA_SYSTEM_VARIABLES is defined, we are in a brainvisa package and some environment variable have been modified at startup
-    brainvisaSysVarList=os.getenv('BRAINVISA_SYSTEM_VARIABLES')
-    if brainvisaSysVarList:
+    unenvVars = [ i for i in os.environ if i.startswith( 'BRAINVISA_UNENV_' ) ]
+    if unenvVars:
       # this map will contain {variable : old value} for all varialbes modified at startup
       self.variables={}
-      # the old value of these variables was stored in variables BRAINVISA_SYSTEM_VARIABLE
-      for sysVar in brainvisaSysVarList.split(" "):
-        bvSysVar="BRAINVISA_SYSTEM_"+sysVar
+      # the old value of these variables was stored in variables BRAINVISA_UNENV_VARIABLE
+      for bvSysVar in unenvVars:
+        sysVar=bvSysVar[16:]
         self.variables[sysVar]=os.getenv(bvSysVar)
 
   def getVariables(self):
     '''
-    Returns the dictionary of BRAINVISA_SYSTEM_* variables
+    Returns the dictionary of BRAINVISA_UNENV_* variables
     '''
     return self.variables
   
