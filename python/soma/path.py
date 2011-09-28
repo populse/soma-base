@@ -1,4 +1,4 @@
-# -*- coding: iso-8859-1 -*-
+# -*- coding: utf-8 -*-
 
 #  This software and supporting documentation are distributed by
 #      Institut Federatif de Recherche 49
@@ -92,7 +92,10 @@ def relative_path( path, referenceDirectory ):
   i = 0
   while i < len( sPath ) and i < len( sReferencePath ) and sPath[ i ] == sReferencePath[ i ]:
     i += 1
-  return os.path.join( *( [ '..' ] * ( len( sReferencePath ) - i  ) ) + sPath[ i: ] )
+  plist = ( [ '..' ] * ( len( sReferencePath ) - i  ) ) + sPath[ i: ]
+  if len( plist ) == 0:
+    return ''
+  return os.path.join( *plist )
 
 
 def no_symlink( path ):
