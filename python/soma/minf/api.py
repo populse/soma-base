@@ -100,6 +100,7 @@ def minfFormat( source ):
   if not hasattr( source, 'readline' ):
     source = BufferAndFile( open( source ) )
   elif not isinstance( source, BufferAndFile ):
+    source.seek(0)
     source = BufferAndFile( source )
 
   # Check first non white character to see if the minf file is XML or not
@@ -167,6 +168,7 @@ def iterateMinf( source, targets=None ):
   if not hasattr( source, 'readline' ):
     source = BufferAndFile( open( source ) )
   elif not isinstance( source, BufferAndFile ):
+    source.seek(0)
     source = BufferAndFile( source )
 
   # Check first non white character to see if the minf file is XML or not
