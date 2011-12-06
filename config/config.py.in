@@ -1,2 +1,5 @@
 MAJOR_QT_VERSION = @DESIRED_QT_VERSION@
 DEFAULT_BRAINVISA_SHARE = '@CMAKE_INSTALL_PREFIX@/share'
+fullVersion = '@soma-base_VERSION@'
+shortVersion = '@soma-base_VERSION_MAJOR@.@soma-base_VERSION_MINOR@'
+__version__ = fullVersion
