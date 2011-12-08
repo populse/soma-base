@@ -185,9 +185,12 @@ class HasSignatureEditionWidget( TgFieldSet ):
       it = self.__object.signature.itervalues()
       it.next() # skip signature
       for signatureItem in it:
-        signatureItem.removeOnAttributeChange( 'type', self._signatureChanged )
-        signatureItem.removeOnAttributeChange( 'visible', self._signatureChanged )
-      
+        
+        if signatureItem._onAttributeChange.has_key('type') :
+          signatureItem.removeOnAttributeChange( 'type', self._signatureChanged )
+          
+        if signatureItem._onAttributeChange.has_key('visible') :
+          signatureItem.removeOnAttributeChange( 'visible', self._signatureChanged )
       
       self.__object = None
     self._deleteSignatureWidgets()

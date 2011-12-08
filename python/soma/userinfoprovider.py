@@ -88,6 +88,14 @@ def getUsersInfo( dataset, formats, keys, sorts ) :
     # Instanciates user info object
     yield UserInfo( **parameters )
 
+def cn_splitter(cn) :
+  # Split first name and last name from completename
+  s = cn.split(' ')
+  if len(s) > 1 :
+    return [s[0], ' '.join(s[1:])]
+  else :
+    return [ cn ]
+          
 class UserInfo( object ) :
   '''
   C{UserInfo} is a class that contains user information.
@@ -105,7 +113,7 @@ class UserInfo( object ) :
     @return : C{UserInfo} complete name.
     '''
     if ( self.completename is None ) :
-      return ' '.join( [ self.lastname.title(), self.firstname.title() ] )
+      return ' '.join( [ self.lastname.upper(), self.firstname.title() ] )
     else :
       return self.completename.title()
   
@@ -264,7 +272,7 @@ class NisUserInfoProvider( UserInfoProvider ) :
   C{NisUserInfoProvider} is the nis implementation of the
   L{UserInfoProvider} class.
   '''
-  def getUsers( self, map = None, domain = None, separator = None, indexes = None, filter = None, attributes = None, formats = None, sorts = None ) :
+  def getUsers( self, map = None, domain = None, separator = None, indexes = None, filter = None, attributes = None, formats = None, sorts = None, columnsplitters = { 4 : cn_splitter } ) :
     '''
     Method that retrieve users info for the C{NisUserInfoProvider}.
     It uses a nis server.
@@ -325,7 +333,16 @@ class NisUserInfoProvider( UserInfoProvider ) :
       if not re.match(filter, value) is None :
         resultrecord = list()
         nisvalues = value.split(separator)
-        resultrecord = [ nisvalues[ index ] for index in indexes ]
+        
+        for index in indexes :
+          cs = columnsplitters.get(index, None)
+          v = nisvalues[ index ]
+          
+          if cs :
+            resultrecord += cs(v)
+          else :
+            resultrecord.append( v )
+
         resultset.append( resultrecord )
     
     return getUsersInfo( resultset, formats, attributes, sorts )
@@ -348,9 +365,9 @@ class NisUserInfoProviderConfigurationGroup( ConfigurationGroup ) :
     'separator', Unicode, dict(defaultValue=':', doc='Set nis map record separator here.'),
     'indexes', Sequence(Integer), dict(defaultValue=[ 4, 0 ], doc='Set indexes of nis map record here.' ),
     'filter', Unicode, dict(defaultValue='^[A-Za-z]{2}\d{6}[^@]*$', doc='Set nis map record filter here.' ),
-    'attributes', Sequence(Unicode), dict(defaultValue=[ 'cn', 'uid' ], doc='Set nis keys here (key order must match with indexes order).' ),
-    'formats', Sequence(Sequence(Unicode)), dict(defaultValue=[ ( 'completename', '%(cn)s' ), ( 'login', '%(uid)s' ) ], doc='Set formats to apply here.' ),
-    'sorts', Sequence(Integer), dict(defaultValue=['completename'], doc='Set sort attributes here.')
+    'attributes', Sequence(Unicode), dict(defaultValue=[ 'fn', 'ln', 'uid' ], doc='Set nis keys here (key order must match with indexes order).' ),
+    'formats', Sequence(Sequence(Unicode)), dict(defaultValue=[ ( 'lastname', '%(ln)s' ), ( 'firstname', '%(fn)s' ), ( 'login', '%(uid)s' ) ], doc='Set formats to apply here.' ),
+    'sorts', Sequence(Integer), dict(defaultValue=['lastname'], doc='Set sort attributes here.')
   )
     
 

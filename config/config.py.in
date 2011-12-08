@@ -3,3 +3,16 @@ DEFAULT_BRAINVISA_SHARE = '@CMAKE_INSTALL_PREFIX@/share'
 fullVersion = '@soma-base_VERSION@'
 shortVersion = '@soma-base_VERSION_MAJOR@.@soma-base_VERSION_MINOR@'
 __version__ = fullVersion
+
+  share = os.getenv( 'BRAINVISA_SHARE' )
+  if not share:
+    share = os.getenv( 'SHFJ_SHARED_PATH' )
+  if not share or not os.path.exists( share ):
+    share = os.path.join( os.path.dirname( os.path.dirname( os.path.dirname( \
+      soma.__file__ ) ) ), 'share' )
+    if not os.path.exists( os.path.join( share, 'soma-base-@BRAINVISA_PACKAGE_VERSION_MAJOR@.@BRAINVISA_PACKAGE_VERSION_MINOR@' ) ):
+      share = DEFAULT_BRAINVISA_SHARE
+  return share
+
+BRAINVISA_SHARE = _init_default_brainvisa_share()
+

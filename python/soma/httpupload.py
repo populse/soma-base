@@ -64,7 +64,6 @@ from __future__ import with_statement
 __docformat__ = 'restructuredtext en'
 
 import datetime
-#import turbogears
 import os
 import thread
 import threading
@@ -99,7 +98,9 @@ from soma.singleton import Singleton
         #print '             -> filefragments', objgraph.count('FileFragment')
     #except Exception, e :
         #pass
-    
+
+config = dict()
+
 def displayFileBuilderInfos():
   '''
     Display current registered :py:class:`FileBuilderInfo`s.
@@ -329,14 +330,16 @@ class LogManager( Singleton ) :
     '''
     Get log reset from configuration file.
     '''
-    return turbogears.config.get( 'httpupload.logreset', True )
+    global config
+    return config.get( 'httpupload.logreset', True )
   
   def logLevel( self ):
     '''
     Get log level from configuration file.
     '''
+    global config
     if not hasattr( self, '_loglevel' ) :
-      value = turbogears.config.get( 'httpupload.loglevel' )
+      value = config.get( 'httpupload.loglevel', 'INFO' )
       result = LogLevel.__dict__.get( value, LogLevel.INFO )
       self.setLogLevel( result )
     else :
@@ -347,7 +350,8 @@ class LogManager( Singleton ) :
     '''
     Get log file from configuration file.
     '''
-    value = turbogears.config.get( 'httpupload.logfile', '/var/log/serverpack/httpupload/httpupload_%(startdate)s.log' )
+    global config
+    value = config.get( 'httpupload.logfile', '/var/log/serverpack/httpupload/httpupload_%(startdate)s.log' )
     value = os.path.expandvars( value )
     return value % { 'startdate' : self._startdate.isoformat() }
   
@@ -414,8 +418,9 @@ class ResourceManager( Singleton ) :
       
         number of :py:class:`FileBuilder` threads to start.
     '''
+    global config
     if count is None :
-      count = int(turbogears.config.get( 'httpupload.threadcount', '4' ))
+      count = int(config.get( 'httpupload.threadcount', '4' ))
       
     if len( self.builders ) == 0 :
       logmanager.writeLogInfo( 'Module started' )
@@ -443,13 +448,15 @@ class ResourceManager( Singleton ) :
     
     - returns: managed directory list.
     '''
+    global config
+    
     result = None
     defaultvalue = None
     
     if key in self.defaultdirectories :
       defaultvalue = self.defaultdirectories[ key ]
 
-    result = turbogears.config.get( key, defaultvalue )
+    result = config.get( key, defaultvalue )
     result = os.path.expandvars( result )
     checkDirectory( result )
     return result
