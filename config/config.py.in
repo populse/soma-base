@@ -4,6 +4,7 @@ fullVersion = '@soma-base_VERSION@'
 shortVersion = '@soma-base_VERSION_MAJOR@.@soma-base_VERSION_MINOR@'
 __version__ = fullVersion
 
+def _init_default_brainvisa_share():
   share = os.getenv( 'BRAINVISA_SHARE' )
   if not share:
     share = os.getenv( 'SHFJ_SHARED_PATH' )
