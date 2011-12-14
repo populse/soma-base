@@ -295,7 +295,6 @@ import soma.minf.xml_writer
 
 #------------------------------------------------------------------------------
 from soma.minf.xhtml import XHTML
-from soma.notification import ObservableList, EditableTree
 from soma.uuid import Uuid
 
 minf_2_0_reducer = MinfReducer( 'minf_2.0' )
@@ -316,10 +315,6 @@ minf_2_0_expander.registerStructure( listStructure, minf_2_0_expander.sequenceEx
 minf_2_0_expander.registerStructure( dictStructure, minf_2_0_expander.dictExpander )
 
 registerClass( 'minf_2.0', Uuid, 'Uuid' )
-registerClass( 'minf_2.0', EditableTree, 'EditableTree' )
-registerClass( 'minf_2.0', EditableTree.Branch, 'EditableTree.Branch' )
-registerClass( 'minf_2.0', EditableTree.Leaf, 'EditableTree.Leaf' )
-registerClass( 'minf_2.0', ObservableList, 'ObservableList' )
 
 
 #------------------------------------------------------------------------------
