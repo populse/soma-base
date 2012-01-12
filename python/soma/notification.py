@@ -574,7 +574,7 @@ class ObservableList(list):
     """Removes the element at position pos or the last element if pos is None.
     Notifies a remove action.
     @return: the removed element"""
-    if pos:
+    if pos is not None:
       index=self.getPositiveIndex(pos)
       elem=super(ObservableList, self).pop( pos)
     else:
