@@ -181,7 +181,7 @@ def iterateMinf( source, targets=None ):
     except:
       d = { 'nan' : None }
     try:
-      exec source.read() in d
+      exec source.read().replace("\r\n", "\n") in d
     except Exception, e:
       x = source
       if hasattr( source, '_BufferAndFile__file' ):
