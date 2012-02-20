@@ -1,0 +1,132 @@
+# -*- coding: utf-8 -*-
+
+#  This software and supporting documentation are distributed by
+#      Institut Federatif de Recherche 49
+#      CEA/NeuroSpin, Batiment 145,
+#      91191 Gif-sur-Yvette cedex
+#      France
+#
+# This software is governed by the CeCILL-B license under
+# French law and abiding by the rules of distribution of free software.
+# You can  use, modify and/or redistribute the software under the 
+# terms of the CeCILL-B license as circulated by CEA, CNRS
+# and INRIA at the following URL "http://www.cecill.info". 
+# 
+# As a counterpart to the access to the source code and  rights to copy,
+# modify and redistribute granted by the license, users are provided only
+# with a limited warranty  and the software's author,  the holder of the
+# economic rights,  and the successive licensors  have only  limited
+# liability.
+#
+# In this respect, the user's attention is drawn to the risks associated
+# with loading,  using,  modifying and/or developing or reproducing the
+# software by the user in light of its specific status of free software,
+# that may mean  that it is complicated to manipulate,  and  that  also
+# therefore means  that it is reserved for developers  and  experienced
+# professionals having in-depth computer knowledge. Users are therefore
+# encouraged to load and test the software's suitability as regards their
+# requirements in conditions enabling the security of their systems and/or 
+# data to be ensured and,  more generally, to use and operate it in the 
+# same conditions as regards security.
+#
+# The fact that you are presently reading this means that you have had
+# knowledge of the CeCILL-B license and that you accept its terms.
+
+'''
+@author: Yann Cointepas
+@organization: U{NeuroSpin<http://www.neurospin.org>} and U{IFR 49<http://www.ifr49.org>}
+@license: U{CeCILL version 2<http://www.cecill.info/licences/Licence_CeCILL_V2-en.html>}
+'''
+
+__docformat__ = "epytext en"
+
+import os
+os.environ['ETS_TOOLKIT'] = 'qt4'
+
+import sys, platform
+
+from enthought.traits.api import HasTraits, String, ReadOnly, Directory, ListStr
+from soma.singleton import Singleton
+from soma.controller import Controller, ControllerFactories
+
+
+
+#-------------------------------------------------------------------------------
+class Application( Singleton, Controller ):
+  name = ReadOnly( desc='Name of the application' )
+  version = ReadOnly()
+  user_directory = Directory( desc='Base directory where user specific information can be find' )
+  application_directory = Directory( desc='Base directory where application specifc information can be find' )
+  site_directory = Directory( desc='Base directory where site specifc information can be find' )
+  early_plugin_modules = ListStr( desc='List of Python module to load before application configuration' )
+  plugin_modules = ListStr( desc='List of Python module to load after application configuration' )
+  
+  def __singleton_init__( self, name, version=None, *args, **kwargs ):
+    super( Application, self ).__init__( *args, **kwargs )
+    
+    self._controller_factories = None
+    
+    self.name = name
+    self.version = version
+    self.gui = None
+    
+    # Load early plugin modules
+    for plugin_module in self.early_plugin_modules:
+      self.load_plugin_module( plugin_module )
+    
+    homedir = os.getenv( 'HOME' )
+    if not homedir:
+      homedir = ''
+      if platform.system() == 'Windows':
+        homedir = os.getenv( 'USERPROFILE' )
+        if not homedir:
+          homedir = os.getenv( 'HOMEPATH' )
+          if not homedir:
+            homedir = '\\'
+          drive = os.getenv( 'HOMEDRIVE' )
+          if not drive:
+            drive = os.getenv( 'SystemDrive' )
+            if not drive:
+              drive = os.getenv( 'SystemRoot' )
+              if not drive:
+                drive = os.getenv( 'windir' )
+              if drive and len( drive ) >= 2:
+                drive = drive[ :2 ]
+              else:
+                drive = ''
+          homedir = drive + homedir
+    if homedir and os.path.exists( homedir ):
+      self.user_directory = homedir
+    
+    appdir = os.path.normpath( os.path.dirname( os.path.dirname( sys.argv[0] ) ) )
+    if os.path.exists( appdir ):
+      self.application_directory = appdir
+
+    sitedir = os.path.join( '/etc', self.name )
+    if os.path.exists( sitedir ):
+      self.site_directory = sitedir
+
+  def initialize( self ):
+    # Load plugin modules
+    for plugin_module in self.plugin_modules:
+      self.load_plugin_module( plugin_module )
+
+
+  def initialize_gui( self ):
+    if self.gui is None:
+      from soma.gui.application_gui import ApplicationGUI
+      self.gui = ApplicationGUI( self )
+  
+  
+  def get_controller( self, object ):
+    if self._controller_factories is None:
+      self._controller_factories = ControllerFactories()
+    return self._controller_factories.get_controller( object )
+  
+  
+  def load_plugin_module( self, plugin_module ):
+    try:
+      __import__( plugin_module )
+    except:
+      current_user_context.display_last_exception( 'Cannot load plugin ' + plugin_module )
+    

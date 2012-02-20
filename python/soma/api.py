@@ -1,4 +1,4 @@
-# -*- coding: iso-8859-1 -*-
+# -*- coding: utf-8 -*-
 
 #  This software and supporting documentation are distributed by
 #      Institut Federatif de Recherche 49
@@ -32,10 +32,41 @@
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL-B license and that you accept its terms.
 
+
 '''
-@author: Yann Cointepas
-@organization: U{NeuroSpin<http://www.neurospin.org>} and U{IFR 49<http://www.ifr49.org>}
-@license: U{CeCILL version 2<http://www.cecill.info/licences/Licence_CeCILL_V2-en.html>}
+soma module documentation is not finished yet
+
+Examples
+========
+
+Insert examples here
+
+Module content
+==============
+
+The content of soma module is composed of many submodules. However,
+all important items can be imported from soma.api. For example, if
+one wants to use the Application class defined in the module 
+soma.application, he just have to use the following import 
+statement::
+  from soma.api import Application
+
+Main classes
+------------
+ - Application: an Application instance contains all information that is 
+   shared across all modules of an application.
+
+Advanced classes
+----------------
+ - Singleton: A class deriving from Singleton can have only one instance.
+
+
+- Yann Cointepas
+- NeuroSpin (http://www.neurospin.org) and IFR 49 (http://www.ifr49.org)
+- License: CeCILL version 2 (http://www.cecill.info/licences/Licence_CeCILL_V2-en.html)
 '''
-__docformat__ = "epytext en"
- 
+
+
+from soma.singleton import Singleton
+from soma.application import Application
+from soma.controller import Controller, ControllerFactories
