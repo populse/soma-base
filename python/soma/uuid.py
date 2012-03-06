@@ -42,6 +42,7 @@ Universal unique identifier.
 __docformat__ = "epytext en"
 
 import struct, random, binascii
+import types
 
 #-------------------------------------------------------------------------------
 class Uuid( object ):
@@ -100,5 +101,15 @@ class Uuid( object ):
   def __eq__( self, other ):
     if isinstance( other, Uuid ):
       return self.__uuid == other.__uuid
-    else: # assume string-like object (str or unicode)
+    elif isinstance(other, types.StringTypes): # assume string-like object (str or unicode)
       return self.__uuid == Uuid( other ).__uuid
+    else:
+      return False
+
+  def __ne__( self, other ):
+    if isinstance( other, Uuid ):
+      return self.__uuid != other.__uuid
+    elif isinstance(other, types.StringTypes): # assume string-like object (str or unicode)
+      return self.__uuid != Uuid( other ).__uuid
+    else:
+      return True
