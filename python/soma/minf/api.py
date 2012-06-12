@@ -150,7 +150,7 @@ def _setTarget( target, source ):
   
   
 #------------------------------------------------------------------------------
-def iterateMinf( source, targets=None ):
+def iterateMinf( source, targets=None, stop_on_error=True, exceptions=[] ):
   '''
   Returns an iterator over all objects stored in a minf file.
 
@@ -223,17 +223,16 @@ def iterateMinf( source, targets=None ):
         target = targets.next()
       except StopIteration:
         targets = None
-    yield expander.expand( iterator, nodeItem, target=target )
-
+    yield expander.expand( iterator, nodeItem, target=target, stop_on_error=stop_on_error, exceptions=exceptions )
 
 #------------------------------------------------------------------------------
-def readMinf( source, targets=None ):
+def readMinf( source, targets=None, stop_on_error=True, exceptions=[] ):
   '''
   Entirerly reads a minf file and returns its content in a tuple.
   Equivalent to C{tuple( iterateMinf( source ) )}.
   @see: L{iterateMinf}
   '''
-  return tuple( iterateMinf( source, targets=targets ) )
+  return tuple( iterateMinf( source, targets=targets, stop_on_error=stop_on_error, exceptions=exceptions ) )
 
 
 #------------------------------------------------------------------------------

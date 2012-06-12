@@ -45,7 +45,7 @@ A minf tree is always accessed via an iterator on its content. This content is c
 __docformat__ = "epytext en"
 
 import types
-
+import sys
 from soma.translation import translate as _
 from soma.undefined import Undefined
 from soma.minf.error import MinfError
@@ -349,7 +349,7 @@ class MinfExpander( object ):
       self.factory = factory
     
     
-    def __call__( self, expander, minfNode, minfNodeIterator, target, targetType ):
+    def __call__( self, expander, minfNode, minfNodeIterator, target, targetType, stop_on_error=True, exceptions=[] ):
       structureName = minfNode.type
       args = []
       kwargs = {}
@@ -360,12 +360,18 @@ class MinfExpander( object ):
             { 'exp': structureName, 'rcv': minfNode.type } )
           break
         else:
-          key = expander.expand( minfNodeIterator, minfNode )
-          value = expander.expand( minfNodeIterator )
-          if key is None:
-            args.append( value )
-          else:
-            kwargs[ str( key ) ] = value
+          key = expander.expand( minfNodeIterator, minfNode, stop_on_error=stop_on_error, exceptions=exceptions )
+          try:
+            value = expander.expand( minfNodeIterator, stop_on_error=stop_on_error, exceptions=exceptions )
+            if key is None:
+              args.append( value )
+            else:
+              kwargs[ str( key ) ] = value
+          except Exception, e:
+            if stop_on_error:
+              raise e
+            else:
+              exceptions.append(sys.exc_info())
       return self.factory( *args, **kwargs )
 
   
@@ -391,14 +397,21 @@ class MinfExpander( object ):
     return expander
   
   
-  def expand( self, minfNodeIterator, minfNode=Undefined, target=None, targetType=Undefined ):
+  def expand( self, minfNodeIterator, minfNode=Undefined, target=None, targetType=Undefined, stop_on_error=True, exceptions=[] ):
     if minfNode is Undefined:
       minfNode = minfNodeIterator.next()
     if isinstance( minfNode, StartStructure ):
       identifier = minfNode.identifier
       typeExpander = self.getTypeExpander( minfNode.type )
-      result = typeExpander( self, minfNode, minfNodeIterator, target=target, 
-                             targetType=targetType )
+      try:
+        result = typeExpander( self, minfNode, minfNodeIterator, target=target, 
+                             targetType=targetType, stop_on_error=stop_on_error, exceptions=exceptions  )
+      except Exception, e:
+        if stop_on_error:
+          raise e
+        else:
+          result= None
+          exceptions.append(sys.exc_info())
       if identifier is not None:
         self.objectsWithIdentifier[ identifier ] = result 
       return result
@@ -411,7 +424,7 @@ class MinfExpander( object ):
       return minfNode
   
   
-  def sequenceExpander( expander, minfNode, minfNodeIterator, target, targetType ):
+  def sequenceExpander( expander, minfNode, minfNodeIterator, target, targetType, stop_on_error=True, exceptions=[] ):
     if target is None:
       result = []
     else:
@@ -435,14 +448,21 @@ class MinfExpander( object ):
           except StopIteration:
             itTarget = None
         if target is not None:
-          expander.expand( minfNodeIterator, minfNode, target=target, targetType=targetType.elementType )
+          expander.expand( minfNodeIterator, minfNode, target=target, targetType=targetType.elementType, stop_on_error=stop_on_error, exceptions=exceptions )
         else:
-          result.append( expander.expand( minfNodeIterator, minfNode ) )
+          try:
+            result.append( expander.expand( minfNodeIterator, minfNode, stop_on_error=stop_on_error, exceptions=exceptions ) )
+          except Exception, e:
+            if stop_on_error:
+              raise e
+            else:
+              result.append(None)
+              exceptions.append(sys.exc_info())
     return result
   sequenceExpander = staticmethod( sequenceExpander )
   
   
-  def dictExpander( expander, minfNode, minfNodeIterator, target, targetType ):
+  def dictExpander( expander, minfNode, minfNodeIterator, target, targetType, stop_on_error=True, exceptions=[] ):
     if target is None:
       result = {}
     else:
@@ -454,7 +474,7 @@ class MinfExpander( object ):
            { 'exp': dictStructure, 'rcv': minfNode.type } )
         break
       else:
-        key = expander.expand( minfNodeIterator, minfNode )
+        key = expander.expand( minfNodeIterator, minfNode, stop_on_error=stop_on_error, exceptions=exceptions )
         if isinstance( key, list ):
           # list objects are unhashable and cannot be used as dictionary key
           # in this case they are converted to tuple
@@ -464,15 +484,29 @@ class MinfExpander( object ):
           if targetType is not Undefined:
             targetType = targetType.type
           target = getattr( result, key, None )
-          if isinstance( target, HasSignature ) or isinstance( targetType, Sequence ):
-            value = expander.expand( minfNodeIterator, target=target,
-                                     targetType=targetType )
-          else:
-            value = expander.expand( minfNodeIterator )
-          setattr( result, key, value )
+          try:
+            if isinstance( target, HasSignature ) or isinstance( targetType, Sequence ):
+              value = expander.expand( minfNodeIterator, target=target,
+                                      targetType=targetType, stop_on_error=stop_on_error, exceptions=exceptions )
+            else:
+              value = expander.expand( minfNodeIterator, stop_on_error=stop_on_error, exceptions=exceptions )
+            setattr( result, key, value )
+          except Exception, e:
+            if stop_on_error:
+              raise e
+            else:
+              exceptions.append(sys.exc_info())
+
         else:
-          value = expander.expand( minfNodeIterator )
-          result[ key ] = value
+          try:
+            value = expander.expand( minfNodeIterator, stop_on_error=stop_on_error, exceptions=exceptions )
+            result[ key ] = value
+          except Exception, e:
+            if stop_on_error:
+              raise e
+            else:
+              exceptions.append(sys.exc_info())
+
     return result
   dictExpander = staticmethod( dictExpander )
   
