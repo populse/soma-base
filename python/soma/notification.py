@@ -852,11 +852,10 @@ class EditableTree(ObservableAttributes, ObservableSortedDictionary):
   @ivar modifiable: if true, new items can be added, items can be deleted and modified
   @type unamed: boolean
   @param unamed: indicates if name parameter was none, so the tree has the default name.
-  @type valid: bool
-  @ivar valid: indicates if the tree is valid (if not it may be hidden in a graphical representation)
+  :param visible: bool, indicates if the tree is visible (if not it may be hidden in a graphical representation)
   """
   defaultName="tree"
-  def __init__( self, name=None, id=None, modifiable=True, content=[], valid=True):
+  def __init__( self, name=None, id=None, modifiable=True, content=[], visible=True, enabled=True):
     dictContent=[(i.id, i) for i in content]
     super(EditableTree, self).__init__(*dictContent)
     if name is None:
@@ -870,7 +869,8 @@ class EditableTree(ObservableAttributes, ObservableSortedDictionary):
     else:
       self.id=id
     self.modifiable=modifiable
-    self.valid=valid
+    self.visible=visible
+    self.enabled=enabled
 
   def __getinitargs__(self):
     """Returns the args to pass to the __init__ method to construct this object.
@@ -880,7 +880,7 @@ class EditableTree(ObservableAttributes, ObservableSortedDictionary):
     """
     # elements in the tuple must be serializable with minf, so the content must be of type list
     content=self.values()
-    return (self.name, self.id, self.modifiable, content, self.valid)
+    return (self.name, self.id, self.modifiable, content, self.visible, self.enabled)
 
   def __str__(self):
     s = self.name + " ("
@@ -997,10 +997,10 @@ class EditableTree(ObservableAttributes, ObservableSortedDictionary):
     @ivar modifiable: indicates if the item can be modified (renamed for example)
     @type delEnabled: boolean
     @ivar delEnabled: indicates if the item can be deleted
-    @type valid: bool
-    @ivar valid: indicates if current item is valid (if not it may be hidden in a graphical representation)
+    :param visible: bool, indicates if current item is visible (if not it may be hidden in a graphical representation)
+    :param enabled: bool, indicates if the item is enabled, it could be visible but disabled
     """
-    def __init__( self, name=None, id=None, icon=None, tooltip=None, copyEnabled=True, modifiable=True, delEnabled=True, valid=True, *args):
+    def __init__( self, name=None, id=None, icon=None, tooltip=None, copyEnabled=True, modifiable=True, delEnabled=True, visible=True, enabled=True, *args):
       super(EditableTree.Item, self).__init__(*args)
       self.icon=icon
       self.name=name
@@ -1012,7 +1012,8 @@ class EditableTree(ObservableAttributes, ObservableSortedDictionary):
       self.copyEnabled=copyEnabled
       self.modifiable=modifiable
       self.delEnabled=delEnabled
-      self.valid=valid
+      self.visible=visible
+      self.enabled=enabled
       self.onChangeNotifier=Notifier()
       self.unamed=False
 
@@ -1022,7 +1023,7 @@ class EditableTree(ObservableAttributes, ObservableSortedDictionary):
       @rtype: tuple
       @return: arg content to pass to the __init__ method for creating a copy of this object
       """
-      return (self.name, self.id, self.icon, self.tooltip, self.copyEnabled, self.modifiable, self.delEnabled, self.valid)
+      return (self.name, self.id, self.icon, self.tooltip, self.copyEnabled, self.modifiable, self.delEnabled, self.visible, self.enabled)
 
     def __reduce__( self ):
       """This method is redefined for enable deepcopy of this object (and potentially pickle).
@@ -1070,12 +1071,12 @@ class EditableTree(ObservableAttributes, ObservableSortedDictionary):
     It inherits from L{Item} and from L{ObservableSortedDictionary}, so it can have children items.
     """
     defaultName="new"
-    def __init__( self, name=None, id=None, icon=None, tooltip=None, copyEnabled=True, modifiable=True, delEnabled=True, content=[], valid=True ):
+    def __init__( self, name=None, id=None, icon=None, tooltip=None, copyEnabled=True, modifiable=True, delEnabled=True, content=[], visible=True, enabled=True ):
       """All parameters must have default values to be able to create new elements automatically"""
       #super(EditableTree.Branch, self).__init__(content)  #, name, icon, tooltip, copyEnabled, modifiable, delEnabled)
       #EditableTree.Item.__init__(self, name, icon, tooltip, copyEnabled, modifiable, delEnabled)
       dictContent=[(i.id, i) for i in content]
-      super(EditableTree.Branch, self).__init__(name, id, icon, tooltip, copyEnabled, modifiable, delEnabled, valid, *dictContent)
+      super(EditableTree.Branch, self).__init__(name, id, icon, tooltip, copyEnabled, modifiable, delEnabled, visible, enabled, *dictContent)
       if name is None:
         self.name=self.defaultName
         self.unamed=True
@@ -1085,7 +1086,7 @@ class EditableTree(ObservableAttributes, ObservableSortedDictionary):
 
     def __getinitargs__(self):
       content=self.values()
-      return (self.name, self.id, self.icon, self.tooltip, self.copyEnabled, self.modifiable, self.delEnabled, content, self.valid)
+      return (self.name, self.id, self.icon, self.tooltip, self.copyEnabled, self.modifiable, self.delEnabled, content, self.visible, self.enabled)
 
     def __reduce__( self ):
       """This method is redefined for enable deepcopy of this object (and potentially pickle).
@@ -1174,8 +1175,8 @@ class EditableTree(ObservableAttributes, ObservableSortedDictionary):
   #----------------------------------------------------------------------------
   class Leaf( Item ):
     """A tree item that cannot have children items"""
-    def __init__( self, name="new", id=None, icon=None, tooltip=None, copyEnabled=True, modifiable=True, delEnabled=True, valid=True):
-      super(EditableTree.Leaf, self).__init__(name, id, icon, tooltip, copyEnabled, modifiable, delEnabled, valid)
+    def __init__( self, name="new", id=None, icon=None, tooltip=None, copyEnabled=True, modifiable=True, delEnabled=True, visible=True, enabled=True):
+      super(EditableTree.Leaf, self).__init__(name, id, icon, tooltip, copyEnabled, modifiable, delEnabled, visible, enabled)
 
     def isLeaf(self):
             return True
