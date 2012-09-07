@@ -112,7 +112,7 @@ def minfFormat( source ):
     # Try gzip compressed file
     gzipSource = source.clone()
     gzipSource.unread( start )
-    gunzipSource = gzip.GzipFile( source.name, fileobj=gzipSource )
+    gunzipSource = gzip.GzipFile( source.name ) 
     try:
       start = gunzipSource.read( 5 )
     except IOError:
@@ -202,7 +202,7 @@ def iterateMinf( source, targets=None, stop_on_error=True, exceptions=[] ):
     return
   elif start != '<?xml':
     # Try gzip compressed file
-    gzSource = gzip.GzipFile( source.name, fileobj=source )
+    gzSource = gzip.GzipFile( source.name )
     if gzSource.read( 5 ) != '<?xml':
       raise MinfError( _( 'Invalid minf file: %s' ) % ( source.name, ) )
     source = BufferAndFile( gzSource )
