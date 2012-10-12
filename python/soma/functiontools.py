@@ -1,4 +1,4 @@
-# -*- coding: iso-8859-1 -*-
+# -*- coding: utf-8 -*-
 
 #  This software and supporting documentation are distributed by
 #      Institut Federatif de Recherche 49
@@ -43,6 +43,7 @@ Utility classes and functions for Python callable.
 __docformat__ = 'restructuredtext en'
 
 import inspect
+from itertools import izip
 
 
 #-------------------------------------------------------------------------------
@@ -119,6 +120,22 @@ def getArgumentsSpecification( callable ):
     except AttributeError:
       return [], None, None, None
     return getArgumentsSpecification( init )
+  elif isinstance( callable, partial ):
+    args, varargs, varkw, defaults = inspect.getargspec( callable.func )
+    if defaults:
+      d = dict( izip( reversed( args ), reversed( defaults ) ) )
+    else:
+      d = {}
+    d.update( izip( reversed( args ), reversed( callable.args ) ) )
+    if callable.keywords:
+      d.update( callable.keywords )
+
+    if len(d) :
+      defaults = tuple( (d[i] for i in args[ -len(d): ] ) )
+    else :
+      defaults = d
+      
+    return ( args, varargs, varkw, defaults )
   else:
     try:
       call = callable.__call__
