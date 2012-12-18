@@ -38,14 +38,18 @@
 @license: U{CeCILL version 2<http://www.cecill.info/licences/Licence_CeCILL_V2-en.html>}
 '''
 
+from __future__ import absolute_import
 __docformat__ = "epytext en"
 
-import os
+
+import os, sys, platform, traceback
+
 os.environ['ETS_TOOLKIT'] = 'qt4'
+try:
+  from enthought.traits.api import ReadOnly, Directory, ListStr
+except ImportError:
+  from traits.api import ReadOnly, Directory, ListStr
 
-import sys, platform
-
-from enthought.traits.api import HasTraits, String, ReadOnly, Directory, ListStr
 from soma.singleton import Singleton
 from soma.controller import Controller, ControllerFactories
 
@@ -53,15 +57,24 @@ from soma.controller import Controller, ControllerFactories
 
 #-------------------------------------------------------------------------------
 class Application( Singleton, Controller ):
+  '''Any program using soma should create an Application instance to manage
+  its configuration and to store any kind of value that have to be global to
+  the program.'''
   name = ReadOnly( desc='Name of the application' )
   version = ReadOnly()
-  user_directory = Directory( desc='Base directory where user specific information can be find' )
-  application_directory = Directory( desc='Base directory where application specifc information can be find' )
-  site_directory = Directory( desc='Base directory where site specifc information can be find' )
-  early_plugin_modules = ListStr( desc='List of Python module to load before application configuration' )
-  plugin_modules = ListStr( desc='List of Python module to load after application configuration' )
+  user_directory = Directory( 
+    desc='Base directory where user specific information can be find' )
+  application_directory = Directory(
+    desc='Base directory where application specifc information can be find' )
+  site_directory = Directory( 
+    desc='Base directory where site specifc information can be find' )
+  early_plugin_modules = ListStr( 
+    desc='List of Python module to load before application configuration' )
+  plugin_modules = ListStr(
+    desc='List of Python module to load after application configuration' )
   
   def __singleton_init__( self, name, version=None, *args, **kwargs ):
+    '''Replaces __init__ in Singleton.'''
     super( Application, self ).__init__( *args, **kwargs )
     
     self._controller_factories = None
@@ -107,26 +120,32 @@ class Application( Singleton, Controller ):
       self.site_directory = sitedir
 
   def initialize( self ):
+    '''This method must be called once to setup the application.'''
     # Load plugin modules
     for plugin_module in self.plugin_modules:
       self.load_plugin_module( plugin_module )
 
 
   def initialize_gui( self ):
+    '''If the application is using a graphical user interface (GUI), this
+    method must be called to initialize it.'''
     if self.gui is None:
       from soma.gui.application_gui import ApplicationGUI
       self.gui = ApplicationGUI( self )
   
   
-  def get_controller( self, object ):
+  def get_controller( self, something ):
+    '''This method must be used to get a controller for any object.'''
     if self._controller_factories is None:
       self._controller_factories = ControllerFactories()
-    return self._controller_factories.get_controller( object )
+    return self._controller_factories.get_controller( something )
   
   
-  def load_plugin_module( self, plugin_module ):
+  @staticmethod
+  def load_plugin_module( plugin_module ):
+    '''This method loads a plugin module. It imports the module without raising
+    an axception if it fails.'''
     try:
       __import__( plugin_module )
     except:
-      current_user_context.display_last_exception( 'Cannot load plugin ' + plugin_module )
-    
+      traceback.print_last()

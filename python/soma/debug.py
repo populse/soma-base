@@ -40,14 +40,16 @@ Utility classes and functions for debugging.
   `IFR 49 <http://www.ifr49.org>`_
 - license: `CeCILL version 2 <http://www.cecill.info/licences/Licence_CeCILL_V2-en.html>`_
 '''
+from __future__ import absolute_import
+
 __docformat__ = 'restructuredtext en'
 
 import sys
-from soma.functiontools import getArgumentsSpecification
-from soma.undefined import Undefined
 from pprint import pprint
 
-def functionCallInfo( frame=None ):
+from soma.undefined import Undefined
+
+def function_call_info( frame=None ):
   '''
   Return a dictionary that gives information about a frame corresponding to a function call.
   The directory contains the following items:
@@ -66,42 +68,42 @@ def functionCallInfo( frame=None ):
       'lineno': frame.f_lineno,
       'filename': frame.f_code.co_filename,
     }
-    c = frame.f_code.co_name
     args = frame.f_code.co_varnames[:frame.f_code.co_argcount]
-    result[ 'arguments' ] = [( p, frame.f_locals.get( p, frame.f_globals.get( p, Undefined ) ) ) for p in args]
+    result[ 'arguments' ] = \
+      [( p, frame.f_locals.get( p, frame.f_globals.get( p, Undefined ) ) ) for p in args]
   finally:
     del frame
   return result
 
 
-def stackCallsInfo( frame=None ):
+def stack_calls_info( frame=None ):
   '''
-  Return a list containing functionCallInfo(frame) for all frame in the stack.
+  Return a list containing function_call_info(frame) for all frame in the stack.
   '''
   try:
     if frame is None:
       frame = sys._getframe( 1 )
     result = []
     while frame is not None:
-      result.insert( 0, functionCallInfo( frame ) )
+      result.insert( 0, function_call_info( frame ) )
       frame = frame.f_back
     return result
   finally:
     del frame
 
 
-def print_stack( file=sys.stdout, frame=None ):
+def print_stack( out=sys.stdout, frame=None ):
   '''
   Print information about the stack, including argument passed to functions called.
   '''
   try:
     if frame is None:
       frame = sys._getframe( 1 )
-    for info in stackCallsInfo( frame ):
-      print >> file, 'File "%(filename)s", line %(lineno)d' % info + ' in ' + info[ 'function' ]
-      for n, v in info['arguments']:
-        file.write( '   ' + n + ' = ' )
-        pprint( v, file, 3 )
-    file.flush()
+    for info in stack_calls_info( frame ):
+      print >> out, 'File "%(filename)s", line %(lineno)d' % info + ' in ' + info[ 'function' ]
+      for name, value in info['arguments']:
+        out.write( '   ' + name + ' = ' )
+        pprint( value, out, 3 )
+    out.flush()
   finally:
     del frame

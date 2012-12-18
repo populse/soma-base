@@ -119,7 +119,7 @@ def minfFormat( source ):
       start = ''
     if start != '<?xml':
       raise MinfError( _( 'Invalid minf file: %s' ) % ( source.name, ) )
-    source.changeFile( gunzipSource )
+    source.change_file( gunzipSource )
     source.unread( start )
   else:
     source.unread( start )

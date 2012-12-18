@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
 
+'''Base classes for the management of association between Python objects and
+factories (i.e. a function that create something for an object) taking into
+account classes hierachy but without storing anything in the objects classes.
 '''
-Base classes for the management of association between Python objects and factories (i.e. a function that create something for an object) taking into account classes hierachy but without storing anything in the objects classes.
-'''
+
+from __future__ import absolute_import
 
 from weakref import WeakKeyDictionary
 
@@ -11,10 +14,10 @@ class MetaFactories( type ):
   It intercepts Factories class creation to make sure that they have
   a _global_factories attibute.'''
   
-  def __new__( mcs, name, bases, dict ):
-    if '_global_factories' not in dict:
-      dict[ '_global_factories' ] = {}
-    return type.__new__( mcs, name, bases, dict )
+  def __new__( mcs, name, bases, dictionary ):
+    if '_global_factories' not in dictionary:
+      dictionary[ '_global_factories' ] = {}
+    return type.__new__( mcs, name, bases, dictionary )
 
 
 class Factories( object ):
@@ -33,6 +36,7 @@ class Factories( object ):
   to create an associtation at the instance level.
   '''
   __metaclass__ = MetaFactories
+  _global_factories = None
   
 
   def __init__( self ):
@@ -41,11 +45,11 @@ class Factories( object ):
 
 
   @classmethod
-  def register_global_factory( factories_class, klass, factory ):
+  def register_global_factory( cls, klass, factory ):
     '''
     Create an association between a class and a global factory.
     '''
-    factories_class._global_factories[ klass ] = factory
+    cls._global_factories[ klass ] = factory
   
   
   def get_global_factory( self, key ):
@@ -61,10 +65,10 @@ class Factories( object ):
     '''
     Create an association between a class (or an instance) and a factory.
     '''
-    self._factories[ klass ] = class_or_instance
+    self._factories[ class_or_instance ] = factory
   
   
-  def get_factory( self, object ):
+  def get_factory( self, something ):
     '''
     Retrieve the factory associated to an object.
     First look into the object instance and then in the object class hierarchy.
@@ -72,9 +76,11 @@ class Factories( object ):
     If there is none, self.get_global_factory is used.
     Returns None if no factory is found.
     '''
-    for key in ( object, ) + object.__class__.__mro__:
+    for key in ( something, ) + something.__class__.__mro__:
       factory = self._factories.get( key )
-      if factory is not None: break
+      if factory is not None:
+        break
       factory = self.get_global_factory( key )
-      if factory is not None: break
+      if factory is not None:
+        break
     return factory

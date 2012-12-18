@@ -69,30 +69,31 @@ class BufferAndFile( object ):
       ...
 
   '''
-  def __init__( self, fileObject ):
+  def __init__( self, file_object):
     '''
     Create a file-like object that adds an :py:meth:`unread` method to an 
-    opened ``fileObject``.
+    opened ``file_object``.
     '''
     super( BufferAndFile, self).__init__()
     self.__buffer = ''
-    self.__file = fileObject
-    self.name = getattr( fileObject, 'filename', getattr( fileObject, 'name', '<unknown>' ) )
+    self.__file = file_object
+    self.name = getattr( file_object, 'filename', 
+                         getattr( file_object, 'name', '<unknown>' ) )
   
   
-  def unread( self, stringValue ):
+  def unread( self, string_value ):
     '''
     Adds data at the begining of the internal buffer. Data in the internal
     buffer will be returned by all subsequent read acces until the buffer is empty.
     '''
-    self.__buffer = stringValue + self.__buffer 
+    self.__buffer = string_value + self.__buffer 
   
   
-  def changeFile( self, fileObject ):
+  def change_file( self, file_object ):
     '''
     Change the internal file object (keeps the internal buffer untouched).
     '''
-    self.__file = fileObject
+    self.__file = file_object
   
   
   def clone( self ):
@@ -111,12 +112,12 @@ class BufferAndFile( object ):
     if size is None:
       result = self.__buffer + self.__file.read()
     else:
-      bufferSize = len( self.__buffer )
-      if bufferSize >= size:
+      buffer_size = len( self.__buffer )
+      if buffer_size >= size:
         result = self.__buffer[ :size ]
         self.__buffer = self.__buffer[ size: ]
       else:
-        result = self.__buffer + self.__file.read( size - bufferSize )
+        result = self.__buffer + self.__file.read( size - buffer_size )
         self.__buffer = ''
     return result
   
@@ -125,26 +126,26 @@ class BufferAndFile( object ):
     '''
     Read one text line
     '''
-    bufferEndOfLine = self.__buffer.find( '\n' )
+    buffer_eol = self.__buffer.find( '\n' )
     if size is None:
-      if bufferEndOfLine < 0:
+      if buffer_eol < 0:
         result = self.__buffer + self.__file.readline()
         self.__buffer = ''
       else:
-        bufferEndOfLine += 1
-        result = self.__buffer[ :bufferEndOfLine ]
-        self.__buffer = self.__buffer[ bufferEndOfLine: ]
+        buffer_eol += 1
+        result = self.__buffer[ :buffer_eol ]
+        self.__buffer = self.__buffer[ buffer_eol: ]
     else:
-      if bufferEndOfLine < 0:
-        bufferSize = len( self.__buffer )
-        if bufferSize >= size:
+      if buffer_eol < 0:
+        buffer_size = len( self.__buffer )
+        if buffer_size >= size:
           result = self.__buffer[ :size ]
           self.__buffer = self.__buffer[ size: ]
         else:
-          result = self.__buffer + self.__file.readline( size - bufferSize )
+          result = self.__buffer + self.__file.readline( size - buffer_size )
           self.__buffer = ''
       else:
-        size = min( size, bufferEndOfLine + 1 )
+        size = min( size, buffer_eol + 1 )
         result = self.__buffer[ :size ]
         self.__buffer = self.__buffer[ size: ]
     return result
@@ -162,7 +163,8 @@ class BufferAndFile( object ):
     Iteration protocol
     '''
     line = self.readline()
-    if not line: raise StopIteration
+    if not line:
+      raise StopIteration
     return line
 
 
@@ -184,10 +186,10 @@ class BufferAndFile( object ):
       self.__buffer = ''
       return self.__file.seek( offset, whence )
     else:
-      lb = len( self.__buffer )
-      if offset > lb:
+      buflen = len( self.__buffer )
+      if offset > buflen:
         self.__buffer = ''
-        return self.__file.seek( offset - lb, whence )
+        return self.__file.seek( offset - buflen, whence )
       else:
         self.__buffer = self.__buffer[ offset: ]
   

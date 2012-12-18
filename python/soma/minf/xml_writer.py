@@ -204,5 +204,5 @@ class MinfXMLWriter( MinfWriter ):
     self.__file.flush()
   
   
-  def changeFile( self, file ):
+  def change_file( self, file ):
     self.__file = file

@@ -40,11 +40,13 @@ but independant of GUI backend (Qt3, Qt4, wxWidget, Tcl/TK, etc).
 @organization: U{NeuroSpin<http://www.neurospin.org>} and U{IFR 49<http://www.ifr49.org>}
 @license: U{CeCILL version 2<http://www.cecill.info/licences/Licence_CeCILL_V2-en.html>}
 '''
+from __future__ import absolute_import
 __docformat__ = "epytext en"
  
+
 import sys
 
-def chooseMatplotlibBackend():
+def choose_matplotlib_backend():
   '''
   Tries to identify running graphical interface an select the appropriate
   backend for Matplotlib. This function must be called after GUI is started.
@@ -68,3 +70,6 @@ def chooseMatplotlibBackend():
     raise RuntimeError( 'Mismatch between Qt version and matplotlib backend: '
       'matplotlib uses ' + matplotlib.get_backend() + ' but ' + runningGUIBackend + ' is required.' )
   return matplotlib.get_backend()
+
+# For backward compatibility:
+chooseMatplotlibBackend = choose_matplotlib_backend

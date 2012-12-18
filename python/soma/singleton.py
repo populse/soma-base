@@ -40,7 +40,9 @@ Singleton pattern.
   `IFR 49 <http://www.ifr49.org>`_
 - license: `CeCILL version 2 <http://www.cecill.info/licences/Licence_CeCILL_V2-en.html>`_
 '''
+from __future__ import absolute_import
 __docformat__ = 'restructuredtext en'
+
 
 class Singleton( object ):
   '''
@@ -68,10 +70,10 @@ class Singleton( object ):
   def __new__( cls, *args, **kwargs ):
     if '_singleton_instance' not in cls.__dict__:
       cls._singleton_instance = super(Singleton, cls).__new__( cls )
-      singletonInit = getattr( cls._singleton_instance, 
+      singleton_init = getattr( cls._singleton_instance, 
                                '__singleton_init__', None )
-      if singletonInit is not None:
-        singletonInit( *args, **kwargs )
+      if singleton_init is not None:
+        singleton_init( *args, **kwargs )
     return cls._singleton_instance
 
   def __init__( self, *args, **kwargs ):
