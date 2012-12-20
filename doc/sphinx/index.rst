@@ -224,10 +224,3 @@ SubModule: ``wip.singleton``
   :members:
 
 
-SubModule: ``wip.temporary``
-----------------------------
-
-.. automodule:: soma.wip.temporary
-  :members:
-
-
