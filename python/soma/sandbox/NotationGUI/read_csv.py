@@ -1,8 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # author Mathilde Bouin
-
+from __future__ import with_statement
 import csv
+
 
 class Data:
     #-----------
