@@ -1,8 +1,5 @@
 # -*- coding: utf-8 -*-
-
-
 import os
-#os.environ['ETS_TOOLKIT'] = 'qt4'
 #from traits.etsconfig.api import ETSConfig
 #ETSConfig.toolkit = 'qt4'
 from traits.api import HasTraits,Button, Str, Event, Int,Float, Enum, \
@@ -12,8 +9,6 @@ FileEditor, DirectoryEditor, UItem
 from string import strip
 import TraitementJSON
 import glob
-#from process.BiasCorrection import BiasCorrection
-#from process.HistogramAnalysis import HistogramAnalysis
 from Traitement import Traitement
        
 class GestionView(HasTraits):
@@ -116,26 +111,31 @@ class GestionInterface (HasTraits):
 
     # Choix du process/Affichage parametre  
     def _list_process_fired(self):  
-        # Booléen pour indiquer que le choix de la mof est dispo ou non
-        self.mof_enable=True
-        # Création objet du process choisi      
-        self.process=self.traitement.getObject(self.list_process)
-       
-        # Récupération des paramètres
-        #Fonction pour différencier les paramètres/entrées/sorties      
-        self.parameters,self.path_input,self.path=self.traitement.data_process(self.process)      
-        #Boucle pour mettre les paramètres à leurs valeurs par défaut (si l'utilisateur ne les modifie pas)
-        for trait in self.parameters:
-            setattr( self.process, trait, getattr(self.process,trait).default_value)
-                    
-        # Création et affichage des paramètres
-        self.traitement.create_traits(self.camera2,self.parameters)  
-        # Booléen pour indiquer que paramètres créés et que si changement appel de la fonction update OK
-        self.update_param_enable=True
+        if self.parameters is not None:
+            print 'heyy supprime'
+            self.traitement.delete_traits(self.camera2,self.parameters)
+        
+        if self.list_process!=' ':       
+            # Booléen pour indiquer que le choix de la mof est dispo ou non
+            self.mof_enable=True
+            # Création objet du process choisi      
+            self.process=self.traitement.getObject(self.list_process)
+           
+            # Récupération des paramètres
+            #Fonction pour différencier les paramètres/entrées/sorties      
+            self.parameters,self.path_input,self.path=self.traitement.data_process(self.process)      
+            #Boucle pour mettre les paramètres à leurs valeurs par défaut (si l'utilisateur ne les modifie pas)
+            for trait in self.parameters:
+                setattr( self.process, trait, getattr(self.process,trait).default_value)
+                        
+            # Création et affichage des paramètres
+            self.traitement.create_traits(self.camera2,self.parameters)  
+            # Booléen pour indiquer que paramètres créés et que si changement appel de la fonction update OK
+            self.update_param_enable=True
 
                                             
     def _list_mof_fired(self):      
-       # Si le choix de la MOF a changé et que une mof avait déjà été choisie    
+       # Si le choix de la MOF a changé et que une mof avait déjà été choisie   
         if self.data is not None:
             self.update_attributs_enable=False
             self.traitement.delete_traits(self.camera,self.attributs)
@@ -216,15 +216,14 @@ class GestionInterface (HasTraits):
             Group(      
                 Item('output_directory',editor=DirectoryEditor()),
                 Item('input_directory',editor=DirectoryEditor()),
-                #Item('input',editor=FileEditor()), 
                 show_border=True,
                 ),
                 
             Group(
                 Item('list_process',enabled_when='output_directory'),    
-                Group(      
+                    Group(      
                     UItem('camera2',
-                        editor=InstanceEditor(view_name='object.camera2.genView',droppable=False),
+                        editor=InstanceEditor(view_name='object.camera2.genView'),
                         style='custom'),
                     scrollable=True,    
                     ),
@@ -235,7 +234,7 @@ class GestionInterface (HasTraits):
             Group( 
                 Item('list_mof',enabled_when='mof_enable'),  
                 UItem('camera',
-                    editor=InstanceEditor(view_name='object.camera.genView',cachable=False), 
+                    editor=InstanceEditor(view_name='object.camera.genView'), 
                     style='custom'),             
                 show_border=True,
                 scrollable=True
@@ -253,7 +252,6 @@ class GestionInterface (HasTraits):
                 scrollable=True,
                 visible_when='bool_display_hide_completion',
                 ), 
-
             orientation = 'vertical'
                  ),
         UItem('run'),
