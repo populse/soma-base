@@ -12,7 +12,8 @@ FileEditor, DirectoryEditor, UItem
 from string import strip
 import TraitementJSON
 import glob
-import BiasCorrection
+#from process.BiasCorrection import BiasCorrection
+#from process.HistogramAnalysis import HistogramAnalysis
 from Traitement import Traitement
        
 class GestionView(HasTraits):
@@ -23,9 +24,9 @@ class GestionView(HasTraits):
     def _get_genView(self):
         # Crée une vue qui est une liste de traits éditables
         trait_names = self.editable_traits()
-        trait_names.remove('genView')   
+        trait_names.remove('genView')    
         return View(trait_names)
-        
+
         
 
 class GestionInterface (HasTraits): 
@@ -60,7 +61,7 @@ class GestionInterface (HasTraits):
         self.path_input=None
                 
         # Chemins de données (path) dépend des attributs entrés
-        self.path=Property(depends_on=[self.attributs,self.output_directory])    
+        self.path=Property(depends_on=[self.attributs,self.output_directory], cached = False )    
         
         # Choix MOF 
         li=glob.glob('*.json')
@@ -69,11 +70,14 @@ class GestionInterface (HasTraits):
         self.add_trait('list_mof', self.list_mof)
 
         # Choix Process
-        lis=[' ']
-        li=os.listdir('process')
-        for i in range(len(li)):
-            lis.append(li[i].split('.')[0])
-        self.list_process=Enum(lis)
+        lis_pro=[]
+        lis=glob.glob('process/*.py')
+        for i in range (len(lis)):
+            lis_pro.append(os.path.basename(lis[i]))  
+            lis_pro[i]=lis_pro[i].split('.')[-2]                
+        lis_pro.remove('__init__')           
+        lis_pro.insert(0,' ')
+        self.list_process=Enum(lis_pro)
         self.add_trait('list_process', self.list_process)
                               
     ###DEFINITION DES TRAITS CONSTANTS  
@@ -95,6 +99,8 @@ class GestionInterface (HasTraits):
     #Booléen pour autoriser choix MOF (donc quand process choisi)
     mof_enable=Bool(False)
     extension_change=Bool(True)
+    use_OK=Bool(False)
+    
     
     ###FONCTIONS POUR TRAITS        
     # Dossier de sortie
@@ -112,12 +118,12 @@ class GestionInterface (HasTraits):
     def _list_process_fired(self):  
         # Booléen pour indiquer que le choix de la mof est dispo ou non
         self.mof_enable=True
-        # Création objet du process choisi
-        self.process=BiasCorrection.BiasCorrection()
+        # Création objet du process choisi      
+        self.process=self.traitement.getObject(self.list_process)
+       
         # Récupération des paramètres
         #Fonction pour différencier les paramètres/entrées/sorties      
-        self.parameters,self.path_input,self.path=self.traitement.data_process(self.process)
-        #self.parameters=self.process.get()         
+        self.parameters,self.path_input,self.path=self.traitement.data_process(self.process)      
         #Boucle pour mettre les paramètres à leurs valeurs par défaut (si l'utilisateur ne les modifie pas)
         for trait in self.parameters:
             setattr( self.process, trait, getattr(self.process,trait).default_value)
@@ -177,19 +183,14 @@ class GestionInterface (HasTraits):
                 
     def update_path(self,object,name,old,new):
         setattr( self.process, name, new)
-        print 'herre1'
-        print old,new
         if self.update_attributs_enable:
             if old is not None and new is not None:
                 ext_old='.'+old.split('.')[-1]
                 ext_new='.'+new.split('.')[-1]
-                print 'herrrre2'
-                print ext_old,ext_new
                 if ext_old != ext_new:
-                    print 'diffenrent'
                     self.traitement.check_extension(ext_new,self.extension_path,name)
                     if self.traitement.check_extension(ext_new,self.extension_path,name)==1:
-                        print 'YEAH ERROR'
+                        print 'ERROR'
                         extension_change=False
                     else:
                         extension_change=True
@@ -211,11 +212,11 @@ class GestionInterface (HasTraits):
                                                 
     # Création de la vue
     view = View(
-        Group(          
+        Group( 
             Group(      
-                Item('output_directory',editor=DirectoryEditor()), 
+                Item('output_directory',editor=DirectoryEditor()),
                 Item('input_directory',editor=DirectoryEditor()),
-                Item('input',editor=FileEditor()), 
+                #Item('input',editor=FileEditor()), 
                 show_border=True,
                 ),
                 
@@ -223,18 +224,18 @@ class GestionInterface (HasTraits):
                 Item('list_process',enabled_when='output_directory'),    
                 Group(      
                     UItem('camera2',
-                        editor=InstanceEditor(view_name='object.camera2.genView',editable=True),
+                        editor=InstanceEditor(view_name='object.camera2.genView',droppable=False),
                         style='custom'),
                     scrollable=True,    
                     ),
                 show_border=True,
                 ),
-        
-            Group(
-                Item('list_mof',enabled_when='mof_enable'),  ),         
+
+      
             Group( 
+                Item('list_mof',enabled_when='mof_enable'),  
                 UItem('camera',
-                    editor=InstanceEditor(view_name='object.camera.genView',editable=True), 
+                    editor=InstanceEditor(view_name='object.camera.genView',cachable=False), 
                     style='custom'),             
                 show_border=True,
                 scrollable=True
@@ -242,22 +243,17 @@ class GestionInterface (HasTraits):
        
             UItem('display_hide_completion'), 
             Group(     
-                Group(
-                    UItem('camera3', 
-                        editor=InstanceEditor(view_name='object.camera3.genView'),
-                        style='custom'),             
-                    show_border=True,
-                    scrollable=True,
-                    visible_when='bool_display_hide_completion',
-                ),  
-                             
+                UItem('camera3', 
+                    editor=InstanceEditor(view_name='object.camera3.genView'),
+                    invalid='use_OK',
+                    style='custom'),             
+   
+                show_labels=False,
                 show_border=True,
                 scrollable=True,
                 visible_when='bool_display_hide_completion',
                 ), 
-               
-                  
-        
+
             orientation = 'vertical'
                  ),
         UItem('run'),
