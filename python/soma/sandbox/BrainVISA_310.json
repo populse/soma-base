@@ -1,0 +1,31 @@
+{
+	"Attributs": {
+		"Analysis" : "Default_Analysis", 
+		"Protocol" : "Default_Protocol", 
+		"Modality" : "t1mri", 
+		"Acquisition" : "Default_Acquisition", 
+		"Subject" : "Default_Subject"
+	},
+
+	"Directories": {
+		"Dir1" : "/<Protocol>/<Subject>/<Modality>/<Acquisition>"
+	},
+	
+        "Extension" : {
+         	"image" : [ ".nii", ".ima" ],		 
+	  	"dicom" : [ ".dcm", "" ],
+		"commissures_coordinates" : [".APC"]
+				  
+        },
+
+	"BiasCorrection": {
+		"mri_corrected" : [ "{Dir1}/nobias_<Subject>", "image" ],
+		"field" : ["{Dir1}/biasfield_<Subject>", "image"],
+		"hfiltered" : ["{Dir1}/hfiltered_<Subject>","image"], 
+		"white_ridges" : ["{Dir1}/white_ridges_<Subject>","image"], 
+		"meancurvature" : ["{Dir1}/meancurvature_<Subject>","image"], 
+		"variance" : ["{Dir1}/variance_<Subject>","image"], 
+		"edges" : ["{Dir1}/edges_<Subject>","image"] 
+	}
+
+}

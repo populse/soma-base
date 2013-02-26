@@ -155,10 +155,8 @@ class GestionInterface (HasTraits):
             # Création des chemins de données
             self.path,self.extension_path=TraitementJSON.Completion(self.data,self.output_directory,self.list_process)
             # Affichage des chemins de données
-            self.traitement.create_traits(self.camera3,self.path)
-            
-            self.traitement.create_traits(self.camera4,self.extension_path)
-            
+            self.traitement.create_traits(self.camera3,self.path)           
+            self.traitement.create_traits(self.camera4,self.extension_path)            
             self.update_attributs_enable=True
     
     def _display_hide_completion_fired(self):
@@ -247,7 +245,6 @@ class GestionInterface (HasTraits):
                     invalid='use_OK',
                     style='custom'),             
    
-                show_labels=False,
                 show_border=True,
                 scrollable=True,
                 visible_when='bool_display_hide_completion',

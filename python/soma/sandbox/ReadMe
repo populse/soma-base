@@ -1,0 +1,7 @@
+Process.py: fichier à lancer (interface)
+Traitement.py: rassemble différentes fonctions en lien avec Process.py
+TraitementJson.py: rassemble différentes fonctions pour le traitements du .json (hiérarchie des fichiers)
+
+/Process
+BiasCorrection.py: process BiasCorrection
+HistogramAnalysis.py: process HistogramAnalysis
