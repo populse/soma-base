@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #class qui va définir les attributs selon la hiérarichie brainVISA 3.1.0
-from enthought.traits.api import Str,Int
+from traits.api import Str,Int
 from string import strip
 import os
 import json

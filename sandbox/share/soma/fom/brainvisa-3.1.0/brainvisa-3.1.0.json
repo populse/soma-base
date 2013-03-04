@@ -1,0 +1,36 @@
+{
+    "attributes": {
+        "analysis" : {
+            "descr" : "Allow to discriminate several set of parameters for the same process",
+            "default_value" : "default_analysis"
+        },
+        "protocol" : {
+            "descr" : "Name of the cuurent study", 
+            "default_value" : "default_protocol"
+        },
+        "modality" : {
+            "descr" : "Imaging modality"
+        }, 
+        "acquisition" : {
+            "descr" : "Allows to discriminate several acquisitions of the same modality for the same subject",
+            "default_value": "default_acquisition"    
+        },
+        "subject" : {
+            "descr" : "Identifer of the subject"
+        }
+    },
+
+    "directories": {
+        "dir1" : "<protocol>/<subject>/<modality>/<acquisition>"
+    },
+
+    "extensions" : {
+        "image" : [ ".nii", ".ima" ],		 
+        "dicom" : [ ".dcm", "" ],
+        "commissures_coordinates" : [".APC"]
+    },
+
+    "processes" : {
+    }
+
+}

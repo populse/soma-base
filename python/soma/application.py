@@ -43,16 +43,16 @@ __docformat__ = "epytext en"
 
 
 import os, sys, platform, traceback
+from os.path import dirname
 
 os.environ['ETS_TOOLKIT'] = 'qt4'
 try:
-  from enthought.traits.api import ReadOnly, Directory, ListStr
+  from enthought.traits.api import ReadOnly, Directory, ListStr, Instance
 except ImportError:
-  from traits.api import ReadOnly, Directory, ListStr
+  from traits.api import ReadOnly, Directory, ListStr, Instance
 
 from soma.singleton import Singleton
 from soma.controller import Controller, ControllerFactories
-
 
 
 #-------------------------------------------------------------------------------
@@ -62,17 +62,20 @@ class Application( Singleton, Controller ):
   the program.'''
   name = ReadOnly( desc='Name of the application' )
   version = ReadOnly()
+  
+  install_directory = Directory( 
+    desc='Base directory where the application is installed' )
   user_directory = Directory( 
     desc='Base directory where user specific information can be find' )
   application_directory = Directory(
     desc='Base directory where application specifc information can be find' )
   site_directory = Directory( 
     desc='Base directory where site specifc information can be find' )
-  early_plugin_modules = ListStr( 
-    desc='List of Python module to load before application configuration' )
+  #early_plugin_modules = ListStr( 
+    #desc='List of Python module to load before application configuration' )
   plugin_modules = ListStr(
     desc='List of Python module to load after application configuration' )
-  
+
   def __singleton_init__( self, name, version=None, *args, **kwargs ):
     '''Replaces __init__ in Singleton.'''
     super( Application, self ).__init__( *args, **kwargs )
@@ -82,11 +85,12 @@ class Application( Singleton, Controller ):
     self.name = name
     self.version = version
     self.gui = None
+    self.loaded_plugin_modules = {}
     
-    # Load early plugin modules
-    for plugin_module in self.early_plugin_modules:
-      self.load_plugin_module( plugin_module )
-    
+
+  def initialize( self ):
+    '''This method must be called once to setup the application.'''
+    self.install_directory = dirname( dirname( dirname( __file__ ) ) )
     homedir = os.getenv( 'HOME' )
     if not homedir:
       homedir = ''
@@ -111,6 +115,15 @@ class Application( Singleton, Controller ):
     if homedir and os.path.exists( homedir ):
       self.user_directory = homedir
     
+    # Load early plugin modules
+    for plugin_module in self.plugin_modules:
+      module = self.load_plugin_module( plugin_module )
+      if module is not None:
+        self.loaded_plugin_modules[ plugin_module ] = module
+        init = getattr( module, 'call_before_application_initialization', None )
+        if init is not None:
+          init( self )
+        
     appdir = os.path.normpath( os.path.dirname( os.path.dirname( sys.argv[0] ) ) )
     if os.path.exists( appdir ):
       self.application_directory = appdir
@@ -119,11 +132,16 @@ class Application( Singleton, Controller ):
     if os.path.exists( sitedir ):
       self.site_directory = sitedir
 
-  def initialize( self ):
-    '''This method must be called once to setup the application.'''
     # Load plugin modules
     for plugin_module in self.plugin_modules:
-      self.load_plugin_module( plugin_module )
+      module = self.loaded_plugin_modules.get( plugin_module )
+      if module is None:
+        module = self.load_plugin_module( plugin_module )
+      if module is not None:
+        self.loaded_plugin_modules[ plugin_module ] = module
+        init = getattr( module, 'call_after_application_initialization', None )
+        if init is not None:
+          init( self )
 
 
   def initialize_gui( self ):
@@ -146,6 +164,8 @@ class Application( Singleton, Controller ):
     '''This method loads a plugin module. It imports the module without raising
     an axception if it fails.'''
     try:
-      __import__( plugin_module )
+      __import__( plugin_module, level=0 )
+      return sys.modules[ plugin_module ]
     except:
       traceback.print_last()
+    return None
