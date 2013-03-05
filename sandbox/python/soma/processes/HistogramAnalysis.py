@@ -1,7 +1,10 @@
 ## -*- coding: utf-8 -*-
 #Process HistogramAnalysis
 
-from traits.api import HasTraits,Str, Int, Enum, Float, File, Bool
+try:
+  from traits.api import HasTraits,Str, Int, Enum, Float, File, Bool
+except ImportError:
+  from enthought.traits.api import HasTraits,Str, Int, Enum, Float, File, Bool
 
 class HistogramAnalysis( HasTraits ):
    

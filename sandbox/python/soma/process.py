@@ -3,11 +3,16 @@ import sys, os, glob
 
 #from traits.etsconfig.api import ETSConfig
 #ETSConfig.toolkit = 'qt4'
-from traits.api import HasTraits,Button, Str, Event, Int,Float, Enum, \
+try:
+  from traits.api import HasTraits,Button, Str, Event, Int,Float, Enum, \
 Instance, Property, Bool, List
-from traitsui.api import View,Group,Label,Item,InstanceEditor, \
+  from traitsui.api import View,Group,Label,Item,InstanceEditor, \
 FileEditor, DirectoryEditor, UItem
-
+except ImportError:
+  from enthought.traits.api import HasTraits,Button, Str, Event, Int,Float, Enum, \
+Instance, Property, Bool, List
+  from enthought.traits.ui.api import View,Group,Label,Item,InstanceEditor, \
+FileEditor, DirectoryEditor, UItem
 
 from soma.application import Application
    

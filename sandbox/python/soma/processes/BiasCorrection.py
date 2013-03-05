@@ -2,7 +2,10 @@
 #Process BiasCorrection
 import os
 import subprocess
-from traits.api import HasTraits,Str, Int, Enum, Float, File
+try:
+  from traits.api import HasTraits,Str, Int, Enum, Float, File
+except ImportError:
+  from enthought.traits.api import HasTraits,Str, Int, Enum, Float, File
 
 class BiasCorrection( HasTraits ):
    

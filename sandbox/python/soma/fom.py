@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 import os, json, glob, re
-from traits.api import ListStr
+try:
+  from traits.api import ListStr
+except ImportError:
+  from enthought.traits.api import ListStr
 from soma.singleton import Singleton
 from soma.application import Application
 
