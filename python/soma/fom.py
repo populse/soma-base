@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from __future__ import absolute_import
 
 import sys, os, stat, posix, time, re, pprint, sqlite3
 try:
