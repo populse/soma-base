@@ -54,7 +54,6 @@ except ImportError:
 from soma.singleton import Singleton
 from soma.controller import Controller, ControllerFactories
 
-
 #-------------------------------------------------------------------------------
 class Application( Singleton, Controller ):
   '''Any program using soma should create an Application instance to manage
@@ -63,16 +62,6 @@ class Application( Singleton, Controller ):
   name = ReadOnly( desc='Name of the application' )
   version = ReadOnly()
   
-  install_directory = Directory( 
-    desc='Base directory where the application is installed' )
-  user_directory = Directory( 
-    desc='Base directory where user specific information can be find' )
-  application_directory = Directory(
-    desc='Base directory where application specifc information can be find' )
-  site_directory = Directory( 
-    desc='Base directory where site specifc information can be find' )
-  #early_plugin_modules = ListStr( 
-    #desc='List of Python module to load before application configuration' )
   plugin_modules = ListStr(
     desc='List of Python module to load after application configuration' )
 
@@ -80,6 +69,18 @@ class Application( Singleton, Controller ):
     '''Replaces __init__ in Singleton.'''
     super( Application, self ).__init__( *args, **kwargs )
     
+    # Warning : Traits bug
+    # Using the trait Directory() might instanciate a QApplication (seems to depend on the
+    # traits release). If it is declared in the class, the QApplication is instanciated at
+    # module importation which prevent to customize QApplication.
+    self.add_trait( 'install_directory', Directory( 
+      desc='Base directory where the application is installed' ) )
+    self.add_trait( 'user_directory', Directory( 
+      desc='Base directory where user specific information can be find' ) )
+    self.add_trait( 'application_directory', Directory(
+      desc='Base directory where application specifc information can be find' ) )
+    self.add_trait( 'site_directory',  Directory( 
+      desc='Base directory where site specifc information can be find' ) )
     self._controller_factories = None
     
     self.name = name

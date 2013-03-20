@@ -51,6 +51,7 @@ class ProcessView( HasTraits ):
         
         foms = Application().fom_manager.find_fom()
         self.add_trait( 'file_organization_model', Enum( foms ) )
+        
         self.attributes = DynamicView()
         self.process_parameters = DynamicView()
 
@@ -90,13 +91,13 @@ class ProcessView( HasTraits ):
                 Item( 'file_organization_model', ),
                 show_border=True ),
             Group(     
-                UItem('attributes', 
+                UItem( 'attributes', 
                     editor = InstanceEditor( view_name='object.attributes.genView' ),
                     style='custom'),             
                 show_border=True,
                 scrollable=True ),
            Group(     
-                UItem('process_parameters', 
+                UItem( 'process_parameters', 
                     editor = InstanceEditor( view_name='object.process_parameters.genView' ),
                     style='custom'),             
                 show_border=True,

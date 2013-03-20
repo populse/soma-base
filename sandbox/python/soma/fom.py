@@ -1,4 +1,9 @@
 # -*- coding: utf-8 -*-
+
+'''
+This File Organization Model (i.e. FOM) module allows the management of runtime customizable automatic generation of file names for processes (i.e. data processing function) with named parameters
+'''
+
 import os, json, glob, re
 try:
   from traits.api import ListStr
@@ -7,7 +12,6 @@ except ImportError:
 from soma.singleton import Singleton
 from soma.application import Application
 
-'''This File Organization Model (i.e. FOM) module allows the management of runtime customizable automatic generation of file names for processes (i.e. data processing function) with named parameters'''
 
 
 class FileOrganizationModelManager( object ):
@@ -94,7 +98,7 @@ class FileOrganizationModel( object ):
     
     def attributes( self, process=None ):
       '''
-      Returns a definition of attributes
+      Returns a definitioattributesn of attributes
       '''
       if not process:
           return self.json_data[ 'attributes' ]
@@ -126,7 +130,7 @@ class FileOrganizationModel( object ):
         return process_dir
         
         
-    def process_completion( self, process, attributes ):
+    def process_completion( self, process, attributes, extensions={} ):
         return dict( ( k, v % attributes ) for k, v in self._get_process_dir( process ).iteritems() )
         
 
@@ -181,5 +185,6 @@ if __name__ == '__main__':
               acquisition='ACQU', 
               analysis='ANAL', 
               modality='MODAL', 
-              subject='SUBJ' ) )
+              subject='SUBJ' ),
+              { 'image': '.nii' } )
     pprint.pprint( completion )
