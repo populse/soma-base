@@ -218,3 +218,7 @@ class SortedDictionary( UserDict, object ):
     except ValueError:
       pass
     return result
+
+  
+  def __repr__( self ):
+    return '{' + ', '.join( repr(k)+': '+repr(v) for k, v in self.iteritems() ) + '}'
