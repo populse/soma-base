@@ -641,7 +641,20 @@ class AttributesToPaths( object ):
           if r:
             yield r
 
-  
+  def find_discriminant_attributes( self ):
+    result = []
+    if self.rules:
+      for attribute in self.all_attributes:
+        sql = 'SELECT DISTINCT %s FROM rules' % attribute
+        values = list( self._db.execute( sql ) )
+        #print '!', attribute, values
+        if len( values ) > 1 or values[ 0 ][ 0 ] == '':
+          result.append( attribute )
+    return result
+      
+      
+    
+    
   def _join_directory( self, path, rule_attributes ):
     fom_directory = rule_attributes.get( 'fom_directory' )
     if fom_directory:
@@ -650,14 +663,7 @@ class AttributesToPaths( object ):
         return ( os.path.join( directory, *path.split( '/' ) ), rule_attributes )
     return ( os.path.join( *path.split( '/' ) ), rule_attributes )
   
-  
-  def find_attributes( self, rules_selection ):
-    # TODO
-    attributes = {}
-    sql = 'SELECT * FROM rules WHERE %s' % ' AND '.join( k + '=' + repr(v) for k, v in rules_selection.iteritems() )
-    for rule_index, format in self._db.execute( sql, values ):
-      result.add
-    
+      
     
 def call_before_application_initialization( application ):
     application.add_trait( 'fom_path', 
@@ -690,11 +696,22 @@ if __name__ == '__main__':
     
     atp = AttributesToPaths( foms, selection=dict( fom_process='morphologistProcess', fom_parameter='t1mri' ),
                              directories={ 'output' : '/output', 'input' : '/input', 'spm' : '/spm', 'shared' : '/shared' } )
-    selection = dict( protocol='P', subject='S', acquisition='A', normalization='SPM' )
-    for path, attributes in atp.find_paths( selection ):
-      print path, '\n  ->', attributes
+    pprint.pprint( atp.rules )
+    print '-' * 40
+    print atp.all_attributes, ':', atp.find_discriminant_attributes()
     print '=' * 40
-    selection[ 'fom_format' ] = 'fom_first'
-    for path, attributes in atp.find_paths( selection ):
-      print path, '\n  ->', attributes
+    
+    atp = AttributesToPaths( foms, selection=dict( fom_process='morphologistProcess', fom_parameter='normalized_t1mri' ),
+                             directories={ 'output' : '/output', 'input' : '/input', 'spm' : '/spm', 'shared' : '/shared' } )
+    pprint.pprint( atp.rules )
+    print '-' * 40
+    print atp.all_attributes, ':', atp.find_discriminant_attributes()
+    
+    #selection = dict( protocol='P', subject='S', acquisition='A' )
+    #for path, attributes in atp.find_paths( selection ):
+      #print path, '\n  ->', attributes
+    #print '=' * 40
+    #selection[ 'fom_format' ] = 'fom_first'
+    #for path, attributes in atp.find_paths( selection ):
+      #print path, '\n  ->', attributes
     
