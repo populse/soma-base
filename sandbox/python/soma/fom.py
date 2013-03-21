@@ -78,10 +78,7 @@ class FileOrganizationModel( object ):
             if os.path.isdir( full_path ):
                 stack.extend( path_list + [ i ] for i in os.listdir( full_path ) )
             elif full_path.endswith( '.json' ):
-                parent = self.json_data
-                for i in path_list[ :-1 ]:
-                    parent = parent.setdefault( i, {} )
-                parent.update( json.load( open( full_path ) ) )
+                self.json_data.update( json.load( open( full_path ) ) )
         
         # Parse directory patterns and convert them to "Python" patterns
         # usable with % operator
@@ -90,8 +87,9 @@ class FileOrganizationModel( object ):
         for dir_name, json_pattern in self.json_data.get( 'directories', {} ).iteritems():
             if dir_name in attributes:
                 raise ValueError( 'Directory name "%s" is already used for an attribute' % ( dir_name, ) )
-            python_pattern = json_pattern.replace( '<', '%(' ).replace( '>', ')s' )
-            self._directories[ dir_name ] = python_pattern
+            if json_pattern:
+              python_pattern = json_pattern.replace( '<', '%(' ).replace( '>', ')s' )
+              self._directories[ dir_name ] = python_pattern
 
         self._processes = {}
         
@@ -131,7 +129,7 @@ class FileOrganizationModel( object ):
         
         
     def process_completion( self, process, attributes, extensions={} ):
-        return dict( ( k, v % attributes ) for k, v in self._get_process_dir( process ).iteritems() )
+        return dict( ( k, ( [ i % attributes for i in v ] if isinstance( v, list ) else [ v % attributes ] ) ) for k, v in self._get_process_dir( process ).iteritems() )
         
 
                 
