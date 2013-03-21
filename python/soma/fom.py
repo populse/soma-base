@@ -261,13 +261,59 @@ class FileOrganizationModels( object ):
     
     rules = json_dict.get( 'rules' )
     patterns = json_dict.get( 'patterns', {} ).copy()
+    processes = json_dict.get( 'processes' )      
+            
     if rules:
       patterns[ 'fom_dummy' ] = rules
     new_patterns = {}
     self._expand_json_patterns( patterns, new_patterns, { 'fom_name' : fom_name } )
     self._parse_patterns( new_patterns, self.patterns )
 
-    
+    if processes:
+      process_patterns = {}
+      for process, parameters in processes.iteritems():
+        process_dict = {}
+        process_patterns[ process ] = process_dict
+        for parameter, rules in parameters.iteritems():
+          parameter_rules = []
+          process_dict[ parameter ] = parameter_rules
+          for rule in rules:
+            if len( rule ) == 2:
+              pattern, formats = rule
+              rule_attributes = {}
+            else:
+              print '!', rule, len( rule )
+              pattern, formats, rule_attributes = rule
+            rule_attributes[ 'fom_process' ] = process
+            rule_attributes[ 'fom_parameter' ] = parameter
+          parameter_rules.append( [ pattern, formats, rule_attributes ] )
+      new_patterns = {}
+      self._expand_json_patterns( process_patterns, new_patterns, { 'fom_name' : fom_name } )
+      self._parse_patterns( new_patterns, self.patterns )
+
+      
+  def selected_rules( self, selection ):
+    if selection:
+      format = selection.get( 'format' )
+      for rule_pattern, rule_attributes in self.rules:
+        rule_formats = rule_attributes.get( 'fom_formats', [] )
+        if format and format not in rule_formats:
+          continue
+        keep = True
+        for attribute, selection_value in selection.iteritems():
+          if attribute == 'format':
+            continue
+          rule_value = rule_attributes.get( attribute )
+          if rule_value is not None and rule_value != value:
+            keep = False
+            break
+        if keep:
+          yield ( rule_pattern, rule_attributes )
+    else:
+      for rule in self.rules:
+        yield rule
+  
+  
   def _expand_json_patterns( self, json_patterns, parent, parent_attributes ):
     attributes = parent_attributes.copy()
     attributes.update( json_patterns.get( 'fom_attributes', {} ) )
@@ -367,6 +413,10 @@ class FileOrganizationModels( object ):
               #raise ValueError( 'Attribute "%s" must be declared in attribute_definitions' % attribute )
             if attribute in rule_attributes:
               pattern = pattern.replace( '<' + attribute + '>', rule_attributes[ attribute ] )
+          i = pattern.find( ':' )
+          if i > 0:
+            rule_attributes[ 'fom_directory' ] = pattern[ :i ]
+            pattern = pattern[ i+1: ]
           pattern_rules.append( [ pattern, rule_attributes ] )
           self.rules.append( [ pattern, rule_attributes ] )
 
@@ -378,25 +428,11 @@ class FileOrganizationModels( object ):
 
        
 class PathToAttributes( object ):
-  def __init__( self, foms, selection={} ):
+  def __init__( self, foms, selection=None ):
     self._attributes_regex = re.compile( '<([^>]*)>' )
     self.hierarchical_patterns = {}
-    for rule_pattern, rule_attributes in foms.rules:
+    for rule_pattern, rule_attributes in foms.selected_rules( selection ):
       rule_formats = rule_attributes.get( 'fom_formats', [] )
-      
-      # Select or skip rule according to selection
-      format = selection.get( 'format' )
-      if format and format not in rule_formats:
-        continue
-      skip = False
-      for attribute, value in selection.iteritems():
-        if attribute == 'format':
-          continue
-        if rule_attributes.get( attribute ) != value:
-          skip = True
-          break
-      if skip: continue
-        
       parent = self.hierarchical_patterns
       attributes_found = set()
       splited_pattern = rule_pattern.split( '/' )
@@ -502,19 +538,21 @@ class PathToAttributes( object ):
 
   
 class AttributesToPaths( object ):
-  def __init__( self, foms ):
+  def __init__( self, foms, selection=None, directories={} ):
     self.foms = foms
+    self.selection = selection
+    self.directories = directories
     self._db = sqlite3.connect( ':memory:' )
     self._db.execute( 'PRAGMA journal_mode = OFF;' )
     self._db.execute( 'PRAGMA synchronous = OFF;' )
     self.all_attributes = tuple( i for i in self.foms.attribute_definitions if i != 'fom_formats' )
     fom_format_index = self.all_attributes.index( 'fom_format' )
     sql = 'CREATE TABLE rules ( %s, fom_rule )' % ','.join( repr( i ) for i in self.all_attributes )
-    #print '!', sql
+    print '!', sql
     self._db.execute( sql )
     sql_insert = 'INSERT INTO rules VALUES ( %s )' % ','.join( '?' for i in xrange( len( self.all_attributes ) + 1 ) )
     self.rules = []
-    for pattern, rule_attributes in foms.rules:
+    for pattern, rule_attributes in foms.selected_rules( self.selection ):
       pattern_attributes = set( self.foms._attributes_regex.findall( pattern ) )
       values =[]
       for attribute in self.all_attributes:
@@ -528,18 +566,18 @@ class AttributesToPaths( object ):
       if fom_formats and 'fom_format' not in rule_attributes:
         for format in fom_formats:
           values[ fom_format_index ] = format
-          #print '!', sql_insert, values
+          print '!', sql_insert, values
           self._db.execute( sql_insert, values )
         values[ fom_format_index ] = ''
-        #print '!', sql_insert, values
+        print '!', sql_insert, values
         self._db.execute( sql_insert, values )
       else:
-        #print '!', sql_insert, values        
+        print '!', sql_insert, values        
         self._db.execute( sql_insert, values )
     self._db.commit()
   
   
-  def find_paths( self, attributes ):
+  def find_paths( self, attributes={} ):
     select = []
     select_attributes = []
     for attribute in self.all_attributes:
@@ -553,26 +591,26 @@ class AttributesToPaths( object ):
         select.append( attribute + " IN ( ?, '' )" )
         select_attributes.append( attribute )
     sql = 'SELECT fom_rule, fom_format FROM rules WHERE %s' % ' AND '.join( select )
-    #format = attributes.get( 'fom_format' )
+    format = attributes.get( 'fom_format' )
     values = [ attributes[ i ] for i in select_attributes ]
-    #print '!', sql, values
+    print '!', sql, values
     for rule_index, format in self._db.execute( sql, values ):
       rule = self.rules[ rule_index ]
       rule_attributes = fom_formats = self.foms.rules[ rule_index ][ 1 ]
-      #print '!1!', rule
+      print '!1!', rule
       if format:
         ext = self.foms.formats[ format ]
-        #print '!2!',rule % attributes + '.' + ext
+        print '!2!',rule % attributes + '.' + ext
         yield ( rule % attributes + '.' + ext, rule_attributes )
       else:
         fom_formats = rule_attributes.get( 'fom_formats' )
         if fom_formats:
           for f in fom_formats:
             ext = self.foms.formats[ f ]
-            #print '!3!',rule % attributes + '.' + ext
+            print '!3!',rule % attributes + '.' + ext
             yield ( rule % attributes + '.' + ext, rule_attributes )
         else:
-          #print '!4!',rule % attributes
+          print '!4!',rule % attributes
           yield ( rule % attributes, rule_attributes )
 
           
@@ -607,3 +645,14 @@ if __name__ == '__main__':
     print app.fom_manager.find_foms()
     foms = app.fom_manager.load_foms( 'morphologist-brainvisa-1.0' )
     foms.pprint()
+    print '=' * 40
+    
+    #pta = PathToAttributes( foms )
+    #for path, st, attributes in pta.parse_directory( DirectoryAsDict( os.path.join( os.environ[ 'HOME' ], 'imagen_bv' ) ) ):
+      #print os.path.join( *path ), '->', attributes
+    
+    atp = AttributesToPaths( foms, selection={ 'process' : 'morphologistProcess' },
+                             directories={ 'outpout' : '/output', 'input' : '/input', 'spm' : '/spm', 'shared' : '/shared' } )
+    for p in atp.find_paths( dict( protocol='P', subject='S', acquisition='A' ) ):
+      print p
+    

@@ -8,24 +8,25 @@
     "analysis" : "{acquisition}/analysis",
   },
   
-  "patterns" : {
-    "fom_key_attribute" : "process",
+#  "patterns" : {
+  "processes" : {
+#    "fom_key_attribute" : "process",
   
   
     "morphologistProcess" : {
-      "fom_key_attribute" : "parameter",
+#      "fom_key_attribute" : "parameter",
 
-       "t1mri": [ [ "input/{acquisition}/<subject>", "images" ],
-                  [ "input/{acquisition}/normalized_<normalization>_<subject>", "images" ] ],
-       "commissure_coordinates": [ [ "input/{acquisition}/<subject>", "Commissure coordinates" ] ],
-       "anatomical_template": [ [ "spm/templates/T1", [ "NIFTI", "MINC", "SPM" ] ] ],
-       "job_file": [ [ "output/{acquisition}/<subject>_job_anat_normalization", [ "Matlab", "Matlab bz2", "XML" ] ] ],
-       "transformations_information": [ [ "output/{acquisition}/<subject>_sn", "Matlab" ] ],
-       "normalized_t1mri": [ [ "output/{acquisition}/normalized_<normalization>_<subject>", [ "NIFTI", "SPM" ], { "normalization":"SPM" } ] ], 
-       "talairach_MNI_transform": [ [ "output/{acquisition}/registration/RawT1-<subject>_<acquisition>_TO_Talairach-MNI", 
+       "t1mri": [ [ "input:{acquisition}/<subject>", "images" ],
+                  [ "input:{acquisition}/normalized_<normalization>_<subject>", "images" ] ],
+       "commissure_coordinates": [ [ "input:{acquisition}/<subject>", "Commissure coordinates" ] ],
+       "anatomical_template": [ [ "spm:templates/T1", [ "NIFTI", "MINC", "SPM" ] ] ],
+       "job_file": [ [ "output:{acquisition}/<subject>_job_anat_normalization", [ "Matlab", "Matlab bz2", "XML" ] ] ],
+       "transformations_information": [ [ "output:{acquisition}/<subject>_sn", "Matlab" ] ],
+       "normalized_t1mri": [ [ "output:{acquisition}/normalized_<normalization>_<subject>", [ "NIFTI", "SPM" ], { "normalization":"SPM" } ] ], 
+       "talairach_MNI_transform": [ [ "output:{acquisition}/registration/RawT1-<subject>_<acquisition>_TO_Talairach-MNI", 
                                       "Transformation matrix" ] ],
-       "source_referential": [ [ "input/{acquisition}/registration/RawT1-<subject>_<acquisition>", "Referential" ] ],
-       "normalized_referential": [ [ "share/registration/Talairach-MNI_template-SPM", "Referential" ] ],
+       "source_referential": [ [ "input:{acquisition}/registration/RawT1-<subject>_<acquisition>", "Referential" ] ],
+       "normalized_referential": [ [ "shared:registration/Talairach-MNI_template-SPM", "Referential" ] ],
 
 
        
