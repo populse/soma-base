@@ -17,6 +17,22 @@
         },
         "subject" : {
             "descr" : "Identifer of the subject"
+        },
+        "side" : {
+            "type" : "Enum",
+            "*args" : [ "L", "R" ],
+            "descr" : "Select L for Left or R for Right"
+        },
+        "sulci_recognition_type" : {
+            "type" : "Enum",
+            "*args" : [ "auto", "manual", "best" ],
+            "descr" : "Type of sulci recognition"
+        },
+        "graph_version" : {
+            "descr" : "Version of sulci recognition graph"
+        },
+        "sulci_recognition_session" : {
+            "descr" : "Session name for sulci recognition"
         }
     },
 
