@@ -286,7 +286,7 @@ class FileOrganizationModels( object ):
               pattern, formats, rule_attributes = rule
             rule_attributes[ 'fom_process' ] = process
             rule_attributes[ 'fom_parameter' ] = parameter
-          parameter_rules.append( [ pattern, formats, rule_attributes ] )
+            parameter_rules.append( [ pattern, formats, rule_attributes ] )
       new_patterns = {}
       self._expand_json_patterns( process_patterns, new_patterns, { 'fom_name' : fom_name } )
       self._parse_patterns( new_patterns, self.patterns )
@@ -586,10 +586,16 @@ class AttributesToPaths( object ):
   
   
   def find_paths( self, attributes={} ):
+    d = self.selection.copy()
+    d.update( attributes )
+    attributes = d
+    #print '!1!', attributes, self.selection
     select = []
     select_attributes = []
     for attribute in self.all_attributes:
       value = attributes.get( attribute )
+      if value is None:
+        value = self.selection.get( attribute )
       if value is None:
         select.append( '(' + attribute + " != '' OR " + attribute + ' IS NULL )' )
       elif attribute == 'fom_format':
@@ -604,16 +610,16 @@ class AttributesToPaths( object ):
         select_attributes.append( attribute )
     sql = 'SELECT fom_rule, fom_format FROM rules WHERE %s' % ' AND '.join( select )
     values = [ attributes[ i ] for i in select_attributes ]
-    #print '!', sql, values
+    #print '!2!', sql, values
     for rule_index, format in self._db.execute( sql, values ):
       rule = self.rules[ rule_index ]
       rule_attributes = fom_formats = self.foms.rules[ rule_index ][ 1 ].copy()
       fom_formats = rule_attributes.pop( 'fom_formats', None )
-      #print '!1!', rule
+      #print '!2.1!', rule
       if format:
         ext = self.foms.formats[ format ]
         rule_attributes[ 'fom_format' ] = format
-        #print '!2!',rule % attributes + '.' + ext
+        #print '!2.2!',rule % attributes + '.' + ext
         r = self._join_directory( rule % attributes + '.' + ext, rule_attributes )
         if r:
           yield r
@@ -623,13 +629,13 @@ class AttributesToPaths( object ):
           del rule_attributes[ 'fom_formats' ]
           for f in fom_formats:
             ext = self.foms.formats[ f ]
-            #print '!3!',rule % attributes + '.' + ext
+            #print '!2.3!',rule % attributes + '.' + ext
             rule_attributes[ 'fom_format' ] = f
             r = self._join_directory( rule % attributes + '.' + ext, rule_attributes )
             if r:
               yield r
         else:
-          #print '!4!',rule % attributes
+          #print '!2.4!',rule % attributes
           r = self._join_directory( rule % attributes, rule_attributes )
           if r:
             yield r

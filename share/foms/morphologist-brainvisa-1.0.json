@@ -8,14 +8,8 @@
     "analysis" : "{acquisition}/analysis",
   },
   
-#  "patterns" : {
-  "processes" : {
-#    "fom_key_attribute" : "process",
-  
-  
+  "processes" : {  
     "morphologistProcess" : {
-#      "fom_key_attribute" : "parameter",
-
        "t1mri": [ [ "input:{acquisition}/<subject>", "images" ],
                   [ "input:{acquisition}/normalized_<normalization>_<subject>", "images" ] ],
        "commissure_coordinates": [ [ "input:{acquisition}/<subject>", "Commissure coordinates" ] ],
