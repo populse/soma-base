@@ -606,7 +606,8 @@ class AttributesToPaths( object ):
           select.append( attribute + " = ?" )
           select_attributes.append( attribute )
       else:
-        select.append( '(' + attribute + " IN ( ?, '' ) OR " + attribute + ' IS NULL )' )
+        #select.append( '(' + attribute + " IN ( ?, '' ) OR " + attribute + ' IS NULL )' )
+        select.append( attribute + " IN ( ?, '' )" )
         select_attributes.append( attribute )
     sql = 'SELECT fom_rule, fom_format FROM rules WHERE %s' % ' AND '.join( select )
     values = [ attributes[ i ] for i in select_attributes ]
@@ -687,11 +688,13 @@ if __name__ == '__main__':
     #for path, st, attributes in pta.parse_directory( DirectoryAsDict( os.path.join( os.environ[ 'HOME' ], 'imagen_bv' ) ) ):
       #print os.path.join( *path ), '->', attributes
     
-    atp = AttributesToPaths( foms, selection={ 'fom_process' : 'morphologistProcess' },
+    atp = AttributesToPaths( foms, selection=dict( fom_process='morphologistProcess', fom_parameter='t1mri' ),
                              directories={ 'output' : '/output', 'input' : '/input', 'spm' : '/spm', 'shared' : '/shared' } )
-    for path, attributes in atp.find_paths( dict( protocol='P', subject='S', acquisition='A' ) ):
+    selection = dict( protocol='P', subject='S', acquisition='A', normalization='SPM' )
+    for path, attributes in atp.find_paths( selection ):
       print path, '\n  ->', attributes
     print '=' * 40
-    for path, attributes in atp.find_paths( dict( protocol='P', subject='S', acquisition='A', fom_format='fom_first' ) ):
+    selection[ 'fom_format' ] = 'fom_first'
+    for path, attributes in atp.find_paths( selection ):
       print path, '\n  ->', attributes
     
