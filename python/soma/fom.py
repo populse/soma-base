@@ -728,7 +728,7 @@ if __name__ == '__main__':
     
     # Create an AttributesToPaths specialized for our process
     atp = AttributesToPaths( foms, selection=dict( fom_process=process ),
-                             directories={ 'intput' : input_directory, 
+                             directories={ 'input' : input_directory, 
                                            'output' : input_directory, 
                                            'spm' : '/here/is/spm',
                                            'shared' : '/here/is/shared' } )
