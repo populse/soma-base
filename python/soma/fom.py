@@ -308,7 +308,7 @@ class FileOrganizationModels( object ):
           if attribute == 'format':
             continue
           rule_value = rule_attributes.get( attribute )
-          if rule_value is not None and rule_value != value:
+          if rule_value is not None and rule_value != selection_value:
             keep = False
             break
         if keep:
@@ -681,7 +681,7 @@ if __name__ == '__main__':
     #for path, st, attributes in pta.parse_directory( DirectoryAsDict( os.path.join( os.environ[ 'HOME' ], 'imagen_bv' ) ) ):
       #print os.path.join( *path ), '->', attributes
     
-    atp = AttributesToPaths( foms, selection={ 'process' : 'morphologistProcess', 'parameter' : 't1mri' },
+    atp = AttributesToPaths( foms, selection={ 'fom_process' : 'morphologistProcess' },
                              directories={ 'output' : '/output', 'input' : '/input', 'spm' : '/spm', 'shared' : '/shared' } )
     for path, attributes in atp.find_paths( dict( protocol='P', subject='S', acquisition='A' ) ):
       print path, '\n  ->', attributes
