@@ -641,12 +641,17 @@ class AttributesToPaths( object ):
           if r:
             yield r
 
-  def find_discriminant_attributes( self ):
+            
+  def find_discriminant_attributes( self, **selection ):
     result = []
     if self.rules:
       for attribute in self.all_attributes:
         sql = 'SELECT DISTINCT %s FROM rules' % attribute
-        values = list( self._db.execute( sql ) )
+        if selection:
+          sql += ' WHERE ' + ' AND '.join( i + ' = ?' for i in selection )
+          values = list( self._db.execute( sql, selection.values() ) )
+        else:
+          values = list( self._db.execute( sql ) )
         #print '!', attribute, values
         if len( values ) > 1 or values[ 0 ][ 0 ] == '':
           result.append( attribute )
@@ -685,33 +690,67 @@ if __name__ == '__main__':
     # Application initialization (e.g. configuration file may be read here)
     app.initialize()
 
-    print app.fom_manager.find_foms()
-    foms = app.fom_manager.load_foms( 'morphologist-brainvisa-1.0' )
+    # Name of the process to use
+    process = 'morphologistProcess'
+    # Name of the input parameter used to identify the given file name
+    input_parameter = 't1mri'
+
+    if len( sys.argv ) != 2:
+      print 'Give a parameter containing a file name that can be recognized for parameter "%s" of process "%s"' % ( input_parameter, process )
+      print 'e.g. python -m soma.fom /there/proto/subj/t1mri/acqu/subj.nii'
+      sys.exit()
+    
+    # Load one or more FOMs
+    foms = Application().fom_manager.load_foms( 'morphologist-brainvisa-1.0' )
     foms.pprint()
     print '=' * 40
     
-    #pta = PathToAttributes( foms )
-    #for path, st, attributes in pta.parse_directory( DirectoryAsDict( os.path.join( os.environ[ 'HOME' ], 'imagen_bv' ) ) ):
-      #print os.path.join( *path ), '->', attributes
     
-    atp = AttributesToPaths( foms, selection=dict( fom_process='morphologistProcess', fom_parameter='t1mri' ),
-                             directories={ 'output' : '/output', 'input' : '/input', 'spm' : '/spm', 'shared' : '/shared' } )
-    pprint.pprint( atp.rules )
-    print '-' * 40
-    print atp.all_attributes, ':', atp.find_discriminant_attributes()
+    # Extract attributes from path given on command line
+    pta = PathToAttributes( foms, selection=dict( fom_process=process, fom_parameter=input_parameter ) )
+    
+    # Only relative paths are matched by PathToAttributes. We suppose that
+    # the given file is in the "acquisition" directory.
+    path = os.path.abspath( sys.argv[1] )
+    input_directory = os.path.dirname( os.path.dirname( os.path.dirname( os.path.dirname( os.path.dirname( path ) ) ) ) )
+    path = path[ len( input_directory ) + 1: ]
+    
+    # Extract the attributes from the first result returned by parse_directory
+    try:
+      path, st, attributes = pta.parse_directory( DirectoryAsDict.paths_to_dict( path ) ).next()
+    except StopIteration:
+      raise ValueError( '%s is not recognized for parameter "%s" of "%s"' % ( path, input_parameter, process ) )
+    
+    # Remove FOM related attributes that are specific to the given file name
+    for i in attributes.keys():
+      if i.startswith( 'fom_' ):
+        del attributes[ i ]
+    
+    # Create an AttributesToPaths specialized for our process
+    atp = AttributesToPaths( foms, selection=dict( fom_process=process ),
+                             directories={ 'intput' : input_directory, 
+                                           'output' : input_directory, 
+                                           'spm' : '/here/is/spm',
+                                           'shared' : '/here/is/shared' } )
+
+    # Set the default value for all attributes that can be used to find a path that do
+    # not already have a value (e.g. analysis = 'default_analysis')
+    for attribute in atp.find_discriminant_attributes():
+      default_value = foms.attribute_definitions[ attribute ].get( 'default_value' )
+      #print '!', attribute, default_value
+      if default_value is not None:
+        attributes[ attribute ] = default_value
+    pprint.pprint( attributes )
     print '=' * 40
     
-    atp = AttributesToPaths( foms, selection=dict( fom_process='morphologistProcess', fom_parameter='normalized_t1mri' ),
-                             directories={ 'output' : '/output', 'input' : '/input', 'spm' : '/spm', 'shared' : '/shared' } )
-    pprint.pprint( atp.rules )
-    print '-' * 40
-    print atp.all_attributes, ':', atp.find_discriminant_attributes()
-    
-    #selection = dict( protocol='P', subject='S', acquisition='A' )
-    #for path, attributes in atp.find_paths( selection ):
-      #print path, '\n  ->', attributes
-    #print '=' * 40
-    #selection[ 'fom_format' ] = 'fom_first'
-    #for path, attributes in atp.find_paths( selection ):
-      #print path, '\n  ->', attributes
+    # Try to find a single value for all parameters declared in foms for this process.
+    # First, say to select the first format when several are possible
+    attributes[ 'fom_format' ] = 'fom_first'
+    for parameter in foms.patterns[ process ]:
+      # Select only the attributes that are discriminant for this parameter
+      # otherwise other attibutes can prevent the appropriate rule to match
+      parameter_attributes = [ 'fom_process' ] + atp.find_discriminant_attributes( fom_parameter=parameter )
+      d = dict( ( i, attributes[ i ] ) for i in parameter_attributes if i in attributes )
+      d[ 'fom_parameter' ] = parameter
+      print parameter, '->', list( i[0] for i in atp.find_paths( d ) )
     
