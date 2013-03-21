@@ -282,7 +282,7 @@ class FileOrganizationModels( object ):
               pattern, formats = rule
               rule_attributes = {}
             else:
-              print '!', rule, len( rule )
+              #print '!', rule, len( rule )
               pattern, formats, rule_attributes = rule
             rule_attributes[ 'fom_process' ] = process
             rule_attributes[ 'fom_parameter' ] = parameter
@@ -297,8 +297,12 @@ class FileOrganizationModels( object ):
       format = selection.get( 'format' )
       for rule_pattern, rule_attributes in self.rules:
         rule_formats = rule_attributes.get( 'fom_formats', [] )
-        if format and format not in rule_formats:
-          continue
+        if format:
+          if format == 'fom_first':
+            if not rule_formats:
+              continue
+          elif format not in rule_formats:
+            continue
         keep = True
         for attribute, selection_value in selection.iteritems():
           if attribute == 'format':
@@ -547,10 +551,10 @@ class AttributesToPaths( object ):
     self._db.execute( 'PRAGMA synchronous = OFF;' )
     self.all_attributes = tuple( i for i in self.foms.attribute_definitions if i != 'fom_formats' )
     fom_format_index = self.all_attributes.index( 'fom_format' )
-    sql = 'CREATE TABLE rules ( %s, fom_rule )' % ','.join( repr( i ) for i in self.all_attributes )
-    print '!', sql
+    sql = 'CREATE TABLE rules ( %s, fom_first, fom_rule )' % ','.join( repr( i ) for i in self.all_attributes )
+    #print '!', sql
     self._db.execute( sql )
-    sql_insert = 'INSERT INTO rules VALUES ( %s )' % ','.join( '?' for i in xrange( len( self.all_attributes ) + 1 ) )
+    sql_insert = 'INSERT INTO rules VALUES ( %s )' % ','.join( '?' for i in xrange( len( self.all_attributes ) + 2 ) )
     self.rules = []
     for pattern, rule_attributes in foms.selected_rules( self.selection ):
       pattern_attributes = set( self.foms._attributes_regex.findall( pattern ) )
@@ -560,19 +564,23 @@ class AttributesToPaths( object ):
         if not value and attribute in pattern_attributes:
           value = ''
         values.append( value )
+      values.append( True )
       values.append( len( self.rules ) )
       self.rules.append( pattern.replace( '<', '%(' ).replace( '>', ')s' ) )
       fom_formats = rule_attributes.get( 'fom_formats' )
       if fom_formats and 'fom_format' not in rule_attributes:
+        first = True
         for format in fom_formats:
+          values[ -2 ] = first
+          first = False
           values[ fom_format_index ] = format
-          print '!', sql_insert, values
+          #print '!', sql_insert, values
           self._db.execute( sql_insert, values )
-        values[ fom_format_index ] = ''
-        print '!', sql_insert, values
-        self._db.execute( sql_insert, values )
+        #values[ fom_format_index ] = ''
+        #print '!', sql_insert, values
+        #self._db.execute( sql_insert, values )
       else:
-        print '!', sql_insert, values        
+        #print '!', sql_insert, values        
         self._db.execute( sql_insert, values )
     self._db.commit()
   
@@ -585,35 +593,57 @@ class AttributesToPaths( object ):
       if value is None:
         select.append( '(' + attribute + " != '' OR " + attribute + ' IS NULL )' )
       elif attribute == 'fom_format':
-        select.append( attribute + " = ?" )
-        select_attributes.append( attribute )
+        selected_format = attributes.get( 'fom_format' )
+        if selected_format == 'fom_first':
+          select.append( 'fom_first = 1' )
+        else:
+          select.append( attribute + " = ?" )
+          select_attributes.append( attribute )
       else:
-        select.append( attribute + " IN ( ?, '' )" )
+        select.append( '(' + attribute + " IN ( ?, '' ) OR " + attribute + ' IS NULL )' )
         select_attributes.append( attribute )
     sql = 'SELECT fom_rule, fom_format FROM rules WHERE %s' % ' AND '.join( select )
-    format = attributes.get( 'fom_format' )
     values = [ attributes[ i ] for i in select_attributes ]
-    print '!', sql, values
+    #print '!', sql, values
     for rule_index, format in self._db.execute( sql, values ):
       rule = self.rules[ rule_index ]
-      rule_attributes = fom_formats = self.foms.rules[ rule_index ][ 1 ]
-      print '!1!', rule
+      rule_attributes = fom_formats = self.foms.rules[ rule_index ][ 1 ].copy()
+      fom_formats = rule_attributes.pop( 'fom_formats', None )
+      #print '!1!', rule
       if format:
         ext = self.foms.formats[ format ]
-        print '!2!',rule % attributes + '.' + ext
-        yield ( rule % attributes + '.' + ext, rule_attributes )
+        rule_attributes[ 'fom_format' ] = format
+        #print '!2!',rule % attributes + '.' + ext
+        r = self._join_directory( rule % attributes + '.' + ext, rule_attributes )
+        if r:
+          yield r
       else:
-        fom_formats = rule_attributes.get( 'fom_formats' )
         if fom_formats:
+          rule_attributes = rule_attributes.copy()
+          del rule_attributes[ 'fom_formats' ]
           for f in fom_formats:
             ext = self.foms.formats[ f ]
-            print '!3!',rule % attributes + '.' + ext
-            yield ( rule % attributes + '.' + ext, rule_attributes )
+            #print '!3!',rule % attributes + '.' + ext
+            rule_attributes[ 'fom_format' ] = f
+            r = self._join_directory( rule % attributes + '.' + ext, rule_attributes )
+            if r:
+              yield r
         else:
-          print '!4!',rule % attributes
-          yield ( rule % attributes, rule_attributes )
+          #print '!4!',rule % attributes
+          r = self._join_directory( rule % attributes, rule_attributes )
+          if r:
+            yield r
 
-          
+  
+  def _join_directory( self, path, rule_attributes ):
+    fom_directory = rule_attributes.get( 'fom_directory' )
+    if fom_directory:
+      directory = self.directories.get( fom_directory )
+      if directory:
+        return ( os.path.join( directory, *path.split( '/' ) ), rule_attributes )
+    return ( os.path.join( *path.split( '/' ) ), rule_attributes )
+  
+  
   def find_attributes( self, rules_selection ):
     # TODO
     attributes = {}
@@ -652,7 +682,10 @@ if __name__ == '__main__':
       #print os.path.join( *path ), '->', attributes
     
     atp = AttributesToPaths( foms, selection={ 'process' : 'morphologistProcess' },
-                             directories={ 'outpout' : '/output', 'input' : '/input', 'spm' : '/spm', 'shared' : '/shared' } )
-    for p in atp.find_paths( dict( protocol='P', subject='S', acquisition='A' ) ):
-      print p
+                             directories={ 'output' : '/output', 'input' : '/input', 'spm' : '/spm', 'shared' : '/shared' } )
+    for path, attributes in atp.find_paths( dict( protocol='P', subject='S', acquisition='A' ) ):
+      print path, '\n  ->', attributes
+    print '=' * 40
+    for path, attributes in atp.find_paths( dict( protocol='P', subject='S', acquisition='A', fom_format='fom_first' ) ):
+      print path, '\n  ->', attributes
     
