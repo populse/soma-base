@@ -16,53 +16,6 @@ from soma.path import split_path
 from soma.application import Application
 from soma.config import short_version
 
-class FileOrganizationModelManager( object ):
-  '''
-  Manage the discovery and instanciation of available FileOrganizationModel (FOM). A FOM can be represented as a JSON file (or a series of JSON files in a directory). This class allows to identify these files contained in a predefined set of directories (see find_fom method) and to instanciate a FileOrganizationModel for each identified file (see get_fom method).
-  '''
-  def __init__( self, paths ):
-    '''
-    Create a FOM manager that will use the given paths to find available FOMs.
-    '''
-    self.paths = paths
-    self._cache = None
-  
-  
-  def find_foms( self ):
-    '''Return a list of file organisation model (FOM) names. 
-    These FOMs can be loaded with load_foms. FOM files (or directories) are
-    looked for in self.paths.'''
-    self._cache = {}
-    for path in self.paths:
-      for i in os.listdir( path ):
-        full_path = os.path.join( path, i )
-        if os.path.isdir( full_path ):
-          for ext in ( '.json', '.yaml' ):
-            main_file = os.path.join( full_path, i + ext )
-            if os.path.exists( main_file ):
-              d = json_reader.load( open( main_file ) )
-              name = d.get( 'fom_name' )
-              if not name:
-                raise ValueError( 'file %s does not contain fom_name' % main_file )
-              self._cache[ name ] = full_path
-        elif i.endswith( '.json' ) or i.endswith( '.yaml' ):
-          d = json_reader.load( open( full_path ) )
-          name = d.get( 'fom_name' )
-          if not name:
-            raise ValueError( 'file %s does not contain fom_name' % full_path )
-          self._cache[ name ] = full_path
-    return self._cache.keys()
-   
-   
-  def load_foms( self, *names ):
-    if self._cache is None:
-      self.find_foms()
-    foms = FileOrganizationModels()
-    for name in names:
-      foms.import_file( self._cache[ name ] )
-    return foms
-
-
 class DirectoryAsDict( object ):
   def __init__( self, directory ):
     self.directory = directory
@@ -168,6 +121,59 @@ class DirectoryAsDict( object ):
     return ( directories, files, links, files_size, path_size, errors, count )
 
         
+class FileOrganizationModelManager( object ):
+  '''
+  Manage the discovery and instanciation of available FileOrganizationModel (FOM). A FOM can be represented as a JSON file (or a series of JSON files in a directory). This class allows to identify these files contained in a predefined set of directories (see find_fom method) and to instanciate a FileOrganizationModel for each identified file (see get_fom method).
+  '''
+  def __init__( self, paths ):
+    '''
+    Create a FOM manager that will use the given paths to find available FOMs.
+    '''
+    self.paths = paths
+    self._cache = None
+  
+  
+  def find_foms( self ):
+    '''Return a list of file organisation model (FOM) names. 
+    These FOMs can be loaded with load_foms. FOM files (or directories) are
+    looked for in self.paths.'''
+    self._cache = {}
+    for path in self.paths:
+      for i in os.listdir( path ):
+        full_path = os.path.join( path, i )
+        if os.path.isdir( full_path ):
+          for ext in ( '.json', '.yaml' ):
+            main_file = os.path.join( full_path, i + ext )
+            if os.path.exists( main_file ):
+              d = json_reader.load( open( main_file ) )
+              name = d.get( 'fom_name' )
+              if not name:
+                raise ValueError( 'file %s does not contain fom_name' % main_file )
+              self._cache[ name ] = full_path
+        elif i.endswith( '.json' ) or i.endswith( '.yaml' ):
+          d = json_reader.load( open( full_path ) )
+          name = d.get( 'fom_name' )
+          if not name:
+            raise ValueError( 'file %s does not contain fom_name' % full_path )
+          self._cache[ name ] = full_path
+    return self._cache.keys()
+   
+   
+  def load_foms( self, *names ):
+    if self._cache is None:
+      self.find_foms()
+    foms = FileOrganizationModels()
+    for name in names:
+      foms.import_file( self._cache[ name ], foms_manager=self )
+    return foms
+
+    
+  def file_name( self, fom ):
+    if self._cache is None:
+      self.find_foms()
+    return self._cache[ fom ]
+
+    
 class FileOrganizationModels( object ):
   def __init__( self ):
     self._directories_regex = re.compile( r'{([^}]*)}' )
@@ -190,12 +196,18 @@ class FileOrganizationModels( object ):
     self.rules = []
     
   
-  def import_file( self, file_or_dict ):
+  def import_file( self, file_or_dict, foms_manager=None ):
     if not isinstance( file_or_dict, dict ):
       json_dict = json_reader.load( open( file_or_dict, 'r' ) )
     else:
       json_dict = file_or_dict
-          
+    
+    foms = json_dict.get( 'fom_import', [] )
+    if foms and foms_manager is None:
+      raise RuntimeError( 'Cannot import FOM because no FileOrganizationModelManager has been provided' ) 
+    for fom in foms:
+      self.import_file( foms_manager.file_name( fom ) )
+    
     fom_name = json_dict[ 'fom_name' ]
     if fom_name in self.fom_names:
       return

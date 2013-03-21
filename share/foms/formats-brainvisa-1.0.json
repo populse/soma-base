@@ -1,0 +1,25 @@
+{
+  "fom_name" : "formats-brainvisa-1.0",
+
+  "formats" : {
+    "NIFTI" : "nii",
+    "MINC" : "mnc",
+    "SPM" : "img",
+    "Label Translation" : "trl",
+    "DEF Label Translation" : "def",
+    "Text Data Table": ".dat",
+    "CSV file": "CSV",
+    "Commissure coordinates" : "APC",
+    "Matlab" : "mat",
+    "Matlab bz2" : "mat.bz2",
+    "XML" : "xml",
+    "Transformation matrix" : "trm",
+    "Referential", "referential"
+  },
+  
+  
+  "format_lists" : {
+    "label translations" : [ "Label Translation", "DEF Label Translation" ]
+  },
+
+}
