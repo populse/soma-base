@@ -34,18 +34,19 @@ class Data:
     # SAVE
     #-------------------------
     def save(self,data_file_name,images_directory):
-        print 'SAVVVEEE'
+        print 'SAVE'
         if data_file_name is not None:
             with open(data_file_name, 'wb',) as csvfile:
                 mywriter = csv.writer(csvfile,delimiter=';', quotechar='|', quoting=csv.QUOTE_MINIMAL)
                 for i in range (0, len(self.filenames)):
-                    #print 'file',self.filenames[i]
-                    #print images_directory
-                    #image for image in self.images if word_to_find 
                     if self.filenames[i] in images_directory:  
-                         #print 'OK FILE SAVE'           
-                         mywriter.writerow([ unicode(self.filenames[i]).encode("utf-8"), self.marks[i],  unicode(self.comments[i]).encode("utf-8")])
-    
+                        #print 'OK FILE SAVE'    
+                        try:
+                           #mywriter.writerow([ unicode(self.filenames[i]).encode("utf-8"), self.marks[i],  unicode(self.comments[i]).encode("utf-8")])
+                            mywriter.writerow([ self.filenames[i].encode("utf-8"), self.marks[i],  self.comments[i].encode("utf-8")])
+                        except UnicodeDecodeError: 
+                            mywriter.writerow([self.filenames[i], self.marks[i],self.comments[i]])
+
   
     def get_note(self, filename):
         for i in range (0, len(self.filenames)):

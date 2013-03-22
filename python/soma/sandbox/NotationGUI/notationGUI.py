@@ -18,7 +18,7 @@ class MyFrame(wx.Frame):
     def __init__(self, parent, id, title):
         
         # Default directory (change it if you want)
-        self.dirname='/neurospin/cati/CATI_MIRROR/freeshare/Projet_X_050213/snapshots'     
+        self.dirname=''     
         self.dirname_xls='/home/mb236582'
         #border widget picture
         self.border=25
@@ -36,8 +36,7 @@ class MyFrame(wx.Frame):
         
         #Windows       
         wx.Frame.__init__(self, parent, id, title, (-1, -1), wx.Size(800, 600+self.size_widget))
-        self.panel = wx.Panel(self)
-         #wx.ID_ANY)
+        self.panel = wx.Panel(self,wx.ID_ANY)
         #self.panel.Bind(wx.EVT_KEY_DOWN, self.on_key_down)
         #self.panel.SetFocus()
   
@@ -129,9 +128,9 @@ class MyFrame(wx.Frame):
         self.Bind(wx.EVT_BUTTON,self.add_xls_comment,self.display_xls)
         self.Bind(wx.EVT_CLOSE,self.quit_windows)
         self.Bind(wx.EVT_SIZE, self.on_size_changed)
-        self.Bind(wx.EVT_KEY_DOWN, self.on_key_down)
-        self.Bind(wx.EVT_KEY_UP, self.on_key_down)
-        self.Bind(wx.EVT_CHAR, self.on_key_down)
+        #self.Bind(wx.EVT_KEY_DOWN, self.on_key_down)
+        #self.Bind(wx.EVT_KEY_UP, self.on_key_down)
+        #self.Bind(wx.EVT_CHAR, self.on_key_down)
         self.panel.SetFocus()
     
     #To resize image
@@ -139,81 +138,64 @@ class MyFrame(wx.Frame):
         self.picture.SetFocus()
         # Get current picture    
         image=wx.Image(os.path.join(self.dirname,self.images[self.index]))
-        # Windows size
-        #image=wx.Bitmap(os.path.join(self.dirname,self.images[self.index]))
         
+        #Windows size
         (frameW,frameH)=self.GetSize()
         frameW=frameW
         frameH=frameH-self.size_widget
-        #print 'frameW',frameW
-        #print 'frameH',frameH
    
         #Picture size
         W = image.GetWidth()
         H = image.GetHeight()
-        #print 'W',W
-        #print 'H',H
         
         #Find the best ratio
         ratioW=frameW/W
-        #print 'ratioW',ratioW
         ratioH=frameH/H
-        #print 'ratioH',ratioH
         if ratioW>ratioH:
             ratio=ratioH
         else:
             ratio=ratioW 
-            
-        #print 'ratio',ratio        
-            
+                            
         #Rescale picture  
         image = image.Scale(image.GetWidth()*ratio, image.GetHeight()*ratio, wx.IMAGE_QUALITY_HIGH)
         result = wx.BitmapFromImage(image)
         self.picture.SetBitmap(result)
         self.Refresh()
-        #self.Center(wx.BOTH)
         self.Show()
-        
-    def on_key_down(self,e):
-        print 'hereeee'
-        keycode=e.GetKeyCode()
-        print keycode
-        if keycode==wx.WXK_LEFT:
-            self.prev_pic_event(e)
-        elif keycode==wx.WXK_RIGHT:
-            self.next_pic_event(e)           
-        elif keycode==wx.WXK_NUMPAD0:
-            self.keycode_note=0
-            self.sel_note_event(e)
-        elif keycode==wx.WXK_NUMPAD1:
-            self.keycode_note=1
-            self.sel_note_event(e)
-        elif keycode==wx.WXK_NUMPAD2:
-            self.keycode_note=2
-            self.sel_note_event(e)
-        elif keycode==wx.WXK_NUMPAD3:
-            self.keycode_note=3
-            self.sel_note_event(e)
-        elif keycode==wx.WXK_NUMPAD4:
-            self.keycode_note=4
-            self.sel_note_event(e)
-        elif keycode==wx.WXK_NUMPAD5:
-            self.keycode_note=5
-            self.sel_note_event(e)
-        elif keycode==wx.WXK_ESCAPE:
-            self.quit_windows(e)
-        else:
-            print 'else'
-            print 'uni',e.GetUnicodeKey()
-            print 'unich',e.GetUniChar()
-            print 'unichar2',unichr(keycode)
-            print 'char',chr(keycode)           
-            self.keycode_comment=unichr(keycode)
-            self.comment.AppendText(self.keycode_comment)
-            #self.sel_com(e)
-            #self.Bind(wx.EVT_KEY_DOWN, self.on_key_down)
-            #self.Bind(wx.EVT_KEY_UP, self.on_key_down)
-            #self.Bind(wx.EVT_CHAR, self.on_key_down)
+ 
+#KEYBOARD EVENT         
+    #def on_key_down(self,e):
+        #print 'hereeee'
+        #keycode=e.GetKeyCode()
+        #print keycode
+        #if keycode==wx.WXK_LEFT:
+            #self.prev_pic_event(e)
+        #elif keycode==wx.WXK_RIGHT:
+            #self.next_pic_event(e)           
+        #elif keycode==wx.WXK_NUMPAD0:
+            #self.keycode_note=0
+            #self.sel_note_event(e)
+        #elif keycode==wx.WXK_NUMPAD1:
+            #self.keycode_note=1
+            #self.sel_note_event(e)
+        #elif keycode==wx.WXK_NUMPAD2:
+            #self.keycode_note=2
+            #self.sel_note_event(e)
+        #elif keycode==wx.WXK_NUMPAD3:
+            #self.keycode_note=3
+            #self.sel_note_event(e)
+        #elif keycode==wx.WXK_NUMPAD4:
+            #self.keycode_note=4
+            #self.sel_note_event(e)
+        #elif keycode==wx.WXK_NUMPAD5:
+            #self.keycode_note=5
+            #self.sel_note_event(e)
+        #elif keycode==wx.WXK_ESCAPE:
+            #self.quit_windows(e)
+        #else:
+            #print 'else'       
+            #self.keycode_comment=unichr(keycode)
+            #self.comment.AppendText(self.keycode_comment)
        
     # Function if windows change size    
     def on_size_changed(self, e) :  
@@ -223,14 +205,6 @@ class MyFrame(wx.Frame):
     # Function if comment change                 
     def sel_com(self,e):
         if self.data_file_name is not None:
-            #if self.keycode_comment is not None:
-                #print 'keycode',self.keycode_comment
-                #self.comment.AppendText(self.keycode_comment)
-                #e.Skip()    
-                #self.data.set_comment(self.images[self.index],self.comment.GetValue())   
-                #self.keycode_comment=None 
-
-            #else:    
             self.data.set_comment(self.images[self.index],self.comment.GetValue())      
         
     # Function if not change
@@ -244,19 +218,13 @@ class MyFrame(wx.Frame):
                 self.data.set_note(self.images[self.index],self.choice_note.GetCurrentSelection())
         
 
-        # Function if not change
+    # Function if not change
     def sel_note_brain_event(self,e):
         if self.data_file_name is not None:
-            #print 'brain event',self.image_brain
-            #print self.choice_note2.GetCurrentSelection()
             self.data.set_note(self.image_brain,self.choice_note2.GetCurrentSelection())
        
- 
-         
-    #If click on button '>' , display next picture in the folder 
+    # If click on button '>' , display next picture in the folder 
     def next_pic_event(self,e):  
-        self.Show()
-    
         # Hide and clear display xls
         self.xls_comment.Clear()
         self.box2.Show(self.xls_comment,False,True)          
@@ -271,9 +239,7 @@ class MyFrame(wx.Frame):
             self.pict_split() 
             self.check_data() 
             # Display image                   
-            self.size_image()
-        self.panel.Bind(wx.EVT_KEY_DOWN, self.on_key_down)       
-        #self.panel.SetFocus()
+            self.size_image() 
 
  
     # If click on button '<' , display previous picture in the folder    
@@ -291,10 +257,8 @@ class MyFrame(wx.Frame):
             self.statusbar.SetStatusText(self.images[self.index])
             self.pict_split()      
             self.check_data()
-            #self.check_data_xls()
             # Display image                 
             self.size_image()
-        e.Skip()
     
     def add_xls_comment(self,e):
         if self.box2.IsShown(self.xls_comment) is False:
@@ -305,11 +269,9 @@ class MyFrame(wx.Frame):
             self.box2.Show(self.xls_comment,False,True)          
             self.box2.Layout()  
        
-
-              
+         
     # Function for open a file
     def on_open(self,e):      
-        print 'on open'
         dlg = wx.FileDialog(self, "Choose a file", self.dirname, "", "*.*", wx.OPEN)
         if dlg.ShowModal() == wx.ID_OK:
             self.filename = dlg.GetFilename()
@@ -326,11 +288,8 @@ class MyFrame(wx.Frame):
                 if im==self.filename:
                     self.index=i
                     break                                                    
-            f.close() 
-            #print self.images      
+            f.close()    
         dlg.Destroy()    
-     
-
         
         if self.data_file_name is not None:    
         # Display image    
@@ -340,12 +299,8 @@ class MyFrame(wx.Frame):
             self.check_data()
             self.size_image()   
             
-        print 'FOCUS',self.FindFocus()
-        self.picture.SetFocus()
-        print 'FOCUS',self.FindFocus()
                 
     def on_open_xls(self,e):  
-        print 'on xls'
         dlg = wx.FileDialog(self, "Choose a file xls", self.dirname_xls, "", "*.xls", wx.OPEN)     
         if dlg.ShowModal() == wx.ID_OK:           
             self.filename_xls = dlg.GetFilename()
@@ -353,17 +308,13 @@ class MyFrame(wx.Frame):
             self.data_file_xls=xlrd.open_workbook(os.path.join(self.dirname_xls, self.filename_xls))                       
         dlg.Destroy()    
        
-
-        
-        
-                   
+            
     def check_data_xls(self):
         if self.data_file_xls is None:
             self.xls_comment.AppendText('Open a xls file pls')  
         if self.data_file_name is not None and self.data_file_xls is not None:
             suj_find=False
             filename=self.images[self.index].split('.')[0]
-            print 'filename',filename
             expresion=r"([0-9]{7})([A-Za-z]{4})"
             m=re.search(expresion, filename)
             if m is not None:
@@ -372,19 +323,15 @@ class MyFrame(wx.Frame):
                 for i in range(0,len(filesplit)):
                     if filesplit[i]==subject:
                         index=i
-                        break
-                      
+                        break                     
                 nom_center=filesplit[index-1]
-                print 'nom centre',nom_center  
                 subject2=subject[7:11]+subject[0:7]
-                print subject2 
                 res=[]  
                 res += [each for each in self.data_file_xls.sheet_names() if nom_center in each]
                 if res is not None:
                     good_sheet = self.data_file_xls.sheet_by_name(res[0])
                     good_row=0
                     for row in good_sheet.col_values(0):
-                        print 'row',row
                         if row==subject2:
                             suj_find=True
                             break;          
@@ -404,33 +351,29 @@ class MyFrame(wx.Frame):
             self.comment.SetValue(self.data.get_comment(self.images[self.index]))
         else:
             self.choice_note.SetSelection(self.data.get_note(self.images[self.index]))
-            self.comment.SetValue(self.data.get_comment(self.images[self.index]))
-    
+            self.comment.ChangeValue(self.data.get_comment(self.images[self.index]))
+            self.data.save(self.data_file_name,self.images)
+
    
     def check_brain_exist(self):       
         word_to_find='brain'
         self.image_brain=self.images[self.index].replace('split','brain')
         element=[]
-        #print self.images
         element+= [image for image in self.images if image==self.image_brain]
         if not element:
-            #print 'nthing'
             return 0
         else:
-            #print 'element',element
             return 1
    
 
     def pict_split(self):
         word_to_find='split'
         if word_to_find in self.images[self.index] and self.check_brain_exist()==1: 
-            #print 'ho'
             self.box2.Show(self.choice_note2,True,True)
             self.box4.Show(self.brain_text,True,True)
             self.box2.Layout()
             self.box4.Layout()            
         else:
-            #print 'he'
             self.box2.Show(self.choice_note2,False,True)
             self.box4.Show(self.brain_text,False,True)
             self.box2.Layout()
