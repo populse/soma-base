@@ -14,9 +14,7 @@ class Data:
         self.marks = []
         self.comments = []
         #self.DATA_FILE_NAME = "data.csv"
-        
-        
-       
+           
     #-------------------------
     # LOAD
     #-------------------------
@@ -29,18 +27,24 @@ class Data:
                     self.marks.append(row[1])
                     self.comments.append(row[2])
         except IOError:
+            print 'IOERROR'
             pass
 
     #-------------------------
     # SAVE
     #-------------------------
-    def save(self,data_file_name):
+    def save(self,data_file_name,images_directory):
+        print 'SAVVVEEE'
         if data_file_name is not None:
             with open(data_file_name, 'wb',) as csvfile:
                 mywriter = csv.writer(csvfile,delimiter=';', quotechar='|', quoting=csv.QUOTE_MINIMAL)
-                for i in range (0, len(self.filenames)):               
-                    mywriter.writerow([ unicode(self.filenames[i]).encode("utf-8"), self.marks[i],  unicode(self.comments[i]).encode("utf-8")])
-    
+                for i in range (0, len(self.filenames)):
+                    #print 'file',self.filenames[i]
+                    #print images_directory
+                    #image for image in self.images if word_to_find 
+                    if self.filenames[i] in images_directory:  
+                         #print 'OK FILE SAVE'           
+                         mywriter.writerow([ unicode(self.filenames[i]).encode("utf-8"), self.marks[i],  unicode(self.comments[i]).encode("utf-8")])
     
   
     def get_note(self, filename):
@@ -73,7 +77,7 @@ class Data:
     def add_filename(self, filename):
         self.filenames.append(filename);
         self.marks.append('0');
-        self.comments.append('None');
+        self.comments.append('');
         
     # Renvoie 1 si le fichier est déjà présent dans le CSV, 0 sinon.
     def is_recorded(self, filename):
