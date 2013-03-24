@@ -51,41 +51,57 @@ from soma.translation import translate as _
 
 
 #-------------------------------------------------------------------------------
+class _Empty( object ):
+  pass
+
+#-------------------------------------------------------------------------------
+class SomaPartial( object ):
+  '''
+  Python 2.5 introduced a very useful function: :py:func:`functools.partial`,
+  this is an implementation that is compatible with Python 2.3 (if
+  functools.partial exists, it is used directly).
+  
+  functools.partial allow to create a new function from an existing
+  function by setting values to some arguments. The new function
+  will be callable with less parameters. See Python 2.5 documentation
+  for more information.
+  
+  Example::
+
+    from soma.functiontools import partial
+    
+    def f( a, b, c ):
+      return ( a, b, c )
+    
+    g = partial( f, 'a', c='c' )
+    g( 'b' ) # calls f( 'a', 'b', c='c' )
+  '''
+  def __init__( self, function, *args, **kwargs ):
+    self.func = function
+    self.args = args
+    self.keywords = kwargs
+  
+  
+  def __call__( self, *args, **kwargs ):
+    merged_kwargs = self.keywords.copy()
+    merged_kwargs.update( kwargs )
+    return self.func( *(self.args + args), **merged_kwargs )
+  
+  @property
+  def func_code( self ):
+    '''
+    This property make SomaPartial useable with traits module. The method
+    on_trait_change is requiring that the function has a func_code.co_argcount
+    attribute.
+    '''
+    result = _Empty()
+    result.co_argcount = numberOfParameterRange( self )[ 0 ]
+    return result
+    
 try:
   from functools import partial
 except ImportError:
-  class partial( object ):
-    '''
-    Python 2.5 introduced a very useful function: :py:func:`functools.partial`,
-    this is an implementation that is compatible with Python 2.3 (if
-    functools.partial exists, it is used directly).
-    
-    functools.partial allow to create a new function from an existing
-    function by setting values to some arguments. The new function
-    will be callable with less parameters. See Python 2.5 documentation
-    for more information.
-    
-    Example::
-
-      from soma.functiontools import partial
-      
-      def f( a, b, c ):
-        return ( a, b, c )
-      
-      g = partial( f, 'a', c='c' )
-      g( 'b' ) # calls f( 'a', 'b', c='c' )
-    '''
-    def __init__( self, function, *args, **kwargs ):
-      self.func = function
-      self.args = args
-      self.keywords = kwargs
-    
-    
-    def __call__( self, *args, **kwargs ):
-      merged_kwargs = self.keywords.copy()
-      merged_kwargs.update( kwargs )
-      return self.func( *(self.args + args), **merged_kwargs )
-
+  partial = SomaPartial
 
 #-------------------------------------------------------------------------------
 def getArgumentsSpecification( callable ):

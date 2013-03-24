@@ -54,9 +54,21 @@ class MetaController( HasTraits.__metaclass__ ):
 
 
 class Controller( HasTraits ):
-  '''A Controller is a HasTraits that hides some intance traits and allows for
-  automatic registration of the class through its MetaController metaclass.'''
+  '''
+  A Controller is a HasTraits that is connected to ControllerFactories and
+  idgetFactories and provides some methods to inspect user defined traits.
+  '''
   __metaclass__ = MetaController
   
-  def trait_names( self, *args, **kwargs ):
-    return self.class_trait_names( *args, **kwargs )
+  def user_traits( self, *args, **kwargs ):
+    '''
+    Returns a dictionnary containing class traits and instance traits defined by
+    user  (i.e.  the traits that are not automatically defined by traits 
+    module).
+    '''
+    traits = dict( (i, j) for i, j in self.class_traits().iteritems() if not i.startswith( 'trait_' ) )
+    traits.update( self._instance_traits() )
+    for name in traits.keys():
+      if name.endswith( '_items' ) and name[ :-6 ] in traits:
+        del traits[ name ]
+    return traits
