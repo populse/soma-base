@@ -1,4 +1,4 @@
-# -*- coding: iso-8859-1 -*-
+# -*- coding: utf-8 -*-
 
 #  This software and supporting documentation are distributed by
 #      Institut Federatif de Recherche 49
@@ -405,7 +405,7 @@ class MinfExpander( object ):
       typeExpander = self.getTypeExpander( minfNode.type )
       try:
         result = typeExpander( self, minfNode, minfNodeIterator, target=target, 
-                             targetType=targetType, stop_on_error=stop_on_error, exceptions=exceptions  )
+                               targetType=targetType, stop_on_error=stop_on_error, exceptions=exceptions  )
       except Exception, e:
         if stop_on_error:
           raise e
