@@ -10,6 +10,7 @@ try:
   from enthought.traits.api import HasTraits
 except ImportError:
   from traits.api import HasTraits
+from soma.sorted_dictionary import SortedDictionary
 from soma.factory import Factories
 
 
@@ -64,11 +65,12 @@ class Controller( HasTraits ):
     '''
     Returns a dictionnary containing class traits and instance traits defined by
     user  (i.e.  the traits that are not automatically defined by traits 
-    module).
+    module). Returned values are sorted according to the "order" trait attribute.
     '''
     traits = dict( (i, j) for i, j in self.class_traits().iteritems() if not i.startswith( 'trait_' ) )
     traits.update( self._instance_traits() )
     for name in traits.keys():
       if name.endswith( '_items' ) and name[ :-6 ] in traits:
         del traits[ name ]
-    return traits
+    sorted_keys = [ t[1] for t in sorted( ( getattr( trait, 'order', '' ), name ) for name, trait in traits.iteritems() ) ]
+    return SortedDictionary( *[ ( name, traits[ name ] ) for name in sorted_keys ] )
