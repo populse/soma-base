@@ -7,9 +7,9 @@ from __future__ import absolute_import
 from weakref import WeakKeyDictionary
 from functools import partial
 try:
-  from enthought.traits.api import HasTraits
-except ImportError:
   from traits.api import HasTraits
+except ImportError:
+  from enthought.traits.api import HasTraits
 from soma.sorted_dictionary import SortedDictionary
 from soma.factory import Factories
 
@@ -74,3 +74,45 @@ class Controller( HasTraits ):
         del traits[ name ]
     sorted_keys = [ t[1] for t in sorted( ( getattr( trait, 'order', '' ), name ) for name, trait in traits.iteritems() ) ]
     return SortedDictionary( *[ ( name, traits[ name ] ) for name in sorted_keys ] )
+
+    
+_type_to_trait_id = {
+  int: 'Int',
+  unicode: 'Unicode',
+  str: 'Str',
+  float: 'Float'
+}
+
+def trait_ids( trait ):
+  main_id = trait.handler.__class__.__name__
+  inner_ids = []
+  if main_id == 'TraitCoerceType':
+    real_id = _type_to_trait_id.get( trait.handler.aType )
+    if real_id:
+      main_id = real_id
+  else:
+    inner_id = '_'.join( ( trait_ids( i )[0] for i in trait.handler.inner_traits() ) )
+    if not inner_id:
+      klass = getattr( trait.handler, 'klass', None )
+      if klass is not None:
+        inner_ids = [ i.__name__ for i in klass.__mro__  ]
+      else:
+        inner_ids = []
+    else:
+      inner_ids = [ inner_id ]
+  if inner_ids:
+    return [ main_id + '_' + i for i in inner_ids ]
+  else:
+    return [ main_id ]
+    
+if __name__ == '__main__':
+  from traits.api import *
+  from soma.controller import *
+  class C( Controller ):
+      d = Dict( Str, Int )
+      d2 = DictStrStr
+      d3 = Dict( Str, Directory )
+  o = C()
+  print trait_ids(o.trait('d'))
+  print trait_ids(o.trait('d2'))
+  print trait_ids(o.trait('d3'))
