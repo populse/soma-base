@@ -85,7 +85,6 @@ class Application( Singleton, Controller ):
     
     self.name = name
     self.version = version
-    self.gui = None
     self.loaded_plugin_modules = {}
     
 
@@ -145,14 +144,6 @@ class Application( Singleton, Controller ):
           init( self )
 
 
-  def initialize_gui( self ):
-    '''If the application is using a graphical user interface (GUI), this
-    method must be called to initialize it.'''
-    if self.gui is None:
-      from soma.gui.application_gui import ApplicationGUI
-      self.gui = ApplicationGUI( self )
-  
-  
   def get_controller( self, something ):
     '''This method must be used to get a controller for any object.'''
     if self._controller_factories is None:
