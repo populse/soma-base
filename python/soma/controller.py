@@ -7,9 +7,9 @@ from __future__ import absolute_import
 from weakref import WeakKeyDictionary
 from functools import partial
 try:
-  from traits.api import HasTraits
+  from traits.api import HasTraits, Event
 except ImportError:
-  from enthought.traits.api import HasTraits
+  from enthought.traits.api import HasTraits, Event
 from soma.sorted_dictionary import SortedDictionary
 from soma.factory import Factories
 
@@ -57,18 +57,30 @@ class MetaController( HasTraits.__metaclass__ ):
 class Controller( HasTraits ):
   '''
   A Controller is a HasTraits that is connected to ControllerFactories and
-  idgetFactories and provides some methods to inspect user defined traits.
+  idgetFactories, it also provides some methods to inspect user defined traits
+  and to raise an event if its traits have changed.
   '''
   __metaclass__ = MetaController
+  
+  '''
+  This event is necessary because there is no event when a trait is removed
+  with remove_trait and because it is sometimes better to send a single event
+  when several traits changes are done (especially when GUI is updated on real
+  time). This event have to be triggered explicitely to take into account
+  changes due to call(s) to add_trait or remove_trait.
+  '''
+  user_traits_changed = Event
   
   def user_traits( self, *args, **kwargs ):
     '''
     Returns a dictionnary containing class traits and instance traits defined by
-    user  (i.e.  the traits that are not automatically defined by traits 
-    module). Returned values are sorted according to the "order" trait attribute.
+    user  (i.e.  the traits that are not automatically defined by HasTraits 
+    or Controller). Returned values are sorted according to the "order" trait
+    meta-attribute.
     '''
     traits = dict( (i, j) for i, j in self.class_traits().iteritems() if not i.startswith( 'trait_' ) )
     traits.update( self._instance_traits() )
+    del traits[ 'user_traits_changed' ]
     for name in traits.keys():
       if name.endswith( '_items' ) and name[ :-6 ] in traits:
         del traits[ name ]
@@ -104,15 +116,3 @@ def trait_ids( trait ):
     return [ main_id + '_' + i for i in inner_ids ]
   else:
     return [ main_id ]
-    
-if __name__ == '__main__':
-  from traits.api import *
-  from soma.controller import *
-  class C( Controller ):
-      d = Dict( Str, Int )
-      d2 = DictStrStr
-      d3 = Dict( Str, Directory )
-  o = C()
-  print trait_ids(o.trait('d'))
-  print trait_ids(o.trait('d2'))
-  print trait_ids(o.trait('d3'))
