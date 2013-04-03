@@ -13,6 +13,7 @@ import sys
 import xlrd
 import xlwt
 import re
+from filter_window import MyDialog
 
 class MyFrame(wx.Frame):
     def __init__(self, parent, id, title):
@@ -44,12 +45,17 @@ class MyFrame(wx.Frame):
         filemenu= wx.Menu()
         menuOpen = filemenu.Append(wx.ID_FILE, "&Open"," Open a file to edit")
         menuOpenXls= filemenu.Append(wx.ID_FILE1, "&Open Xls"," Open a file Xls")
+        
+        # Filter
+        filtermenu=wx.Menu()
+        filter_open=filtermenu.Append(wx.ID_ANY, 'Launch filter')
               
         self.statusbar = self.CreateStatusBar()
 
         # Creating the menubar.
         menuBar = wx.MenuBar()
         menuBar.Append(filemenu,"&File") # Adding the "filemenu" to the MenuBar
+        menuBar.Append(filtermenu,"&Filter")
         self.SetMenuBar(menuBar)  # Adding the MenuBar to the Frame content.
         
         # Main Box 
@@ -110,7 +116,8 @@ class MyFrame(wx.Frame):
         memory.Clear()
         memory.SelectObject(wx.NullBitmap)
         self.picture = wx.StaticBitmap(self.panel, bitmap=bitmap)
-        self.box.Add(self.picture, 0, wx.ALIGN_CENTER| wx.ALL | wx.ADJUST_MINSIZE)     
+        self.box.Add(self.picture, 0)
+        #, wx.ALIGN_CENTER| wx.ALL | wx.ADJUST_MINSIZE)     
   
         #Display GUI
         self.panel.SetSizerAndFit(self.box)
@@ -120,6 +127,7 @@ class MyFrame(wx.Frame):
         # Events
         self.Bind(wx.EVT_MENU, self.on_open, menuOpen)
         self.Bind(wx.EVT_MENU, self.on_open_xls, menuOpenXls)
+        self.Bind(wx.EVT_MENU, self.on_open_filter, filter_open)
         self.Bind(wx.EVT_BUTTON,self.next_pic_event, button_next)
         self.Bind(wx.EVT_BUTTON,self.prev_pic_event, button_prev)
         self.Bind(wx.EVT_CHOICE,self.sel_note_event,self.choice_note)
@@ -306,7 +314,19 @@ class MyFrame(wx.Frame):
             self.filename_xls = dlg.GetFilename()
             self.dirname_xls = dlg.GetDirectory()
             self.data_file_xls=xlrd.open_workbook(os.path.join(self.dirname_xls, self.filename_xls))                       
-        dlg.Destroy()    
+        dlg.Destroy()  
+        
+        
+    def on_open_filter(self,e):
+        dia = MyDialog(self, -1, 'buttons',self.dirname)
+        if dia.ShowModal() == wx.ID_OK:   
+            #Get value of filter
+            dia.filter_process()           
+        else:
+            print 'NO FILTER SELECTION'   
+
+        dia.Destroy()
+             
        
             
     def check_data_xls(self):
@@ -319,16 +339,20 @@ class MyFrame(wx.Frame):
             m=re.search(expresion, filename)
             if m is not None:
                 subject=m.group(0)
-                filesplit=filename.split('_')
-                for i in range(0,len(filesplit)):
-                    if filesplit[i]==subject:
+                filespliter=filename.split('_')
+                for i in range(0,len(filespliter)):
+                    if filespliter[i]==subject:
                         index=i
-                        break                     
-                nom_center=filesplit[index-1]
+                        break
+                        
+                #Check nom_center                              
+                nom_center=filespliter[index-1]
+                if nom_center.isdigit():
+                    nom_center=filespliter[index-2]   
                 subject2=subject[7:11]+subject[0:7]
                 res=[]  
                 res += [each for each in self.data_file_xls.sheet_names() if nom_center in each]
-                if res is not None:
+                if res:
                     good_sheet = self.data_file_xls.sheet_by_name(res[0])
                     good_row=0
                     for row in good_sheet.col_values(0):
