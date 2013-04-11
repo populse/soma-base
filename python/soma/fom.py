@@ -10,7 +10,8 @@ except ImportError:
 try:
   from traits.api import ListStr
 except ImportError:
-  from enthought.traits.api import ListStr
+   print 'importERROR'   
+   from enthought.traits.api import ListStr
 
 from soma.path import split_path
 from soma.application import Application
@@ -681,29 +682,24 @@ def call_before_application_initialization( application ):
 def call_after_application_initialization( application ):
     application.fom_manager = FileOrganizationModelManager( application.fom_path )
 
-if __name__ == '__main__':
-    # First thing to do is to create an Application with name and version
-    app = Application( 'soma.fom', '1.0' )
-    # Register module to load and call functions before and/or after
-    # initialization
-    app.plugin_modules.append( 'soma.fom' )
-    # Application initialization (e.g. configuration file may be read here)
-    app.initialize()
 
-    # Name of the process to use
-    process = 'morphologistProcess'
-    # Name of the input parameter used to identify the given file name
-    input_parameter = 't1mri'
+def process_completion( fom, process, input_parameter, value, directories ):
+    
+    #print 'SYS'
+    #print  sys.argv[0]
+    #print  sys.argv[1]
+    #print '//////////////'
 
-    if len( sys.argv ) != 2:
-      print 'Give a parameter containing a file name that can be recognized for parameter "%s" of process "%s"' % ( input_parameter, process )
-      print 'e.g. python -m soma.fom /there/proto/subj/t1mri/acqu/subj.nii'
-      sys.exit()
+   
+    #if len( sys.argv ) != 2:
+      #print 'Give a parameter containing a file name that can be recognized for parameter "%s" of process "%s"' % ( input_parameter, process )
+      #print 'e.g. python -m soma.fom /there/proto/subj/t1mri/acqu/subj.nii'
+      #sys.exit()
     
     # Load one or more FOMs
-    foms = Application().fom_manager.load_foms( 'morphologist-brainvisa-1.0' )
-    foms.pprint()
-    print '=' * 40
+    foms = Application().fom_manager.load_foms( fom )
+    #foms.pprint()
+    #print '=' * 40
     
     
     # Extract attributes from path given on command line
@@ -711,9 +707,12 @@ if __name__ == '__main__':
     
     # Only relative paths are matched by PathToAttributes. We suppose that
     # the given file is in the "acquisition" directory.
-    path = os.path.abspath( sys.argv[1] )
+    #path = os.path.abspath( sys.argv[1] )
+    path = os.path.abspath( value )
     input_directory = os.path.dirname( os.path.dirname( os.path.dirname( os.path.dirname( os.path.dirname( path ) ) ) ) )
     path = path[ len( input_directory ) + 1: ]
+    directories[ 'input' ] = input_directory
+    directories[ 'output' ] = input_directory
     
     # Extract the attributes from the first result returned by parse_directory
     try:
@@ -728,10 +727,7 @@ if __name__ == '__main__':
     
     # Create an AttributesToPaths specialized for our process
     atp = AttributesToPaths( foms, selection=dict( fom_process=process ),
-                             directories={ 'input' : input_directory, 
-                                           'output' : input_directory, 
-                                           'spm' : '/here/is/spm',
-                                           'shared' : '/here/is/shared' } )
+                             directories=directories )
 
     # Set the default value for all attributes that can be used to find a path that do
     # not already have a value (e.g. analysis = 'default_analysis')
@@ -740,17 +736,33 @@ if __name__ == '__main__':
       #print '!', attribute, default_value
       if default_value is not None:
         attributes[ attribute ] = default_value
-    pprint.pprint( attributes )
-    print '=' * 40
+    #pprint.pprint( attributes )
+    #print '=' * 40
     
     # Try to find a single value for all parameters declared in foms for this process.
     # First, say to select the first format when several are possible
+    completion={}
     attributes[ 'fom_format' ] = 'fom_first'
     for parameter in foms.patterns[ process ]:
       # Select only the attributes that are discriminant for this parameter
       # otherwise other attibutes can prevent the appropriate rule to match
       parameter_attributes = [ 'fom_process' ] + atp.find_discriminant_attributes( fom_parameter=parameter )
       d = dict( ( i, attributes[ i ] ) for i in parameter_attributes if i in attributes )
-      d[ 'fom_parameter' ] = parameter
-      print parameter, '->', list( i[0] for i in atp.find_paths( d ) )
+      d['fom_parameter'] = parameter
+      print parameter,'-->', list( h[0] for h in atp.find_paths( d ))
+      for h in atp.find_paths(d):
+          completion[parameter]=h[0]
+    return completion
     
+
+if __name__ == '__main__':
+    # First thing to do is to create an Application with name and version
+    app = Application( 'soma.fom', '1.0' )
+    # Register module to load and call functions before and/or after
+    # initialization
+    app.plugin_modules.append( 'soma.fom' )
+    # Application initialization (e.g. configuration file may be read here)
+    app.initialize()
+    print 'IN THE MAIN'
+    main( sys.argv[1], {'spm' : '/here/is/spm', 'shared' : '/volatile/bouin/build/trunk/share/brainvisa-share-4.4' })
+
