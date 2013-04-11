@@ -5,7 +5,9 @@
   
   "attribute_definitions" : {
     "acquisition" : { "default_value" : "default_acquisition" },
-    "analysis" : { "default_value" : "default_analysis" }
+    "analysis" : { "default_value" : "default_analysis" },
+    "sulci_recognition_session" :  { "default_value" : "default_session"}
+    
   },
   
   "shared_patterns" : {
@@ -14,398 +16,108 @@
   },
   
   "processes" : {  
-    "morphologistProcess" : {
+    "morphologist.SimplifiedMorphologist" : {
        "t1mri": [ [ "input:{acquisition}/<subject>", "images" ],
                   [ "input:{acquisition}/normalized_<normalization>_<subject>", "images" ] ],
+       #Commissure Coordinates
        "commissure_coordinates": [ [ "input:{acquisition}/<subject>", "Commissure coordinates" ] ],
+        ##SPM Normalization
        "anatomical_template": [ [ "spm:templates/T1", [ "NIFTI", "MINC", "SPM" ] ] ],
        "job_file": [ [ "output:{acquisition}/<subject>_job_anat_normalization", [ "Matlab", "Matlab bz2", "XML" ] ] ],
        "transformations_information": [ [ "output:{acquisition}/<subject>_sn", "Matlab" ] ],
        "normalized_t1mri": [ [ "output:{acquisition}/normalized_<normalization>_<subject>", [ "NIFTI", "SPM" ], { "normalization":"SPM" } ] ], 
        "talairach_MNI_transform": [ [ "output:{acquisition}/registration/RawT1-<subject>_<acquisition>_TO_Talairach-MNI", 
                                       "Transformation matrix" ] ],
+        ##Talairach Transformation
        "source_referential": [ [ "input:{acquisition}/registration/RawT1-<subject>_<acquisition>", "Referential" ] ],
        "normalized_referential": [ [ "shared:registration/Talairach-MNI_template-SPM", "Referential" ] ],
 
+       #Bias Correction 
+       "t1mri_nobias": [ ["output:{acquisition}/nobias_<subject>", "images" ] ], 
+       "hfiltered": [ ["output:{acquisition}/<analysis>/hfiltered_<subject>",  "images"] ], 
+       "white_ridges": [ ["output:{acquisition}/<analysis>/whiteridge_<subject>", "images"] ], 
+       "variance": [ ["output:{acquisition}/<analysis>/variance_<subject>","images"] ], 
+       "edges": [ ["output:{acquisition}/<analysis>/edges_<subject>","images"] ], 
+       "field": [ ["output:{acquisition}/<analysis>/biasfield_<subject>","images"] ], 
+       "meancurvature": [ ["output:{acquisition}/<analysis>/mean_curvature_<subject>", "images" ] ],
 
-       
-       
-#       "talairach_ACPC_transform": [
-#         [
-#           "<protocol>/<subject>/t1mri/<acquisition>/registration/RawT1-<subject>_<acquisition>_TO_Talairach-ACPC", 
-#           "images"
-#         ]
-#       ], 
-#      "labels_translation_map": [ [ "shared/{Label translation}", "label translations"   ]  ], 
-#      "right_roots": [ [  "<protocol>/<subject>/t1mri/<acquisition>/<analysis>/segmentation/<side>roots_<subject>", 
-#          "images", { "side": "R" } ] ], 
-#        "left_angle_priors": [ [ "{Sulci Angle Transformation Priors}", "Text Data Table" ] ], 
-#       "right_posterior_probabilities": [ [ "<protocol>/<subject>/t1mri/<acquisition>/<analysis>/folds/<graph_version>/<sulci_recognition_session>_auto/<side><subject>_<sulci_recognition_session>_auto_proba", "CSV file" , { "side" : "R" } ] ],
-#       "meancurvature": [ [ "<protocol>/<subject>/t1mri/<acquisition>/<analysis>/mean_curvature_<subject>", "images" ] ],
-#       "left_hemi_mesh": [
-#         [
-#           "<protocol>/<subject>/t1mri/<acquisition>/<analysis>/segmentation/mesh/<subject>_Lhemi", 
-#           "images"
-#         ]
-#       ], 
-#       "left_sulci_voronoi": [
-#         [
-#           [
-#             "<protocol>/<subject>/t1mri/<acquisition>/<analysis>/folds/<graph_version>/Lsulcivoronoi_<subject>", 
-#             "<protocol>/<subject>/t1mri/<acquisition>/<analysis>/folds/<graph_version>/Rsulcivoronoi_<subject>"
-#           ], 
-#           "images"
-#         ]
-#       ], 
-#       "left_local_model": [
-#         [
-#           null, 
-#           "images"
-#         ]
-#       ], 
-#       "left_local_referentials": [
-#         [
-#           null, 
-#           "images"
-#         ]
-#       ], 
-#       "right_global_model": [
-#         [
-#           null, 
-#           "images"
-#         ]
-#       ], 
-#       "split_template": [
-#         [
-#           null, 
-#           "images"
-#         ]
-#       ], 
-#       "right_middle_cortex": [
-#         [
-#           [
-#             "<protocol>/<subject>/t1mri/<acquisition>/<analysis>/segmentation/Lgw_interface_<subject>", 
-#             "<protocol>/<subject>/t1mri/<acquisition>/<analysis>/segmentation/Rgw_interface_<subject>"
-#           ], 
-#           "images"
-#         ]
-#       ], 
-#       "left_skeleton": [
-#         [
-#           "<protocol>/<subject>/t1mri/<acquisition>/<analysis>/segmentation/Lskeleton_<subject>", 
-#           "images"
-#         ]
-#       ], 
-#       "field": [
-#         [
-#           "<protocol>/<subject>/t1mri/<acquisition>/<analysis>/biasfield_<subject>", 
-#           "images"
-#         ]
-#       ], 
-#       "left_labels_priors": [
-#         [
-#           null, 
-#           "images"
-#         ]
-#       ], 
-#       "right_white_mesh": [
-#         [
-#           "<protocol>/<subject>/t1mri/<acquisition>/<analysis>/segmentation/mesh/<subject>_Rwhite", 
-#           "images"
-#         ]
-#       ], 
-#       "left_direction_priors": [
-#         [
-#           null, 
-#           "images"
-#         ]
-#       ], 
-#       "right_sulci_voronoi": [
-#         [
-#           [
-#             "<protocol>/<subject>/t1mri/<acquisition>/<analysis>/folds/<graph_version>/Lsulcivoronoi_<subject>", 
-#             "<protocol>/<subject>/t1mri/<acquisition>/<analysis>/folds/<graph_version>/Rsulcivoronoi_<subject>"
-#           ], 
-#           "images"
-#         ]
-#       ], 
-#       ], 
-#       "left_white_mesh": [
-#         [
-#           "<protocol>/<subject>/t1mri/<acquisition>/<analysis>/segmentation/mesh/<subject>_Lwhite", 
-#           "images"
-#         ]
-#       ], 
-#       "right_hemi_mesh": [
-#         [
-#           "<protocol>/<subject>/t1mri/<acquisition>/<analysis>/segmentation/mesh/<subject>_Rhemi", 
-#           "images"
-#         ]
-#       ], 
-#       "split_brain": [
-#         [
-#           "<protocol>/<subject>/t1mri/<acquisition>/<analysis>/segmentation/voronoi_<subject>", 
-#           "images"
-#         ]
-#       ], 
-#       "left_hemi_cortex": [
-#         [
-#           "<protocol>/<subject>/t1mri/<acquisition>/<analysis>/segmentation/Lcortex_<subject>", 
-#           "images"
-#         ]
-#       ], 
-#       "right_angle_priors": [
-#         [
-#           null, 
-#           "images"
-#         ]
-#       ], 
-#       "left_tal_to_global_transform": [
-#         [
-#           [
-#             "<protocol>/<subject>/t1mri/<acquisition>/<analysis>/folds/<graph_version>/<sulci_recognition_session>_auto/L<subject>_<sulci_recognition_session>_auto_Tal_TO_SPAM", 
-#             "<protocol>/<subject>/t1mri/<acquisition>/<analysis>/folds/<graph_version>/<sulci_recognition_session>_auto/R<subject>_<sulci_recognition_session>_auto_Tal_TO_SPAM"
-#           ], 
-#           "images"
-#         ]
-#       ], 
-#       "left_roots": [
-#         [
-#           "<protocol>/<subject>/t1mri/<acquisition>/<analysis>/segmentation/Lroots_<subject>", 
-#           "images"
-#         ]
-#       ], 
-#       "left_global_model": [
-#         [
-#           null, 
-#           "images"
-#         ]
-#       ], 
-#       "left_graph": [
-#         [
-#           "<protocol>/<subject>/t1mri/<acquisition>/<analysis>/folds/<graph_version>/L<subject>", 
-#           "images"
-#         ]
-#       ], 
-#       "brain_mask": [
-#         [
-#           "<protocol>/<subject>/t1mri/<acquisition>/<analysis>/segmentation/brain_<subject>", 
-#           "images"
-#         ]
-#       ], 
-#       "left_global_to_local_transforms": [
-#         [
-#           [
-#             "<protocol>/<subject>/t1mri/<acquisition>/<analysis>/folds/<graph_version>/<sulci_recognition_session>_auto/L<subject>_<sulci_recognition_session>_auto_global_TO_local", 
-#             "<protocol>/<subject>/t1mri/<acquisition>/<analysis>/folds/<graph_version>/<sulci_recognition_session>_auto/R<subject>_<sulci_recognition_session>_auto_global_TO_local"
-#           ], 
-#           "images"
-#         ]
-#       ], 
-#       "left_translation_priors": [
-#         [
-#           null, 
-#           "images"
-#         ]
-#       ], 
-#       "left_labelled_graph": [
-#         [
-#           [
-#             "<protocol>/<subject>/t1mri/<acquisition>/<analysis>/folds/<graph_version>/<sulci_recognition_session>_auto/L<subject>_<sulci_recognition_session>_auto", 
-#             "<protocol>/<subject>/t1mri/<acquisition>/<analysis>/folds/<graph_version>/<sulci_recognition_session>_auto/R<subject>_<sulci_recognition_session>_auto", 
-#             "<protocol>/<subject>/t1mri/<acquisition>/<analysis>/folds/<graph_version>/<sulci_recognition_session>_manual/L<subject>_<sulci_recognition_session>_manual", 
-#             "<protocol>/<subject>/t1mri/<acquisition>/<analysis>/folds/<graph_version>/<sulci_recognition_session>_manual/R<subject>_<sulci_recognition_session>_manual", 
-#             "<protocol>/<subject>/t1mri/<acquisition>/<analysis>/folds/<graph_version>/<sulci_recognition_session>_best/L<subject>_<sulci_recognition_session>_best", 
-#             "<protocol>/<subject>/t1mri/<acquisition>/<analysis>/folds/<graph_version>/<sulci_recognition_session>_best/R<subject>_<sulci_recognition_session>_best"
-#           ], 
-#           "images"
-#         ]
-#       ], 
-#       "right_local_model": [
-#         [
-#           null, 
-#           "images"
-#         ]
-#       ], 
-#       "right_tal_to_global_transform": [
-#         [
-#           [
-#             "<protocol>/<subject>/t1mri/<acquisition>/<analysis>/folds/<graph_version>/<sulci_recognition_session>_auto/L<subject>_<sulci_recognition_session>_auto_Tal_TO_SPAM", 
-#             "<protocol>/<subject>/t1mri/<acquisition>/<analysis>/folds/<graph_version>/<sulci_recognition_session>_auto/R<subject>_<sulci_recognition_session>_auto_Tal_TO_SPAM"
-#           ], 
-#           "images"
-#         ]
-#       ], 
-#       "right_t1_to_global_transform": [
-#         [
-#           [
-#             "<protocol>/<subject>/t1mri/<acquisition>/<analysis>/folds/<graph_version>/<sulci_recognition_session>_auto/L<subject>_<sulci_recognition_session>_auto_T1_TO_SPAM", 
-#             "<protocol>/<subject>/t1mri/<acquisition>/<analysis>/folds/<graph_version>/<sulci_recognition_session>_auto/R<subject>_<sulci_recognition_session>_auto_T1_TO_SPAM"
-#           ], 
-#           "images"
-#         ]
-#       ], 
-#       "right_grey_white": [
-#         [
-#           "<protocol>/<subject>/t1mri/<acquisition>/<analysis>/segmentation/Rgrey_white_<subject>", 
-#           "images"
-#         ]
-#       ], 
-#       "hfiltered": [
-#         [
-#           "<protocol>/<subject>/t1mri/<acquisition>/<analysis>/hfiltered_<subject>", 
-#           "images"
-#         ]
-#       ], 
-#       "right_labelled_graph": [
-#         [
-#           [
-#             "<protocol>/<subject>/t1mri/<acquisition>/<analysis>/folds/<graph_version>/<sulci_recognition_session>_auto/L<subject>_<sulci_recognition_session>_auto", 
-#             "<protocol>/<subject>/t1mri/<acquisition>/<analysis>/folds/<graph_version>/<sulci_recognition_session>_auto/R<subject>_<sulci_recognition_session>_auto", 
-#             "<protocol>/<subject>/t1mri/<acquisition>/<analysis>/folds/<graph_version>/<sulci_recognition_session>_manual/L<subject>_<sulci_recognition_session>_manual", 
-#             "<protocol>/<subject>/t1mri/<acquisition>/<analysis>/folds/<graph_version>/<sulci_recognition_session>_manual/R<subject>_<sulci_recognition_session>_manual", 
-#             "<protocol>/<subject>/t1mri/<acquisition>/<analysis>/folds/<graph_version>/<sulci_recognition_session>_best/L<subject>_<sulci_recognition_session>_best", 
-#             "<protocol>/<subject>/t1mri/<acquisition>/<analysis>/folds/<graph_version>/<sulci_recognition_session>_best/R<subject>_<sulci_recognition_session>_best"
-#           ], 
-#           "images"
-#         ]
-#       ], 
-#       "edges": [
-#         [
-#           "<protocol>/<subject>/t1mri/<acquisition>/<analysis>/edges_<subject>", 
-#           "images"
-#         ]
-#       ], 
-#       "left_grey_white": [
-#         [
-#           "<protocol>/<subject>/t1mri/<acquisition>/<analysis>/segmentation/Lgrey_white_<subject>", 
-#           "images"
-#         ]
-#       ], 
-#       "right_direction_priors": [
-#         [
-#           null, 
-#           "images"
-#         ]
-#       ], 
-#       "right_graph": [
-#         [
-#           "<protocol>/<subject>/t1mri/<acquisition>/<analysis>/folds/<graph_version>/R<subject>", 
-#           "images"
-#         ]
-#       ], 
-#       "right_translation_priors": [
-#         [
-#           null, 
-#           "images"
-#         ]
-#       ], 
-#       "left_middle_cortex": [
-#         [
-#           [
-#             "<protocol>/<subject>/t1mri/<acquisition>/<analysis>/segmentation/Lgw_interface_<subject>", 
-#             "<protocol>/<subject>/t1mri/<acquisition>/<analysis>/segmentation/Rgw_interface_<subject>"
-#           ], 
-#           "images"
-#         ]
-#       ], 
-#       "right_labels_priors": [
-#         [
-#           null, 
-#           "images"
-#         ]
-#       ], 
-#       "white_ridges": [
-#         [
-#           "<protocol>/<subject>/t1mri/<acquisition>/<analysis>/whiteridge_<subject>", 
-#           "images"
-#         ]
-#       ], 
-#       "right_hemi_cortex": [
-#         [
-#           "<protocol>/<subject>/t1mri/<acquisition>/<analysis>/segmentation/Rcortex_<subject>", 
-#           "images"
-#         ]
-#       ], 
-#       "left_posterior_probabilities": [
-#         [
-#           [
-#             "<protocol>/<subject>/t1mri/<acquisition>/<analysis>/folds/<graph_version>/<sulci_recognition_session>_auto/L<subject>_<sulci_recognition_session>_auto_proba", 
-#             "<protocol>/<subject>/t1mri/<acquisition>/<analysis>/folds/<graph_version>/<sulci_recognition_session>_auto/R<subject>_<sulci_recognition_session>_auto_proba"
-#           ], 
-#           "images"
-#         ]
-#       ], 
-#       "t1mri_nobias": [
-#         [
-#           "<protocol>/<subject>/t1mri/<acquisition>/<analysis>/nobias_<subject>", 
-#           "images"
-#         ]
-#       ], 
-#       "right_local_referentials": [
-#         [
-#           null, 
-#           "images"
-#         ]
-#       ], 
-#       "right_skeleton": [
-#         [
-#           "<protocol>/<subject>/t1mri/<acquisition>/<analysis>/segmentation/Rskeleton_<subject>", 
-#           "images"
-#         ]
-#       ], 
-#       "left_t1_to_global_transform": [
-#         [
-#           [
-#             "<protocol>/<subject>/t1mri/<acquisition>/<analysis>/folds/<graph_version>/<sulci_recognition_session>_auto/L<subject>_<sulci_recognition_session>_auto_T1_TO_SPAM", 
-#             "<protocol>/<subject>/t1mri/<acquisition>/<analysis>/folds/<graph_version>/<sulci_recognition_session>_auto/R<subject>_<sulci_recognition_session>_auto_T1_TO_SPAM"
-#           ], 
-#           "images"
-#         ]
-#       ], 
-#       "right_global_to_local_transforms": [
-#         [
-#           [
-#             "<protocol>/<subject>/t1mri/<acquisition>/<analysis>/folds/<graph_version>/<sulci_recognition_session>_auto/L<subject>_<sulci_recognition_session>_auto_global_TO_local", 
-#             "<protocol>/<subject>/t1mri/<acquisition>/<analysis>/folds/<graph_version>/<sulci_recognition_session>_auto/R<subject>_<sulci_recognition_session>_auto_global_TO_local"
-#           ], 
-#           "images"
-#         ]
-#       ], 
-#       "variance": [
-#         [
-#           "<protocol>/<subject>/t1mri/<acquisition>/<analysis>/variance_<subject>", 
-#           "images"
-#         ]
-#       ], 
-#       "histo_analysis": [
-#         [
-#           "<protocol>/<subject>/t1mri/<acquisition>/<analysis>/nobias_<subject>", 
-#           "images"
-#         ]
-#       ]
-#     }
-# 
+       #Histogram Analysis
+       "histo_analysis": [ ["output:{acquisition}/<analysis>/nobias_<subject>", "Histo Analysis"   ] ] ,
 
+       #Brain Mask Segmentation
+       "brain_mask": [ ["output:{acquisition}/<analysis>/segmentation/brain_<subject>","images"] ],
 
+       #Split Brain Mask 
+       "split_brain": [ ["output:{acquisition}/<analysis>/segmentation/voronoi_<subject>","images"] ],  
+#       "split_template": [ ["share:hemitemplate/closedvoronoi","images"] ], 
 
+       #Talairach Transformation
+       "talairach_ACPC_transform": [ [ "output:{acquisition}/registration/RawT1-<subject>_<acquisition>_TO_Talairach-ACPC","Transformation matrix"] ], 
 
+       #Grey/White Classification
+       "left_grey_white": [ ["output:{acquisition}/<analysis>/segmentation/Lgrey_white_<subject>","images"] ], 
+       "right_grey_white": [ ["output:{acquisition}/<analysis>/segmentation/Rgrey_white_<subject>","images"] ],
 
+       #Grey/White Surface
+       "left_hemi_cortex": [ ["output:{acquisition}/<analysis>/segmentation/Lcortex_<subject>","images"] ], 
+       "left_white_mesh": [ ["output:{acquisition}/<analysis>/segmentation/mesh/<subject>_Lwhite","MNI OBJ mesh"] ], 
+       "right_hemi_cortex": [ ["output:{acquisition}/<analysis>/segmentation/Rcortex_<subject>","images"] ], 
+       "right_white_mesh": [ ["output:{acquisition}/<analysis>/segmentation/mesh/<subject>_Rwhite","MNI OBJ mesh"] ], 
 
+       #Spherical Hemispheres Surface
+       "left_hemi_mesh": [ ["output:{acquisition}/<analysis>/segmentation/mesh/<subject>_Lhemi","MNI OBJ mesh"] ], 
+       "right_hemi_mesh": [ ["output:{acquisition}/<analysis>/segmentation/mesh/<subject>_Rhemi","MNI OBJ mesh"] ], 
 
+       #Cortical Folds Graph
+       "left_graph": [ ["output:{acquisition}/<analysis>/folds/<graph_version>/L<subject>","Graph and data", {'labelled':'No', 'graph_version':'3.1'} ] ], 
+       "left_skeleton": [ ["output:{acquisition}/<analysis>/segmentation/Lskeleton_<subject>","images"] ], 
+       "left_roots": [ ["output:{acquisition}/<analysis>/segmentation/Lroots_<subject>","images"] ], 
+       "left_sulci_voronoi": [ ["output:{acquisition}/folds/<graph_version>/Lsulcivoronoi_<subject>","images",{'side':'left','graph_version':'3.1'}],["output:{acquisition}/<analysis>/folds/<graph_version>/Lsulcivoronoi_<subject>", "images",{'side':'left','graph_version':'3.1'} ] ],
+       "left_middle_cortex": [ [ "output:{acquisition}/<analysis>/segmentation/Lgw_interface_<subject>","images",{'side':'left'}] ], 
+       "right_graph": [ ["output:{acquisition}/<analysis>/folds/<graph_version>/R<subject>","Graph and data", {'labelled':'No', 'graph_version':'3.1'}] ], 
+       "right_skeleton": [ ["output:{acquisition}/<analysis>/segmentation/Rskeleton_<subject>","images"] ], 
+       "right_roots": [ [ "output:{acquisition}/<analysis>/segmentation/<side>roots_<subject>", "images", { "side": "right" } ] ], 
+       "right_sulci_voronoi": [ ["output:{acquisition}/folds/<graph_version>/Rsulcivoronoi_<subject>","images",{'side':'right','graph_version':'3.1'}],["output:{acquisition}/<analysis>/folds/<graph_version>/Rsulcivoronoi_<subject>", "images",{'side':'right','graph_version':'3.1'} ] ],
+       "right_middle_cortex": [["output:{acquisition}/<analysis>/segmentation/Rgw_interface_<subject>","images",{ "side": "R" }] ], 
 
+       #Sulci Recognition
+#       "labels_translation_map": [ ["shared/{Label translation}", "label translations"] ], 
+        ##Left
+       "left_labelled_graph": [ ["output:{acquisition}/<analysis>/folds/<graph_version>/<sulci_recognition_session>_auto/L<subject>_<sulci_recognition_session>_auto","Graph and data",{'side':'left','graph_version':'3.1'}],["output:{acquisition}/<analysis>/folds/<graph_version>/<sulci_recognition_session>_manual/L<subject>_<sulci_recognition_session>_manual","Graph and data",{'side':'left','graph_version':'3.1'}],["output:{acquisition}/<analysis>/folds/<graph_version>/<sulci_recognition_session>_best/L<subject>_<sulci_recognition_session>_best","Graph and data",{'side':'left','graph_version':'3.1'}] ], 
 
+       "left_posterior_probabilities": [ ["output:{acquisition}/<analysis>/folds/<graph_version>/<sulci_recognition_session>_auto/L<subject>_<sulci_recognition_session>_auto_proba","CSV file",{ "side" : "left",'graph_version':'3.1'}  ] ], 
+#       "left_labels_priors": [ [null,"images"] ], 
 
+            ###Global
+#       "left_global_model": [ [null,"images"] ], 
+       "left_tal_to_global_transform": [ ["output:{acquisition}/<analysis>/folds/<graph_version>/<sulci_recognition_session>_auto/L<subject>_<sulci_recognition_session>_auto_Tal_TO_SPAM","Transformation matrix",{'side':'left','graph_version':'3.1'}] ], 
+       "left_t1_to_global_transform": [ [ "output:{acquisition}/<analysis>/folds/<graph_version>/<sulci_recognition_session>_auto/L<subject>_<sulci_recognition_session>_auto_T1_TO_SPAM","Transformation matrix",{'side':'left','graph_version':'3.1'}] ],
 
+            ###Local
+#       "left_local_model": [ [null,"images"] ], 
+#       "left_local_referentials": [ [null,"images"] ], 
+#       "left_direction_priors": [ [null,"images"] ], 
+#       "left_angle_priors": [ [ "{Sulci Angle Transformation Priors}", "Text Data Table" ] ], 
+#       "left_translation_priors": [ [null,"images"] ], 
+       "left_global_to_local_transforms": [ ["output:{acquisition}/<analysis>/folds/<graph_version>/<sulci_recognition_session>_auto/L<subject>_<sulci_recognition_session>_auto_global_TO_local","Directory",{'side':'left','graph_version':'3.1'}] ], 
 
+        ##Right
+       "right_labelled_graph": [ ["output:{acquisition}/<analysis>/folds/<graph_version>/<sulci_recognition_session>_auto/R<subject>_<sulci_recognition_session>_auto","Graph and data",{'side':'right','graph_version':'3.1'}],["output:{acquisition}/<analysis>/folds/<graph_version>/<sulci_recognition_session>_manual/R<subject>_<sulci_recognition_session>_manual","Graph and data",{'side':'right','graph_version':'3.1'}],["output:{acquisition}/<analysis>/folds/<graph_version>/<sulci_recognition_session>_best/R<subject>_<sulci_recognition_session>_best","Graph and data",{'side':'right','graph_version':'3.1'}] ], 
+      "right_posterior_probabilities": [ [ "<protocol>/<subject>/t1mri/<acquisition>/<analysis>/folds/<graph_version>/<sulci_recognition_session>_auto/<side><subject>_<sulci_recognition_session>_auto_proba", "CSV file" , { "side" : "right",'graph_version':'3.1'} ] ],
+#       "right_labels_priors": [ [null, "images"] ], 
+    
+            ###Global
+#       "right_global_model": [ [ null,"images"] ], 
+       "right_tal_to_global_transform": [ ["output:{acquisition}/<analysis>/folds/<graph_version>/<sulci_recognition_session>_auto/R<subject>_<sulci_recognition_session>_auto_Tal_TO_SPAM","Transformation matrix",{'side':'right','graph_version':'3.1'} ] ], 
+       "right_t1_to_global_transform": [ [ "output:{acquisition}/<analysis>/folds/<graph_version>/<sulci_recognition_session>_auto/R<subject>_<sulci_recognition_session>_auto_T1_TO_SPAM","Transformation matrix",{'side':'right','graph_version':'3.1'} ] ], 
 
-
-
-
-
-
-
-
+            ###Local
+#       "right_local_model": [ [null,"images"] ], 
+#       "right_local_referentials": [ [null,"images"] ], 
+#       "right_direction_priors": [ [null,"images"] ], 
+#       "right_angle_priors": [ [null,"images"] ], 
+#       "right_translation_priors": [ [null,"images"] ], 
+       "right_global_to_local_transforms": [ [ "output:{acquisition}/<analysis>/folds/<graph_version>/<sulci_recognition_session>_auto/R<subject>_<sulci_recognition_session>_auto_global_TO_local","Directory",{'side':'right','graph_version':'3.1'} ] ], 
 
 
     }

@@ -15,12 +15,18 @@
     "Matlab bz2" : "mat.bz2",
     "XML" : "xml",
     "Transformation matrix" : "trm",
-    "Referential": "referential"
+    "Referential": "referential",
+    "Histo Analysis" : "han",
+    "MNI OBJ mesh" : "gii",
+    "Graph and data" : "arg",
+    "Referential": "referential",
+    "Directory" : ""
+
   },
   
   
   "format_lists" : {
-    "images" : [ "NIFTI", "MINC", "GIS", "SPM" ],
+    "images" : [ "NIFTI", "MINC", "GIS", "SPM"],
     "label translations" : [ "Label Translation", "DEF Label Translation" ]
   },
 
