@@ -8,7 +8,7 @@
     "SPM" : "img",
     "Label Translation" : "trl",
     "DEF Label Translation" : "def",
-    "Text Data Table": ".dat",
+    "Text Data Table": "dat",
     "CSV file": "CSV",
     "Commissure coordinates" : "APC",
     "Matlab" : "mat",
