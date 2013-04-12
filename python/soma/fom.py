@@ -763,6 +763,5 @@ if __name__ == '__main__':
     app.plugin_modules.append( 'soma.fom' )
     # Application initialization (e.g. configuration file may be read here)
     app.initialize()
-    print 'IN THE MAIN'
-    main( sys.argv[1], {'spm' : '/here/is/spm', 'shared' : '/volatile/bouin/build/trunk/share/brainvisa-share-4.4' })
+    #process_completion( sys.argv[1], {'spm' : '/here/is/spm', 'shared' : '/volatile/bouin/build/trunk/share/brainvisa-share-4.4' })
 
