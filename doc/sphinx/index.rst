@@ -26,29 +26,6 @@ SubModule: ``debug``
   :members:
 
 
-SubModule: ``decorators``
--------------------------
-
-.. automodule:: soma.decorators
-  :members:
-  
-  .. autofunction:: soma.decorators.synchronized
-
-
-SubModule: ``enum``
--------------------
-
-.. automodule:: soma.enum
-  :members:
-
-
-SubModule: ``env``
-------------------
-
-.. automodule:: soma.env
-  :members:
-
-
 SubModule: ``functiontools``
 ----------------------------
 
@@ -67,13 +44,6 @@ SubModule: ``html``
 -------------------
 
 .. automodule:: soma.html
-  :members:
-
-
-SubModule: ``httpupload``
--------------------------
-
-.. automodule:: soma.httpupload
   :members:
 
 
@@ -105,24 +75,10 @@ SubModule: ``path``
   :members:
 
 
-SubModule: ``plugins``
-----------------------
-
-.. automodule:: soma.plugins
-  :members:
-
-
 SubModule: ``pyro``
 -------------------
 
 .. automodule:: soma.pyro
-  :members:
-
-
-SubModule: ``signature``
-------------------------
-
-.. automodule:: soma.signature
   :members:
 
 
@@ -154,13 +110,6 @@ SubModule: ``stringtools``
   :members:
 
 
-SubModule: ``tggui``
---------------------
-
-.. automodule:: soma.tggui
-  :members:
-
-
 SubModule: ``thread_calls``
 ---------------------------
 
@@ -182,13 +131,6 @@ SubModule: ``undefined``
   :members:
 
 
-SubModule: ``userinfoprovider``
--------------------------------
-
-.. automodule:: soma.userinfoprovider
-  :members:
-
-
 SubModule: ``uuid``
 -------------------
 
@@ -203,24 +145,10 @@ SubModule: ``zipfile``
   :members:
 
 
-SubModule: ``wip.application``
+SubModule: ``application``
 ------------------------------
 
-.. automodule:: soma.wip.application
-  :members:
-
-
-SubModule: ``wip.configuration``
---------------------------------
-
-.. automodule:: soma.wip.configuration
-  :members:
-
-
-SubModule: ``wip.singleton``
-----------------------------
-
-.. automodule:: soma.wip.singleton
+.. automodule:: soma.application
   :members:
 
 
