@@ -14,6 +14,8 @@ import xlrd
 import xlwt
 import re
 from filter_window import MyDialog
+from snap_options_windows import Dialog_snap
+
 
 class MyFrame(wx.Frame):
     def __init__(self, parent, id, title):
@@ -34,13 +36,19 @@ class MyFrame(wx.Frame):
         self.data=read_csv.Data()   
         self.keycode_note=None
         self.keycode_comment=None
+        self.zoom_ratio=1
         
         #Windows       
         wx.Frame.__init__(self, parent, id, title, (-1, -1), wx.Size(800, 600+self.size_widget))
-        self.panel = wx.Panel(self,wx.ID_ANY)
-        #self.panel.Bind(wx.EVT_KEY_DOWN, self.on_key_down)
-        #self.panel.SetFocus()
-  
+               
+        self.scroll = wx.ScrolledWindow(self)
+        self.panel = wx.Panel(self.scroll,wx.ID_ANY)
+        #self.panel = wx.Panel(self,-1)
+        
+        #self.scroll = wx.ScrollBar(self, -1, (100, 240), (200, 20), wx.SB_HORIZONTAL)
+        #self.scroll.SetScrollbar(1, 1, 12, 1, True)
+
+              
         # Setting up the menu.
         filemenu= wx.Menu()
         menuOpen = filemenu.Append(wx.ID_FILE, "&Open"," Open a file to edit")
@@ -49,6 +57,9 @@ class MyFrame(wx.Frame):
         # Filter
         filtermenu=wx.Menu()
         filter_open=filtermenu.Append(wx.ID_ANY, 'Launch filter')
+        
+        optionsmenu=wx.Menu()
+        snapshots_options=optionsmenu.Append(wx.ID_ANY, 'Define your snapshots')
               
         self.statusbar = self.CreateStatusBar()
 
@@ -56,6 +67,7 @@ class MyFrame(wx.Frame):
         menuBar = wx.MenuBar()
         menuBar.Append(filemenu,"&File") # Adding the "filemenu" to the MenuBar
         menuBar.Append(filtermenu,"&Filter")
+        menuBar.Append(optionsmenu,"&Options")
         self.SetMenuBar(menuBar)  # Adding the MenuBar to the Frame content.
         
         # Main Box 
@@ -95,7 +107,7 @@ class MyFrame(wx.Frame):
 
         self.comment=wx.TextCtrl(self.panel, size=(300, 50),style=wx.TE_MULTILINE)
         self.box2.Add(self.comment)    
-        self.display_xls=wx.Button(self.panel,-1,'Display_wls',(50,50)) 
+        self.display_xls=wx.Button(self.panel,-1,'Display_xls',(50,50)) 
         self.box2.Add(self.display_xls)
         self.xls_comment=wx.TextCtrl(self.panel, size=(300, 50),style=wx.TE_READONLY | wx.TE_MULTILINE )
         self.box2.Add(self.xls_comment)
@@ -120,14 +132,14 @@ class MyFrame(wx.Frame):
         #, wx.ALIGN_CENTER| wx.ALL | wx.ADJUST_MINSIZE)     
   
         #Display GUI
-        self.panel.SetSizerAndFit(self.box)
-        self.Centre()
+        self.panel.SetSizerAndFit(self.box)   
         self.Show()
         
         # Events
         self.Bind(wx.EVT_MENU, self.on_open, menuOpen)
         self.Bind(wx.EVT_MENU, self.on_open_xls, menuOpenXls)
         self.Bind(wx.EVT_MENU, self.on_open_filter, filter_open)
+        self.Bind(wx.EVT_MENU, self.on_open_snapshots_options,snapshots_options)
         self.Bind(wx.EVT_BUTTON,self.next_pic_event, button_next)
         self.Bind(wx.EVT_BUTTON,self.prev_pic_event, button_prev)
         self.Bind(wx.EVT_CHOICE,self.sel_note_event,self.choice_note)
@@ -135,13 +147,15 @@ class MyFrame(wx.Frame):
         self.Bind(wx.EVT_TEXT,self.sel_com,self.comment)
         self.Bind(wx.EVT_BUTTON,self.add_xls_comment,self.display_xls)
         self.Bind(wx.EVT_CLOSE,self.quit_windows)
-        self.Bind(wx.EVT_SIZE, self.on_size_changed)
+        #self.Bind(wx.EVT_SIZE, self.on_size_changed)
         #self.Bind(wx.EVT_KEY_DOWN, self.on_key_down)
         #self.Bind(wx.EVT_KEY_UP, self.on_key_down)
         #self.Bind(wx.EVT_CHAR, self.on_key_down)
+        self.panel.Bind(wx.EVT_MOUSEWHEEL,self.on_mouse_wheel)   
+   
         self.panel.SetFocus()
-    
-    #To resize image
+        
+    ##To resize image
     def size_image(self):      
         self.picture.SetFocus()
         # Get current picture    
@@ -151,6 +165,7 @@ class MyFrame(wx.Frame):
         (frameW,frameH)=self.GetSize()
         frameW=frameW
         frameH=frameH-self.size_widget
+        print frameW,frameH
    
         #Picture size
         W = image.GetWidth()
@@ -163,19 +178,55 @@ class MyFrame(wx.Frame):
             ratio=ratioH
         else:
             ratio=ratioW 
-                            
+        
+        self.zoom_ratio=ratio                    
         #Rescale picture  
         image = image.Scale(image.GetWidth()*ratio, image.GetHeight()*ratio, wx.IMAGE_QUALITY_HIGH)
         result = wx.BitmapFromImage(image)
         self.picture.SetBitmap(result)
         self.Refresh()
         self.Show()
- 
-#KEYBOARD EVENT         
-    #def on_key_down(self,e):
-        #print 'hereeee'
-        #keycode=e.GetKeyCode()
-        #print keycode
+        
+        
+    def zoom_image(self):
+        image=wx.Image(os.path.join(self.dirname,self.images[self.index]))
+        #Rescale picture  
+        width_scale=image.GetWidth()*self.zoom_ratio
+        height_scale=image.GetHeight()*self.zoom_ratio
+        #print width_scale,height_scale
+     
+        if (30<width_scale<2500) and (30<height_scale<2500):           
+            image = image.Scale(width_scale,height_scale, wx.IMAGE_QUALITY_HIGH)
+            print image.GetWidth(),image.GetHeight()
+            (frameW,frameH)=self.GetSize()
+            frameH=frameH-self.size_widget
+            if frameW<image.GetWidth():
+                self.frmPanelWid, self.frmPanelHgt = self.panel.GetSize()
+                self.scroll.SetScrollbars(5,5,image.GetWidth(),image.GetHeight())
+            if frameH<image.GetHeight():
+                self.frmPanelWid, self.frmPanelHgt = self.panel.GetSize()
+                self.scroll.SetScrollbars(5,5,image.GetWidth(),image.GetHeight())      
+            result = wx.BitmapFromImage(image)
+            self.picture.SetBitmap(result)
+            self.Refresh()
+            self.Show()        
+            print 'end'                          
+        else:
+            print 'NO MORE ZOOM/DEZOOM'   
+            image = image.Scale(width_scale,height_scale, wx.IMAGE_QUALITY_HIGH)     
+       
+    def on_mouse_wheel(self,e):
+        if self.images is not None:       
+            rot=e.GetWheelRotation()
+            if rot>0:
+                self.zoom_ratio=self.zoom_ratio+0.05
+                self.zoom_image()
+            else:
+                self.zoom_ratio=self.zoom_ratio-0.05
+                self.zoom_image()
+
+
+#KEYBOARD EVENTS           
         #if keycode==wx.WXK_LEFT:
             #self.prev_pic_event(e)
         #elif keycode==wx.WXK_RIGHT:
@@ -204,6 +255,7 @@ class MyFrame(wx.Frame):
             #print 'else'       
             #self.keycode_comment=unichr(keycode)
             #self.comment.AppendText(self.keycode_comment)
+  
        
     # Function if windows change size    
     def on_size_changed(self, e) :  
@@ -318,16 +370,22 @@ class MyFrame(wx.Frame):
         
         
     def on_open_filter(self,e):
-        dia = MyDialog(self, -1, 'buttons',self.dirname)
+        self.data.save(self.data_file_name,self.images)  
+        dia = MyDialog(self, -1, 'Filter',self.dirname)
         if dia.ShowModal() == wx.ID_OK:   
             #Get value of filter
-            dia.filter_process()           
+            #dia.filter_process()    
+            dia.write_results()       
         else:
             print 'NO FILTER SELECTION'   
-
         dia.Destroy()
              
-       
+             
+    def on_open_snapshots_options(self,e):
+        dia = Dialog_snap(self, -1, 'Options snap')   
+        if dia.ShowModal() == wx.ID_OK:  
+            pass      
+        dia.Destroy()     
             
     def check_data_xls(self):
         if self.data_file_xls is None:
@@ -402,8 +460,7 @@ class MyFrame(wx.Frame):
             self.box4.Show(self.brain_text,False,True)
             self.box2.Layout()
             self.box4.Layout()
-        
-   
+           
     #Function if quit windows  
     def quit_windows(self,e):
         print 'SAVE/QUIT'       
@@ -415,6 +472,7 @@ class MyApp(wx.App):
     def OnInit(self):
         frame = MyFrame(None, -1, 'Note.py')
         frame.Show(True)
+        frame.Centre()
         return True
 
 app = MyApp(0)
