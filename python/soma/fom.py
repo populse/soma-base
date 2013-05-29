@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
 
-import sys, os, stat, posix, time, re, pprint, sqlite3
+import sys, os, stat, posix, time, re, pprint, sqlite3, bz2, json
 try:
   import yaml as json_reader
 except ImportError:
@@ -10,7 +10,6 @@ except ImportError:
 try:
   from traits.api import ListStr
 except ImportError:
-   print 'importERROR'   
    from enthought.traits.api import ListStr
 
 from soma.path import split_path
@@ -18,8 +17,12 @@ from soma.application import Application
 from soma.config import short_version
 
 class DirectoryAsDict( object ):
-  def __init__( self, directory ):
+  def __init__( self, directory, cache=None ):
     self.directory = directory
+    if cache is None:
+      self.cache = DirectoriesCache()
+    else:
+      self.cache = cache
 
 
   def __repr__( self ):
@@ -27,18 +30,28 @@ class DirectoryAsDict( object ):
   
   
   def iteritems( self ):
-    try:
-      listdir = os.listdir( self.directory )
-    except OSError:
-      yield '', [ None, None ]
-      return
-    for name in listdir:
-      full_path = os.path.join( self.directory, name )
-      st = os.lstat( full_path )
-      if stat.S_ISDIR( st.st_mode ):
-        yield ( name, [ tuple( st ), DirectoryAsDict( full_path ) ] )
-      else:
-        yield ( name, [ tuple( st ), None ] )
+    st_content = self.cache.get_directory( self.directory )
+    if st_content is not None:
+      st, content = st_content
+      for i in content.iteritems():
+        yield i
+    else:
+      try:
+        listdir = os.listdir( self.directory )
+      except OSError:
+        yield '', [ None, None ]
+        return
+      for name in listdir:
+        full_path = os.path.join( self.directory, name )
+        st_content = self.cache.get_directory( full_path )
+        if st_content is not None:
+          yield st_content
+        else:
+          st = os.lstat( full_path )
+          if stat.S_ISDIR( st.st_mode ):
+            yield ( name, [ tuple( st ), DirectoryAsDict( full_path ) ] )
+          else:
+            yield ( name, [ tuple( st ), None ] )
 
         
   @staticmethod
@@ -57,7 +70,7 @@ class DirectoryAsDict( object ):
     if result is not None:
       for name in listdir:
         if debug and count % 100 == 0:
-          print >> debug, time.asctime(), 'files=%d, directories=%d, size=%d' % ( files+links, directories, files_size )
+          debug.info( '%s files=%d, directories=%d, size=%d' % ( time.asctime(), files+links, directories, files_size ) )
         path_size += len( name )
         count += 1
         full_path = os.path.join( directory, name )
@@ -92,14 +105,14 @@ class DirectoryAsDict( object ):
 
   @staticmethod
   def get_statistics( dirdict, debug=None ):
-    return PathToAttributes._get_statistics( dirdict, debug, 0, 0, 0, 0, 0, 0, 0 )[ :-1 ]
+    return DirectoryAsDict._get_statistics( dirdict, debug, 0, 0, 0, 0, 0, 0, 0 )[ :-1 ]
     
   
   @staticmethod
   def _get_statistics( dirdict, debug, directories, files, links, files_size, path_size, errors, count ):
     
     if debug and count % 100 == 0:
-      print >> debug, time.asctime(), 'files=%d, directories=%d, size=%d' % ( files+links, directories, files_size )
+      debug.info( '%s files=%d, directories=%d, size=%d' % ( time.asctime(), files+links, directories, files_size ) )
     count += 1
     for name, content in dirdict.iteritems():
       path_size += len( name )
@@ -114,14 +127,49 @@ class DirectoryAsDict( object ):
             directories += 1
             errors += 1
           else:
-            directories, files, links, files_size, path_size, errors, count = PathToAttributes._get_statistics( content, debug, directories + 1, files, links, files_size, path_size, errors, count )
+            directories, files, links, files_size, path_size, errors, count = DirectoryAsDict._get_statistics( content, debug, directories + 1, files, links, files_size, path_size, errors, count )
         else:
           links += 1
       else:
         errors += 1
     return ( directories, files, links, files_size, path_size, errors, count )
 
-        
+
+class DirectoriesCache( object ):
+  def __init__( self ):
+    self.directories = {}
+  
+  
+  def add_directory( self, directory, debug=None ):
+    st = tuple( os.stat( directory ) )
+    content = DirectoryAsDict.get_directory( directory, debug=debug )
+    self.directories[ directory ] = [ st, content ]
+  
+  
+  def remove_directory( self, directory ):
+    del self.directories[ directory ]
+  
+  
+  def has_directory( self, directory ):
+    return directory in self.directories
+  
+  
+  def get_directory( self, directory ):
+    return self.directories.get( directory )
+
+  
+  def save( self, path ):
+    f = bz2.BZ2File( path, 'w' )
+    json.dump( self.directories, f )
+  
+  @classmethod
+  def load( cls, path ):
+    result = cls()
+    f = bz2.BZ2File( path, 'r' )
+    result.directories = json.load( f )
+    return result
+
+
 class FileOrganizationModelManager( object ):
   '''
   Manage the discovery and instanciation of available FileOrganizationModel (FOM). A FOM can be represented as a JSON file (or a series of JSON files in a directory). This class allows to identify these files contained in a predefined set of directories (see find_fom method) and to instanciate a FileOrganizationModel for each identified file (see get_fom method).
@@ -479,11 +527,11 @@ class PathToAttributes( object ):
           parent = parent.setdefault( ''.join( regex ) + '$', [ {}, {} ] )[ 1 ]
 
           
-  def parse_directory( self, dirdict, single_match=False, all_unknown=False ):
-    return self._parse_directory( dirdict, [], self.hierarchical_patterns, {}, single_match, all_unknown )
+  def parse_directory( self, dirdict, single_match=False, all_unknown=False, log=None ):
+    return self._parse_directory( dirdict, [], self.hierarchical_patterns, {}, single_match, all_unknown, log )
   
   
-  def _parse_directory( self, dirdict, path, hierarchical_patterns, pattern_attributes, single_match, all_unknown ):
+  def _parse_directory( self, dirdict, path, hierarchical_patterns, pattern_attributes, single_match, all_unknown, log ):
     for name, content in dirdict.iteritems():
       st, content = content
       
@@ -497,13 +545,13 @@ class PathToAttributes( object ):
       
       matched_directories = []
       matched = False
-      #print '!parse!', name, pattern_attributes
+      if log: log.info( name + ' ' +  repr( pattern_attributes ) )
       for pattern, rules_subpattern in hierarchical_patterns.iteritems():
         ext_rules, subpattern = rules_subpattern
         pattern = pattern % pattern_attributes
         match = re.match( pattern, name_no_ext )
         if match:
-          #print '!parse! match', pattern
+          if log: log.info( 'match ' + pattern )
           matched = True
           new_attributes = match.groupdict()
           new_attributes.update( pattern_attributes )
@@ -529,7 +577,7 @@ class PathToAttributes( object ):
       else:
         for full_path, subpattern, new_attributes in matched_directories:
           if content:
-            for i in self._parse_directory( content, full_path, subpattern, new_attributes, single_match, all_unknown ):
+            for i in self._parse_directory( content, full_path, subpattern, new_attributes, single_match, all_unknown, log ):
               yield i
 
 
@@ -543,7 +591,7 @@ class PathToAttributes( object ):
 
   
 class AttributesToPaths( object ):
-  def __init__( self, foms, selection=None, directories={} ):
+  def __init__( self, foms, selection=None, directories={}, debug=None ):
     self.foms = foms
     self.selection = selection
     self.directories = directories
@@ -553,7 +601,7 @@ class AttributesToPaths( object ):
     self.all_attributes = tuple( i for i in self.foms.attribute_definitions if i != 'fom_formats' )
     fom_format_index = self.all_attributes.index( 'fom_format' )
     sql = 'CREATE TABLE rules ( %s, fom_first, fom_rule )' % ','.join( repr( i ) for i in self.all_attributes )
-    #print '!', sql
+    if debug: debug.debug( sql )
     self._db.execute( sql )
     sql_insert = 'INSERT INTO rules VALUES ( %s )' % ','.join( '?' for i in xrange( len( self.all_attributes ) + 2 ) )
     self.rules = []
@@ -575,13 +623,10 @@ class AttributesToPaths( object ):
           values[ -2 ] = first
           first = False
           values[ fom_format_index ] = format
-          #print '!', sql_insert, values
+          if debug: debug.debug( sql_insert + ' ' + repr( values ) )
           self._db.execute( sql_insert, values )
-        #values[ fom_format_index ] = ''
-        #print '!', sql_insert, values
-        #self._db.execute( sql_insert, values )
       else:
-        #print '!', sql_insert, values        
+        if debug: debug.debug( sql_insert + ' ' + repr( values ) )
         self._db.execute( sql_insert, values )
     self._db.commit()
   
