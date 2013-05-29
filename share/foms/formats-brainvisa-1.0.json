@@ -3,6 +3,7 @@
 
   "formats" : {
     "NIFTI" : "nii",
+    "NIFTI gz" : "nii.gz",
     "GIS" : "ima",
     "MINC" : "mnc",
     "SPM" : "img",
@@ -26,7 +27,7 @@
   
   
   "format_lists" : {
-    "images" : [ "NIFTI", "MINC", "GIS", "SPM"],
+    "images" : [ "NIFTI", "NIFTI gz", "MINC", "GIS", "SPM"],
     "label translations" : [ "Label Translation", "DEF Label Translation" ]
   },
 
