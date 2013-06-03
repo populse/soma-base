@@ -9,7 +9,7 @@ except ImportError:
 
 try:
   from traits.api import ListStr
-except ImportError:
+except ImportError:  
    from enthought.traits.api import ListStr
 
 from soma.path import split_path
@@ -213,7 +213,7 @@ class FileOrganizationModelManager( object ):
       self.find_foms()
     foms = FileOrganizationModels()
     for name in names:
-      foms.import_file( self._cache[ name ], foms_manager=self )
+     foms.import_file( self._cache[ name ], foms_manager=self )
     return foms
 
     
@@ -318,16 +318,16 @@ class FileOrganizationModels( object ):
     self._expand_json_patterns( patterns, new_patterns, { 'fom_name' : fom_name } )
     self._parse_patterns( new_patterns, self.patterns )
 
-    if processes:
+    if processes:   
       process_patterns = {}
-      for process, parameters in processes.iteritems():
+      for process, parameters in processes.iteritems():  
         process_dict = {}
         process_patterns[ process ] = process_dict
         for parameter, rules in parameters.iteritems():
           parameter_rules = []
           process_dict[ parameter ] = parameter_rules
           for rule in rules:
-            if len( rule ) == 2:
+            if len( rule ) == 2:    
               pattern, formats = rule
               rule_attributes = {}
             else:
@@ -658,18 +658,33 @@ class AttributesToPaths( object ):
     sql = 'SELECT fom_rule, fom_format FROM rules WHERE %s' % ' AND '.join( select )
     values = [ attributes[ i ] for i in select_attributes ]
     #print '!2!', sql, values
-    for rule_index, format in self._db.execute( sql, values ):
+    for rule_index, format in self._db.execute( sql, values ):  
+      bool_output=False 
       rule = self.rules[ rule_index ]
       rule_attributes = fom_formats = self.foms.rules[ rule_index ][ 1 ].copy()
       fom_formats = rule_attributes.pop( 'fom_formats', None )
+      
+      if rule_attributes['fom_directory'] == 'output':
+        bool_output=True    
+      
       #print '!2.1!', rule
       if format:
-        ext = self.foms.formats[ format ]
-        rule_attributes[ 'fom_format' ] = format
-        #print '!2.2!',rule % attributes + '.' + ext
-        r = self._join_directory( rule % attributes + '.' + ext, rule_attributes )
-        if r:
-          yield r
+        if len(fom_formats)>1 and bool_output is False:
+          for i in range(len(fom_formats)):           
+            #if format:
+            ext = self.foms.formats[ fom_formats[i] ]
+            rule_attributes[ 'fom_format' ] = fom_formats[i]
+            r = self._join_directory( rule % attributes + '.' + ext, rule_attributes )
+            #print 'r',r
+            if r and os.path.exists(r[0]) is True:  
+              yield r  
+        else:      
+          ext = self.foms.formats[ format ]
+          rule_attributes[ 'fom_format' ] = format
+          #print '!2.2!',rule % attributes + '.' + ext
+          r = self._join_directory( rule % attributes + '.' + ext, rule_attributes )
+          if r:
+            yield r
       else:
         if fom_formats:
           rule_attributes = rule_attributes.copy()
@@ -723,19 +738,26 @@ def call_before_application_initialization( application ):
         application.fom_path = [ os.path.join( application.install_directory, 
             'share', 'soma-base-' + short_version, 'foms' ) ]
 
-            
+
 def call_after_application_initialization( application ):
     application.fom_manager = FileOrganizationModelManager( application.fom_path )
 
 
+
 def process_completion( fom, process, input_parameter, value, directories ):
-    
+ 
     #print 'SYS'
     #print  sys.argv[0]
     #print  sys.argv[1]
     #print '//////////////'
+    app = Application( 'soma.fom', '1.0' )
+    # Register module to load and call functions before and/or after
+    # initialization
+    app.plugin_modules.append( 'soma.fom' )
+    # Application initialization (e.g. configuration file may be read here)
+    app.initialize()
 
-   
+
     #if len( sys.argv ) != 2:
       #print 'Give a parameter containing a file name that can be recognized for parameter "%s" of process "%s"' % ( input_parameter, process )
       #print 'e.g. python -m soma.fom /there/proto/subj/t1mri/acqu/subj.nii'
@@ -743,9 +765,9 @@ def process_completion( fom, process, input_parameter, value, directories ):
     
     # Load one or more FOMs
     foms = Application().fom_manager.load_foms( fom )
+    #print 'in the MAINNNNNN',side_parameter
     #foms.pprint()
     #print '=' * 40
-    
     
     # Extract attributes from path given on command line
     pta = PathToAttributes( foms, selection=dict( fom_process=process, fom_parameter=input_parameter ) )
@@ -773,7 +795,8 @@ def process_completion( fom, process, input_parameter, value, directories ):
     # Create an AttributesToPaths specialized for our process
     atp = AttributesToPaths( foms, selection=dict( fom_process=process ),
                              directories=directories )
-
+                             
+                             
     # Set the default value for all attributes that can be used to find a path that do
     # not already have a value (e.g. analysis = 'default_analysis')
     for attribute in atp.find_discriminant_attributes():
@@ -794,9 +817,10 @@ def process_completion( fom, process, input_parameter, value, directories ):
       parameter_attributes = [ 'fom_process' ] + atp.find_discriminant_attributes( fom_parameter=parameter )
       d = dict( ( i, attributes[ i ] ) for i in parameter_attributes if i in attributes )
       d['fom_parameter'] = parameter
-      print parameter,'-->', list( h[0] for h in atp.find_paths( d ))
+      #print parameter,'-->', list( h[0] for h in atp.find_paths( d ))
       for h in atp.find_paths(d):
-          completion[parameter]=h[0]
+          completion[parameter]=[h[0],h[1]]
+          #completion[parameter]=[h[0],None]              
     return completion
     
 
@@ -809,4 +833,3 @@ if __name__ == '__main__':
     # Application initialization (e.g. configuration file may be read here)
     app.initialize()
     #process_completion( sys.argv[1], {'spm' : '/here/is/spm', 'shared' : '/volatile/bouin/build/trunk/share/brainvisa-share-4.4' })
-
