@@ -17,17 +17,17 @@
     "XML" : "xml",
     "Transformation matrix" : "trm",
     "Referential": "referential",
+    "Histogram" : "his",
     "Histo Analysis" : "han",
     "MNI OBJ mesh" : "gii",
     "Graph and data" : "arg",
-    "Referential": "referential",
-    "Directory" : ""
-
+    "Referential" : "referential",
+    "Directory" : "",
   },
   
   
   "format_lists" : {
-    "images" : [ "NIFTI", "NIFTI gz", "MINC", "GIS", "SPM"],
+    "images" : [ "NIFTI","GIS","MINC", "SPM"],
     "label translations" : [ "Label Translation", "DEF Label Translation" ]
   },
 
