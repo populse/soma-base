@@ -12,7 +12,7 @@
   
   "shared_patterns" : {
     "acquisition" : "<protocol>/<subject>/t1mri/<acquisition>",
-    "analysis" : "{acquisition}/analysis",
+    "analysis" : "{acquisition}/<analysis>",
   },
   
   "processes" : {  
@@ -34,66 +34,66 @@
        "tal_to_normalized_transform": [ ["shared:transformation/talairach_TO_spm_template_novoxels","Transformation matrix"]],
 
        #Bias Correction 
-       "t1mri_nobias": [ ["output:{acquisition}/nobias_<subject>", "images" ] ], 
-       "hfiltered": [ ["output:{acquisition}/<analysis>/hfiltered_<subject>",  "images"] ], 
-       "white_ridges": [ ["output:{acquisition}/<analysis>/whiteridge_<subject>", "images"] ], 
-       "variance": [ ["output:{acquisition}/<analysis>/variance_<subject>","images"] ], 
-       "edges": [ ["output:{acquisition}/<analysis>/edges_<subject>","images"] ], 
-       "field": [ ["output:{acquisition}/<analysis>/biasfield_<subject>","images"] ], 
-       "meancurvature": [ ["output:{acquisition}/<analysis>/mean_curvature_<subject>", "images" ] ],
+       "t1mri_nobias": [ ["output:{analysis}/nobias_<subject>", "images" ] ], 
+       "hfiltered": [ ["output:{analysis}/hfiltered_<subject>",  "images"] ], 
+       "white_ridges": [ ["output:{analysis}/whiteridge_<subject>", "images"] ], 
+       "variance": [ ["output:{analysis}/variance_<subject>","images"] ], 
+       "edges": [ ["output:{analysis}/edges_<subject>","images"] ], 
+       "field": [ ["output:{analysis}/biasfield_<subject>","images"] ], 
+       "meancurvature": [ ["output:{analysis}/mean_curvature_<subject>", "images" ] ],
 
        #Histogram Analysis
        "histo": [ ["output:{analysis}/nobias_<subject>", "Histogram" ] ],
-       "histo_analysis": [ ["output:{acquisition}/<analysis>/nobias_<subject>", "Histo Analysis"   ] ] ,
+       "histo_analysis": [ ["output:{analysis}/nobias_<subject>", "Histo Analysis"   ] ] ,
 
        #Brain Mask Segmentation
-       "brain_mask": [ ["output:{acquisition}/<analysis>/segmentation/brain_<subject>","images"] ],
+       "brain_mask": [ ["output:{analysis}/segmentation/brain_<subject>","images"] ],
 
        #Split Brain Mask 
-       "split_brain": [ ["output:{acquisition}/<analysis>/segmentation/voronoi_<subject>","images"] ],  
+       "split_brain": [ ["output:{analysis}/segmentation/voronoi_<subject>","images"] ],  
        "split_template": [ ["shared:hemitemplate/closedvoronoi","images"] ], 
 
        #Talairach Transformation
        "talairach_ACPC_transform": [ [ "output:{acquisition}/registration/RawT1-<subject>_<acquisition>_TO_Talairach-ACPC","Transformation matrix"] ], 
 
        #Grey/White Classification
-       "left_grey_white": [ ["output:{acquisition}/<analysis>/segmentation/<side>_grey_white_<subject>","images",{'side':'left'}] ], 
-       "right_grey_white": [ ["output:{acquisition}/<analysis>/segmentation/<side>_grey_white_<subject>","images",{'side':'right'}] ],
+       "left_grey_white": [ ["output:{analysis}/segmentation/<side>_grey_white_<subject>","images",{'side':'left'}] ], 
+       "right_grey_white": [ ["output:{analysis}/segmentation/<side>_grey_white_<subject>","images",{'side':'right'}] ],
 
        #Grey/White Surface
-       "left_hemi_cortex": [ ["output:{acquisition}/<analysis>/segmentation/<side>_cortex_<subject>","images",{'side':'left'}] ], 
-       "left_white_mesh": [ ["output:{acquisition}/<analysis>/segmentation/mesh/<subject>_<side>_white","MNI OBJ mesh",{'side':'left'}] ], 
-       "right_hemi_cortex": [ ["output:{acquisition}/<analysis>/segmentation/<side>_cortex_<subject>","images",{'side':'right'}] ], 
-       "right_white_mesh": [ ["output:{acquisition}/<analysis>/segmentation/mesh/<subject>_<side>_white","MNI OBJ mesh",{'side':'right'}] ], 
+       "left_hemi_cortex": [ ["output:{analysis}/segmentation/<side>_cortex_<subject>","images",{'side':'left'}] ], 
+       "left_white_mesh": [ ["output:{analysis}/segmentation/mesh/<subject>_<side>_white","MNI OBJ mesh",{'side':'left'}] ], 
+       "right_hemi_cortex": [ ["output:{analysis}/segmentation/<side>_cortex_<subject>","images",{'side':'right'}] ], 
+       "right_white_mesh": [ ["output:{analysis}/segmentation/mesh/<subject>_<side>_white","MNI OBJ mesh",{'side':'right'}] ], 
 
        #Spherical Hemispheres Surface
-       "left_hemi_mesh": [ ["output:{acquisition}/<analysis>/segmentation/mesh/<subject>_<side>_hemi","MNI OBJ mesh",{'side':'left'}] ], 
-       "right_hemi_mesh": [ ["output:{acquisition}/<analysis>/segmentation/mesh/<subject>_<side>_hemi","MNI OBJ mesh",{'side':'right'}] ], 
+       "left_hemi_mesh": [ ["output:{analysis}/segmentation/mesh/<subject>_<side>_hemi","MNI OBJ mesh",{'side':'left'}] ], 
+       "right_hemi_mesh": [ ["output:{analysis}/segmentation/mesh/<subject>_<side>_hemi","MNI OBJ mesh",{'side':'right'}] ], 
 
        #Cortical Folds Graph
-       "left_graph": [ ["output:{acquisition}/<analysis>/folds/<graph_version>/<side>_<subject>","Graph and data", {'side':'left','labelled':'No', 'graph_version':'3.1'} ] ], 
-       "left_skeleton": [ ["output:{acquisition}/<analysis>/segmentation/<side>_skeleton_<subject>","images",{'side':'left'}] ], 
-       "left_roots": [ ["output:{acquisition}/<analysis>/segmentation/<side>_roots_<subject>","images",{'side':'left'}] ], 
-       "left_sulci_voronoi": [ ["output:{acquisition}/folds/<graph_version>/<side>_sulcivoronoi_<subject>","images",{'side':'left','graph_version':'3.1'}],["output:{acquisition}/<analysis>/folds/<graph_version>/<side>_sulcivoronoi_<subject>", "images",{'side':'left','graph_version':'3.1'} ] ],
-       "left_middle_cortex": [ [ "output:{acquisition}/<analysis>/segmentation/<side>_gw_interface_<subject>","images",{'side':'left'}] ], 
-       "right_graph": [ ["output:{acquisition}/<analysis>/folds/<graph_version>/<side>_<subject>","Graph and data", {'side':'right','labelled':'No', 'graph_version':'3.1'}] ], 
-       "right_skeleton": [ ["output:{acquisition}/<analysis>/segmentation/<side>_skeleton_<subject>","images",{'side':'right'}] ], 
-       "right_roots": [ [ "output:{acquisition}/<analysis>/segmentation/<side>_roots_<subject>", "images", { "side": "right" } ] ], 
-       "right_sulci_voronoi": [ ["output:{acquisition}/folds/<graph_version>/<side>_sulcivoronoi_<subject>","images",{'side':'right','graph_version':'3.1'}],["output:{acquisition}/<analysis>/folds/<graph_version>/<side>_sulcivoronoi_<subject>", "images",{'side':'right','graph_version':'3.1'} ] ],
-       "right_middle_cortex": [ ["output:{acquisition}/<analysis>/segmentation/<side>_gw_interface_<subject>","images",{ "side": "right" }] ], 
+       "left_graph": [ ["output:{analysis}/folds/<graph_version>/<side>_<subject>","Graph and data", {'side':'left','labelled':'No', 'graph_version':'3.1'} ] ], 
+       "left_skeleton": [ ["output:{analysis}/segmentation/<side>_skeleton_<subject>","images",{'side':'left'}] ], 
+       "left_roots": [ ["output:{analysis}/segmentation/<side>_roots_<subject>","images",{'side':'left'}] ], 
+       "left_sulci_voronoi": [ ["output:{acquisition}/folds/<graph_version>/<side>_sulcivoronoi_<subject>","images",{'side':'left','graph_version':'3.1'}],["output:{analysis}/folds/<graph_version>/<side>_sulcivoronoi_<subject>", "images",{'side':'left','graph_version':'3.1'} ] ],
+       "left_middle_cortex": [ [ "output:{analysis}/segmentation/<side>_gw_interface_<subject>","images",{'side':'left'}] ], 
+       "right_graph": [ ["output:{analysis}/folds/<graph_version>/<side>_<subject>","Graph and data", {'side':'right','labelled':'No', 'graph_version':'3.1'}] ], 
+       "right_skeleton": [ ["output:{analysis}/segmentation/<side>_skeleton_<subject>","images",{'side':'right'}] ], 
+       "right_roots": [ [ "output:{analysis}/segmentation/<side>_roots_<subject>", "images", { "side": "right" } ] ], 
+       "right_sulci_voronoi": [ ["output:{acquisition}/folds/<graph_version>/<side>_sulcivoronoi_<subject>","images",{'side':'right','graph_version':'3.1'}],["output:{analysis}/folds/<graph_version>/<side>_sulcivoronoi_<subject>", "images",{'side':'right','graph_version':'3.1'} ] ],
+       "right_middle_cortex": [ ["output:{analysis}/segmentation/<side>_gw_interface_<subject>","images",{ "side": "right" }] ], 
 
        #Sulci Recognition
        "labels_translation_map": [ ["shared:nomenclature/translation/", "label translations"],["shared:nomenclature/surfaceanalysis/surfaceReferential", "label translations"], ], 
         ##Left
-       "left_labelled_graph": [["output:{acquisition}/<analysis>/folds/<graph_version>/<sulci_recognition_session>_auto/<side>_<subject>_<sulci_recognition_session>_auto","Graph and data",{'side':'left','graph_version':'3.1','automatically_labelled':'Yes'}]], 
+       "left_labelled_graph": [["output:{analysis}/folds/<graph_version>/<sulci_recognition_session>_auto/<side>_<subject>_<sulci_recognition_session>_auto","Graph and data",{'side':'left','graph_version':'3.1','automatically_labelled':'Yes'}]], 
 
-       "left_posterior_probabilities": [ ["output:{acquisition}/<analysis>/folds/<graph_version>/<sulci_recognition_session>_auto/<side>_<subject>_<sulci_recognition_session>_auto_proba","CSV file",{ "side" : "left",'graph_version':'3.1'}  ] ], 
+       "left_posterior_probabilities": [ ["output:{analysis}/folds/<graph_version>/<sulci_recognition_session>_auto/<side>_<subject>_<sulci_recognition_session>_auto_proba","CSV file",{ "side" : "left",'graph_version':'3.1'}  ] ], 
        "left_labels_priors": [ ["shared:models/models_<sulci_database>/descriptive_models/labels_priors/<filename_variable>_priors_<side>/<filename_variable>_priors","Text Data Table",{"sulci_database":"2008","filename_variable":"frequency_segments","side":"left"}] ], 
 
             ###Global
        "left_global_model": [ ["shared:models/models_<sulci_database>/descriptive_models/segments/<sulci_segments_model_type>_<side>/<filename_variable>_distribs" ,"Text Data Table",{"sulci_database":"2008","sulci_segments_model_type":"global_registered_spam","filename_variable":"spam","side":"left"}] ], 
-       "left_tal_to_global_transform": [ ["output:{acquisition}/<analysis>/folds/<graph_version>/<sulci_recognition_session>_auto/<side>_<subject>_<sulci_recognition_session>_auto_Tal_TO_SPAM","Transformation matrix",{'side':'left','graph_version':'3.1'}] ], 
-       "left_t1_to_global_transform": [ [ "output:{acquisition}/<analysis>/folds/<graph_version>/<sulci_recognition_session>_auto/<side>_<subject>_<sulci_recognition_session>_auto_T1_TO_SPAM","Transformation matrix",{'side':'left','graph_version':'3.1'}] ],
+       "left_tal_to_global_transform": [ ["output:{analysis}/folds/<graph_version>/<sulci_recognition_session>_auto/<side>_<subject>_<sulci_recognition_session>_auto_Tal_TO_SPAM","Transformation matrix",{'side':'left','graph_version':'3.1'}] ], 
+       "left_t1_to_global_transform": [ [ "output:{analysis}/folds/<graph_version>/<sulci_recognition_session>_auto/<side>_<subject>_<sulci_recognition_session>_auto_T1_TO_SPAM","Transformation matrix",{'side':'left','graph_version':'3.1'}] ],
 
             ###Local
        "left_local_model": [ ["shared:models/models_<sulci_database>/descriptive_models/segments/<sulci_segments_model_type>_<side>/<filename_variable>_distribs" ,"Text Data Table",{"sulci_database":"2008","sulci_segments_model_type":"locally_from_global_registred_spam","filename_variable":"spam","side":"left"}] ], 
@@ -101,17 +101,17 @@
        "left_direction_priors": [ ["shared:models/models_<sulci_database>/descriptive_models/segments/<sulci_segments_model_type>_<side>/<filename_variable>_direction_trm_priors" ,"Text Data Table",{"sulci_database":"2008","sulci_segments_model_type":"locally_from_global_registred_spam","filename_variable":"bingham","side":"left"}] ], 
        "left_angle_priors": [ [ "shared:models/models_<sulci_database>/descriptive_models/segments/<sulci_segments_model_type>_<side>/<filename_variable>_angle_trm_priors", "Text Data Table", {"sulci_database":"2008","sulci_segments_model_type":"locally_from_global_registred_spam","filename_variable":"vonmises","side":"left"}] ], 
        "left_translation_priors": [ ["shared:models/models_<sulci_database>/descriptive_models/segments/<sulci_segments_model_type>_<side>/<filename_variable>_translation_trm_priors","Text Data Table", {"sulci_database":"2008","sulci_segments_model_type":"locally_from_global_registred_spam","filename_variable":"gaussian","side":"left"}] ], 
-       "left_global_to_local_transforms": [ ["output:{acquisition}/<analysis>/folds/<graph_version>/<sulci_recognition_session>_auto/<side>_<subject>_<sulci_recognition_session>_auto_global_TO_local","Directory",{'side':'left','graph_version':'3.1'}] ], 
+       "left_global_to_local_transforms": [ ["output:{analysis}/folds/<graph_version>/<sulci_recognition_session>_auto/<side>_<subject>_<sulci_recognition_session>_auto_global_TO_local","Directory",{'side':'left','graph_version':'3.1'}] ], 
 
         ##Right
-       "right_labelled_graph": [ ["output:{acquisition}/<analysis>/folds/<graph_version>/<sulci_recognition_session>_auto/<side>_<subject>_<sulci_recognition_session>_auto","Graph and data",{'side':'right','graph_version':'3.1'}] ],
+       "right_labelled_graph": [ ["output:{analysis}/folds/<graph_version>/<sulci_recognition_session>_auto/<side>_<subject>_<sulci_recognition_session>_auto","Graph and data",{'side':'right','graph_version':'3.1'}] ],
       "right_posterior_probabilities": [ [ "output:{analysis}/folds/<graph_version>/<sulci_recognition_session>_auto/<side>_<subject>_<sulci_recognition_session>_auto_proba", "CSV file" , { "side" : "right",'graph_version':'3.1'} ] ],
        "right_labels_priors": [ ["shared:models/models_<sulci_database>/descriptive_models/labels_priors/<filename_variable>_priors_<side>/<filename_variable>_priors","Text Data Table",{"sulci_database":"2008","filename_variable":"frequency_segments","side":"right"} ] ], 
     
             ###Global
        "right_global_model": [ ["shared:models/models_<sulci_database>/descriptive_models/segments/<sulci_segments_model_type>_<side>/<filename_variable>_distribs" ,"Text Data Table",{"sulci_database":"2008","sulci_segments_model_type":"global_registered_spam","filename_variable":"spam","side":"right"}] ], 
-       "right_tal_to_global_transform": [ ["output:{acquisition}/<analysis>/folds/<graph_version>/<sulci_recognition_session>_auto/<side>_<subject>_<sulci_recognition_session>_auto_Tal_TO_SPAM","Transformation matrix",{'side':'right','graph_version':'3.1'} ] ], 
-       "right_t1_to_global_transform": [ [ "output:{acquisition}/<analysis>/folds/<graph_version>/<sulci_recognition_session>_auto/<side>_<subject>_<sulci_recognition_session>_auto_T1_TO_SPAM","Transformation matrix",{'side':'right','graph_version':'3.1'} ] ], 
+       "right_tal_to_global_transform": [ ["output:{analysis}/folds/<graph_version>/<sulci_recognition_session>_auto/<side>_<subject>_<sulci_recognition_session>_auto_Tal_TO_SPAM","Transformation matrix",{'side':'right','graph_version':'3.1'} ] ], 
+       "right_t1_to_global_transform": [ [ "output:{analysis}/folds/<graph_version>/<sulci_recognition_session>_auto/<side>_<subject>_<sulci_recognition_session>_auto_T1_TO_SPAM","Transformation matrix",{'side':'right','graph_version':'3.1'} ] ], 
 
             ###Local
         "right_local_model": [ ["shared:models/models_<sulci_database>/descriptive_models/segments/<sulci_segments_model_type>_<side>/<filename_variable>_distribs" ,"Text Data Table",{"sulci_database":"2008","sulci_segments_model_type":"locally_from_global_registred_spam","filename_variable":"spam","side":"right"}] ], 
@@ -119,7 +119,7 @@
         "right_direction_priors":  [ ["shared:models/models_<sulci_database>/descriptive_models/segments/<sulci_segments_model_type>_<side>/<filename_variable>_direction_trm_priors" ,"Text Data Table",{"sulci_database":"2008","sulci_segments_model_type":"locally_from_global_registred_spam","filename_variable":"bingham","side":"right"}] ],
         "right_angle_priors":  [ [ "shared:models/models_<sulci_database>/descriptive_models/segments/<sulci_segments_model_type>_<side>/<filename_variable>_angle_trm_priors", "Text Data Table", {"sulci_database":"2008","sulci_segments_model_type":"locally_from_global_registred_spam","filename_variable":"vonmises","side":"right"}] ], 
         "right_translation_priors":  [ ["shared:models/models_<sulci_database>/descriptive_models/segments/<sulci_segments_model_type>_<side>/<filename_variable>_translation_trm_priors","Text Data Table", {"sulci_database":"2008","sulci_segments_model_type":"locally_from_global_registred_spam","filename_variable":"gaussian","side":"right"}] ], 
-       "right_global_to_local_transforms": [ [ "output:{acquisition}/<analysis>/folds/<graph_version>/<sulci_recognition_session>_auto/<side>_<subject>_<sulci_recognition_session>_auto_global_TO_local","Directory",{'side':'right','graph_version':'3.1'} ] ], 
+       "right_global_to_local_transforms": [ [ "output:{analysis}/folds/<graph_version>/<sulci_recognition_session>_auto/<side>_<subject>_<sulci_recognition_session>_auto_global_TO_local","Directory",{'side':'right','graph_version':'3.1'} ] ], 
 
     }
   }

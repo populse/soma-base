@@ -750,13 +750,6 @@ def process_completion( fom, process, input_parameter, value, directories ):
     #print  sys.argv[0]
     #print  sys.argv[1]
     #print '//////////////'
-    app = Application( 'soma.fom', '1.0' )
-    # Register module to load and call functions before and/or after
-    # initialization
-    app.plugin_modules.append( 'soma.fom' )
-    # Application initialization (e.g. configuration file may be read here)
-    app.initialize()
-
 
     #if len( sys.argv ) != 2:
       #print 'Give a parameter containing a file name that can be recognized for parameter "%s" of process "%s"' % ( input_parameter, process )
@@ -818,7 +811,9 @@ def process_completion( fom, process, input_parameter, value, directories ):
       d = dict( ( i, attributes[ i ] ) for i in parameter_attributes if i in attributes )
       d['fom_parameter'] = parameter
       #print parameter,'-->', list( h[0] for h in atp.find_paths( d ))
+      print '!', parameter, d
       for h in atp.find_paths(d):
+          print '!!  ', h
           completion[parameter]=[h[0],h[1]]
           #completion[parameter]=[h[0],None]              
     return completion
