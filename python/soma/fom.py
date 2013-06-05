@@ -244,7 +244,25 @@ class FileOrganizationModels( object ):
     self.patterns = {}
     self.rules = []
     
-  
+
+  def _expand_shared_pattern( self, pattern ):
+    expanded_pattern = []
+    last_end = 0
+    for match in self._directories_regex.finditer( pattern ):
+      c = pattern[ last_end : match.start() ]
+      if c:
+        expanded_pattern.append( c )
+      attribute = match.group( 1 )
+      expanded_pattern.append( self.shared_patterns[ attribute ] )
+      last_end = match.end()
+    if expanded_pattern:
+      last = pattern[ last_end : ]
+      if last:
+        expanded_pattern.append( last )
+      return ''.join( expanded_pattern )
+    else:
+      return pattern
+
   def import_file( self, file_or_dict, foms_manager=None ):
     if not isinstance( file_or_dict, dict ):
       json_dict = json_reader.load( open( file_or_dict, 'r' ) )
@@ -291,22 +309,19 @@ class FileOrganizationModels( object ):
       stack = self.shared_patterns.items()
       while stack:
         name, pattern = stack.pop()
-        expanded_pattern = []
-        last_end = 0
-        for match in self._directories_regex.finditer( pattern ):
-          c = pattern[ last_end : match.start() ]
-          if c:
-            expanded_pattern.append( c )
-          attribute = match.group( 1 )
-          expanded_pattern.append( self.shared_patterns[ attribute ] )
-          last_end = match.end()
-        if expanded_pattern:
-          last = pattern[ last_end : ]
-          if last:
-            expanded_pattern.append( last )
-          stack.append( ( name, ''.join( expanded_pattern ) ) )
+        if isinstance( pattern, list ):
+          if pattern and isinstance( pattern[0], basestring ):
+            pattern[0] = self._expand_shared_pattern( pattern[0] )
+          else:
+            for i in pattern:
+              i[0] = self._expand_shared_pattern( i[0] )
         else:
-          self.shared_patterns[ name ] = pattern
+          expanded_pattern = self._expand_shared_pattern( pattern )
+          if expanded_pattern != pattern:
+            stack.append( ( name, expanded_pattern ) )
+          else:
+            self.shared_patterns[ name ] = pattern
+        
     
     rules = json_dict.get( 'rules' )
     patterns = json_dict.get( 'patterns', {} ).copy()
@@ -324,6 +339,8 @@ class FileOrganizationModels( object ):
         process_dict = {}
         process_patterns[ process ] = process_dict
         for parameter, rules in parameters.iteritems():
+          if isinstance( rules, basestring ):
+            rules = self.shared_patterns[ rules[ 1:-1 ] ]
           parameter_rules = []
           process_dict[ parameter ] = parameter_rules
           for rule in rules:
@@ -811,9 +828,7 @@ def process_completion( fom, process, input_parameter, value, directories ):
       d = dict( ( i, attributes[ i ] ) for i in parameter_attributes if i in attributes )
       d['fom_parameter'] = parameter
       #print parameter,'-->', list( h[0] for h in atp.find_paths( d ))
-      print '!', parameter, d
       for h in atp.find_paths(d):
-          print '!!  ', h
           completion[parameter]=[h[0],h[1]]
           #completion[parameter]=[h[0],None]              
     return completion

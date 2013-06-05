@@ -29,7 +29,7 @@ BRAINVISA_INSTALL( FILES "${CMAKE_BINARY_DIR}/include/soma/config.h"
 set( SOMA-BASE_DEFINITIONS "-DUSE_SOMA_CONFIG" )
 
 BRAINVISA_COPY_PYTHON_DIRECTORY( "${CMAKE_CURRENT_SOURCE_DIR}/python"
-                            ${PROJECT_NAME} )
+                                 ${PROJECT_NAME} )
 BRAINVISA_COPY_DIRECTORY( "${CMAKE_CURRENT_SOURCE_DIR}/share" 
                          "share/${PROJECT_NAME}-${BRAINVISA_PACKAGE_VERSION_MAJOR}.${BRAINVISA_PACKAGE_VERSION_MINOR}"
                          ${PROJECT_NAME} )
@@ -39,6 +39,9 @@ BRAINVISA_COPY_DIRECTORY( "${CMAKE_CURRENT_SOURCE_DIR}/bin"
 BRAINVISA_COPY_DIRECTORY( "${CMAKE_CURRENT_SOURCE_DIR}/examples/soma"
                           "share/doc/${PROJECT_NAME}-${BRAINVISA_PACKAGE_VERSION_MAJOR}.${BRAINVISA_PACKAGE_VERSION_MINOR}/examples"
                           ${PROJECT_NAME}-doc )
+ BRAINVISA_COPY_PYTHON_DIRECTORY( "${CMAKE_CURRENT_SOURCE_DIR}/tests"
+                                  ${PROJECT_NAME}
+                                  python )
  BRAINVISA_COPY_PYTHON_DIRECTORY( "${CMAKE_CURRENT_SOURCE_DIR}/sandbox/python"
                                   ${PROJECT_NAME}
                                   python/sandbox )

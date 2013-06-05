@@ -1,7 +1,7 @@
 {
   "fom_name" : "morphologist-brainvisa-1.0",  
   
-  "fom_import" : [ "formats-brainvisa-1.0" ],
+  "fom_import" : [ "formats-brainvisa-1.0", "shared-brainvisa-1.0" ],
   
   "attribute_definitions" : {
     "acquisition" : { "default_value" : "default_acquisition" },
@@ -22,7 +22,7 @@
        #Commissure Coordinates
        "commissure_coordinates": [ [ "input:{acquisition}/<subject>", "Commissure coordinates" ] ],
         ##SPM Normalization
-       "anatomical_template": [ [ "shared:anatomical_templates/MNI152_T1_1mm ", "images" ],[ "shared:anatomical_templates/MNI152_T1_2mm ", "images" ],[ "shared:anatomical_templates/MNI152_T1_1mm_brain", "images" ],[ "shared:anatomical_templates/MNI152_T1_2mm_brain", "images" ] ],
+       "anatomical_template": "{shared.anatomical_templates}",
        "job_file": [ [ "output:{acquisition}/<subject>_job_anat_normalization", [ "Matlab", "Matlab bz2", "XML" ] ] ],
        "transformations_information": [ [ "output:{acquisition}/<subject>_sn", "Matlab" ] ],
        "normalized_t1mri": [ [ "output:{acquisition}/normalized_<normalization>_<subject>","images", { "normalization":"SPM" } ] ], 
@@ -30,8 +30,8 @@
                                       "Transformation matrix" ] ],
         ##Talairach Transformation
        "source_referential": [ [ "input:{acquisition}/registration/RawT1-<subject>_<acquisition>", "Referential" ] ],
-       "normalized_referential": [ [ "shared:registration/Talairach-MNI_template-SPM", "Referential" ] ],
-       "tal_to_normalized_transform": [ ["shared:transformation/talairach_TO_spm_template_novoxels","Transformation matrix"]],
+       "normalized_referential": "{shared.mni_spm_referential}",
+       "tal_to_normalized_transform": "{shared.talairach_TO_spm_transform}",
 
        #Bias Correction 
        "t1mri_nobias": [ ["output:{analysis}/nobias_<subject>", "images" ] ], 
@@ -83,7 +83,7 @@
        "right_middle_cortex": [ ["output:{analysis}/segmentation/<side>_gw_interface_<subject>","images",{ "side": "right" }] ], 
 
        #Sulci Recognition
-       "labels_translation_map": [ ["shared:nomenclature/translation/", "label translations"],["shared:nomenclature/surfaceanalysis/surfaceReferential", "label translations"], ], 
+       "labels_translation_map": "{shared.surface_referential_translation_map}", 
         ##Left
        "left_labelled_graph": [["output:{analysis}/folds/<graph_version>/<sulci_recognition_session>_auto/<side>_<subject>_<sulci_recognition_session>_auto","Graph and data",{'side':'left','graph_version':'3.1','automatically_labelled':'Yes'}]], 
 
@@ -91,7 +91,7 @@
        "left_labels_priors": [ ["shared:models/models_<sulci_database>/descriptive_models/labels_priors/<filename_variable>_priors_<side>/<filename_variable>_priors","Text Data Table",{"sulci_database":"2008","filename_variable":"frequency_segments","side":"left"}] ], 
 
             ###Global
-       "left_global_model": [ ["shared:models/models_<sulci_database>/descriptive_models/segments/<sulci_segments_model_type>_<side>/<filename_variable>_distribs" ,"Text Data Table",{"sulci_database":"2008","sulci_segments_model_type":"global_registered_spam","filename_variable":"spam","side":"left"}] ], 
+       "left_global_model": "{shared.spam_distribs}", 
        "left_tal_to_global_transform": [ ["output:{analysis}/folds/<graph_version>/<sulci_recognition_session>_auto/<side>_<subject>_<sulci_recognition_session>_auto_Tal_TO_SPAM","Transformation matrix",{'side':'left','graph_version':'3.1'}] ], 
        "left_t1_to_global_transform": [ [ "output:{analysis}/folds/<graph_version>/<sulci_recognition_session>_auto/<side>_<subject>_<sulci_recognition_session>_auto_T1_TO_SPAM","Transformation matrix",{'side':'left','graph_version':'3.1'}] ],
 
