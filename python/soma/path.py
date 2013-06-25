@@ -41,7 +41,7 @@ Some useful functions to manage file or directorie names.
 '''
 __docformat__ = "epytext en"
 
-import os, platform
+import os, platform, fnmatch
 
 def split_path( path ):
   '''
@@ -150,3 +150,20 @@ def find_in_path( file, path = None ):
       r = os.path.join( p, file )
       if os.path.isdir( p ) and os.path.exists( r ):
         return r
+
+def locate_file( pattern, root = os.curdir ):
+    """
+    Locates a file in a directory tree
+    
+    :param string pattern:
+        The pattern to find
+    
+    :param string root:
+        The search root directory
+    
+    :returns:
+        The first found occurrence
+    """
+    for path, dirs, files in os.walk(os.path.abspath(root)):
+        for filename in fnmatch.filter(files, pattern):
+            return os.path.join(path, filename)
