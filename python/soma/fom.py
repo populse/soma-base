@@ -8,9 +8,9 @@ except ImportError:
   import json as json_reader
 
 try:
-  from traits.api import ListStr
-except ImportError:  
-   from enthought.traits.api import ListStr
+    from traits.api import ListStr,HasTraits,File,Float,Instance,Enum,Str
+except ImportError:
+    from enthought.traits.api import ListStr,HasTraits,File,Float,Instance,Enum,Str
 
 from soma.path import split_path
 from soma.application import Application
@@ -208,6 +208,8 @@ class FileOrganizationModelManager( object ):
           if not name:
             raise ValueError( 'file %s does not contain fom_name' % full_path )
           self._cache[ name ] = full_path
+          print self._cache.keys()
+          
     return self._cache.keys()
    
    
@@ -217,6 +219,7 @@ class FileOrganizationModelManager( object ):
     foms = FileOrganizationModels()
     for name in names:
      foms.import_file( self._cache[ name ], foms_manager=self )
+    print 'foms',foms 
     return foms
 
     
@@ -624,7 +627,11 @@ class AttributesToPaths( object ):
   def __init__( self, foms, selection=None, directories={}, debug=None ):
     self.foms = foms
     self.selection = selection
+    print 'in ATP'
+    print self.selection
+    print '                           \n'
     self.directories = directories
+    print self.directories
     self._db = sqlite3.connect( ':memory:' )
     self._db.execute( 'PRAGMA journal_mode = OFF;' )
     self._db.execute( 'PRAGMA synchronous = OFF;' )
@@ -774,28 +781,22 @@ def call_after_application_initialization( application ):
     application.fom_manager = FileOrganizationModelManager( application.fom_path )
 
 
+        
+def process_find_attributes(fom,process,input_parameter,value,directories):   
 
-def process_completion( fom, process, input_parameter, value, directories ):
- 
-    #print 'SYS'
-    #print  sys.argv[0]
-    #print  sys.argv[1]
-    #print '//////////////'
+    """Returns useful attributes for completion"""
 
-    #if len( sys.argv ) != 2:
-      #print 'Give a parameter containing a file name that can be recognized for parameter "%s" of process "%s"' % ( input_parameter, process )
-      #print 'e.g. python -m soma.fom /there/proto/subj/t1mri/acqu/subj.nii'
-      #sys.exit()
+    global foms
+    global atp
     
-    # Load one or more FOMs
+     # Load one or more FOMs   
     foms = Application().fom_manager.load_foms( fom )
-    #print 'in the MAINNNNNN',side_parameter
+    
     #foms.pprint()
     #print '=' * 40
-    
+
     # Extract attributes from path given on command line
     pta = PathToAttributes( foms, selection=dict( fom_process=process, fom_parameter=input_parameter ) )
-    
     # Only relative paths are matched by PathToAttributes. We suppose that
     # the given file is in the "acquisition" directory.
     #path = os.path.abspath( sys.argv[1] )
@@ -816,36 +817,72 @@ def process_completion( fom, process, input_parameter, value, directories ):
       if i.startswith( 'fom_' ):
         del attributes[ i ]
     
+    print 'attributes1111',attributes
+    #return attributes
+    
     # Create an AttributesToPaths specialized for our process
+
     atp = AttributesToPaths( foms, selection=dict( fom_process=process ),
                              directories=directories )
                              
-                             
+      
+                       
     # Set the default value for all attributes that can be used to find a path that do
     # not already have a value (e.g. analysis = 'default_analysis')
+    #print 'attributes',attributes
+
     for attribute in atp.find_discriminant_attributes():
       default_value = foms.attribute_definitions[ attribute ].get( 'default_value' )
       #print '!', attribute, default_value
       if default_value is not None:
+        #print 'default_value',default_value  
         attributes[ attribute ] = default_value
     #pprint.pprint( attributes )
     #print '=' * 40
-    
     # Try to find a single value for all parameters declared in foms for this process.
     # First, say to select the first format when several are possible
+    return attributes
+    
+    
+    
+def process_create_completion(attributes,process,prorpo):   
+    
+    print 'in proceess create completion'    
+    # Create an AttributesToPaths specialized for our process
+    #atp = AttributesToPaths( foms, selection=dict( fom_process=process ),
+                             #directories=directories )
+    global atp     
+    global foms       
+    #print 'gloglo',globals()[AttributesToPaths]()
+    #print 'atp',atp                        
     completion={}
     attributes[ 'fom_format' ] = 'fom_first'
     for parameter in foms.patterns[ process ]:
       # Select only the attributes that are discriminant for this parameter
       # otherwise other attibutes can prevent the appropriate rule to match
       parameter_attributes = [ 'fom_process' ] + atp.find_discriminant_attributes( fom_parameter=parameter )
+      #print 'disicrminant',atp.find_discriminant_attributes( fom_parameter=parameter )
+      #print 'parameter _attributes',parameter_attributes
+      #print 'attributes',attributes
+
       d = dict( ( i, attributes[ i ] ) for i in parameter_attributes if i in attributes )
       d['fom_parameter'] = parameter
+       
       #print parameter,'-->', list( h[0] for h in atp.find_paths( d ))
+
+
       for h in atp.find_paths(d):
           completion[parameter]=[h[0],h[1]]
-          #completion[parameter]=[h[0],None]              
-    return completion
+               
+
+    for key in completion:   
+        setattr(prorpo,key,completion[key][0])  
+        prorpo.trait(key).attributes=completion[key][1] 
+    
+    
+    
+    return completion   
+    #return completion,attributes
     
 
 if __name__ == '__main__':
