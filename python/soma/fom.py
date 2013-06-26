@@ -140,9 +140,12 @@ class DirectoriesCache( object ):
     self.directories = {}
   
   
-  def add_directory( self, directory, debug=None ):
-    st = tuple( os.stat( directory ) )
-    content = DirectoryAsDict.get_directory( directory, debug=debug )
+  def add_directory( self, directory, content=None, debug=None ):
+    if content is None:
+      st = tuple( os.stat( directory ) )
+      content = DirectoryAsDict.get_directory( directory, debug=debug )
+    else:
+      st = None
     self.directories[ directory ] = [ st, content ]
   
   
@@ -225,8 +228,8 @@ class FileOrganizationModelManager( object ):
     
 class FileOrganizationModels( object ):
   def __init__( self ):
-    self._directories_regex = re.compile( r'{([^}]*)}' )
-    self._attributes_regex = re.compile( '<([^>]*)>' )
+    self._directories_regex = re.compile( r'{([A-Za-z][A-Za-z0-9_]*)}' )
+    self._attributes_regex = re.compile( '<([^>]+)>' )
     self.fom_names = set()
     self.attribute_definitions = {
       "fom_name" : {
@@ -474,6 +477,9 @@ class FileOrganizationModels( object ):
         for rule in value:
           pattern, rule_attributes = rule          
           for attribute in self._attributes_regex.findall( pattern ):
+            s = attribute.find( '|' )
+            if s > 0:
+              attribute = attribute[ :s ]
             definition = self.attribute_definitions.setdefault( attribute, {} )
             value = rule_attributes.get( attribute )
             if value is not None:
@@ -499,7 +505,7 @@ class FileOrganizationModels( object ):
        
 class PathToAttributes( object ):
   def __init__( self, foms, selection=None ):
-    self._attributes_regex = re.compile( '<([^>]*)>' )
+    self._attributes_regex = re.compile( '<([^>]+)>' )
     self.hierarchical_patterns = {}
     for rule_pattern, rule_attributes in foms.selected_rules( selection ):
       rule_formats = rule_attributes.get( 'fom_formats', [] )
@@ -516,6 +522,12 @@ class PathToAttributes( object ):
           if c:
             regex.append( re.escape( c ) )
           attribute = match.group( 1 )
+          s = attribute.find( '|' )
+          if s > 0:
+            attribute_re = attribute[ s+1: ]
+            attribute = attribute[ :s ]
+          else:
+            attribute_re = '[^/]*'
           if attribute in attributes_found:
             regex.append( '%(' + attribute + ')s' )
           else:
@@ -524,7 +536,7 @@ class PathToAttributes( object ):
             if values:
               regex.append( '(?P<%s>%s)' % ( attribute, '|'.join( '(?:' + re.escape(i) + ')' for i in values ) ) )
             else:
-              regex.append( '(?P<%s>.*)' % attribute )
+              regex.append( '(?P<%s>%s)' % ( attribute, attribute_re ) )
             attributes_found.add( attribute )
           last_end = match.end()
         last = pattern[ last_end : ]
@@ -567,6 +579,7 @@ class PathToAttributes( object ):
         ext_rules, subpattern = rules_subpattern
         pattern = pattern % pattern_attributes
         match = re.match( pattern, name_no_ext )
+        if log: log.debug( 'try %s for %s' % ( repr( pattern ), repr( name_no_ext ) ) )
         if match:
           if log: log.info( 'match ' + pattern )
           matched = True
@@ -617,7 +630,7 @@ class AttributesToPaths( object ):
     self._db.execute( 'PRAGMA synchronous = OFF;' )
     self.all_attributes = tuple( i for i in self.foms.attribute_definitions if i != 'fom_formats' )
     fom_format_index = self.all_attributes.index( 'fom_format' )
-    sql = 'CREATE TABLE rules ( %s, fom_first, fom_rule )' % ','.join( repr( i ) for i in self.all_attributes )
+    sql = 'CREATE TABLE rules ( %s, _fom_first, _fom_rule )' % ','.join( repr( '_' + i ) for i in self.all_attributes )
     if debug: debug.debug( sql )
     self._db.execute( sql )
     sql_insert = 'INSERT INTO rules VALUES ( %s )' % ','.join( '?' for i in xrange( len( self.all_attributes ) + 2 ) )
@@ -660,19 +673,19 @@ class AttributesToPaths( object ):
       if value is None:
         value = self.selection.get( attribute )
       if value is None:
-        select.append( '(' + attribute + " != '' OR " + attribute + ' IS NULL )' )
+        select.append( '(_' + attribute + " != '' OR " + attribute + ' IS NULL )' )
       elif attribute == 'fom_format':
         selected_format = attributes.get( 'fom_format' )
         if selected_format == 'fom_first':
-          select.append( 'fom_first = 1' )
+          select.append( '_fom_first = 1' )
         else:
-          select.append( attribute + " = ?" )
+          select.append( '_' + attribute + " = ?" )
           select_attributes.append( attribute )
       else:
         #select.append( '(' + attribute + " IN ( ?, '' ) OR " + attribute + ' IS NULL )' )
-        select.append( attribute + " IN ( ?, '' )" )
+        select.append( '_' + attribute + " IN ( ?, '' )" )
         select_attributes.append( attribute )
-    sql = 'SELECT fom_rule, fom_format FROM rules WHERE %s' % ' AND '.join( select )
+    sql = 'SELECT _fom_rule, _fom_format FROM rules WHERE %s' % ' AND '.join( select )
     values = [ attributes[ i ] for i in select_attributes ]
     #print '!2!', sql, values
     for rule_index, format in self._db.execute( sql, values ):  
@@ -724,11 +737,12 @@ class AttributesToPaths( object ):
     result = []
     if self.rules:
       for attribute in self.all_attributes:
-        sql = 'SELECT DISTINCT %s FROM rules' % attribute
+        sql = 'SELECT DISTINCT %s FROM rules' % ('_' + attribute)
         if selection:
-          sql += ' WHERE ' + ' AND '.join( i + ' = ?' for i in selection )
+          sql += ' WHERE ' + ' AND '.join( '_' + i + ' = ?' for i in selection )
           values = list( self._db.execute( sql, selection.values() ) )
         else:
+	  print '!!!', sql
           values = list( self._db.execute( sql ) )
         #print '!', attribute, values
         if len( values ) > 1 or values[ 0 ][ 0 ] == '':
