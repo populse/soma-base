@@ -92,11 +92,13 @@ class Controller( HasTraits ):
 
     def add_trait( self, name, *trait ):
        global global_compt_order
-       
+
        super( Controller, self ).add_trait( name, *trait )
        global_compt_order=global_compt_order+1        
        self.trait( name ).order = global_compt_order
+       self.trait(name).defaultvalue = self.trait(name).default
 
+    
         
 _type_to_trait_id = {
     int: 'Int',
@@ -138,3 +140,4 @@ def trait_ids( trait ):
 
 def add_trait (self,name, *trait ):   
   self.add_trait( name, *trait )
+  #print 'traiit',Trait( *trait )
