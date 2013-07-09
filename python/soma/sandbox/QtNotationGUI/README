@@ -1,0 +1,11 @@
+To run the GUI:
+- in the same folder the files: run_gui.py main_window.py filter_window.py and read_csv.py
+
+- command line: python run_gui.py
+
+- choose a picutre (.png/.jpeg) in a directory and then all the picture in this directory are available with the button '>' and '<' (next and prev picture or the keyboard)
+- the name of the picture is written in the command line
+- a file data.csv is created with the note and comments for the picture associated
+
+
+IF YOU WANT CHANGE SOMETHING IN THE DATA.CSV PLEASE DO IT WITH GEDIT OR KATE (don't OpenOffice)
