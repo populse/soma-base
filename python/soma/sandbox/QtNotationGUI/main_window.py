@@ -183,13 +183,14 @@ class MainWindow(QtGui.QMainWindow):
             self.open_image(fname)
             self.dirname=os.path.dirname(str(fname))
             self.data_file_name = os.path.join(self.dirname,'data.csv')
-            results = [each for each in os.listdir(self.dirname) if each.endswith('.png')]
+            results = [os.path.join(self.dirname,each) for each in os.listdir(self.dirname) if each.endswith('.png')]
             results.sort()
+            print self.dirname
             self.pictures_in_directory=results
             i=-1
             for picture in self.pictures_in_directory:
                 i=i+1
-                if picture==os.path.basename(str(fname)):
+                if picture==fname:
                     self.index_picture_display=i
                     break        
                          
@@ -206,7 +207,6 @@ class MainWindow(QtGui.QMainWindow):
         self.setFocusPolicy(QtCore.Qt.StrongFocus)    
             
     def open_image(self, path):
-        print 'open image'
         w_vue, h_vue = self.view.width(), self.view.height() 
         self.current_image = QtGui.QImage(path)
         self.pixmap = QtGui.QPixmap.fromImage(self.current_image.scaled(w_vue, h_vue,
