@@ -2,7 +2,6 @@
 
 import sys
 from main_window import MainWindow
-
 from PyQt4.QtGui import QLabel, QApplication
  
 # On utilise la syntaxe from x import *, parce que 
@@ -10,7 +9,6 @@ from PyQt4.QtGui import QLabel, QApplication
 # n'aura pas de problème d'espace de noms ainsi. 
  
 if __name__=='__main__':
- 
     app = QApplication(sys.argv)
     w=MainWindow()
     w.show()

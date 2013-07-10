@@ -1,17 +1,10 @@
 # -*- coding: utf-8 -*-
 
-
-#from PyQt4.QtGui import QMainWindow,QHBoxLayout,QVBoxLayout,QPushButton,QWidget,QComboBox,\
-#QLabel,QTextEdit,QGraphicsScene,QGraphicsView,QGraphicsPixmapItem,QPixmap,QAction,QFileDialog,\
-#QStatusBar,QStyle,QIcon,QImage
 from PyQt4 import QtGui
 from PyQt4 import QtCore
-#from PyQt4.QtCore import QObject,QString,Qt.KeepAspectRatio,Qt.SmoothTransformation
 import os
 import read_csv
-
 from filter_window import MyFilter
-
 
 class MainWindow(QtGui.QMainWindow):
 
