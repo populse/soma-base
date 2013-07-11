@@ -3,6 +3,7 @@
 import sys
 from main_window import MainWindow
 from PyQt4.QtGui import QLabel, QApplication
+
  
 # On utilise la syntaxe from x import *, parce que 
 # tous les objets de Qt commencent par un Q et l'on

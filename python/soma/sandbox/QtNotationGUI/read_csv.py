@@ -27,6 +27,7 @@ class Data:
                     self.marks.append(row[1])
                     self.comments.append(row[2])
         except IOError:
+            print 'IOERROr'
             pass
 
     #-------------------------

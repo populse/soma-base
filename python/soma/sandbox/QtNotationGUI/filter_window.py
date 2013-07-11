@@ -1,6 +1,6 @@
 from PyQt4 import QtGui
 from PyQt4 import QtCore
-from catidb import CatiDB
+from create_bdd import CreateBDD
 import csv
 import re
 import glob
@@ -16,13 +16,11 @@ class MyFilter(QtGui.QDialog):
         self.filenames = []
         self.marks = []  
         self.nb_subject=0
-        self.bdd = CatiDB('user', 'Passe, le mot.')
-
         #To write in the .txt
         self.sign_filter_str=''
         self.number=0
         self.word_to_find=''
- 
+        
         self.hbox = QtGui.QHBoxLayout()
         self.hbox2=QtGui.QHBoxLayout()
         self.vbox = QtGui.QVBoxLayout()    
@@ -76,6 +74,7 @@ class MyFilter(QtGui.QDialog):
       
     def filter_process(self):
         print 'in filtre_process'
+        self.bdd=CreateBDD.get_instance()
         print self.dirname_snap
         self.list_subject=''
         self.nb_subject=0
@@ -111,6 +110,7 @@ class MyFilter(QtGui.QDialog):
         filename=file.split('.')[0]
         expresion=r"([0-9]{7})([A-Za-z]{4})"
         m=re.search(expresion, filename)
+
         if m is not None:
             subject=m.group(0)
             subject=subject[0:7]+'_'+subject[7:11]

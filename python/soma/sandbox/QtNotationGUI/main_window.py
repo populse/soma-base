@@ -195,7 +195,6 @@ class MainWindow(QtGui.QMainWindow):
             self.check_data()
             self.statusBar().showMessage(self.pictures_in_directory[self.index_picture_display])             
 
-            #self.size_image()
         #Get back focus 
         self.setFocusPolicy(QtCore.Qt.StrongFocus)    
             
@@ -247,7 +246,7 @@ class MainWindow(QtGui.QMainWindow):
             print 'PLEASE OPEN AN IMAGE BEFORE USING FILTER'          
     
         #Get back focus 
-        self.setFocusPolicy(QtCore.Qt.StrongFocus)      
+        #self.setFocusPolicy(QtCore.Qt.StrongFocus)      
             
     def check_brain_exist(self):       
         word_to_find='brain'
