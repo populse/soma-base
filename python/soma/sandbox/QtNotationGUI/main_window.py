@@ -5,6 +5,7 @@ from PyQt4 import QtCore
 import os
 import read_csv
 from filter_window import MyFilter
+from create_bdd import CreateBDD
 
 class MainWindow(QtGui.QMainWindow):
 
@@ -241,12 +242,14 @@ class MainWindow(QtGui.QMainWindow):
         if self.data_file_name is not None:
             self.data.save(self.data_file_name,self.pictures_in_directory)  
             setattr(self.filter_window,'dirname_snap',self.dirname) 
+            setattr(self.filter_window,'bdd',CreateBDD.get_instance())
+            self.filter_window.choice_studies.addItems(self.filter_window.bdd.studies())
             self.filter_window.open()
         else:
             print 'PLEASE OPEN AN IMAGE BEFORE USING FILTER'          
     
         #Get back focus 
-        #self.setFocusPolicy(QtCore.Qt.StrongFocus)      
+        self.setFocusPolicy(QtCore.Qt.StrongFocus)      
             
     def check_brain_exist(self):       
         word_to_find='brain'

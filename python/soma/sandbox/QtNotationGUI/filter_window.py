@@ -1,6 +1,5 @@
 from PyQt4 import QtGui
 from PyQt4 import QtCore
-from create_bdd import CreateBDD
 import csv
 import re
 import glob
@@ -20,11 +19,13 @@ class MyFilter(QtGui.QDialog):
         self.sign_filter_str=''
         self.number=0
         self.word_to_find=''
+        self.bdd=None
         
         self.hbox = QtGui.QHBoxLayout()
         self.hbox2=QtGui.QHBoxLayout()
         self.vbox = QtGui.QVBoxLayout()    
-          
+        
+        self.choice_studies=QtGui.QComboBox()
         self.display_dirnam=QtGui.QLabel(self.dirname_snap)
         self.choice_type=QtGui.QComboBox()
         self.choice_type.addItems(['split','GW','hemi'])
@@ -39,9 +40,12 @@ class MyFilter(QtGui.QDialog):
         self.hbox2.addWidget(QtGui.QLabel('    Results filter'))
         self.text_res=QtGui.QLabel()
         self.hbox2.addWidget(self.text_res)
+        
+        self.vbox.addWidget(self.choice_studies)
         self.vbox.addLayout(self.hbox)
         self.vbox.addLayout(self.hbox2)
         self.button_save_quit=QtGui.QPushButton('Save&Quit')
+
         self.vbox.addWidget(self.button_save_quit)
         self.vbox.setAlignment(QtCore.Qt.AlignLeft)  
         self.setLayout(self.vbox)
@@ -58,7 +62,7 @@ class MyFilter(QtGui.QDialog):
   
     def get_files_and_marks(self): 
         print 'IN GET FILE'
-        print self.dirname_snap 
+        print 'CURRENT DIRECTORY FOR FILTER',self.dirname_snap 
         data_file_name = os.path.join(self.dirname_snap,'data.csv')
         print data_file_name
         try:
@@ -74,12 +78,9 @@ class MyFilter(QtGui.QDialog):
       
     def filter_process(self):
         print 'in filtre_process'
-        self.bdd=CreateBDD.get_instance()
-        print self.dirname_snap
         self.list_subject=''
         self.nb_subject=0
         self.word_in_the_file=str(self.choice_type.currentText())
-        print 'type file',self.word_in_the_file
         if not self.filenames:
             print 'OPEN CSV'
             #if data.csv has not been opened
@@ -114,11 +115,15 @@ class MyFilter(QtGui.QDialog):
         if m is not None:
             subject=m.group(0)
             subject=subject[0:7]+'_'+subject[7:11]
-            image_t1=self.bdd.T1_images(subject)
+            image_t1=self.bdd.T1_images(self.choice_studies.currentText(),subject)
             if not image_t1:
                 print 'NO IMAGE T1 FIND'
             elif len(image_t1)>1:
-                print 'WARNING MORE THAN ON RAW DATA HAVE BEEN FOUND BY DEFAULT IT S   %s'%image_t1[0] 
+                print 'WARNING MORE THAN ON RAW DATA HAVE BEEN FOUND'
+                for index in range(0,len(image_t1)):
+                    print image_t1[index]
+        
+                print 'BY DEFAULT IS TAKEN     %s'%image_t1[0] 
                 self.list_subject=self.list_subject+"'"+image_t1[0]+"'"+' '  
                 self.nb_subject=self.nb_subject+1
             else:
