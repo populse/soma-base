@@ -4,9 +4,11 @@ from PyQt4 import QtGui
 from PyQt4 import QtCore
 import os
 import read_csv
-from filter_window import MyFilter
-from create_bdd import CreateBDD
 
+#from filter_window import Filter
+
+     
+    
 class MainWindow(QtGui.QMainWindow):
 
     def __init__(self):
@@ -17,7 +19,7 @@ class MainWindow(QtGui.QMainWindow):
         self.pictures_in_directory=None
         self.index_picture_display=None
         self.image_brain=None
-        self.filter_window=MyFilter(self.dirname)
+        #self.filter_window=MyFilter(self.dirname)
         #self.filter_window.setParent(self)
         
         self.create_actions()
@@ -78,13 +80,17 @@ class MainWindow(QtGui.QMainWindow):
         self.setFocusPolicy(QtCore.Qt.StrongFocus)  
 
     def create_menu(self):
-        menubar = self.menuBar()
-        filemenu=menubar.addMenu('&File')
-        filemenu.addAction(self.action_open)
-        filemenu.addAction(self.action_open_xls)
-        filtermenu=menubar.addMenu('&Filter')
-        filtermenu.addAction(self.action_filter)
-
+        self.filemenu=QtGui.QMenu("File")
+        #self.filemenu.setTitle("&File")
+        self.filemenu.addAction(self.action_open)
+        self.filemenu.addAction(self.action_open_xls)
+        self.filtermenu=QtGui.QMenu("Filter")
+        #self.filtermenu.setTitle('&Filter')
+        self.filtermenu.addAction(self.action_filter)
+        self.menuBar().addMenu(self.filemenu)
+        self.menuBar().addMenu(self.filtermenu)
+        
+        
      
     def create_actions(self):
         #Action filemenu
@@ -240,11 +246,24 @@ class MainWindow(QtGui.QMainWindow):
     def on_open_filter(self):
         print 'on open filter'
         if self.data_file_name is not None:
-            self.data.save(self.data_file_name,self.pictures_in_directory)  
-            setattr(self.filter_window,'dirname_snap',self.dirname) 
-            setattr(self.filter_window,'bdd',CreateBDD.get_instance())
-            self.filter_window.choice_studies.addItems(self.filter_window.bdd.studies())
+            try:
+                from create_bdd import CreateBDD  
+                from filter_window import Filter
+                self.filter_window=Filter(self.dirname)        
+                self.data.save(self.data_file_name,self.pictures_in_directory)  
+                setattr(self.filter_window,'dirname_snap',self.dirname) 
+                setattr(self.filter_window,'bdd',CreateBDD.get_instance())
+                self.filter_window.choice_studies.addItems(self.filter_window.bdd.studies())
+
+            except ImportError:
+                print 'NO USE DATABASE FOR FILTER'
+                from filter_window_basic import FilterBasic
+                self.filter_window=FilterBasic(self.dirname)
+                self.data.save(self.data_file_name,self.pictures_in_directory)  
+                setattr(self.filter_window,'dirname_snap',self.dirname) 
             self.filter_window.open()
+                    
+                
         else:
             print 'PLEASE OPEN AN IMAGE BEFORE USING FILTER'          
     

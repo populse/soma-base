@@ -5,9 +5,9 @@ import re
 import glob
 import os
 
-class Filter(QtGui.QDialog):
+class FilterBasic(QtGui.QDialog):
     def __init__(self,dirname):
-        super(Filter, self).__init__()
+        super(FilterBasic, self).__init__()
         self.dirname_bdd='/neurospin/cati/Memento/MEMENTO_fevrier2013/geoCorrected'
         self.dirname_snap=dirname
         self.list_subject=''
@@ -25,15 +25,15 @@ class Filter(QtGui.QDialog):
         self.hbox2=QtGui.QHBoxLayout()
         self.vbox = QtGui.QVBoxLayout()    
         
-        self.choice_studies=QtGui.QComboBox()
-        self.display_dirnam=QtGui.QLabel(self.dirname_snap)
+        #self.choice_studies=QtGui.QComboBox()
+        #self.display_dirnam=QtGui.QLabel(self.dirname_snap)
         self.choice_type=QtGui.QComboBox()
         self.choice_type.addItems(['split','GW','hemi'])
         self.choice_sign=QtGui.QComboBox()
         self.choice_sign.addItems(['<','<=','=','>=','>'])
         self.choice_number=QtGui.QComboBox()
         self.choice_number.addItems(['0','1','2','3','4','5'])
-        self.hbox.addWidget(self.display_dirnam)
+        #self.hbox.addWidget(self.display_dirnam)
         self.hbox.addWidget(self.choice_type)
         self.hbox.addWidget(self.choice_sign)
         self.hbox.addWidget(self.choice_number)
@@ -41,7 +41,7 @@ class Filter(QtGui.QDialog):
         self.text_res=QtGui.QLabel()
         self.hbox2.addWidget(self.text_res)
         
-        self.vbox.addWidget(self.choice_studies)
+        #self.vbox.addWidget(self.choice_studies)
         self.vbox.addLayout(self.hbox)
         self.vbox.addLayout(self.hbox2)
         self.button_save_quit=QtGui.QPushButton('Save&Quit')
@@ -94,43 +94,43 @@ class Filter(QtGui.QDialog):
                 self.number=self.choice_number.currentIndex()
                 if len(self.marks[index])>2:
                     if self.comparison(sign,self.number,int(self.marks[index].split(' ')[0]))==1:
-                        self.raw_data(file)
+                        self.list_subject=self.list_subject+file+'\n' 
+                        self.nb_subject=self.nb_subject+1
                 else:
                     if self.comparison(sign,self.number,int(self.marks[index]))==1:
-                        self.raw_data(file)
+                        self.list_subject=self.list_subject+file+'\n' 
+                        self.nb_subject=self.nb_subject+1
                             
             index=index+1 
         self.text_res.setText(str(self.nb_subject))
     
     def write_results(self):
-        with open(os.path.join(self.dirname_snap,'results_filter_%s_%s_%d'%(self.word_in_the_file,self.sign_filter_str,self.number)), 'w') as f:
+        with open(os.path.join(self.dirname_snap,'results_filter_basic_%s_%s_%d'%(self.word_in_the_file,self.sign_filter_str,self.number)), 'w') as f:
             f.write(self.list_subject)       
         
 
-    def raw_data(self,file):  
-        filename=file.split('.')[0]
-        expresion=r"([0-9]{7})([A-Za-z]{4})"
-        m=re.search(expresion, filename)
+    #def raw_data(self,file):  
+        #filename=file.split('.')[0]
+        #expresion=r"([0-9]{7})([A-Za-z]{4})"
+        #m=re.search(expresion, filename)
 
-        if m is not None:
-            subject=m.group(0)
-            subject=subject[0:7]+'_'+subject[7:11]
-            print 'study',self.choice_studies.currentText()
-            print 'subject',subject
-            image_t1=self.bdd.T1_images(self.choice_studies.currentText(),subject)
-            if not image_t1:
-                print 'NO IMAGE T1 FIND'
-            elif len(image_t1)>1:
-                print 'WARNING MORE THAN ON RAW DATA HAVE BEEN FOUND'
-                for index in range(0,len(image_t1)):
-                    print image_t1[index]
+        #if m is not None:
+            #subject=m.group(0)
+            #subject=subject[0:7]+'_'+subject[7:11]
+            #image_t1=self.bdd.T1_images(self.choice_studies.currentText(),subject)
+            #if not image_t1:
+                #print 'NO IMAGE T1 FIND'
+            #elif len(image_t1)>1:
+                #print 'WARNING MORE THAN ON RAW DATA HAVE BEEN FOUND'
+                #for index in range(0,len(image_t1)):
+                    #print image_t1[index]
         
-                print 'BY DEFAULT IS TAKEN     %s'%image_t1[0] 
-                self.list_subject=self.list_subject+"'"+image_t1[0]+"'"+' '  
-                self.nb_subject=self.nb_subject+1
-            else:
-                self.list_subject=self.list_subject+"'"+image_t1[0]+"'"+' '  
-                self.nb_subject=self.nb_subject+1
+                #print 'BY DEFAULT IS TAKEN     %s'%image_t1[0] 
+                #self.list_subject=self.list_subject+"'"+image_t1[0]+"'"+' '  
+                #self.nb_subject=self.nb_subject+1
+            #else:
+                #self.list_subject=self.list_subject+"'"+image_t1[0]+"'"+' '  
+                #self.nb_subject=self.nb_subject+1
 
 
     def comparison(self,sign,number,number_file):
