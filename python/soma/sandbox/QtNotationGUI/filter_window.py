@@ -58,13 +58,15 @@ class Filter(QtGui.QDialog):
        self.choice_sign.currentIndexChanged.connect(self.filter_process)   
        self.choice_number.currentIndexChanged.connect(self.filter_process)   
        self.button_save_quit.clicked.connect(self.save_quit)
+
+       
+       
         
   
     def get_files_and_marks(self): 
         print 'IN GET FILE'
         print 'CURRENT DIRECTORY FOR FILTER',self.dirname_snap 
         data_file_name = os.path.join(self.dirname_snap,'data.csv')
-        print data_file_name
         try:
             with open(data_file_name, 'rb') as csvfile:
                 myreader = csv.reader(csvfile, delimiter=';', quotechar='|')
@@ -115,8 +117,6 @@ class Filter(QtGui.QDialog):
         if m is not None:
             subject=m.group(0)
             subject=subject[0:7]+'_'+subject[7:11]
-            print 'study',self.choice_studies.currentText()
-            print 'subject',subject
             image_t1=self.bdd.T1_images(self.choice_studies.currentText(),subject)
             if not image_t1:
                 print 'NO IMAGE T1 FIND'

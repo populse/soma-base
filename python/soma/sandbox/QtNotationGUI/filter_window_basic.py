@@ -64,7 +64,6 @@ class FilterBasic(QtGui.QDialog):
         print 'IN GET FILE'
         print 'CURRENT DIRECTORY FOR FILTER',self.dirname_snap 
         data_file_name = os.path.join(self.dirname_snap,'data.csv')
-        print data_file_name
         try:
             with open(data_file_name, 'rb') as csvfile:
                 myreader = csv.reader(csvfile, delimiter=';', quotechar='|')
