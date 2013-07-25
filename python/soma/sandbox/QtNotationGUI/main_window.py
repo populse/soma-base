@@ -349,32 +349,41 @@ class MainWindow(QtGui.QMainWindow):
             #return 0
         #else:
             #return 1        
-    
+
             
     def check_data(self):
         if self.data.is_recorded(self.pictures_relatif_path[self.index_picture_display])==0:
             self.data.add_filename(self.pictures_relatif_path[self.index_picture_display])
             self.data.save(self.data_file_name,self.pictures_relatif_path)  
-           
-            #if self.choice_note2.isEnabled() is True:
-                #self.choice_note.setCurrentIndex(self.data.get_double_note(self.pictures_absolute_path[self.index_picture_display],False))
-                #self.choice_note2.setCurrentIndex(self.data.get_double_note(self.pictures_absolute_path[self.index_picture_display],True))
-            #else:
-        self.choice_note.setCurrentIndex(self.data.get_simple_note(self.pictures_relatif_path[self.index_picture_display]))                        
-        #self.comment.setPlainText(self.data.get_comment(self.pictures_absolute_path[self.index_picture_display]))
-        self.text_in_comment=QtCore.QString.fromUtf8(self.data.get_comment(self.pictures_relatif_path[self.index_picture_display]))
-        self.choice_note_debordement.setCurrentIndex(self.data.get_marks_debordement(self.pictures_relatif_path[self.index_picture_display]))     
-        self.choice_note_pial.setCurrentIndex(self.data.get_marks_pial(self.pictures_relatif_path[self.index_picture_display])+1)                 
-        self.choice_note_cutting.setCurrentIndex(self.data.get_marks_cutting(self.pictures_relatif_path[self.index_picture_display]))      
-        self.choice_note_brain_miss.setCurrentIndex(self.data.get_marks_brain_miss(self.pictures_relatif_path[self.index_picture_display]))     
-
-        self.list_get_locality=self.data.get_locality(self.pictures_relatif_path[self.index_picture_display]) 
-        for i in range(0,len(self.list_locality)):
-            if self.list_locality[i] in self.list_get_locality:
-                self.check_box_locality[i].setCheckState(QtCore.Qt.Checked)
-            else:
-                self.check_box_locality[i].setCheckState(QtCore.Qt.Unchecked)
-                    
+            self.choice_note.setCurrentIndex(self.data.get_simple_note(self.pictures_relatif_path[self.index_picture_display]))                        
+            self.comment.setPlainText(self.data.get_comment(self.pictures_relatif_path[self.index_picture_display]))
+            self.choice_note_debordement.setCurrentIndex(self.data.get_marks_debordement(self.pictures_relatif_path[self.index_picture_display]))     
+            self.choice_note_pial.setCurrentIndex(self.data.get_marks_pial(self.pictures_relatif_path[self.index_picture_display])+1)                 
+            self.choice_note_cutting.setCurrentIndex(self.data.get_marks_cutting(self.pictures_relatif_path[self.index_picture_display]))      
+            self.choice_note_brain_miss.setCurrentIndex(self.data.get_marks_brain_miss(self.pictures_relatif_path[self.index_picture_display]))  
+            self.list_get_locality=self.data.get_locality(self.pictures_relatif_path[self.index_picture_display]) 
+            for i in range(0,len(self.list_locality)):
+                if self.list_locality[i] in self.list_get_locality:
+                    self.check_box_locality[i].setCheckState(QtCore.Qt.Checked)
+                else:
+                    self.check_box_locality[i].setCheckState(QtCore.Qt.Unchecked)          
+            
+        else:
+            self.text_in_comment=QtCore.QString.fromUtf8(self.data.get_comment(self.pictures_relatif_path[self.index_picture_display]))
+            self.comment.setPlainText(unicode(self.text_in_comment))
+            self.data.save(self.data_file_name,self.pictures_relatif_path)             
+            self.choice_note.setCurrentIndex(self.data.get_simple_note(self.pictures_relatif_path[self.index_picture_display]))                        
+            self.choice_note_debordement.setCurrentIndex(self.data.get_marks_debordement(self.pictures_relatif_path[self.index_picture_display]))     
+            self.choice_note_pial.setCurrentIndex(self.data.get_marks_pial(self.pictures_relatif_path[self.index_picture_display])+1)                 
+            self.choice_note_cutting.setCurrentIndex(self.data.get_marks_cutting(self.pictures_relatif_path[self.index_picture_display]))      
+            self.choice_note_brain_miss.setCurrentIndex(self.data.get_marks_brain_miss(self.pictures_relatif_path[self.index_picture_display]))     
+            self.list_get_locality=self.data.get_locality(self.pictures_relatif_path[self.index_picture_display]) 
+            for i in range(0,len(self.list_locality)):
+                if self.list_locality[i] in self.list_get_locality:
+                    self.check_box_locality[i].setCheckState(QtCore.Qt.Checked)
+                else:
+                    self.check_box_locality[i].setCheckState(QtCore.Qt.Unchecked)
+            self.data.save(self.data_file_name,self.pictures_relatif_path)            
 
         
         #else:

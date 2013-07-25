@@ -52,7 +52,6 @@ class Data:
                         self.marks_cutting.append(row[5])
                         self.marks_brain_miss.append(row[6])
                         self.locality.append(row[7])
-                        print self.filenames
                         
         except IOError:
             pass
