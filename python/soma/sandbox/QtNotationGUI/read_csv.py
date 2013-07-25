@@ -3,6 +3,7 @@
 # author Mathilde Bouin
 from __future__ import with_statement
 import csv
+import sys
 
 
 class Data:
@@ -51,28 +52,42 @@ class Data:
                         self.marks_cutting.append(row[5])
                         self.marks_brain_miss.append(row[6])
                         self.locality.append(row[7])
+                        print self.filenames
+                        
         except IOError:
-            print 'IOERROr'
             pass
-
+            
+            
+        except IndexError:
+            print 'SOMETHING WRONG (MISS COLOUMN) WITH DATA.CSV IN THIS ROW %s'%row
+            print 'PLS DELETE THE ROW IN THE DATA.CSV OR PUT THE ROW IN THE RULES'
+            sys.exit()  
     #-------------------------
     # SAVE
     #-------------------------
     def save(self,data_file_name,images_directory):
         print 'SAVE'
         if data_file_name is not None:
+            for i in range (0, len(self.filenames)):
+                if self.filenames[i] not in images_directory:  
+                    print 'ERROR DATA.CSV CONTAINS FALSE DATA---->%s'%self.filenames[i]
+                    sys.exit()    
+            
             with open(data_file_name, 'wb') as csvfile:
                 mywriter = csv.writer(csvfile,delimiter=';', quotechar='|', quoting=csv.QUOTE_MINIMAL)
                 #write the header
                 mywriter.writerow(["Filename","Global grade","Comment","Débordements méninges/sinus","Limite surface pial","Découpage HD, HG et cervelet","Bouts de cerveau manquant","Localité Bouts de cerveau manquant"])
                 for i in range (0, len(self.filenames)):
                     if self.filenames[i] in images_directory:  
-                        #print 'OK FILE SAVE'    
                         try:
                             #mywriter.writerow([ self.filenames[i].encode("utf-8"), self.marks[i],  self.comments[i].encode("utf-8")])
                             mywriter.writerow([unicode(self.filenames[i]),unicode(self.marks[i]),unicode(self.comments[i]),unicode(self.marks_debordement[i]),unicode(self.marks_pial[i]),unicode(self.marks_cutting[i]),unicode(self.marks_brain_miss[i]),unicode(self.locality[i])])
                         except UnicodeDecodeError: 
                             mywriter.writerow([self.filenames[i],self.marks[i],self.comments[i],self.marks_debordement[i],self.marks_pial[i],self.marks_cutting[i],self.marks_brain_miss[i],self.locality[i]])
+                    else:
+                        print 'ERROR DATA.CSV CONTAINS FALSE DATA---->%s'%self.filenames[i]
+                        sys.exit()       
+                    
 
   
     def get_simple_note(self, filename):

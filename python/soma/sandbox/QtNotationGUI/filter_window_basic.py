@@ -93,11 +93,11 @@ class FilterBasic(QtGui.QDialog):
                 self.number=self.choice_number.currentIndex()
                 if len(self.marks[index])>2:
                     if self.comparison(sign,self.number,int(self.marks[index].split(' ')[0]))==1:
-                        self.list_subject=self.list_subject+file+'\n' 
+                        self.list_subject=self.list_subject+os.path.join(self.dirname_snap,file)+'\n' 
                         self.nb_subject=self.nb_subject+1
                 else:
                     if self.comparison(sign,self.number,int(self.marks[index]))==1:
-                        self.list_subject=self.list_subject+file+'\n' 
+                        self.list_subject=self.list_subject+os.path.join(self.dirname_snap,file)+'\n' 
                         self.nb_subject=self.nb_subject+1
                             
             index=index+1 

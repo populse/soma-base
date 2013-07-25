@@ -16,7 +16,8 @@ class MainWindow(QtGui.QMainWindow):
         self.data=read_csv.Data()   
         self.data_file_name= None
         self.dirname=None
-        self.pictures_in_directory=None
+        self.pictures_absolute_path=None
+        self.pictures_relatif_path=None
         self.index_picture_display=None
         self.image_brain=None
         self.check_box_locality={}
@@ -59,7 +60,7 @@ class MainWindow(QtGui.QMainWindow):
         self.hbox.addWidget(self.button_next)
         self.hbox.addWidget(QtGui.QLabel('Grade Image Display'))         
         self.hbox.addWidget(self.choice_note)
-        self.hbox.addWidget(QtGui.QLabel('Grade Brain Mask')) 
+        #self.hbox.addWidget(QtGui.QLabel('Grade Brain Mask')) 
         #self.hbox.addWidget(self.choice_note2)   
         self.hbox.addWidget(self.comment)
         self.hbox.addWidget(self.display_xls)      
@@ -126,12 +127,14 @@ class MainWindow(QtGui.QMainWindow):
         #Surface pial surface limit
         self.label_pial=QtGui.QLabel("Limite surface pial")
         self.choice_note_pial=QtGui.QComboBox()
-        self.choice_note_pial.addItems(['-1','0','1'])
+        self.choice_note_pial_items=['-1','0','1']
+        self.choice_note_pial.addItems(self.choice_note_pial_items)
+        self.choice_note_pial.setCurrentIndex(1)
         self.layout_pial=QtGui.QGridLayout()
         self.layout_pial.addWidget(self.label_pial,0,0)
         self.layout_pial.addWidget(self.choice_note_pial,0,1,QtCore.Qt.AlignRight)
         self.vbox_pre_commentary.addLayout(self.layout_pial)            
-     
+
         #Cutting HL,HR and cerebellum
         self.label_cutting=QtGui.QLabel("Decoupage HD,HG,cervelet")
         self.choice_note_cutting=QtGui.QComboBox()
@@ -155,42 +158,25 @@ class MainWindow(QtGui.QMainWindow):
             self.check_box_locality[i]=QtGui.QCheckBox(self.list_locality[i])
             self.layout_brain_miss.addWidget(self.check_box_locality[i],i+1,0)
          
-         
-        #self.locality1=QtGui.QCheckBox('temporal')
-        #self.locality2=QtGui.QCheckBox('frontal')
-        #self.locality3=QtGui.QCheckBox('hippocampe')
-        #self.locality4=QtGui.QCheckBox('hypersignaux MB')
-        #self.locality5=QtGui.QCheckBox('corps calleux')
-        #self.locality6=QtGui.QCheckBox('noyaux gris')
-        #self.locality7=QtGui.QCheckBox('cervelet')       
-        #self.layout_brain_miss.addWidget(self.locality1,1,0)
-        #self.layout_brain_miss.addWidget(self.locality2,2,0)
-        #self.layout_brain_miss.addWidget(self.locality3,3,0)
-        #self.layout_brain_miss.addWidget(self.locality4,4,0)
-        #self.layout_brain_miss.addWidget(self.locality5,5,0)
-        #self.layout_brain_miss.addWidget(self.locality6,6,0)   
-        #self.layout_brain_miss.addWidget(self.locality7,7,0)
-        
-        self.group_box.setLayout(self.vbox_pre_commentary)               
+        self.group_box.setLayout(self.vbox_pre_commentary)            
         self.hbox2.addWidget(self.group_box)
-        
             
     def set_pre_commmentary(self): 
-        self.data.set_marks_debordement(self.pictures_in_directory[self.index_picture_display],self.choice_note_debordement.currentIndex())
-        self.data.set_marks_pial(self.pictures_in_directory[self.index_picture_display],self.choice_note_pial.currentIndex())
-        self.data.set_marks_cutting(self.pictures_in_directory[self.index_picture_display],self.choice_note_cutting.currentIndex())
-        self.data.set_marks_brain_miss(self.pictures_in_directory[self.index_picture_display],self.choice_note_brain_miss.currentIndex())
+        self.data.set_marks_debordement(self.pictures_relatif_path[self.index_picture_display],self.choice_note_debordement.currentIndex())
+        self.data.set_marks_pial(self.pictures_relatif_path[self.index_picture_display],self.choice_note_pial_items[self.choice_note_pial.currentIndex()])
+        self.data.set_marks_cutting(self.pictures_relatif_path[self.index_picture_display],self.choice_note_cutting.currentIndex())
+        self.data.set_marks_brain_miss(self.pictures_relatif_path[self.index_picture_display],self.choice_note_brain_miss.currentIndex())
         self.checked_locality=[]
         for i in range(0,len(self.list_locality)):
             if self.check_box_locality[i].isChecked() is True:
                 self.checked_locality.append(self.list_locality[i])
-        self.data.set_locality(self.pictures_in_directory[self.index_picture_display],self.checked_locality)        
+        self.data.set_locality(self.pictures_relatif_path[self.index_picture_display],self.checked_locality)        
                 
 
 
     def resizeEvent(self,resizeEvent):
         if self.data_file_name is not None:
-            self.open_image(self.pictures_in_directory[self.index_picture_display]) 
+            self.open_image(self.pictures_relatif_path[self.index_picture_display]) 
 
     def keyPressEvent(self, event):
         if self.data_file_name is not None:
@@ -206,13 +192,13 @@ class MainWindow(QtGui.QMainWindow):
         print 'on next' 
         if self.data_file_name is not None:
             self.set_pre_commmentary()
-            if (self.index_picture_display+1)==len(self.pictures_in_directory):
+            if (self.index_picture_display+1)==len(self.pictures_absolute_path):
                 self.index_picture_display=0
             else:
                 self.index_picture_display=self.index_picture_display+1    
            
-            self.open_image(self.pictures_in_directory[self.index_picture_display]) 
-            self.statusBar().showMessage(self.pictures_in_directory[self.index_picture_display])
+            self.open_image(self.pictures_absolute_path[self.index_picture_display]) 
+            self.statusBar().showMessage(self.pictures_absolute_path[self.index_picture_display])
             #self.find_picture_split()
             self.check_data()  
         
@@ -221,12 +207,12 @@ class MainWindow(QtGui.QMainWindow):
         if self.data_file_name is not None:
             self.set_pre_commmentary()
             if (self.index_picture_display-1)==-1:
-                self.index_picture_display=len(self.pictures_in_directory)-1
+                self.index_picture_display=len(self.pictures_absolute_path)-1
             else:
                 self.index_picture_display=self.index_picture_display-1
              
-            self.open_image(self.pictures_in_directory[self.index_picture_display])     
-            self.statusBar().showMessage(self.pictures_in_directory[self.index_picture_display])             
+            self.open_image(self.pictures_absolute_path[self.index_picture_display])     
+            self.statusBar().showMessage(self.pictures_absolute_path[self.index_picture_display])             
             #self.find_picture_split()
             self.check_data() 
             
@@ -234,15 +220,15 @@ class MainWindow(QtGui.QMainWindow):
         print 'marks change'
         if self.data_file_name is not None:
             #if self.choice_note2.isEnabled() is True:
-                #self.data.set_double_note(self.pictures_in_directory[self.index_picture_display],self.choice_note.currentIndex(),self.choice_note2.currentIndex())
+                #self.data.set_double_note(self.pictures_absolute_path[self.index_picture_display],self.choice_note.currentIndex(),self.choice_note2.currentIndex())
             #else:
-            self.data.set_simple_note(self.pictures_in_directory[self.index_picture_display],self.choice_note.currentIndex())
+            self.data.set_simple_note(self.pictures_relatif_path[self.index_picture_display],self.choice_note.currentIndex())
         self.setFocusPolicy(QtCore.Qt.StrongFocus)               
                                
     #def on_marks_change2(self):
         #print 'brain marks change'
         #if self.data_file_name is not None:
-                #self.data.set_double_note(self.pictures_in_directory[self.index_picture_display],self.choice_note.currentIndex(),self.choice_note2.currentIndex())
+                #self.data.set_double_note(self.pictures_absolute_path[self.index_picture_display],self.choice_note.currentIndex(),self.choice_note2.currentIndex())
         #self.setFocusPolicy(QtCore.Qt.StrongFocus)
         
         
@@ -251,7 +237,7 @@ class MainWindow(QtGui.QMainWindow):
         if self.data_file_name is not None:
             self.text_in_comment=self.comment.toPlainText()
             self.text_in_comment=self.comment.toPlainText().toUtf8()
-            self.data.set_comment(self.pictures_in_directory[self.index_picture_display],self.text_in_comment)
+            self.data.set_comment(self.pictures_relatif_path[self.index_picture_display],self.text_in_comment)
         self.setFocusPolicy(QtCore.Qt.StrongFocus)
 
             
@@ -267,9 +253,12 @@ class MainWindow(QtGui.QMainWindow):
             results = [os.path.join(self.dirname,each) for each in os.listdir(self.dirname) if each.endswith('.png')]
             results.sort()
             print self.dirname
-            self.pictures_in_directory=results
+            self.pictures_absolute_path=results
+            results2=[each for each in os.listdir(self.dirname) if each.endswith('.png')]
+            results2.sort()
+            self.pictures_relatif_path=results2
             i=-1
-            for picture in self.pictures_in_directory:
+            for picture in self.pictures_absolute_path:
                 i=i+1
                 if picture==fname:
                     self.index_picture_display=i
@@ -277,11 +266,11 @@ class MainWindow(QtGui.QMainWindow):
                          
         if self.data_file_name is not None:    
          #Display image       
-            self.statusBar().showMessage(self.pictures_in_directory[self.index_picture_display])
+            self.statusBar().showMessage(self.pictures_absolute_path[self.index_picture_display])
             self.data.load(self.data_file_name)
             #self.find_picture_split()
             self.check_data()
-            self.statusBar().showMessage(self.pictures_in_directory[self.index_picture_display])             
+            self.statusBar().showMessage(self.pictures_absolute_path[self.index_picture_display])             
 
         #Get back focus 
         self.setFocusPolicy(QtCore.Qt.StrongFocus)    
@@ -327,21 +316,21 @@ class MainWindow(QtGui.QMainWindow):
     def on_open_filter(self):
         print 'on open filter'
         if self.data_file_name is not None:
-            try:
-                from create_bdd import CreateBDD  
-                from filter_window import Filter
-                self.filter_window=Filter(self.dirname)        
-                self.data.save(self.data_file_name,self.pictures_in_directory)  
-                setattr(self.filter_window,'dirname_snap',self.dirname) 
-                setattr(self.filter_window,'bdd',CreateBDD.get_instance())
-                self.filter_window.choice_studies.addItems(self.filter_window.bdd.studies())
+            #try:
+                #from create_bdd import CreateBDD  
+                #from filter_window import Filter
+                #self.filter_window=Filter(self.dirname)        
+                #self.data.save(self.data_file_name,self.pictures_relatif_path)  
+                #setattr(self.filter_window,'dirname_snap',self.dirname) 
+                #setattr(self.filter_window,'bdd',CreateBDD.get_instance())
+                #self.filter_window.choice_studies.addItems(self.filter_window.bdd.studies())
 
-            except ImportError:
-                print 'NO USE DATABASE FOR FILTER'
-                from filter_window_basic import FilterBasic
-                self.filter_window=FilterBasic(self.dirname)
-                self.data.save(self.data_file_name,self.pictures_in_directory)  
-                setattr(self.filter_window,'dirname_snap',self.dirname) 
+            #except ImportError:
+            print 'NO USE DATABASE FOR FILTER'
+            from filter_window_basic import FilterBasic
+            self.filter_window=FilterBasic(self.dirname)
+            self.data.save(self.data_file_name,self.pictures_relatif_path)  
+            setattr(self.filter_window,'dirname_snap',self.dirname) 
             self.filter_window.open()
                     
                 
@@ -351,35 +340,35 @@ class MainWindow(QtGui.QMainWindow):
         #Get back focus 
         self.setFocusPolicy(QtCore.Qt.StrongFocus)      
             
-    def check_brain_exist(self):       
-        word_to_find='brain'
-        self.image_brain=self.pictures_in_directory[self.index_picture_display].replace('split','brain')
-        element=[]
-        element+= [image for image in self.pictures_in_directory if image==self.image_brain]
-        if not element:
-            return 0
-        else:
-            return 1        
+    #def check_brain_exist(self):       
+        #word_to_find='brain'
+        #self.image_brain=self.pictures_absolute_path[self.index_picture_display].replace('split','brain')
+        #element=[]
+        #element+= [image for image in self.pictures_absolute_path if image==self.image_brain]
+        #if not element:
+            #return 0
+        #else:
+            #return 1        
     
             
     def check_data(self):
-        if self.data.is_recorded(self.pictures_in_directory[self.index_picture_display])==0:
-            self.data.add_filename(self.pictures_in_directory[self.index_picture_display])
-            self.data.save(self.data_file_name,self.pictures_in_directory)  
+        if self.data.is_recorded(self.pictures_relatif_path[self.index_picture_display])==0:
+            self.data.add_filename(self.pictures_relatif_path[self.index_picture_display])
+            self.data.save(self.data_file_name,self.pictures_relatif_path)  
            
             #if self.choice_note2.isEnabled() is True:
-                #self.choice_note.setCurrentIndex(self.data.get_double_note(self.pictures_in_directory[self.index_picture_display],False))
-                #self.choice_note2.setCurrentIndex(self.data.get_double_note(self.pictures_in_directory[self.index_picture_display],True))
+                #self.choice_note.setCurrentIndex(self.data.get_double_note(self.pictures_absolute_path[self.index_picture_display],False))
+                #self.choice_note2.setCurrentIndex(self.data.get_double_note(self.pictures_absolute_path[self.index_picture_display],True))
             #else:
-        self.choice_note.setCurrentIndex(self.data.get_simple_note(self.pictures_in_directory[self.index_picture_display]))                        
-        #self.comment.setPlainText(self.data.get_comment(self.pictures_in_directory[self.index_picture_display]))
-        self.text_in_comment=QtCore.QString.fromUtf8(self.data.get_comment(self.pictures_in_directory[self.index_picture_display]))
-        self.choice_note_debordement.setCurrentIndex(self.data.get_marks_debordement(self.pictures_in_directory[self.index_picture_display]))      
-        self.choice_note_pial.setCurrentIndex(self.data.get_marks_pial(self.pictures_in_directory[self.index_picture_display]))                 
-        self.choice_note_cutting.setCurrentIndex(self.data.get_marks_cutting(self.pictures_in_directory[self.index_picture_display]))      
-        self.choice_note_brain_miss.setCurrentIndex(self.data.get_marks_brain_miss(self.pictures_in_directory[self.index_picture_display]))     
+        self.choice_note.setCurrentIndex(self.data.get_simple_note(self.pictures_relatif_path[self.index_picture_display]))                        
+        #self.comment.setPlainText(self.data.get_comment(self.pictures_absolute_path[self.index_picture_display]))
+        self.text_in_comment=QtCore.QString.fromUtf8(self.data.get_comment(self.pictures_relatif_path[self.index_picture_display]))
+        self.choice_note_debordement.setCurrentIndex(self.data.get_marks_debordement(self.pictures_relatif_path[self.index_picture_display]))     
+        self.choice_note_pial.setCurrentIndex(self.data.get_marks_pial(self.pictures_relatif_path[self.index_picture_display])+1)                 
+        self.choice_note_cutting.setCurrentIndex(self.data.get_marks_cutting(self.pictures_relatif_path[self.index_picture_display]))      
+        self.choice_note_brain_miss.setCurrentIndex(self.data.get_marks_brain_miss(self.pictures_relatif_path[self.index_picture_display]))     
 
-        self.list_get_locality=self.data.get_locality(self.pictures_in_directory[self.index_picture_display]) 
+        self.list_get_locality=self.data.get_locality(self.pictures_relatif_path[self.index_picture_display]) 
         for i in range(0,len(self.list_locality)):
             if self.list_locality[i] in self.list_get_locality:
                 self.check_box_locality[i].setCheckState(QtCore.Qt.Checked)
@@ -389,23 +378,23 @@ class MainWindow(QtGui.QMainWindow):
 
         
         #else:
-            ##self.text_in_comment=QtCore.QString.fromUtf8(self.data.get_comment(self.pictures_in_directory[self.index_picture_display]))
+            ##self.text_in_comment=QtCore.QString.fromUtf8(self.data.get_comment(self.pictures_absolute_path[self.index_picture_display]))
             ##if self.choice_note2.isEnabled() is True:
-                ##self.choice_note.setCurrentIndex(self.data.get_double_note(self.pictures_in_directory[self.index_picture_display],False))
-                ##self.choice_note2.setCurrentIndex(self.data.get_double_note(self.pictures_in_directory[self.index_picture_display],True))
+                ##self.choice_note.setCurrentIndex(self.data.get_double_note(self.pictures_absolute_path[self.index_picture_display],False))
+                ##self.choice_note2.setCurrentIndex(self.data.get_double_note(self.pictures_absolute_path[self.index_picture_display],True))
             ##else:   
-            #self.choice_note.setCurrentIndex(self.data.get_simple_note(self.pictures_in_directory[self.index_picture_display]))   
+            #self.choice_note.setCurrentIndex(self.data.get_simple_note(self.pictures_absolute_path[self.index_picture_display]))   
             #self.comment.setPlainText(unicode(self.text_in_comment))
             
             
             
             
-            #self.data.save(self.data_file_name,self.pictures_in_directory)    
+            #self.data.save(self.data_file_name,self.pictures_absolute_path)    
             
             
     #def find_picture_split(self):
         #word_to_find='split'
-        #if word_to_find in self.pictures_in_directory[self.index_picture_display]:
+        #if word_to_find in self.pictures_absolute_path[self.index_picture_display]:
             #self.choice_note2.setEnabled(True)
         #else:
             #self.choice_note2.setEnabled(False)
@@ -415,5 +404,5 @@ class MainWindow(QtGui.QMainWindow):
     def closeEvent(self, event): 
         if self.data_file_name is not None:
             self.set_pre_commmentary()
-            self.data.save(self.data_file_name,self.pictures_in_directory)    
+            self.data.save(self.data_file_name,self.pictures_relatif_path)    
 
