@@ -167,3 +167,29 @@ def locate_file( pattern, root = os.curdir ):
     for path, dirs, files in os.walk(os.path.abspath(root)):
         for filename in fnmatch.filter(files, pattern):
             return os.path.join(path, filename)
+
+def which(program):
+    """
+    Identifies the location of an executable
+    
+    :param string program
+        The executable to find
+        
+    :returns:
+        The full path of the executable
+    """
+    def is_exe(fpath):
+        return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
+    
+    fpath, fname = os.path.split(program)
+    if fpath:
+        if is_exe(program):
+            return program
+    else:
+        for path in os.environ["PATH"].split(os.pathsep):
+            path = path.strip('"')
+            exe_file = os.path.join(path, program)
+            if is_exe(exe_file):
+                return exe_file
+    
+    return None
