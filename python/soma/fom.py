@@ -208,8 +208,6 @@ class FileOrganizationModelManager( object ):
           if not name:
             raise ValueError( 'file %s does not contain fom_name' % full_path )
           self._cache[ name ] = full_path
-          print self._cache.keys()
-          
     return self._cache.keys()
    
    
@@ -219,7 +217,6 @@ class FileOrganizationModelManager( object ):
     foms = FileOrganizationModels()
     for name in names:
      foms.import_file( self._cache[ name ], foms_manager=self )
-    print 'foms',foms 
     return foms
 
     
@@ -363,6 +360,16 @@ class FileOrganizationModels( object ):
       self._expand_json_patterns( process_patterns, new_patterns, { 'fom_name' : fom_name } )
       self._parse_patterns( new_patterns, self.patterns )
 
+
+  def get_attributes_without_value(self):
+      att_no_value={}
+      for att in self.shared_patterns:
+	  if not att.startswith('shared.'):
+	      for attrec in self._attributes_regex.findall( self.shared_patterns[att] ):
+		  if attrec not in att_no_value:
+		      att_no_value[attrec]=''
+		      
+      return att_no_value
       
   def selected_rules( self, selection ):
     if selection:
@@ -559,14 +566,13 @@ class PathToAttributes( object ):
           parent = parent.setdefault( ''.join( regex ) + '$', [ {}, {} ] )[ 1 ]
 
           
-  def parse_directory( self, dirdict, single_match=False, all_unknown=False, log=None ):
+  def parse_directory( self, dirdict, single_match=False, all_unknown=False, log=None ): 
     return self._parse_directory( dirdict, [], self.hierarchical_patterns, {}, single_match, all_unknown, log )
   
   
   def _parse_directory( self, dirdict, path, hierarchical_patterns, pattern_attributes, single_match, all_unknown, log ):
     for name, content in dirdict.iteritems():
       st, content = content
-      
       # Split extention on left most dot
       split = name.split( '.', 1 )
       name_no_ext = split[ 0 ]
@@ -627,11 +633,7 @@ class AttributesToPaths( object ):
   def __init__( self, foms, selection=None, directories={}, debug=None ):
     self.foms = foms
     self.selection = selection
-    print 'in ATP'
-    print self.selection
-    print '                           \n'
     self.directories = directories
-    print self.directories
     self._db = sqlite3.connect( ':memory:' )
     self._db.execute( 'PRAGMA journal_mode = OFF;' )
     self._db.execute( 'PRAGMA synchronous = OFF;' )
@@ -680,7 +682,7 @@ class AttributesToPaths( object ):
       if value is None:
         value = self.selection.get( attribute )
       if value is None:
-        select.append( '(_' + attribute + " != '' OR " + attribute + ' IS NULL )' )
+        select.append( '(_' + attribute + " != '' OR _" + attribute + ' IS NULL )' )
       elif attribute == 'fom_format':
         selected_format = attributes.get( 'fom_format' )
         if selected_format == 'fom_first':
@@ -749,7 +751,7 @@ class AttributesToPaths( object ):
           sql += ' WHERE ' + ' AND '.join( '_' + i + ' = ?' for i in selection )
           values = list( self._db.execute( sql, selection.values() ) )
         else:
-	  print '!!!', sql
+	  #print '!!!', sql
           values = list( self._db.execute( sql ) )
         #print '!', attribute, values
         if len( values ) > 1 or values[ 0 ][ 0 ] == '':
@@ -781,108 +783,87 @@ def call_after_application_initialization( application ):
     application.fom_manager = FileOrganizationModelManager( application.fom_path )
 
 
-        
+"""Returns useful attributes for completion"""
 def process_find_attributes(fom,process,input_parameter,value,directories):   
 
-    """Returns useful attributes for completion"""
 
     global foms
     global atp
     
      # Load one or more FOMs   
     foms = Application().fom_manager.load_foms( fom )
-    
-    #foms.pprint()
-    #print '=' * 40
-
-    # Extract attributes from path given on command line
-    pta = PathToAttributes( foms, selection=dict( fom_process=process, fom_parameter=input_parameter ) )
-    # Only relative paths are matched by PathToAttributes. We suppose that
-    # the given file is in the "acquisition" directory.
-    #path = os.path.abspath( sys.argv[1] )
-    path = os.path.abspath( value )
-    input_directory = os.path.dirname( os.path.dirname( os.path.dirname( os.path.dirname( os.path.dirname( path ) ) ) ) )
-    path = path[ len( input_directory ) + 1: ]
-    directories[ 'input' ] = input_directory
-    directories[ 'output' ] = input_directory
-    
-    # Extract the attributes from the first result returned by parse_directory
-    try:
-      path, st, attributes = pta.parse_directory( DirectoryAsDict.paths_to_dict( path ) ).next()
-    except StopIteration:
-      raise ValueError( '%s is not recognized for parameter "%s" of "%s"' % ( path, input_parameter, process ) )
-    
-    # Remove FOM related attributes that are specific to the given file name
-    for i in attributes.keys():
-      if i.startswith( 'fom_' ):
-        del attributes[ i ]
-    
-    print 'attributes1111',attributes
-    #return attributes
-    
+    if value is None:
+	attributes=foms.get_attributes_without_value()
+    else:
+	# Extract attributes from path given on command line
+	pta = PathToAttributes( foms, selection=dict( fom_process=process, fom_parameter=input_parameter ) )
+	
+	# Only relative paths are matched by PathToAttributes. We suppose that
+	# the given file is in the "acquisition" directory.
+	#path = os.path.abspath( sys.argv[1] )
+	path = os.path.abspath( value )
+	input_directory = os.path.dirname( os.path.dirname( os.path.dirname( os.path.dirname( os.path.dirname( path ) ) ) ) )
+	path = path[ len( input_directory ) + 1: ]
+	directories[ 'input' ] = input_directory
+	directories[ 'output' ] = input_directory
+	# Extract the attributes from the first result returned by parse_directory
+	try:
+	  path, st, attributes = pta.parse_directory( DirectoryAsDict.paths_to_dict( path ) ).next()
+	except StopIteration: 
+	  raise ValueError( '%s is not recognized for parameter "%s" of "%s"' % ( path, input_parameter, process ) )
+	  
+	# Remove FOM related attributes that are specific to the given file name
+	for i in attributes.keys():
+	  if i.startswith( 'fom_' ):
+	    del attributes[ i ]   
+	    
     # Create an AttributesToPaths specialized for our process
-
     atp = AttributesToPaths( foms, selection=dict( fom_process=process ),
-                             directories=directories )
-                             
-      
-                       
+			     directories=directories )
+			     
+		     
     # Set the default value for all attributes that can be used to find a path that do
     # not already have a value (e.g. analysis = 'default_analysis')
-    #print 'attributes',attributes
 
     for attribute in atp.find_discriminant_attributes():
       default_value = foms.attribute_definitions[ attribute ].get( 'default_value' )
       #print '!', attribute, default_value
-      if default_value is not None:
-        #print 'default_value',default_value  
+      
+      if attribute in attributes.keys():
+	  if attributes[attribute] != '':
+	      pass 
+	  elif default_value is not None:
+	      attributes[ attribute ] = default_value        	      
+      elif default_value is not None:
         attributes[ attribute ] = default_value
+	
     #pprint.pprint( attributes )
     #print '=' * 40
     # Try to find a single value for all parameters declared in foms for this process.
     # First, say to select the first format when several are possible
     return attributes
     
-    
-    
-def process_create_completion(attributes,process,prorpo):   
-    
-    print 'in proceess create completion'    
+""" Create completion with fom and attribute"""   
+def process_create_completion(attributes,process):   
     # Create an AttributesToPaths specialized for our process
     #atp = AttributesToPaths( foms, selection=dict( fom_process=process ),
                              #directories=directories )
     global atp     
-    global foms       
-    #print 'gloglo',globals()[AttributesToPaths]()
-    #print 'atp',atp                        
+    global foms                            
     completion={}
     attributes[ 'fom_format' ] = 'fom_first'
+        
     for parameter in foms.patterns[ process ]:
       # Select only the attributes that are discriminant for this parameter
       # otherwise other attibutes can prevent the appropriate rule to match
       parameter_attributes = [ 'fom_process' ] + atp.find_discriminant_attributes( fom_parameter=parameter )
-      #print 'disicrminant',atp.find_discriminant_attributes( fom_parameter=parameter )
-      #print 'parameter _attributes',parameter_attributes
-      #print 'attributes',attributes
-
       d = dict( ( i, attributes[ i ] ) for i in parameter_attributes if i in attributes )
       d['fom_parameter'] = parameter
-       
       #print parameter,'-->', list( h[0] for h in atp.find_paths( d ))
-
-
       for h in atp.find_paths(d):
           completion[parameter]=[h[0],h[1]]
-               
-
-    for key in completion:   
-        setattr(prorpo,key,completion[key][0])  
-        prorpo.trait(key).attributes=completion[key][1] 
-    
-    
-    
     return completion   
-    #return completion,attributes
+
     
 
 if __name__ == '__main__':

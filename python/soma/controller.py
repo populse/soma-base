@@ -16,8 +16,6 @@ from soma.factory import Factories
 global_compt_order=0
 
 
-
-
 class ControllerFactories( Factories ):
     """Holds association between an object and its controller"""
     def __init__( self ):
