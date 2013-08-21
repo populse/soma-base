@@ -129,11 +129,12 @@ class SortedDictionary( UserDict, object ):
     '''
     for k in self:
       try:
-        yield k, self[ k ]
-      except:
-        print '!error!', self.data.keys(), self.sortedKeys
+        yield ( k, self[ k ] )
+      except KeyError:
+        print '!SortedDictionary error!', self.data.keys(), self.sortedKeys
         raise
 
+        
   def insert( self, index, key, value ):
     '''
     insert a ( C{key}, C{value} ) pair in sorted dictionary before position 
