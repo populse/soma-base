@@ -15,6 +15,7 @@ except ImportError:
 from soma.path import split_path
 from soma.application import Application
 from soma.config import short_version
+from soma.sorted_dictionary import SortedDictionary
 
 class DirectoryAsDict( object ):
   def __init__( self, directory, cache=None ):
@@ -47,7 +48,7 @@ class DirectoryAsDict( object ):
         if st_content is not None:
           yield st_content
         else:
-          st = os.lstat( full_path )
+          st = os.stat( full_path )
           if stat.S_ISDIR( st.st_mode ):
             yield ( name, [ tuple( st ), DirectoryAsDict( full_path ) ] )
           else:
@@ -276,7 +277,7 @@ class FileOrganizationModels( object ):
     if foms and foms_manager is None:
       raise RuntimeError( 'Cannot import FOM because no FileOrganizationModelManager has been provided' ) 
     for fom in foms:
-      self.import_file( foms_manager.file_name( fom ) )
+      self.import_file( foms_manager.file_name( fom ), foms_manager=foms_manager )
     
     fom_name = json_dict[ 'fom_name' ]
     if fom_name in self.fom_names:
@@ -516,7 +517,7 @@ class FileOrganizationModels( object ):
 class PathToAttributes( object ):
   def __init__( self, foms, selection=None ):
     self._attributes_regex = re.compile( '<([^>]+)>' )
-    self.hierarchical_patterns = {}
+    self.hierarchical_patterns = SortedDictionary()
     for rule_pattern, rule_attributes in foms.selected_rules( selection ):
       rule_formats = rule_attributes.get( 'fom_formats', [] )
       parent = self.hierarchical_patterns
@@ -583,31 +584,36 @@ class PathToAttributes( object ):
       
       matched_directories = []
       matched = False
-      if log: log.info( name + ' ' +  repr( pattern_attributes ) )
+      if log: log.debug( '-> ' + name + ' ' +  repr( pattern_attributes ) )
       for pattern, rules_subpattern in hierarchical_patterns.iteritems():
         ext_rules, subpattern = rules_subpattern
         pattern = pattern % pattern_attributes
         match = re.match( pattern, name_no_ext )
         if log: log.debug( 'try %s for %s' % ( repr( pattern ), repr( name_no_ext ) ) )
         if match:
-          if log: log.info( 'match ' + pattern )
+          if log: log.debug( 'match ' + pattern )
           matched = True
           new_attributes = match.groupdict()
           new_attributes.update( pattern_attributes )
           
+          stop_parsing = False
           rules = ext_rules.get( ext )
           if rules:
             for rule_attributes in rules:
               new_attributes.update( rule_attributes )
+              stop_parsing = single_match or new_attributes.pop( 'fom_stop_parsing', False )
               yield path + [ name ], st, new_attributes
               matched = True
-              if single_match:
+              if stop_parsing:
                 break
           if subpattern:
+            stop_parsing = single_match
             full_path = path + [ name ]
             matched_directories.append( ( full_path, subpattern, new_attributes ) )
-            if single_match:
+            if stop_parsing:
               break
+          if stop_parsing:
+            break
       if not matched and all_unknown:
         yield path + [ name ], st, None
         if content:
