@@ -18,6 +18,13 @@ from soma.config import short_version
 from soma.sorted_dictionary import SortedDictionary
 
 class DirectoryAsDict( object ):
+  def __new__( cls, directory, cache=None ):
+    if os.path.isdir( directory ):
+      return super( DirectoryAsDict, cls ).__new__( cls, directory, cache )
+    else:
+      return json.load( open( directory ) )
+  
+  
   def __init__( self, directory, cache=None ):
     self.directory = directory
     if cache is None:
@@ -592,7 +599,6 @@ class PathToAttributes( object ):
         if log: log.debug( 'try %s for %s' % ( repr( pattern ), repr( name_no_ext ) ) )
         if match:
           if log: log.debug( 'match ' + pattern )
-          matched = True
           new_attributes = match.groupdict()
           new_attributes.update( pattern_attributes )
           
@@ -606,7 +612,8 @@ class PathToAttributes( object ):
               matched = True
               if stop_parsing:
                 break
-          if subpattern:
+          if subpattern and stat.S_ISDIR( posix.stat_result(st).st_mode ):
+            matched = True
             stop_parsing = single_match
             full_path = path + [ name ]
             matched_directories.append( ( full_path, subpattern, new_attributes ) )
