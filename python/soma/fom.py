@@ -595,8 +595,12 @@ class PathToAttributes( object ):
       for pattern, rules_subpattern in hierarchical_patterns.iteritems():
         ext_rules, subpattern = rules_subpattern
         pattern = pattern % pattern_attributes
-        match = re.match( pattern, name_no_ext )
-        if log: log.debug( 'try %s for %s' % ( repr( pattern ), repr( name_no_ext ) ) )
+        if subpattern:
+          match = re.match( pattern, name )
+          if log: log.debug( 'try %s for %s' % ( repr( pattern ), repr( name ) ) )
+        else:
+          match = re.match( pattern, name_no_ext )
+          if log: log.debug( 'try %s for %s' % ( repr( pattern ), repr( name_no_ext ) ) )
         if match:
           if log: log.debug( 'match ' + pattern )
           new_attributes = match.groupdict()
@@ -612,7 +616,7 @@ class PathToAttributes( object ):
               matched = True
               if stop_parsing:
                 break
-          if subpattern and stat.S_ISDIR( posix.stat_result(st).st_mode ):
+          if subpattern and st is not None and stat.S_ISDIR( posix.stat_result(st).st_mode ):
             matched = True
             stop_parsing = single_match
             full_path = path + [ name ]
@@ -800,7 +804,6 @@ def call_after_application_initialization( application ):
 def process_find_attributes(fom,process,input_parameter,value,directories):   
 
 
-    global foms
     global atp
     
      # Load one or more FOMs   
