@@ -616,7 +616,7 @@ class PathToAttributes( object ):
               matched = True
               if stop_parsing:
                 break
-          if subpattern and st is not None and stat.S_ISDIR( posix.stat_result(st).st_mode ):
+          if subpattern and ( st is None or stat.S_ISDIR( posix.stat_result(st).st_mode ) ):
             matched = True
             stop_parsing = single_match
             full_path = path + [ name ]
