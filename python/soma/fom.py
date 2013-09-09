@@ -7,13 +7,8 @@ try:
 except ImportError:
   import json as json_reader
 
-try:
-    from traits.api import ListStr,HasTraits,File,Float,Instance,Enum,Str
-except ImportError:
-    from enthought.traits.api import ListStr,HasTraits,File,Float,Instance,Enum,Str
 
 from soma.path import split_path
-from soma.application import Application
 from soma.config import short_version
 from soma.sorted_dictionary import SortedDictionary
 
@@ -789,11 +784,16 @@ class AttributesToPaths( object ):
       
     
 def call_before_application_initialization( application ):
-    application.add_trait( 'fom_path', 
-      ListStr( descr='Path for finding file organization models' ) )
-    if application.install_directory:
-        application.fom_path = [ os.path.join( application.install_directory, 
-            'share', 'soma-base-' + short_version, 'foms' ) ]
+  try:
+    from traits.api import ListStr
+  except ImportError:
+    from enthought.traits.api import ListStr
+  
+  application.add_trait( 'fom_path', 
+    ListStr( descr='Path for finding file organization models' ) )
+  if application.install_directory:
+      application.fom_path = [ os.path.join( application.install_directory, 
+          'share', 'soma-base-' + short_version, 'foms' ) ]
 
 
 def call_after_application_initialization( application ):
@@ -802,6 +802,7 @@ def call_after_application_initialization( application ):
 
 """Returns useful attributes for completion"""
 def process_find_attributes(fom,process,input_parameter,value,directories):   
+    from soma.application import Application
 
 
     global atp
@@ -883,6 +884,7 @@ def process_create_completion(attributes,process):
     
 
 if __name__ == '__main__':
+    from soma.application import Application
     # First thing to do is to create an Application with name and version
     app = Application( 'soma.fom', '1.0' )
     # Register module to load and call functions before and/or after
