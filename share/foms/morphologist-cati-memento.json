@@ -3,15 +3,18 @@
   
   "fom_import" : [ "formats-brainvisa-1.0", "shared-brainvisa-1.0" ],
 
+  "attribute_definitions" : {   
+  },
+
   "shared_patterns" : {
-    "acquisition_input" : "<study>/CONVERTED/<center>/<subject>/<time_point>/<modality/<acquisition>",
-    "acquisition" : "<study>/ANALYSIS/<center>/<subject>/<time_point>/<modality/<acquisition>",
+    "acquisition_input" : "<study>/CONVERTED/<center>/<subject>/<time_point>/<modality>/<acquisition>",
+    "acquisition" : "<study>/ANALYSIS/<center>/<subject>/<time_point>/<modality>/<acquisition>",
   },
   
   "processes" : {  
     "morphologistSimp.SimplifiedMorphologist" : {
-       "t1mri": [ [ "input:{acquisition_input}/<subject>_<time_point>_<sequence>, "images" ],
-                  [ "input:{acquisition_input}/normalized_<normalization>_<subject>_<time_point>_<sequence>", "images" ] ],
+       "t1mri": [ [ "input:{acquisition_input}/<subject>_<time_point>_<acquisition>_<sequence>", "images" ] ,
+                  [ "input:{acquisition_input}/normalized_<normalization>_<subject>_<time_point>_<acquisition>_<sequence>", "images" ] ],
        #Commissure Coordinates
        "commissure_coordinates": [ [ "input:{acquisition}/<subject>", "Commissure coordinates" ] ],
         ##SPM Normalization
