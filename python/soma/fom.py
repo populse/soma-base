@@ -407,9 +407,8 @@ class FileOrganizationModels( object ):
       if attribute not in self.attribute_definitions:
         self.attribute_definitions[ attribute ] = { 'values' : set( (value,) ) }
       else:
-        values = self.attribute_definitions[ attribute ].get( 'values' )
-        if values:
-          values.add( value )
+        values = self.attribute_definitions[ attribute ].setdefault( 'values', set() )
+        values.add( value )
           
     key_attribute = json_patterns.get( 'fom_key_attribute', None )
     if key_attribute:
@@ -435,12 +434,8 @@ class FileOrganizationModels( object ):
             pattern, format_list, rule_attributes = rule
             for attribute, value in rule_attributes.iteritems():
               definition = self.attribute_definitions.setdefault( attribute, {} )
-              if definition is not None:
-                values = definition.setdefault( 'values', set() )
-                if values is not None:
-                  values.add( value )
-              #else:
-                #raise ValueError( 'Attribute "%s" must be declared in attribute_definitions' % attribute )
+              values = definition.setdefault( 'values', set() )
+              values.add( value )
             if attributes:
               new_attributes = attributes.copy()
               new_attributes.update( rule_attributes )
@@ -496,7 +491,7 @@ class FileOrganizationModels( object ):
             definition = self.attribute_definitions.setdefault( attribute, {} )
             value = rule_attributes.get( attribute )
             if value is not None:
-              definition[ 'values' ] = set( ( value, ) )
+              definition.setdefault( 'values', set() ).add( value )
             elif 'fom_open_value' not in definition:
               definition[ 'fom_open_value' ] = True
               #raise ValueError( 'Attribute "%s" must be declared in attribute_definitions' % attribute )
@@ -546,7 +541,7 @@ class PathToAttributes( object ):
           else:
             attribute_type = foms.attribute_definitions[ attribute ]
             values = attribute_type.get( 'values' )
-            if values:
+            if values and not attribute_type.get( 'fom_open_value', True ):
               regex.append( '(?P<%s>%s)' % ( attribute, '|'.join( '(?:' + re.escape(i) + ')' for i in values ) ) )
             else:
               regex.append( '(?P<%s>%s)' % ( attribute, attribute_re ) )
@@ -586,7 +581,7 @@ class PathToAttributes( object ):
       
       matched_directories = []
       matched = False
-      if log: log.debug( '-> ' + name + ' ' +  repr( pattern_attributes ) )
+      if log: log.debug( '?? ' + name + ' ' +  repr( pattern_attributes ) )
       for pattern, rules_subpattern in hierarchical_patterns.iteritems():
         ext_rules, subpattern = rules_subpattern
         pattern = pattern % pattern_attributes
@@ -607,6 +602,7 @@ class PathToAttributes( object ):
             for rule_attributes in rules:
               new_attributes.update( rule_attributes )
               stop_parsing = single_match or new_attributes.pop( 'fom_stop_parsing', False )
+              if log: log.debug( '-> ' + '/'.join(  path + [ name ] ) + ' ' + repr( new_attributes ) )
               yield path + [ name ], st, new_attributes
               matched = True
               if stop_parsing:
@@ -621,6 +617,7 @@ class PathToAttributes( object ):
           if stop_parsing:
             break
       if not matched and all_unknown:
+        if log: log.debug( '-> ' + '/'.join( path + [ name ] ) + ' None' )
         yield path + [ name ], st, None
         if content:
           for i in self._parse_unknown_directory( content, path + [ name ] ):
