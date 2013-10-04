@@ -13,7 +13,7 @@ class MainWindow(QtGui.QMainWindow):
 
     def __init__(self):
         super(MainWindow, self).__init__()
-        self.data=read_csv.Data()   
+        #self.data=read_csv.Data()   
         self.data_file_name= None
         self.dirname=None
         self.pictures_absolute_path=None
@@ -33,15 +33,23 @@ class MainWindow(QtGui.QMainWindow):
         self.MainWidget=QtGui.QWidget()
         self.resize(800,600)
         self.vbox = QtGui.QVBoxLayout()
-        self.hbox = QtGui.QHBoxLayout()     
+        self.hbox = QtGui.QHBoxLayout() 
+        #self.hbox.setAlignment(QtCore.Qt.AlignLeft)  
+        self.hbox.setSizeConstraint(QtGui.QLayout.SetFixedSize)  
         self.hbox2= QtGui.QHBoxLayout()   
         self.button_prev=QtGui.QPushButton('<')
+        self.button_prev.setFixedSize(40,30)
         self.button_next=QtGui.QPushButton('>') 
+        self.button_next.setFixedSize(40,30)
         self.button_prev.clicked.connect(self.on_prev)
         self.button_next.clicked.connect(self.on_next)
-        self.choice_note=QtGui.QComboBox()
-        self.choice_note.addItems(['0','1','2','3','4','5'])
-        self.choice_note.activated.connect(self.on_marks_change)
+        self.choice_note=QtGui.QComboBox(parent=self)
+        self.choice_note.addItems(['0','1','2','3','4'])
+        self.choice_note.setSizeAdjustPolicy(QtGui.QComboBox.AdjustToContents)
+        self.choice_note.setEditable(True)
+        self.choice_note.setCurrentIndex(4)
+        self.choice_note.setFixedSize(60,30)
+        self.choice_note.textChanged.connect(self.on_marks_change)
         #self.choice_note2=QtGui.QComboBox()
         #self.choice_note2.addItems(['0','1','2','3','4','5'])
         #self.choice_note2.setEnabled(False)
@@ -52,10 +60,13 @@ class MainWindow(QtGui.QMainWindow):
         self.text_in_comment=QtCore.QString()
         self.comment.textChanged.connect(self.on_comment_change)
         
-        self.display_xls=QtGui.QPushButton('Display_xls')
-        self.xls_comment=QtGui.QTextEdit()
-        self.xls_comment.setReadOnly(True)
-        self.xls_comment.setVisible(False)     
+        self.number_current_image=QtGui.QLabel()
+        
+        
+        #self.display_xls=QtGui.QPushButton('Display_xls')
+        #self.xls_comment=QtGui.QTextEdit()
+        #self.xls_comment.setReadOnly(True)
+        #self.xls_comment.setVisible(False)     
         self.hbox.addWidget(self.button_prev)
         self.hbox.addWidget(self.button_next)
         self.hbox.addWidget(QtGui.QLabel('Grade Image Display'))         
@@ -63,7 +74,9 @@ class MainWindow(QtGui.QMainWindow):
         #self.hbox.addWidget(QtGui.QLabel('Grade Brain Mask')) 
         #self.hbox.addWidget(self.choice_note2)   
         self.hbox.addWidget(self.comment)
-        self.hbox.addWidget(self.display_xls)      
+        self.hbox.addWidget(self.number_current_image)
+        self.hbox.addStretch(1)
+        #self.hbox.addWidget(self.display_xls)      
         self.vbox.addLayout(self.hbox)
         
          #Image
@@ -121,7 +134,7 @@ class MainWindow(QtGui.QMainWindow):
         self.choice_note_debordement.addItems(['0','1','2'])
         self.layout_debordement=QtGui.QGridLayout()
         self.layout_debordement.addWidget(self.label_debordement,0,0)
-        self.layout_debordement.addWidget(self.choice_note_debordement,0,1,QtCore.Qt.AlignRight)
+        self.layout_debordement.addWidget(self.choice_note_debordement,0,1)
         self.vbox_pre_commentary.addLayout(self.layout_debordement)
            
         #Surface pial surface limit
@@ -132,7 +145,7 @@ class MainWindow(QtGui.QMainWindow):
         self.choice_note_pial.setCurrentIndex(1)
         self.layout_pial=QtGui.QGridLayout()
         self.layout_pial.addWidget(self.label_pial,0,0)
-        self.layout_pial.addWidget(self.choice_note_pial,0,1,QtCore.Qt.AlignRight)
+        self.layout_pial.addWidget(self.choice_note_pial,0,1)
         self.vbox_pre_commentary.addLayout(self.layout_pial)            
 
         #Cutting HL,HR and cerebellum
@@ -141,7 +154,7 @@ class MainWindow(QtGui.QMainWindow):
         self.choice_note_cutting.addItems(['0','1','2'])
         self.layout_cutting=QtGui.QGridLayout()
         self.layout_cutting.addWidget(self.label_cutting,0,0)
-        self.layout_cutting.addWidget(self.choice_note_cutting,0,1,QtCore.Qt.AlignRight)
+        self.layout_cutting.addWidget(self.choice_note_cutting,0,1)
         self.vbox_pre_commentary.addLayout(self.layout_cutting)        
         
         #Brain_miss
@@ -150,7 +163,7 @@ class MainWindow(QtGui.QMainWindow):
         self.choice_note_brain_miss.addItems(['0','1','2'])
         self.layout_brain_miss=QtGui.QGridLayout()
         self.layout_brain_miss.addWidget(self.label_brain_miss,0,0)
-        self.layout_brain_miss.addWidget(self.choice_note_brain_miss,0,1,QtCore.Qt.AlignRight)
+        self.layout_brain_miss.addWidget(self.choice_note_brain_miss,0,1)
         self.vbox_pre_commentary.addLayout(self.layout_brain_miss) 
         
         self.list_locality=['temporal','frontal','hippocampe','hypersignaux MB','corps calleux','noyaux gris','cervelet']
@@ -158,7 +171,8 @@ class MainWindow(QtGui.QMainWindow):
             self.check_box_locality[i]=QtGui.QCheckBox(self.list_locality[i])
             self.layout_brain_miss.addWidget(self.check_box_locality[i],i+1,0)
          
-        self.group_box.setLayout(self.vbox_pre_commentary)            
+        self.vbox_pre_commentary.addStretch(1)  
+        self.group_box.setLayout(self.vbox_pre_commentary)    
         self.hbox2.addWidget(self.group_box)
             
     def set_pre_commmentary(self): 
@@ -189,7 +203,6 @@ class MainWindow(QtGui.QMainWindow):
      
    
     def on_next(self):
-        print 'on next' 
         if self.data_file_name is not None:
             self.set_pre_commmentary()
             if (self.index_picture_display+1)==len(self.pictures_absolute_path):
@@ -199,11 +212,11 @@ class MainWindow(QtGui.QMainWindow):
            
             self.open_image(self.pictures_absolute_path[self.index_picture_display]) 
             self.statusBar().showMessage(self.pictures_absolute_path[self.index_picture_display])
+            self.number_current_image.setText("%d/%d"%(self.index_picture_display+1,len(self.pictures_absolute_path)))
             #self.find_picture_split()
             self.check_data()  
         
-    def on_prev(self):
-        print 'on prev'   
+    def on_prev(self):  
         if self.data_file_name is not None:
             self.set_pre_commmentary()
             if (self.index_picture_display-1)==-1:
@@ -212,18 +225,18 @@ class MainWindow(QtGui.QMainWindow):
                 self.index_picture_display=self.index_picture_display-1
              
             self.open_image(self.pictures_absolute_path[self.index_picture_display])     
-            self.statusBar().showMessage(self.pictures_absolute_path[self.index_picture_display])             
+            self.statusBar().showMessage(self.pictures_absolute_path[self.index_picture_display])       
+            self.number_current_image.setText("%d/%d"%(self.index_picture_display+1,len(self.pictures_absolute_path)))      
             #self.find_picture_split()
             self.check_data() 
             
     def on_marks_change(self):
-        print 'marks change'
         if self.data_file_name is not None:
             #if self.choice_note2.isEnabled() is True:
                 #self.data.set_double_note(self.pictures_absolute_path[self.index_picture_display],self.choice_note.currentIndex(),self.choice_note2.currentIndex())
             #else:
-            self.data.set_simple_note(self.pictures_relatif_path[self.index_picture_display],self.choice_note.currentIndex())
-        self.setFocusPolicy(QtCore.Qt.StrongFocus)               
+            self.data.set_simple_note(self.pictures_relatif_path[self.index_picture_display],self.choice_note.currentText())
+        self.setFocusPolicy(QtCore.Qt.StrongFocus)            
                                
     #def on_marks_change2(self):
         #print 'brain marks change'
@@ -233,7 +246,6 @@ class MainWindow(QtGui.QMainWindow):
         
         
     def on_comment_change(self):
-        print 'comment change'
         if self.data_file_name is not None:
             self.text_in_comment=self.comment.toPlainText()
             self.text_in_comment=self.comment.toPlainText().toUtf8()
@@ -246,31 +258,33 @@ class MainWindow(QtGui.QMainWindow):
         print 'in open'      
         fname = QtGui.QFileDialog.getOpenFileName(self, 'Open file','',self.tr("Images Files (*.png);;(*jpg)"))
         if fname != '':
+            self.data=read_csv.Data()  
             #self.picture_display.setPixmap(QPixmap(fname))
-            self.open_image(fname)
             self.dirname=os.path.dirname(str(fname))
             self.data_file_name = os.path.join(self.dirname,'data.csv')
-            results = [os.path.join(self.dirname,each) for each in os.listdir(self.dirname) if each.endswith('.png')]
-            results.sort()
-            print self.dirname
-            self.pictures_absolute_path=results
-            results2=[each for each in os.listdir(self.dirname) if each.endswith('.png')]
-            results2.sort()
-            self.pictures_relatif_path=results2
-            i=-1
-            for picture in self.pictures_absolute_path:
-                i=i+1
-                if picture==fname:
-                    self.index_picture_display=i
-                    break        
-                         
-        if self.data_file_name is not None:    
-         #Display image       
-            self.statusBar().showMessage(self.pictures_absolute_path[self.index_picture_display])
-            self.data.load(self.data_file_name)
-            #self.find_picture_split()
-            self.check_data()
-            self.statusBar().showMessage(self.pictures_absolute_path[self.index_picture_display])             
+            if self.data_file_name is not None:    
+                #if something wrong with the current csv
+                if self.data.load(self.data_file_name)== 0:
+                    self.data_file_name= None
+                    self.dirname=None
+                else:    
+                    self.open_image(fname)
+                    results = [os.path.join(self.dirname,each) for each in os.listdir(self.dirname) if each.endswith('.png')]
+                    results.sort()
+                    print self.dirname
+                    self.pictures_absolute_path=results
+                    results2=[each for each in os.listdir(self.dirname) if each.endswith('.png')]
+                    results2.sort()
+                    self.pictures_relatif_path=results2
+                    i=-1
+                    for picture in self.pictures_absolute_path:
+                        i=i+1
+                        if picture==fname:
+                            self.index_picture_display=i
+                            break        
+                    self.check_data()
+                    self.number_current_image.setText("%d/%d"%(self.index_picture_display+1,len(self.pictures_absolute_path)))
+                    self.statusBar().showMessage(self.pictures_absolute_path[self.index_picture_display])             
 
         #Get back focus 
         self.setFocusPolicy(QtCore.Qt.StrongFocus)    
@@ -355,7 +369,7 @@ class MainWindow(QtGui.QMainWindow):
         if self.data.is_recorded(self.pictures_relatif_path[self.index_picture_display])==0:
             self.data.add_filename(self.pictures_relatif_path[self.index_picture_display])
             self.data.save(self.data_file_name,self.pictures_relatif_path)  
-            self.choice_note.setCurrentIndex(self.data.get_simple_note(self.pictures_relatif_path[self.index_picture_display]))                        
+            self.choice_note.setEditText(self.data.get_simple_note(self.pictures_relatif_path[self.index_picture_display]))                    
             self.comment.setPlainText(self.data.get_comment(self.pictures_relatif_path[self.index_picture_display]))
             self.choice_note_debordement.setCurrentIndex(self.data.get_marks_debordement(self.pictures_relatif_path[self.index_picture_display]))     
             self.choice_note_pial.setCurrentIndex(self.data.get_marks_pial(self.pictures_relatif_path[self.index_picture_display])+1)                 
@@ -372,7 +386,7 @@ class MainWindow(QtGui.QMainWindow):
             self.text_in_comment=QtCore.QString.fromUtf8(self.data.get_comment(self.pictures_relatif_path[self.index_picture_display]))
             self.comment.setPlainText(unicode(self.text_in_comment))
             self.data.save(self.data_file_name,self.pictures_relatif_path)             
-            self.choice_note.setCurrentIndex(self.data.get_simple_note(self.pictures_relatif_path[self.index_picture_display]))                        
+            self.choice_note.setEditText(self.data.get_simple_note(self.pictures_relatif_path[self.index_picture_display]))                       
             self.choice_note_debordement.setCurrentIndex(self.data.get_marks_debordement(self.pictures_relatif_path[self.index_picture_display]))     
             self.choice_note_pial.setCurrentIndex(self.data.get_marks_pial(self.pictures_relatif_path[self.index_picture_display])+1)                 
             self.choice_note_cutting.setCurrentIndex(self.data.get_marks_cutting(self.pictures_relatif_path[self.index_picture_display]))      
@@ -383,7 +397,6 @@ class MainWindow(QtGui.QMainWindow):
                     self.check_box_locality[i].setCheckState(QtCore.Qt.Checked)
                 else:
                     self.check_box_locality[i].setCheckState(QtCore.Qt.Unchecked)
-            self.data.save(self.data_file_name,self.pictures_relatif_path)            
 
         
         #else:
