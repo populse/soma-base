@@ -240,7 +240,7 @@ class Data:
         self.marks_cutting.append('0')
         self.marks_brain_miss.append('0')
         self.locality.append('')
-        self.marks.append('0')
+        self.marks.append('4')
         self.comments.append('')
         
         
