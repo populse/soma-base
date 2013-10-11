@@ -581,7 +581,7 @@ class PathToAttributes( object ):
       
       matched_directories = []
       matched = False
-      if log: log.debug( '?? ' + name + ' ' +  repr( pattern_attributes ) )
+      if log: log.debug( '?? ' + name + ' ' +  repr( pattern_attributes ) + ' ' + repr( hierarchical_patterns.keys() ) )
       for pattern, rules_subpattern in hierarchical_patterns.iteritems():
         ext_rules, subpattern = rules_subpattern
         pattern = pattern % pattern_attributes
@@ -598,40 +598,48 @@ class PathToAttributes( object ):
           
           stop_parsing = False
           rules = ext_rules.get( ext )
-          if rules:
+          if rules is not None:
+            matched = True
+            if log: log.debug( 'extension matched: ' + repr( ext ) )
             for rule_attributes in rules:
-              new_attributes.update( rule_attributes )
-              stop_parsing = single_match or new_attributes.pop( 'fom_stop_parsing', False )
-              if log: log.debug( '-> ' + '/'.join(  path + [ name ] ) + ' ' + repr( new_attributes ) )
-              yield path + [ name ], st, new_attributes
-              matched = True
+              yield_attributes = new_attributes.copy()
+              yield_attributes.update( rule_attributes )
+              stop_parsing = single_match or yield_attributes.pop( 'fom_stop_parsing', False )
+              if log: log.debug( '-> ' + '/'.join(  path + [ name ] ) + ' ' + repr( yield_attributes ) )
+              yield path + [ name ], st, yield_attributes
               if stop_parsing:
                 break
+          else:
+            if log: log.debug( 'no extension matched: ' + repr( ext ) )
           if subpattern and ( st is None or stat.S_ISDIR( posix.stat_result(st).st_mode ) ):
             matched = True
             stop_parsing = single_match
             full_path = path + [ name ]
+            if log: log.debug( 'directory matched: %s %s' % ( repr(full_path), repr( [ i[0] for i in content.iteritems() ] ) ) )
             matched_directories.append( ( full_path, subpattern, new_attributes ) )
             if stop_parsing:
               break
+          else:
+            if log: log.debug( 'no directory matched for %s' % repr(name) )
           if stop_parsing:
             break
-      if not matched and all_unknown:
-        if log: log.debug( '-> ' + '/'.join( path + [ name ] ) + ' None' )
-        yield path + [ name ], st, None
-        if content:
-          for i in self._parse_unknown_directory( content, path + [ name ] ):
-            yield i
-      else:
+      if matched:
         for full_path, subpattern, new_attributes in matched_directories:
           if content:
             for i in self._parse_directory( content, full_path, subpattern, new_attributes, single_match, all_unknown, log ):
               yield i
+      elif all_unknown:
+        if log: log.debug( '-> ' + '/'.join( path + [ name ] ) + ' None' )
+        yield path + [ name ], st, None
+        if content:
+          for i in self._parse_unknown_directory( content, path + [ name ], log ):
+            yield i
 
 
-  def _parse_unknown_directory( self, dirdict, path ):
+  def _parse_unknown_directory( self, dirdict, path, log ):
     for name, content in dirdict.iteritems():
       st, content = content
+      if log: log.debug( '?-> ' + '/'.join( path + [ name ] ) + ' None' )
       yield path + [ name ], st, None
       if content is not None:
         for i in self._parse_unknown_directory( content, path + [ name ] ):
