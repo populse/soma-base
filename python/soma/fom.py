@@ -563,12 +563,35 @@ class PathToAttributes( object ):
         else:
           parent = parent.setdefault( ''.join( regex ) + '$', [ {}, {} ] )[ 1 ]
 
-          
+  
+  def pprint( self, file=sys.stdout ):
+    self._pprint( file, self.hierarchical_patterns, 0 )
+  
+  
+  def _pprint( self, file, node, indent ):
+    if node:
+      print >> file, '  ' *indent + '{'
+      for pattern, rules_subpattern in node.iteritems():
+        ext_rules, subpattern = rules_subpattern
+        print >> file, '  ' * (indent+1) + repr( pattern ) + ': { ('
+        if ext_rules:
+          print >> file, '  ' * (indent+1) + '{'
+          for ext, rules in ext_rules.iteritems():
+            print >> file, '  ' * (indent+2) + repr( ext ) + ': ', repr( rules )
+          print >> file, '  ' * (indent+1) + '},'
+        else:
+          print >> file, '  ' * (indent+1) + '{},'
+        self._pprint( file, subpattern, indent+1 )
+        print >> file, '),'
+      print >> file, '  ' * indent + '}',
+    else:
+      print >> file, '  ' * indent + '{}',
+  
   def parse_directory( self, dirdict, single_match=False, all_unknown=False, log=None ): 
-    return self._parse_directory( dirdict, [], self.hierarchical_patterns, {}, single_match, all_unknown, log )
+    return self._parse_directory( dirdict, [ ([], self.hierarchical_patterns, {}) ], single_match, all_unknown, log )
   
   
-  def _parse_directory( self, dirdict, path, hierarchical_patterns, pattern_attributes, single_match, all_unknown, log ):
+  def _parse_directory( self, dirdict, parsing_list, single_match, all_unknown, log ):
     for name, content in dirdict.iteritems():
       st, content = content
       # Split extention on left most dot
@@ -581,54 +604,59 @@ class PathToAttributes( object ):
       
       matched_directories = []
       matched = False
-      if log: log.debug( '?? ' + name + ' ' +  repr( pattern_attributes ) + ' ' + repr( hierarchical_patterns.keys() ) )
-      for pattern, rules_subpattern in hierarchical_patterns.iteritems():
-        ext_rules, subpattern = rules_subpattern
-        pattern = pattern % pattern_attributes
-        if subpattern:
-          match = re.match( pattern, name )
-          if log: log.debug( 'try %s for %s' % ( repr( pattern ), repr( name ) ) )
-        else:
-          match = re.match( pattern, name_no_ext )
-          if log: log.debug( 'try %s for %s' % ( repr( pattern ), repr( name_no_ext ) ) )
-        if match:
-          if log: log.debug( 'match ' + pattern )
-          new_attributes = match.groupdict()
-          new_attributes.update( pattern_attributes )
-          
-          stop_parsing = False
-          rules = ext_rules.get( ext )
-          if rules is not None:
-            matched = True
-            if log: log.debug( 'extension matched: ' + repr( ext ) )
-            for rule_attributes in rules:
-              yield_attributes = new_attributes.copy()
-              yield_attributes.update( rule_attributes )
-              stop_parsing = single_match or yield_attributes.pop( 'fom_stop_parsing', False )
-              if log: log.debug( '-> ' + '/'.join(  path + [ name ] ) + ' ' + repr( yield_attributes ) )
-              yield path + [ name ], st, yield_attributes
+      recurse_parsing_list = []
+      for path, hierarchical_patterns, pattern_attributes in parsing_list:
+        if log: log.debug( '?? ' + name + ' ' +  repr( pattern_attributes ) + ' ' + repr( hierarchical_patterns.keys() ) )
+        branch_matched = False
+        for pattern, rules_subpattern in hierarchical_patterns.iteritems():
+          ext_rules, subpattern = rules_subpattern
+          pattern = pattern % pattern_attributes
+          if subpattern:
+            match = re.match( pattern, name )
+            if log: log.debug( 'try %s for %s' % ( repr( pattern ), repr( name ) ) )
+          else:
+            match = re.match( pattern, name_no_ext )
+            if log: log.debug( 'try %s for %s' % ( repr( pattern ), repr( name_no_ext ) ) )
+          if match:
+            if log: log.debug( 'match ' + pattern )
+            new_attributes = match.groupdict()
+            new_attributes.update( pattern_attributes )
+            
+            stop_parsing = False
+            rules = ext_rules.get( ext )
+            if rules is not None:
+              matched = branch_matched = True
+              if log: log.debug( 'extension matched: ' + repr( ext ) )
+              for rule_attributes in rules:
+                yield_attributes = new_attributes.copy()
+                yield_attributes.update( rule_attributes )
+                stop_parsing = single_match or yield_attributes.pop( 'fom_stop_parsing', False )
+                if log: log.debug( '-> ' + '/'.join(  path + [ name ] ) + ' ' + repr( yield_attributes ) )
+                yield path + [ name ], st, yield_attributes
+                if stop_parsing:
+                  break
+            else:
+              if log: log.debug( 'no extension matched: ' + repr( ext ) )
+            if subpattern and ( st is None or stat.S_ISDIR( posix.stat_result(st).st_mode ) ):
+              matched = branch_matched = True
+              stop_parsing = single_match
+              full_path = path + [ name ]
+              if log: log.debug( 'directory matched: %s %s' % ( repr(full_path), repr( [ i[0] for i in content.iteritems() ] ) ) )
+              matched_directories.append( ( full_path, subpattern, new_attributes ) )
               if stop_parsing:
                 break
-          else:
-            if log: log.debug( 'no extension matched: ' + repr( ext ) )
-          if subpattern and ( st is None or stat.S_ISDIR( posix.stat_result(st).st_mode ) ):
-            matched = True
-            stop_parsing = single_match
-            full_path = path + [ name ]
-            if log: log.debug( 'directory matched: %s %s' % ( repr(full_path), repr( [ i[0] for i in content.iteritems() ] ) ) )
-            matched_directories.append( ( full_path, subpattern, new_attributes ) )
+            else:
+              if log: log.debug( 'no directory matched for %s' % repr(name) )
             if stop_parsing:
               break
-          else:
-            if log: log.debug( 'no directory matched for %s' % repr(name) )
-          if stop_parsing:
-            break
-      if matched:
-        for full_path, subpattern, new_attributes in matched_directories:
-          if content:
-            for i in self._parse_directory( content, full_path, subpattern, new_attributes, single_match, all_unknown, log ):
-              yield i
-      elif all_unknown:
+        if branch_matched:
+          for full_path, subpattern, new_attributes in matched_directories:
+            if content:
+              recurse_parsing_list.append( ( full_path, subpattern, new_attributes ) )
+      if recurse_parsing_list:
+        for i in self._parse_directory( content, recurse_parsing_list, single_match, all_unknown, log ):
+          yield i
+      if not matched and all_unknown:
         if log: log.debug( '-> ' + '/'.join( path + [ name ] ) + ' None' )
         yield path + [ name ], st, None
         if content:
