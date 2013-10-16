@@ -4,6 +4,8 @@
   "fom_import" : [ "formats-brainvisa-1.0", "shared-brainvisa-1.0" ],
 
   "attribute_definitions" : {   
+    "sulci_recognition_session" :  { "default_value" : "default_session"},
+    "acquisition" : { "default_value" : "default_acquisition" }
   },
 
   "shared_patterns" : {

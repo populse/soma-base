@@ -27,7 +27,7 @@
   
   
   "format_lists" : {
-    "images" : [ "NIFTI","GIS","MINC", "SPM","NIFTI gz"],
+    "images" : [ "NIFTI gz","GIS","MINC", "SPM","NIFTI"],
     "label translations" : [ "Label Translation", "DEF Label Translation" ]
   },
 
