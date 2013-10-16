@@ -233,11 +233,11 @@ class FileOrganizationModels( object ):
   def __init__( self ):
     self._directories_regex = re.compile( r'{([A-Za-z][A-Za-z0-9_]*)}' )
     self._attributes_regex = re.compile( '<([^>]+)>' )
-    self.fom_names = set()
+    self.fom_names = []
     self.attribute_definitions = {
       "fom_name" : {
         "descr" : "File Organization Model (FOM) in which a pattern is defined.",
-        "values" : self.fom_names,
+        "values" : set( self.fom_names ),
       },
       "fom_format" : {
         "descr" : "Format of a file.",
@@ -284,7 +284,7 @@ class FileOrganizationModels( object ):
     fom_name = json_dict[ 'fom_name' ]
     if fom_name in self.fom_names:
       return
-    self.fom_names.add( fom_name )
+    self.fom_names.append( fom_name )
     
     # Update attribute definitions
     attribute_definitions = json_dict.get( 'attribute_definitions' )
