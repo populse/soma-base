@@ -190,7 +190,7 @@ class MainWindow(QtGui.QMainWindow):
 
     def resizeEvent(self,resizeEvent):
         if self.data_file_name is not None:
-            self.open_image(self.pictures_relatif_path[self.index_picture_display]) 
+            self.open_image(self.pictures_absolute_path[self.index_picture_display]) 
 
     def keyPressEvent(self, event):
         if self.data_file_name is not None:
@@ -330,21 +330,23 @@ class MainWindow(QtGui.QMainWindow):
     def on_open_filter(self):
         print 'on open filter'
         if self.data_file_name is not None:
-            #try:
-                #from create_bdd import CreateBDD  
-                #from filter_window import Filter
-                #self.filter_window=Filter(self.dirname)        
-                #self.data.save(self.data_file_name,self.pictures_relatif_path)  
-                #setattr(self.filter_window,'dirname_snap',self.dirname) 
-                #setattr(self.filter_window,'bdd',CreateBDD.get_instance())
-                #self.filter_window.choice_studies.addItems(self.filter_window.bdd.studies())
+            try:
+                from create_bdd import CreateBDD  
+                from filter_window import Filter
+                self.filter_window=Filter(self.dirname)        
+                self.data.save(self.data_file_name,self.pictures_relatif_path)  
+                setattr(self.filter_window,'dirname_snap',self.dirname) 
+                setattr(self.filter_window,'bdd',CreateBDD.get_instance())
+                self.filter_window.choice_studies.addItems(self.filter_window.bdd.studies())
+    
 
-            #except ImportError:
-            print 'NO USE DATABASE FOR FILTER'
-            from filter_window_basic import FilterBasic
-            self.filter_window=FilterBasic(self.dirname)
-            self.data.save(self.data_file_name,self.pictures_relatif_path)  
-            setattr(self.filter_window,'dirname_snap',self.dirname) 
+            except ImportError:
+                print 'NO USE DATABASE FOR FILTER'
+                from filter_window_basic import FilterBasic
+                self.filter_window=FilterBasic(self.dirname)
+                self.data.save(self.data_file_name,self.pictures_relatif_path)  
+                setattr(self.filter_window,'dirname_snap',self.dirname) 
+            
             self.filter_window.open()
                     
                 
