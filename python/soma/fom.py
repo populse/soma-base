@@ -510,6 +510,28 @@ class FileOrganizationModels( object ):
       print >> out, '-' * 20, i, '-' * 20 
       pprint.pprint( getattr( self, i ), out )
 
+      
+      
+class TwinFOM( FileOrganizationModels ):
+  def __init__( self, input_fom, output_fom ):
+    super( self, TwinFOM ).__init__()
+    self.fom_names = [ input_fom_name, output_fom_name ]
+    self.attribute_definitions = {
+      "fom_name" : {
+        "descr" : "File Organization Model (FOM) in which a pattern is defined.",
+        "values" : set( self.fom_names ),
+      },
+      "fom_format" : {
+        "descr" : "Format of a file.",
+        "values" : set(),
+      }
+    }
+    self.formats = {}
+    self.format_lists = {}
+    self.shared_patterns = {}
+    self.patterns = {}
+    self.rules = []
+
        
 class PathToAttributes( object ):
   def __init__( self, foms, selection=None ):
@@ -675,7 +697,7 @@ class PathToAttributes( object ):
 
   
 class AttributesToPaths( object ):
-  def __init__( self, foms, selection=None, directories={}, debug=None ):
+  def __init__( self, foms, selection=None, directories={}, prefered_formats=set(), debug=None ):
     self.foms = foms
     self.selection = selection or {}
     self.directories = directories
@@ -684,10 +706,10 @@ class AttributesToPaths( object ):
     self._db.execute( 'PRAGMA synchronous = OFF;' )
     self.all_attributes = tuple( i for i in self.foms.attribute_definitions if i != 'fom_formats' )
     fom_format_index = self.all_attributes.index( 'fom_format' )
-    sql = 'CREATE TABLE rules ( %s, _fom_first, _fom_rule )' % ','.join( repr( '_' + i ) for i in self.all_attributes )
+    sql = 'CREATE TABLE rules ( %s, _fom_first, _fom_prefered_format, _fom_rule )' % ','.join( repr( '_' + i ) for i in self.all_attributes )
     if debug: debug.debug( sql )
     self._db.execute( sql )
-    sql_insert = 'INSERT INTO rules VALUES ( %s )' % ','.join( '?' for i in xrange( len( self.all_attributes ) + 2 ) )
+    sql_insert = 'INSERT INTO rules VALUES ( %s )' % ','.join( '?' for i in xrange( len( self.all_attributes ) + 3 ) )
     self.rules = []
     for pattern, rule_attributes in foms.selected_rules( self.selection ):
       if debug: debug.debug( 'pattern: ' + pattern )
@@ -699,15 +721,24 @@ class AttributesToPaths( object ):
           value = ''
         values.append( value )
       values.append( True )
+      values.append( False )
       values.append( len( self.rules ) )
       self.rules.append( re.sub( r'<([^>|]*)(\|[^>]*)?>', r'%(\1)s', pattern ) )
       fom_formats = rule_attributes.get( 'fom_formats' )
       if fom_formats and 'fom_format' not in rule_attributes:
         first = True
         for format in fom_formats:
-          values[ -2 ] = first
-          first = False
+          if format in prefered_formats:
+            prefered_format = format
+            break
+        else:
+          prefered_format = fom_formats[ 0 ]
+        sys.stdout.flush()
+        for format in fom_formats:
           values[ fom_format_index ] = format
+          values[ -3 ] = first
+          values[ -2 ] = bool( format == prefered_format )
+          first = False
           if debug: debug.debug( sql_insert + ' ' + repr( values ) )
           self._db.execute( sql_insert, values )
       else:
@@ -732,11 +763,12 @@ class AttributesToPaths( object ):
         selected_format = attributes.get( 'fom_format' )
         if selected_format == 'fom_first':
           select.append( '_fom_first = 1' )
+        elif selected_format == 'fom_prefered':
+          select.append( '_fom_prefered_format = 1' )
         else:
           select.append( '_' + attribute + " = ?" )
           select_attributes.append( attribute )
       else:
-        #select.append( '(' + attribute + " IN ( ?, '' ) OR " + attribute + ' IS NULL )' )
         select.append( '_' + attribute + " IN ( ?, '' )" )
         select_attributes.append( attribute )
     sql = 'SELECT _fom_rule, _fom_format FROM rules WHERE %s' % ' AND '.join( select )
@@ -759,7 +791,6 @@ class AttributesToPaths( object ):
             ext = self.foms.formats[ fom_formats[i] ]
             rule_attributes[ 'fom_format' ] = fom_formats[i]
             r = self._join_directory( rule % attributes + '.' + ext, rule_attributes )
-            #print 'r',r
             if r and os.path.exists(r[0]) is True:  
               yield r  
         else:      
@@ -831,96 +862,31 @@ def call_after_application_initialization( application ):
     application.fom_manager = FileOrganizationModelManager( application.fom_path )
 
 
-#"""Returns useful attributes for completion"""
-#def process_find_attributes(fom,process,input_parameter,value,directories):   
-    #from soma.application import Application
-
-
-    #global atp
-    
-     ## Load one or more FOMs   
-    #foms = Application().fom_manager.load_foms( fom )
-    #if value is None:
-	#attributes=foms.get_attributes_without_value()
-    #else:
-	## Extract attributes from path given on command line
-	#pta = PathToAttributes( foms, selection=dict( fom_process=process, fom_parameter=input_parameter ) )
-	
-	## Only relative paths are matched by PathToAttributes. We suppose that
-	## the given file is in the "acquisition" directory.
-	##path = os.path.abspath( sys.argv[1] )
-	#path = os.path.abspath( value )
-	#input_directory = os.path.dirname( os.path.dirname( os.path.dirname( os.path.dirname( os.path.dirname( path ) ) ) ) )
-	#path = path[ len( input_directory ) + 1: ]
-	#directories[ 'input' ] = input_directory
-	#directories[ 'output' ] = input_directory
-	## Extract the attributes from the first result returned by parse_directory
-	#try:
-	  #path, st, attributes = pta.parse_directory( DirectoryAsDict.paths_to_dict( path ) ).next()
-	#except StopIteration: 
-	  #raise ValueError( '%s is not recognized for parameter "%s" of "%s"' % ( path, input_parameter, process ) )
-	  
-	## Remove FOM related attributes that are specific to the given file name
-	#for i in attributes.keys():
-	  #if i.startswith( 'fom_' ):
-	    #del attributes[ i ]   
-	    
-    ## Create an AttributesToPaths specialized for our process
-    #atp = AttributesToPaths( foms, selection=dict( fom_process=process ),
-			     #directories=directories )
-			     
-		     
-    ## Set the default value for all attributes that can be used to find a path that do
-    ## not already have a value (e.g. analysis = 'default_analysis')
-
-    #for attribute in atp.find_discriminant_attributes():
-      #default_value = foms.attribute_definitions[ attribute ].get( 'default_value' )
-      ##print '!', attribute, default_value
-      
-      #if attribute in attributes.keys():
-	  #if attributes[attribute] != '':
-	      #pass 
-	  #elif default_value is not None:
-	      #attributes[ attribute ] = default_value        	      
-      #elif default_value is not None:
-        #attributes[ attribute ] = default_value
-	
-    ##pprint.pprint( attributes )
-    ##print '=' * 40
-    ## Try to find a single value for all parameters declared in foms for this process.
-    ## First, say to select the first format when several are possible
-    #return attributes
-    
-#""" Create completion with fom and attribute"""   
-#def process_create_completion(attributes,process):   
-    ## Create an AttributesToPaths specialized for our process
-    ##atp = AttributesToPaths( foms, selection=dict( fom_process=process ),
-                             ##directories=directories )
-    #global atp     
-    #global foms                            
-    #completion={}
-    #attributes[ 'fom_format' ] = 'fom_first'
-        
-    #for parameter in foms.patterns[ process ]:
-      ## Select only the attributes that are discriminant for this parameter
-      ## otherwise other attibutes can prevent the appropriate rule to match
-      #parameter_attributes = [ 'fom_process' ] + atp.find_discriminant_attributes( fom_parameter=parameter )
-      #d = dict( ( i, attributes[ i ] ) for i in parameter_attributes if i in attributes )
-      #d['fom_parameter'] = parameter
-      ##print parameter,'-->', list( h[0] for h in atp.find_paths( d ))
-      #for h in atp.find_paths(d):
-          #completion[parameter]=[h[0],h[1]]
-    #return completion   
-
-    
-
 if __name__ == '__main__':
-    from soma.application import Application
-    # First thing to do is to create an Application with name and version
-    app = Application( 'soma.fom', '1.0' )
-    # Register module to load and call functions before and/or after
-    # initialization
-    app.plugin_modules.append( 'soma.fom' )
-    # Application initialization (e.g. configuration file may be read here)
-    app.initialize()
-    #process_completion( sys.argv[1], {'spm' : '/here/is/spm', 'shared' : '/volatile/bouin/build/trunk/share/brainvisa-share-4.4' })
+  from soma.application import Application
+  # First thing to do is to create an Application with name and version
+  app = Application( 'soma.fom', '1.0' )
+  # Register module to load and call functions before and/or after
+  # initialization
+  app.plugin_modules.append( 'soma.fom' )
+  # Application initialization (e.g. configuration file may be read here)
+  app.initialize()
+  #process_completion( sys.argv[1], {'spm' : '/here/is/spm', 'shared' : '/volatile/bouin/build/trunk/share/brainvisa-share-4.4' })
+ 
+  from pprint import pprint
+  import logging
+  #logging.root.setLevel( logging.DEBUG )
+  fom = app.fom_manager.load_foms( 'morphologist-brainvisa-1.0' )
+  atp = AttributesToPaths( fom, selection={ 'fom_process':'morphologistSimp.SimplifiedMorphologist' }, 
+                           prefered_formats=set( ('NIFTI',) ), 
+                           debug=logging )
+  for parameter in fom.patterns[ 'morphologistSimp.SimplifiedMorphologist' ]:
+    print '- %s' % parameter
+    for p, a in atp.find_paths( { 'fom_parameter': parameter, 
+                                  'protocol': 'c',
+                                  'subject': 's',
+                                  'analysis': 'p',
+                                  'acquisition': 'a',
+                                  'fom_format': 'fom_prefered',
+                                } ):
+      print ' ', repr( p ), a
