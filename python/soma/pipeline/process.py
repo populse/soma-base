@@ -14,29 +14,40 @@ import subprocess
 from soma.global_naming import GlobalNaming
 from soma.pipeline.study import Study
 
-class Process(Controller):
-    def __init__( self, **kwargs ):
-        #super( Process, self ).__init__( self, **kwargs )
-	super( Process, self ).__init__()
-	self.viewers={}
-	
-    def set_viewer( self, parameter, viewer, **kwargs ):
-        self.viewers[ parameter ] = ( viewer, kwargs )
-	
-    def call_viewer( self, controller_widget,name ):
-        viewer, kwargs = self.viewers[ name ]
-	value=getattr(controller_widget.controller,name)
-	dico_parameter={}
-	dico_parameter[name]=value
-	#get all traits name of the process
-	trait_of_process=controller_widget.controller.user_traits().keys()
-	#Get parameters in the kwargs and complete value of traits needed
-	for key,value in kwargs.iteritems():
-	    dico_parameter[key]=value
-	    if key in trait_of_process:
-		dico_parameter[key]=getattr(controller_widget.controller,key)  	
-        p = GlobalNaming().get_object( viewer)(**dico_parameter)
-        return p()
+class Process( Controller ):
+  def __init__( self, id=None, **kwargs ):
+    super( Process, self ).__init__( **kwargs )
+    if id is None:
+      id = self.__class__.__module__ + '.' + self.__class__.__name__
+    self.id = id
+    self.name = self.__class__.__name__
+    self.viewers={}
+      
+  def set_viewer( self, parameter, viewer, **kwargs ):
+    self.viewers[ parameter ] = ( viewer, kwargs )
+      
+  def call_viewer( self, controller_widget,name ):
+      viewer, kwargs = self.viewers[ name ]
+      value=getattr(controller_widget.controller,name)
+      dico_parameter={}
+      dico_parameter[name]=value
+      #get all traits name of the process
+      trait_of_process=controller_widget.controller.user_traits().keys()
+      #Get parameters in the kwargs and complete value of traits needed
+      for key,value in kwargs.iteritems():
+          dico_parameter[key]=value
+          if key in trait_of_process:
+              dico_parameter[key]=getattr(controller_widget.controller,key)  	
+      p = GlobalNaming().get_object( viewer)(**dico_parameter)
+      return p()
+
+  @staticmethod
+  def get_instance( process_or_id, **kwargs ):
+    if isinstance( process_or_id, Process ):
+      return process_or_id
+    process_class = GlobalNaming().get_object( process_or_id )
+    process = process_class( id=process_or_id, **kwargs )
+    return process
 
 
 class ProcessWithFom(Controller):
