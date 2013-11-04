@@ -20,7 +20,6 @@ class GlobalNaming( Singleton ):
     raise ValueError( 'Invalid global name syntax: ' + global_name )
 
 
-
   def get_object( self, global_name ):
     module, name, args, attributes = self.parse_global_name( global_name )
     module = __import__( module, fromlist=[ name ], level=0 )
@@ -33,6 +32,7 @@ class GlobalNaming( Singleton ):
       self._names[ value ] = global_name
     return value
 
+  
   def get_name( self, obj ):
     result = self._names.get( obj )
     if result is not None:
@@ -45,6 +45,14 @@ class GlobalNaming( Singleton ):
     elif isinstance( obj, object ):
       return obj.__class__.__module__ + '.' + obj.__class__.__name__ + '()'
     raise ValueError( 'Cannot find global name for %s' % repr( obj ) )
+
+    
+def get_object( global_name ):
+  return GlobalNaming().get_object( global_name )
+
+  
+def get_name( obj ):
+  return GlobalNaming().get_name( obj )
 
 #if __name__ == '__main__':
   #gn = GlobalNaming()
