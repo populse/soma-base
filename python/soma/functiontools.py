@@ -51,7 +51,7 @@ from soma.translation import translate as _
 
 
 #-------------------------------------------------------------------------------
-class _Empty( object ):
+class Empty( object ):
   pass
 
 #-------------------------------------------------------------------------------
@@ -94,7 +94,7 @@ class SomaPartial( object ):
     on_trait_change is requiring that the function has a func_code.co_argcount
     attribute.
     '''
-    result = _Empty()
+    result = Empty()
     result.co_argcount = numberOfParameterRange( self )[ 0 ]
     return result
     
