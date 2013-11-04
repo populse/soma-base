@@ -692,7 +692,7 @@ class PathToAttributes( object ):
       if log: log.debug( '?-> ' + '/'.join( path + [ name ] ) + ' None' )
       yield path + [ name ], st, None
       if content is not None:
-        for i in self._parse_unknown_directory( content, path + [ name ] ):
+        for i in self._parse_unknown_directory( content, path + [ name ], log ):
           yield i
 
   
