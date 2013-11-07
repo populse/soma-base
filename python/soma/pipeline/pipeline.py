@@ -78,7 +78,7 @@ class ProcessNode( Node ):
     for parameter, trait in self.process.user_traits().iteritems():
       if parameter in ( 'nodes_activation', 'selection_changed' ):
         continue
-      if isinstance( trait.handler, File ) and not trait.handler.exists:
+      if isinstance( trait.handler, File ) and trait.handler.output:
         outputs.append( parameter )
       else:
         inputs.append( dict( name=parameter, optional=bool(trait.optional) ) )
@@ -151,7 +151,7 @@ class Pipeline( Process ):
           
   def add_trait( self, name, trait ):
     super( Pipeline, self ).add_trait( name, trait )
-    output = isinstance( trait, File ) and not trait.exists
+    output = isinstance( trait, File ) and bool( trait.output )
     plug = Plug( output=output )
     self.pipeline_node.plugs[ name ] = plug
     #plug.on_trait_change( self.pipeline_node.update_plugs_hook, 'enabled' )
@@ -230,7 +230,7 @@ class Pipeline( Process ):
       if pipeline_parameter in self.user_traits():
         raise ValueError( 'Parameter %(pn)s of node %(nn)s cannot be exported to pipeline parameter %(pp)s' % dict( nn=node_name, pn=parameter_name, pp=pipeline_parameter ) )
       self.add_trait( pipeline_parameter, trait )
-      if isinstance( trait.handler, File ) and not trait.handler.exists:
+      if isinstance( trait.handler, File ) and trait.handler.output:
         self.add_link( '%s.%s->%s' % ( node_name, parameter_name, pipeline_parameter ) )
       else:
         self.add_link(  '%s->%s.%s' % ( pipeline_parameter, node_name, parameter_name ) )
