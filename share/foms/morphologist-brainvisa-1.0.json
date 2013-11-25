@@ -62,13 +62,13 @@
 
        #Grey/White Surface
        "left_hemi_cortex": [ ["output:{analysis}/segmentation/<side>_cortex_<subject>","images",{'side':'left'}] ], 
-       "left_white_mesh": [ ["output:{analysis}/segmentation/mesh/<subject>_<side>_white","MNI OBJ mesh",{'side':'left'}] ], 
+       "left_white_mesh": [ ["output:{analysis}/segmentation/mesh/<subject>_<side>_white","mesh",{'side':'left'}] ], 
        "right_hemi_cortex": [ ["output:{analysis}/segmentation/<side>_cortex_<subject>","images",{'side':'right'}] ], 
-       "right_white_mesh": [ ["output:{analysis}/segmentation/mesh/<subject>_<side>_white","MNI OBJ mesh",{'side':'right'}] ], 
+       "right_white_mesh": [ ["output:{analysis}/segmentation/mesh/<subject>_<side>_white","mesh",{'side':'right'}] ], 
 
        #Spherical Hemispheres Surface
-       "left_hemi_mesh": [ ["output:{analysis}/segmentation/mesh/<subject>_<side>_hemi","MNI OBJ mesh",{'side':'left'}] ], 
-       "right_hemi_mesh": [ ["output:{analysis}/segmentation/mesh/<subject>_<side>_hemi","MNI OBJ mesh",{'side':'right'}] ], 
+       "left_hemi_mesh": [ ["output:{analysis}/segmentation/mesh/<subject>_<side>_hemi","mesh",{'side':'left'}] ], 
+       "right_hemi_mesh": [ ["output:{analysis}/segmentation/mesh/<subject>_<side>_hemi","mesh",{'side':'right'}] ], 
 
        #Cortical Folds Graph
        "left_graph": [ ["output:{analysis}/folds/<graph_version>/<side>_<subject>","Graph and data", {'side':'left','labelled':'No', 'graph_version':'3.1'} ] ], 
