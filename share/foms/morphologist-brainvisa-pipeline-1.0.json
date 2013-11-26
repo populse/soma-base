@@ -24,7 +24,7 @@
        "spm_transformation":[["output:{acquisition}/<subject>_sn ","Matlab" ] ],
        "normalized_t1mri": [ [ "output:{acquisition}/normalized_<normalization>_<subject>","images", { "normalization":"SPM" } ] ], 
        "template": "{shared.anatomical_templates}",
-    }
+    },
 
     "morphologist_pipeline.BiasCorrection" : {
        #Bias Correction 
