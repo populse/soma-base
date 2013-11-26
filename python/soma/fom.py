@@ -207,10 +207,11 @@ class FileOrganizationModelManager( object ):
               self._cache[ name ] = full_path
         elif i.endswith( '.json' ) or i.endswith( '.yaml' ):
           d = json_reader.load( open( full_path ) )
-          name = d.get( 'fom_name' )
-          if not name:
-            raise ValueError( 'file %s does not contain fom_name' % full_path )
-          self._cache[ name ] = full_path
+	  if d:
+            name = d.get( 'fom_name' )
+            if not name:
+              raise ValueError( 'file %s does not contain fom_name' % full_path )
+            self._cache[ name ] = full_path
     return self._cache.keys()
    
    
@@ -877,8 +878,15 @@ if __name__ == '__main__':
   import logging
   #logging.root.setLevel( logging.DEBUG )
   fom = app.fom_manager.load_foms( 'morphologist-brainvisa-1.0' )
+  #atp = AttributesToPaths( fom, selection={ 'fom_process':'morphologistSimp.SimplifiedMorphologist' }, 
+                           #prefered_formats=set( ('NIFTI',) ), 
+                           #debug=logging )
+  #form='MINC'
+  #form=','+'MESH'
+  #print 'form',form
+  fomr=['MINC','MESH']
   atp = AttributesToPaths( fom, selection={ 'fom_process':'morphologistSimp.SimplifiedMorphologist' }, 
-                           prefered_formats=set( ('NIFTI',) ), 
+                           prefered_formats=set( (fomr[0],fomr[1]) ), 
                            debug=logging )
   for parameter in fom.patterns[ 'morphologistSimp.SimplifiedMorphologist' ]:
     print '- %s' % parameter
