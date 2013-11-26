@@ -206,7 +206,10 @@ class FileOrganizationModelManager( object ):
                 raise ValueError( 'file %s does not contain fom_name' % main_file )
               self._cache[ name ] = full_path
         elif i.endswith( '.json' ) or i.endswith( '.yaml' ):
-          d = json_reader.load( open( full_path ) )
+	  try:
+	    d = json_reader.load( open( full_path ) )
+	  except ValueError, e:
+	    raise ValueError( '%s: %s' % ( full_path, str( e ) ) )
 	  if d:
             name = d.get( 'fom_name' )
             if not name:
