@@ -15,39 +15,43 @@ from soma.global_naming import GlobalNaming
 from soma.pipeline.study import Study
 
 class Process( Controller ):
-  def __init__( self, id=None, **kwargs ):
-    super( Process, self ).__init__( **kwargs )
-    if id is None:
-      id = self.__class__.__module__ + '.' + self.__class__.__name__
-    self.id = id
-    self.name = self.__class__.__name__
-    self.viewers={}
+    def __init__( self, id=None, **kwargs ):
+        super( Process, self ).__init__( **kwargs )
+	if id is None:
+            id = self.__class__.__module__ + '.' + self.__class__.__name__
+	self.id = id
+	self.name = self.__class__.__name__
+	self.viewers={}
       
-  def set_viewer( self, parameter, viewer, **kwargs ):
-    self.viewers[ parameter ] = ( viewer, kwargs )
+    def set_viewer( self, parameter, viewer, **kwargs ):
+        self.viewers[ parameter ] = ( viewer, kwargs )
       
-  def call_viewer( self, controller_widget,name ):
-      viewer, kwargs = self.viewers[ name ]
-      value=getattr(controller_widget.controller,name)
-      dico_parameter={}
-      dico_parameter[name]=value
-      #get all traits name of the process
-      trait_of_process=controller_widget.controller.user_traits().keys()
-      #Get parameters in the kwargs and complete value of traits needed
-      for key,value in kwargs.iteritems():
-          dico_parameter[key]=value
-          if key in trait_of_process:
-              dico_parameter[key]=getattr(controller_widget.controller,key)  	
-      p = GlobalNaming().get_object( viewer)(**dico_parameter)
-      return p()
+    def call_viewer( self, controller_widget,name ):
+        viewer, kwargs = self.viewers[ name ]
+        if not kwargs:
+	    liste=[]
+	    liste.append(getattr(controller_widget.controller,name))
+	    p = GlobalNaming().get_object( viewer)(*liste)
+        else:	  
+	    dico_parameter={}
+	    #dico_parameter[name]=value
+	    #get all traits name of the process
+	    trait_of_process=controller_widget.controller.user_traits().keys()
+	    #Get parameters in the kwargs and complete value of traits needed
+	    for key,value in kwargs.iteritems():
+	        dico_parameter[key]=value
+	        if value in trait_of_process:
+		    dico_parameter[key]=getattr(controller_widget.controller,value)  	
+	    p = GlobalNaming().get_object( viewer)(**dico_parameter)
+        return p()
 
-  @staticmethod
-  def get_instance( process_or_id, **kwargs ):
-    if isinstance( process_or_id, Process ):
-      return process_or_id
-    process_class = GlobalNaming().get_object( process_or_id )
-    process = process_class( id=process_or_id, **kwargs )
-    return process
+    @staticmethod
+    def get_instance( process_or_id, **kwargs ):
+        if isinstance( process_or_id, Process ):
+            return process_or_id
+        process_class = GlobalNaming().get_object( process_or_id )
+        process = process_class( id=process_or_id, **kwargs )
+        return process
 
 
 class ProcessWithFom(Controller):
@@ -73,7 +77,6 @@ class ProcessWithFom(Controller):
 	
     """Function use when new file add on table"""	
     def iteration(self,process,newfile):
-	print 'iteration dans process'
 	self.list_process_iteration.append(process)
 	pwd=ProcessWithFom(process)
 	#process.t1mri=newfile
@@ -100,11 +103,14 @@ class ProcessWithFom(Controller):
     """To get useful attributes by the fom"""   
     def create_attributes_with_fom(self):
 	#self.attributes=self.foms.get_attributes_without_value()
-	## Create an AttributesToPaths specialized for our process
+	## Create an AttributesToPaths specialized for our process	
+        formats=tuple(getattr(self.Study,key) for key in self.Study.user_traits() if key.startswith('format'))
+
 	self.input_atp = AttributesToPaths( self.input_fom, selection=dict( fom_process=self.process_specific.name_process ),
-			     directories=self.directories )
+			     directories=self.directories,prefered_formats=set((formats)) )
+			      
 	self.output_atp = AttributesToPaths( self.output_fom, selection=dict( fom_process=self.process_specific.name_process ),
-			     directories=self.directories )
+			     directories=self.directories,prefered_formats=set((formats)) )
 
 	
 	#Get attributes in input fom
@@ -171,28 +177,37 @@ class ProcessWithFom(Controller):
         print 'CREATE COMPLETION'  	    
 	#Create completion    
 	completion={}
-	for parameter in self.output_fom.patterns[ self.process_specific.name_process ]:
-	  # Select only the attributes that are discriminant for this parameter
-	  # otherwise other attibutes can prevent the appropriate rule to match
-	  if self.process_specific.trait( parameter ).output:
-	      atp=self.output_atp
-	  else:   
-	      #print 'input ',parameter
-	      atp=self.input_atp 	  
-	  parameter_attributes = [ 'fom_process' ] + atp.find_discriminant_attributes( fom_parameter=parameter )
-	  d = dict( ( i, self.attributes[ i ] ) for i in parameter_attributes if i in self.attributes )
-	  d['fom_parameter'] = parameter	  
-	  for h in atp.find_paths(d):
-	      #change ici pour les formats
-	      setattr(self.process_specific,parameter,h[0]) 		
+	#for i in self.process_specific.user_traits():
+	    #parameter = self.output_fom.patterns[ self.process_specific.name_process ].get( i )
+	for parameter in self.output_fom.patterns[self.process_specific.name_process]:
+	#if parameter is not None:
+	    # Select only the attributes that are discriminant for this parameter
+	    # otherwise other attibutes can prevent the appropriate rule to match
+	    if parameter in self.process_specific.user_traits():
+		#print 'parameter',parameter
+		if self.process_specific.trait( parameter ).output:
+		    atp=self.output_atp
+		else:   
+		    #print 'input ',parameter
+		    atp=self.input_atp 	  
+		parameter_attributes = [ 'fom_process' ] + atp.find_discriminant_attributes( fom_parameter=parameter )
+		d = dict( ( i, self.attributes[ i ] ) for i in parameter_attributes if i in self.attributes )
+		d['fom_parameter'] = parameter
+		d['fom_format']='fom_prefered'
+		for h in atp.find_paths(d):	  
+		    setattr(self.process_specific,parameter,h[0]) 	
 			
 	
     def attributes_changed(self,object,name,old,new):
+	print 'attributes changed',name
+	print self.completion_ongoing
         if  name != 'trait_added' and name != 'user_traits_changed' and self.completion_ongoing is False:	
 	    #setattr(self,name,new)
+	    #print 'here attributes change',name
 	    self.attributes[name]=new
 	    self.completion_ongoing = True  
 	    self.create_completion()
+	    #print 'end completion'
 	    self.completion_ongoing = False 
 	
 
