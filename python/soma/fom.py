@@ -206,11 +206,11 @@ class FileOrganizationModelManager( object ):
                 raise ValueError( 'file %s does not contain fom_name' % main_file )
               self._cache[ name ] = full_path
         elif i.endswith( '.json' ) or i.endswith( '.yaml' ):
-	  try:
-	    d = json_reader.load( open( full_path ) )
-	  except ValueError, e:
-	    raise ValueError( '%s: %s' % ( full_path, str( e ) ) )
-	  if d:
+          try:
+            d = json_reader.load( open( full_path ) )
+          except ValueError, e:
+            raise ValueError( '%s: %s' % ( full_path, str( e ) ) )
+          if d:
             name = d.get( 'fom_name' )
             if not name:
               raise ValueError( 'file %s does not contain fom_name' % full_path )
@@ -371,11 +371,11 @@ class FileOrganizationModels( object ):
   def get_attributes_without_value(self):
       att_no_value={}
       for att in self.shared_patterns:
-	  if not att.startswith('shared.'):
-	      for attrec in self._attributes_regex.findall( self.shared_patterns[att] ):
-		  if attrec not in att_no_value:
-		      att_no_value[attrec]=''
-		      
+          if not att.startswith('shared.'):
+              for attrec in self._attributes_regex.findall( self.shared_patterns[att] ):
+                  if attrec not in att_no_value:
+                      att_no_value[attrec]=''
+                      
       return att_no_value
       
   def selected_rules( self, selection ):
@@ -699,7 +699,7 @@ class PathToAttributes( object ):
         for i in self._parse_unknown_directory( content, path + [ name ], log ):
           yield i
 
-  
+
 class AttributesToPaths( object ):
   def __init__( self, foms, selection=None, directories={}, prefered_formats=set(), debug=None ):
     self.foms = foms
@@ -716,7 +716,7 @@ class AttributesToPaths( object ):
     sql_insert = 'INSERT INTO rules VALUES ( %s )' % ','.join( '?' for i in xrange( len( self.all_attributes ) + 3 ) )
     self.rules = []
     for pattern, rule_attributes in foms.selected_rules( self.selection ):
-      if debug: debug.debug( 'pattern: ' + pattern )
+      if debug: debug.debug( 'pattern: ' + pattern + ' ' + repr( rule_attributes ) )
       pattern_attributes = set( ( i if '|' not in i else i[ : i.find( '|' ) ] ) for i in self.foms._attributes_regex.findall( pattern ) )
       values =[]
       for attribute in self.all_attributes:
@@ -727,7 +727,7 @@ class AttributesToPaths( object ):
       values.append( True )
       values.append( False )
       values.append( len( self.rules ) )
-      self.rules.append( re.sub( r'<([^>|]*)(\|[^>]*)?>', r'%(\1)s', pattern ) )
+      self.rules.append( ( re.sub( r'<([^>|]*)(\|[^>]*)?>', r'%(\1)s', pattern ), rule_attributes ) )
       fom_formats = rule_attributes.get( 'fom_formats' )
       if fom_formats and 'fom_format' not in rule_attributes:
         first = True
@@ -777,11 +777,11 @@ class AttributesToPaths( object ):
         select_attributes.append( attribute )
     sql = 'SELECT _fom_rule, _fom_format FROM rules WHERE %s' % ' AND '.join( select )
     values = [ attributes[ i ] for i in select_attributes ]
-    print '!2!', sql, values
-    for rule_index, format in self._db.execute( sql, values ):  
-      bool_output=False 
-      rule = self.rules[ rule_index ]
-      rule_attributes = fom_formats = self.foms.rules[ rule_index ][ 1 ].copy()
+    print '!2!', sql, values, attributes
+    for rule_index, format in self._db.execute( sql, values ):
+      bool_output = False 
+      rule, rule_attributes = self.rules[ rule_index ]
+      #rule_attributes = self.foms.rules[ rule_index ][ 1 ].copy()
       print 'rule_attributes',rule_attributes
       fom_formats = rule_attributes.pop( 'fom_formats', [] )
       
@@ -790,27 +790,27 @@ class AttributesToPaths( object ):
       
       print '!2.1!', rule
       if format:
-	print 'in format'
+        print 'in format'
         if len(fom_formats)>1 and bool_output is False:
-	  print 'here len'
+          print 'here len'
           for i in range(len(fom_formats)):           
             #if format:
-	    print 'in loop'
+            print 'in loop'
             ext = self.foms.formats[ fom_formats[i] ]
             rule_attributes[ 'fom_format' ] = fom_formats[i]
             r = self._join_directory( rule % attributes + '.' + ext, rule_attributes )
-	    print 'r',r
-	    print 'selection',self.selection
+            print 'r',r
+            print 'selection',self.selection
             #if r and os.path.exists(r[0]) is True: 
-	    if r: 
-	      print 'existe'
+            if r: 
+              print 'existe'
               yield r  
         else:      
           ext = self.foms.formats[ format ]
           rule_attributes[ 'fom_format' ] = format
           print '!2.2!',rule % attributes + '.' + ext
           r = self._join_directory( rule % attributes + '.' + ext, rule_attributes )
-	  print 'r',r
+          print 'r',r
           print 'selection',self.selection
           if r:
             yield r
@@ -901,11 +901,11 @@ if __name__ == '__main__':
     "output_directory": "/home/mb236582/my_study",
     "shared_directory": "/volatile/bouin/build/trunk/share/brainvisa-share-4.5"}
   fomr=['NIFTI','MESH']
-  atp = AttributesToPaths( fom, selection={ 'fom_process':'morphologistPipeline.HeadMesh' }, 
+  atp = AttributesToPaths( fom, selection={ 'fom_process':'morphologist_pipeline.HeadMesh' }, 
                            prefered_formats=set( (fomr[0],fomr[1])) , directories=directories, 
                            debug=logging )
   d= {'protocol': u'subjects', 'analysis': 'default_analysis', 'fom_parameter': 'head_mask', 
-  'acquisition': 'default_acquisition', 'fom_format': 'fom_first', 'subject': u'002_S_0816_S18402_I40732'}
+  'acquisition': 'default_acquisition', 'subject': u'002_S_0816_S18402_I40732'}
   for p, a in atp.find_paths( d ):
     print ' ', repr( p ), a
   #for parameter in fom.patterns[ 'morphologistSimp.SimplifiedMorphologist' ]:
