@@ -777,31 +777,41 @@ class AttributesToPaths( object ):
         select_attributes.append( attribute )
     sql = 'SELECT _fom_rule, _fom_format FROM rules WHERE %s' % ' AND '.join( select )
     values = [ attributes[ i ] for i in select_attributes ]
-    #print '!2!', sql, values
+    print '!2!', sql, values
     for rule_index, format in self._db.execute( sql, values ):  
       bool_output=False 
       rule = self.rules[ rule_index ]
       rule_attributes = fom_formats = self.foms.rules[ rule_index ][ 1 ].copy()
+      print 'rule_attributes',rule_attributes
       fom_formats = rule_attributes.pop( 'fom_formats', [] )
       
       if rule_attributes.get( 'fom_directory' ) == 'output':
         bool_output=True    
       
-      #print '!2.1!', rule
+      print '!2.1!', rule
       if format:
+	print 'in format'
         if len(fom_formats)>1 and bool_output is False:
+	  print 'here len'
           for i in range(len(fom_formats)):           
             #if format:
+	    print 'in loop'
             ext = self.foms.formats[ fom_formats[i] ]
             rule_attributes[ 'fom_format' ] = fom_formats[i]
             r = self._join_directory( rule % attributes + '.' + ext, rule_attributes )
-            if r and os.path.exists(r[0]) is True:  
+	    print 'r',r
+	    print 'selection',self.selection
+            #if r and os.path.exists(r[0]) is True: 
+	    if r: 
+	      print 'existe'
               yield r  
         else:      
           ext = self.foms.formats[ format ]
           rule_attributes[ 'fom_format' ] = format
-          #print '!2.2!',rule % attributes + '.' + ext
+          print '!2.2!',rule % attributes + '.' + ext
           r = self._join_directory( rule % attributes + '.' + ext, rule_attributes )
+	  print 'r',r
+          print 'selection',self.selection
           if r:
             yield r
       else:
@@ -810,13 +820,13 @@ class AttributesToPaths( object ):
           del rule_attributes[ 'fom_formats' ]
           for f in fom_formats:
             ext = self.foms.formats[ f ]
-            #print '!2.3!',rule % attributes + '.' + ext
+            print '!2.3!',rule % attributes + '.' + ext
             rule_attributes[ 'fom_format' ] = f
             r = self._join_directory( rule % attributes + '.' + ext, rule_attributes )
             if r:
               yield r
         else:
-          #print '!2.4!',rule % attributes
+          print '!2.4!',rule % attributes
           r = self._join_directory( rule % attributes, rule_attributes )
           if r:
             yield r
@@ -879,25 +889,32 @@ if __name__ == '__main__':
  
   from pprint import pprint
   import logging
-  #logging.root.setLevel( logging.DEBUG )
-  fom = app.fom_manager.load_foms( 'morphologist-brainvisa-1.0' )
+  logging.root.setLevel( logging.DEBUG )
+  fom = app.fom_manager.load_foms( 'morphologist-brainvisa-pipeline-1.0' )
   #atp = AttributesToPaths( fom, selection={ 'fom_process':'morphologistSimp.SimplifiedMorphologist' }, 
                            #prefered_formats=set( ('NIFTI',) ), 
                            #debug=logging )
   #form='MINC'
   #form=','+'MESH'
   #print 'form',form
-  fomr=['MINC','MESH']
-  atp = AttributesToPaths( fom, selection={ 'fom_process':'morphologistSimp.SimplifiedMorphologist' }, 
-                           prefered_formats=set( (fomr[0],fomr[1]) ), 
+  directories={"input_directory": "/home/mb236582/datafom",
+    "output_directory": "/home/mb236582/my_study",
+    "shared_directory": "/volatile/bouin/build/trunk/share/brainvisa-share-4.5"}
+  fomr=['NIFTI','MESH']
+  atp = AttributesToPaths( fom, selection={ 'fom_process':'morphologistPipeline.HeadMesh' }, 
+                           prefered_formats=set( (fomr[0],fomr[1])) , directories=directories, 
                            debug=logging )
-  for parameter in fom.patterns[ 'morphologistSimp.SimplifiedMorphologist' ]:
-    print '- %s' % parameter
-    for p, a in atp.find_paths( { 'fom_parameter': parameter, 
-                                  'protocol': 'c',
-                                  'subject': 's',
-                                  'analysis': 'p',
-                                  'acquisition': 'a',
-                                  'fom_format': 'fom_prefered',
-                                } ):
-      print ' ', repr( p ), a
+  d= {'protocol': u'subjects', 'analysis': 'default_analysis', 'fom_parameter': 'head_mask', 
+  'acquisition': 'default_acquisition', 'fom_format': 'fom_first', 'subject': u'002_S_0816_S18402_I40732'}
+  for p, a in atp.find_paths( d ):
+    print ' ', repr( p ), a
+  #for parameter in fom.patterns[ 'morphologistSimp.SimplifiedMorphologist' ]:
+    #print '- %s' % parameter
+    #for p, a in atp.find_paths( { 'fom_parameter': parameter, 
+                                  #'protocol': 'c',
+                                  #'subject': 's',
+                                  #'analysis': 'p',
+                                  #'acquisition': 'a',
+                                  #'fom_format': 'fom_prefered',
+                                #} ):
+      #print ' ', repr( p ), a
