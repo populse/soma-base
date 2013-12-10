@@ -16,7 +16,7 @@
   },
   
   "processes" : {  
-    "morphologist_pipeline.SPMNormalization" : {
+    "morphologistPipeline.SPMNormalization" : {
        "t1mri": [ [ "input:{acquisition}/<subject>", "images" ],
                   [ "input:{acquisition}/normalized_<normalization>_<subject>", "images" ] ],
        "commissure_coordinates": [ [ "output:{acquisition}/<subject>", "Commissure coordinates" ] ],
@@ -26,7 +26,7 @@
        "template": "{shared.anatomical_templates}",
     },
 
-    "morphologist_pipeline.BiasCorrection" : {
+    "morphologistPipeline.BiasCorrection" : {
        #Bias Correction 
        "t1mri": [ [ "input:{acquisition}/<subject>", "images" ],
                   [ "input:{acquisition}/normalized_<normalization>_<subject>", "images" ] ],
@@ -41,7 +41,7 @@
        "meancurvature": [ ["output:{analysis}/mean_curvature_<subject>", "images" ] ],
        },
 
-    "morphologist_pipeline.HistogramAnalysis" : {
+    "morphologistPipeline.HistoAnalysis" : {
        #Histogram Analysis
        "t1mri_nobias": [ ["input:{analysis}/nobias_<subject>", "images" ] ], 
        "hfiltered": [ ["input:{analysis}/hfiltered_<subject>",  "images"] ], 
@@ -50,7 +50,7 @@
        "histo": [ ["output:{analysis}/nobias_<subject>", "Histogram" ] ],
        },
 
-    "morphologist_pipeline.ComputeBrainMask" : {
+    "morphologistPipeline.ComputeBrainMask" : {
        #Brain Mask Segmentation
        "t1mri_nobias": [ ["input:{analysis}/nobias_<subject>", "images" ] ], 
        "histo_analysis": [ ["input:{analysis}/nobias_<subject>", "Histo Analysis"   ] ] ,        
@@ -61,7 +61,7 @@
        "brain_mask": [ ["output:{analysis}/segmentation/brain_<subject>","images"] ],
        },
 
-    "morphologist_pipeline.SplitBrainMask" : {
+    "morphologistPipeline.SplitBrainMask" : {
        #Split Brain Mask 
        "brain_mask": [ ["input:{analysis}/segmentation/brain_<subject>","images"] ],
        "t1mri_nobias": [ ["input:{analysis}/nobias_<subject>", "images" ] ], 
@@ -72,15 +72,15 @@
        "split_brain": [ ["output:{analysis}/segmentation/voronoi_<subject>","images"] ],  
        },
 
-    "morphologist_pipeline.TalairachTransformation" : {
+    "morphologistPipeline.TalairachTransformation" : {
        #Talairach Transformation
        "split_brain": [ ["input:{analysis}/segmentation/voronoi_<subject>","images"] ],  
        "commissure_coordinates": [ [ "input:{acquisition}/<subject>", "Commissure coordinates" ] ],
-       "talairach_ACPC_transform": [ [ "output:{acquisition}/registration/RawT1-<subject>_<acquisition>_TO_Talairach-ACPC","Transformation matrix"] ], 
+       "Talairach_transform": [ [ "output:{acquisition}/registration/RawT1-<subject>_<acquisition>_TO_Talairach-ACPC","Transformation matrix"] ], 
        },
 
 
-    "morphologist_pipeline.HeadMesh" : {
+    "morphologistPipeline.HeadMesh" : {
        #Grey/White Classification
        "t1mri_nobias": [ ["input:{analysis}/nobias_<subject>", "images" ] ], 
        "histo_analysis": [ ["input:{analysis}/nobias_<subject>", "Histo Analysis"   ] ] , 
