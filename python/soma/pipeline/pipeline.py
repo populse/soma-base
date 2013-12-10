@@ -380,6 +380,12 @@ class Pipeline( Process ):
                   for dest_node in heads[ n ]:
                     result.add_link( source_node, dest_node )
     return result
+
+
+  def __call__( self ):
+    for name, process_node in self.workflow.ordered_nodes():
+      process_node()
+
     
 
 class Workflow( object ):
@@ -451,3 +457,18 @@ class Workflow( object ):
       for nn in v[ 0 ]:
         print >> out, '  %s -> %s;' % ( ids[ n ], ids[ nn ] )
     print >> out, '}'
+
+
+  def ordered_nodes( self ):
+    for head_node in self.head:
+      for branch_node in self.ordered_branch( head_node ):
+        yield branch_node
+  
+  
+  def ordered_branch( self, node ):
+    yield ( self.node_str( node ), node )
+    for child_node in self.links[ node ][ 0 ]:
+      for branch_node in self.ordered_branch( child_node ):
+        yield branch_node
+
+      
