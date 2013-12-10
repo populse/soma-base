@@ -23,7 +23,10 @@ class GlobalNaming( Singleton ):
   def get_object( self, global_name ):
     module, name, args, attributes = self.parse_global_name( global_name )
     module = __import__( module, fromlist=[ name ], level=0 )
-    value = getattr( module, name )
+    try:
+      value = getattr( module, name )
+    except AttributeError, e:
+      raise ImportError( str( e ) )
     if args is not None:
       value = value( *args )
     if attributes:
