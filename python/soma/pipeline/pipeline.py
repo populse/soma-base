@@ -1,14 +1,16 @@
 import sys
 try:
-  from traits.api import File, Float, Enum, Str, Int, Bool, List, Tuple, Instance, Event
+  from traits.api import File, Float, Enum, Str, Int, Bool, List, Tuple, Instance, Event, CTrait
 except ImportError:
-  from enthought.traits.api import File, Float, Enum, Str, Int, Bool, List, Tuple, Instance, Event
+  from enthought.traits.api import File, Float, Enum, Str, Int, Bool, List, Tuple, Instance, Event,CTrait
 
 from soma.controller import Controller
 from soma.sorted_dictionary import SortedDictionary
 from soma.global_naming import GlobalNaming
 from soma.functiontools import SomaPartial
-from soma.pipeline.process import Process    
+from soma.pipeline.process_with_fom import ProcessWithFom
+from soma.pipeline.process import Process
+from soma.pipeline.pipeline_with_fom import PipelineWithFom
     
 class Plug( Controller ):
   enabled = Bool( default_value=True )
@@ -131,6 +133,8 @@ class Pipeline( Process ):
   def __init__( self, **kwargs ):
     super( Pipeline, self ).__init__( **kwargs )
     super( Pipeline, self ).add_trait( 'nodes_activation', Instance( Controller ) )
+    self.list_process_in_pipeline=[]
+    self.attributes={}
     self.nodes_activation = Controller()
     self.nodes = SortedDictionary()
     self.node_position = {}
@@ -154,9 +158,27 @@ class Pipeline( Process ):
     output = isinstance( trait, File ) and bool( trait.output )
     plug = Plug( output=output )
     self.pipeline_node.plugs[ name ] = plug
-    #plug.on_trait_change( self.pipeline_node.update_plugs_hook, 'enabled' )
+    ##plug.on_trait_change( self.pipeline_node.update_plugs_hook, 'enabled' )
+    #if isinstance(trait,CTrait):
+	#print 'trait in process'
+    #else:
+	#print trait
+	#plug.on_trait_change(self.trait_in_pipeline_change, name)
+	
+    #print 'traittype',trait.is_trait_type( Instance)
+    #print plug.trait
     plug.on_trait_change( self.update_nodes_and_plugs_activation, 'enabled' )
-  
+    #print 'nodesss',self.nodes
+    #print 'nodes position',self.node_position
+
+	
+    
+    
+  #def trait_in_pipeline_change(self,object, name, old, new):
+      #print 'trait_in_pipeline_change'
+      #print object,name,old,new
+
+    
   
   def add_process( self, name, process, **kwargs ):
     if name in self.nodes:
@@ -168,6 +190,9 @@ class Pipeline( Process ):
     self.nodes_activation.add_trait( name, Bool )
     setattr( self.nodes_activation, name, node.enabled )
     self.nodes_activation.on_trait_change( self._set_node_enabled, name )
+    self.list_process_in_pipeline.append(process)
+
+ 	
   
   
   def add_switch( self, name, inputs, output ):
@@ -213,6 +238,7 @@ class Pipeline( Process ):
     source_plug.links_to.add( ( dest_node_name, dest_parameter, dest_node, dest_plug ) )
     dest_plug.links_from.add( ( source_node_name, source_parameter, source_node, source_plug ) )
     source_node.connect( source_parameter, dest_node, dest_parameter )
+    dest_node.connect( dest_parameter, source_node, source_parameter )
     #source_node.update_plugs()
     #dest_node.update_plugs()
   
@@ -242,6 +268,7 @@ class Pipeline( Process ):
       node.enabled = value
   
   def update_nodes_and_plugs_activation( self ):
+    print 'update_nodes_and_plugs_activation'
     stack = set()
     for node in self.nodes.itervalues():
       if isinstance( node, PipelineNode ):
@@ -333,8 +360,7 @@ class Pipeline( Process ):
     self.selection_changed = True
     if traits_changed:
       self.user_traits_changed = True
-  
-  
+
   
   def workflow( self ):
     result = Workflow()
@@ -383,7 +409,7 @@ class Pipeline( Process ):
 
 
   def __call__( self ):
-    for name, process_node in self.workflow.ordered_nodes():
+    for name, process_node in self.workflow().ordered_nodes():
       process_node()
 
     
