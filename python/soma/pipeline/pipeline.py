@@ -237,6 +237,8 @@ class Pipeline( Process ):
       raise ValueError( 'Cannot link to an output plug : %s' % link )
     source_plug.links_to.add( ( dest_node_name, dest_parameter, dest_node, dest_plug ) )
     dest_plug.links_from.add( ( source_node_name, source_parameter, source_node, source_plug ) )
+    if isinstance( dest_node, ProcessNode ):
+      dest_node.trait( dest_parameter ).connected_output = True
     source_node.connect( source_parameter, dest_node, dest_parameter )
     dest_node.connect( dest_parameter, source_node, source_parameter )
     #source_node.update_plugs()
@@ -422,7 +424,6 @@ class Workflow( object ):
     self.tail = set()
     
   def add_node( self, name, node ):
-    print '!add_node!', name, node
     self.nodes[ node ] = ( name, set() )
     self.head.add( node )
     self.tail.add( node )
@@ -435,7 +436,6 @@ class Workflow( object ):
       return
     if dest_node is source_ancestors:
       raise ValueError( 'Loop detected in worflow' )
-    print '!add_link!', '%s->%s' % ( self.nodes[ source_node ][ 0 ], self.nodes[ dest_node ][ 0 ] )
     source_links_to, source_links_from = self.links.setdefault( source_node, ( set(), set() ) )
     dest_links_to, dest_links_from = self.links.setdefault( dest_node, ( set(), set() ) )
     ancestors_stack = [ source_node ]
@@ -459,7 +459,6 @@ class Workflow( object ):
     
   def add_workflow( self, workflow, prefix='' ):
     for i, j in workflow.nodes.iteritems():
-      print '!import_node!', prefix + j[ 0 ], i
       self.nodes[ i ] = ( prefix + j[ 0 ], j[ 1 ] )
     self.links.update( workflow.links )
     self.head.update( workflow.head )
