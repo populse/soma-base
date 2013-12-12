@@ -238,7 +238,10 @@ class Pipeline( Process ):
     source_plug.links_to.add( ( dest_node_name, dest_parameter, dest_node, dest_plug ) )
     dest_plug.links_from.add( ( source_node_name, source_parameter, source_node, source_plug ) )
     if isinstance( dest_node, ProcessNode ):
-      dest_node.trait( dest_parameter ).connected_output = True
+      print 'dest_node',dest_node
+      print 'dest parameter',dest_parameter
+      print 'dest_node trait',dest_node.trait( dest_parameter )
+      dest_node.process.trait( dest_parameter ).connected_output = True
     source_node.connect( source_parameter, dest_node, dest_parameter )
     dest_node.connect( dest_parameter, source_node, source_parameter )
     #source_node.update_plugs()
@@ -411,6 +414,7 @@ class Pipeline( Process ):
 
 
   def __call__( self ):
+    print 'pipeline.py -> __call__ pipeline'
     for name, process_node in self.workflow().ordered_nodes():
       process_node()
 
