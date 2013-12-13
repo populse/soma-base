@@ -15,13 +15,12 @@ from soma.global_naming import GlobalNaming
 from soma.pipeline.study import Study
 
 class Process( Controller ):
-    def __init__( self, id=None, **kwargs ):
+    def __init__( self, **kwargs ):
         super( Process, self ).__init__( **kwargs )
-	if id is None:
-            id = self.__class__.__module__ + '.' + self.__class__.__name__
-	self.id = id
-	self.name = self.__class__.__name__
-	self.viewers={}
+        id = self.__class__.__module__ + '.' + self.__class__.__name__
+        self.id = id
+        self.name = self.__class__.__name__
+        self.viewers={}
       
     def set_viewer( self, parameter, viewer, **kwargs ):
         self.viewers[ parameter ] = ( viewer, kwargs )
@@ -49,8 +48,14 @@ class Process( Controller ):
     def get_instance( process_or_id, **kwargs ):
         if isinstance( process_or_id, Process ):
             return process_or_id
-        process_class = GlobalNaming().get_object( process_or_id )
-        process = process_class( id=process_or_id, **kwargs )
+        module = __import__( process_or_id, fromlist=[ '' ], level=0 )
+        processes = [ i for i in module.__dict__.itervalues() if isinstance(i,type) and issubclass( i, Process ) and i.__module__ == process_or_id ]
+        if not processes:
+          raise ImportError( 'No process defined in %s' % process_or_id )
+        elif len( processes ) > 1:
+          raise ImportError( 'Several processes declared in %s' % process_or_id )
+        module = GlobalNaming().get_object( process_or_id )
+        process = processes[ 0 ]( **kwargs )
         return process
 
 
