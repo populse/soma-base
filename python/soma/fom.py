@@ -378,13 +378,13 @@ class FileOrganizationModels( object ):
                       
       return att_no_value
       
-  def selected_rules( self, selection ):
+  def selected_rules( self, selection, debug=None ):
     if selection:
       format = selection.get( 'format' )
       for rule_pattern, rule_attributes in self.rules:
         rule_formats = rule_attributes.get( 'fom_formats', [] )
         if format:
-          if format == 'fom_first':
+          if format in ( 'fom_first', 'fom_prefered' ):
             if not rule_formats:
               continue
           elif format not in rule_formats:
@@ -715,7 +715,7 @@ class AttributesToPaths( object ):
     self._db.execute( sql )
     sql_insert = 'INSERT INTO rules VALUES ( %s )' % ','.join( '?' for i in xrange( len( self.all_attributes ) + 3 ) )
     self.rules = []
-    for pattern, rule_attributes in foms.selected_rules( self.selection ):
+    for pattern, rule_attributes in foms.selected_rules( self.selection, debug=debug ):
       if debug: debug.debug( 'pattern: ' + pattern + ' ' + repr( rule_attributes ) )
       pattern_attributes = set( ( i if '|' not in i else i[ : i.find( '|' ) ] ) for i in self.foms._attributes_regex.findall( pattern ) )
       values =[]
@@ -869,7 +869,7 @@ def call_before_application_initialization( application ):
     ListStr( descr='Path for finding file organization models' ) )
   if application.install_directory:
       application.fom_path = [ os.path.join( application.install_directory, 
-          'share', 'soma-base-' + short_version, 'foms' ) ]
+          'share', 'foms' ) ]
 
 
 def call_after_application_initialization( application ):
@@ -890,22 +890,22 @@ if __name__ == '__main__':
   from pprint import pprint
   import logging
   logging.root.setLevel( logging.DEBUG )
-  fom = app.fom_manager.load_foms( 'morphologist-brainvisa-pipeline-1.0' )
+  fom = app.fom_manager.load_foms( 'morphologist-brainvisa-1.0' )
   #atp = AttributesToPaths( fom, selection={ 'fom_process':'morphologistSimp.SimplifiedMorphologist' }, 
                            #prefered_formats=set( ('NIFTI',) ), 
                            #debug=logging )
   #form='MINC'
   #form=','+'MESH'
   #print 'form',form
-  directories={"input_directory": "/home/mb236582/datafom",
-    "output_directory": "/home/mb236582/my_study",
-    "shared_directory": "/volatile/bouin/build/trunk/share/brainvisa-share-4.5"}
+  directories={"input_directory": "/input",
+    "output_directory": "/output",
+    "shared_directory": "/shared"}
   fomr=['NIFTI','MESH']
-  atp = AttributesToPaths( fom, selection={ 'fom_process':'morphologist_pipeline.HeadMesh' }, 
-                           prefered_formats=set( (fomr[0],fomr[1])) , directories=directories, 
+  atp = AttributesToPaths( fom, selection={ 'fom_process':'"morphologistSimp.SimplifiedMorphologist' }, 
+                           prefered_formats=fomr , directories=directories, 
                            debug=logging )
-  d= {'protocol': u'subjects', 'analysis': 'default_analysis', 'fom_parameter': 'head_mask', 
-  'acquisition': 'default_acquisition', 'subject': u'002_S_0816_S18402_I40732'}
+  d= { 'protocol': u'the_protocol', 'analysis': 'the_analysis', 'fom_parameter': 'brain_mask', 
+  'acquisition': 'the_acquisition', 'subject': u'the_subject'}
   for p, a in atp.find_paths( d ):
     print ' ', repr( p ), a
   #for parameter in fom.patterns[ 'morphologistSimp.SimplifiedMorphologist' ]:

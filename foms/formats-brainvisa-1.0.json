@@ -19,19 +19,16 @@
     "Referential": "referential",
     "Histogram" : "his",
     "Histo Analysis" : "han",
-    "GIFTI" : "gii",
-    "MESH": "mesh",
+    "MNI OBJ mesh" : "gii",
     "Graph and data" : "arg",
     "Referential" : "referential",
     "Directory" : "",
-    "PLY": "ply",
   },
   
   
   "format_lists" : {
     "images" : [ "NIFTI gz","GIS","MINC", "SPM","NIFTI"],
-    "label translations" : [ "Label Translation", "DEF Label Translation" ],
-    "mesh" : ["GIFTI","MESH","PLY"],
+    "label translations" : [ "Label Translation", "DEF Label Translation" ]
   },
 
 }
