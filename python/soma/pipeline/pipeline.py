@@ -237,15 +237,14 @@ class Pipeline( Process ):
       raise ValueError( 'Cannot link to an output plug : %s' % link )
     source_plug.links_to.add( ( dest_node_name, dest_parameter, dest_node, dest_plug ) )
     dest_plug.links_from.add( ( source_node_name, source_parameter, source_node, source_plug ) )
-    if isinstance( dest_node, ProcessNode ):
-      print 'dest_node',dest_node
-      print 'dest parameter',dest_parameter
-      print 'dest_node trait',dest_node.trait( dest_parameter )
-      dest_node.process.trait( dest_parameter ).connected_output = True
+    if isinstance( dest_node, ProcessNode ) and isinstance( source_node, ProcessNode ):
+      source_trait = source_node.process.trait( source_parameter )
+      dest_trait = dest_node.process.trait( dest_parameter )
+      if source_trait.output and not dest_trait.output:
+        #print '! %s.%s -> %s.%s'% ( source_node_name, source_parameter, dest_node_name, dest_parameter )
+        dest_trait.connected_output = True
     source_node.connect( source_parameter, dest_node, dest_parameter )
     dest_node.connect( dest_parameter, source_node, source_parameter )
-    #source_node.update_plugs()
-    #dest_node.update_plugs()
   
   
   def export_parameter( self, node_name, parameter_name, pipeline_parameter='' ):
