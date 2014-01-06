@@ -109,7 +109,7 @@ class MainWindow(QtGui.QMainWindow):
         self.filemenu=QtGui.QMenu("File")
         #self.filemenu.setTitle("&File")
         self.filemenu.addAction(self.action_open)
-        self.filemenu.addAction(self.action_open_xls)
+        #self.filemenu.addAction(self.action_open_xls)
         self.filtermenu=QtGui.QMenu("Filter")
         #self.filtermenu.setTitle('&Filter')
         self.filtermenu.addAction(self.action_filter)
@@ -122,8 +122,8 @@ class MainWindow(QtGui.QMainWindow):
         #Action filemenu
         self.action_open=QtGui.QAction('Open',self)
         self.action_open.triggered.connect(self.on_open)
-        self.action_open_xls=QtGui.QAction('Open Xls',self)
-        self.action_open_xls.triggered.connect(self.on_open_xls)
+        #self.action_open_xls=QtGui.QAction('Open Xls',self)
+        #self.action_open_xls.triggered.connect(self.on_open_xls)
         #Action filtermenu
         self.action_filter=QtGui.QAction('Launch filter',self)
         self.action_filter.triggered.connect(self.on_open_filter)
@@ -501,6 +501,8 @@ class MainWindow(QtGui.QMainWindow):
     def wheel_event (self, event):
         if self.data_file_name is not None:
             steps = event.delta() / 120.0
+            self.event_x=event.x()
+            self.event_y=event.y()
             self.zoom(steps)
             event.accept()
         self.setFocusPolicy(QtCore.Qt.StrongFocus)   
@@ -512,7 +514,7 @@ class MainWindow(QtGui.QMainWindow):
                                             QtCore.Qt.KeepAspectRatio, 
                                             QtCore.Qt.FastTransformation))
         self.view_current()
-
+        self.view.centerOn(self.view.mapToScene(self.event_x,self.event_y))
             
             
     def on_open_xls (self):
