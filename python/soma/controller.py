@@ -58,7 +58,7 @@ class MetaController( HasTraits.__metaclass__ ):
 class Controller( HasTraits ):
     """
     A Controller is a HasTraits that is connected to ControllerFactories and
-    idgetFactories, it also provides some methods to inspect user defined traits
+    widgetFactories, it also provides some methods to inspect user defined traits
     and to raise an event if its traits have changed.
     """
     __metaclass__ = MetaController
@@ -72,7 +72,7 @@ class Controller( HasTraits ):
     """
     user_traits_changed = Event
   
-    def user_traits( self, *args, **kwargs ):
+    def user_traits( self ):
         """
         Returns a dictionnary containing class traits and instance traits defined by
         user  (i.e.  the traits that are not automatically defined by HasTraits 

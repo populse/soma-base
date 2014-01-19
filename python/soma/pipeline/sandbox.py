@@ -1,85 +1,92 @@
+import tempfile
+from subprocess import check_call
+from PyQt4 import QtGui
 try:
-  from traits.api import File, Float, Int
+  from traits.api import File, Float, Int, String
 except ImportError:
   from enthought.traits.api import File, Float, Int
 
 from soma.pipeline.process import Process
 from soma.pipeline.pipeline import Pipeline
 
+
+class EchoProcess( Process ):  
+  def __call__( self ):
+    print self.id + ':'
+    for parameter in self.user_traits():
+      print ' ', parameter, '=', repr( getattr( self, parameter ) )
     
-class SPMNormalization( Process ):
-  def __init__( self, **kwargs ):
-    super( SPMNormalization, self ).__init__( **kwargs )
+    
+class SPMNormalization( EchoProcess ):
+  def __init__( self ):
+    super( SPMNormalization, self ).__init__()
     self.add_trait( 'image', File() )
     self.add_trait( 'template', File() )
     self.add_trait( 'normalized', File( output=True ) )
 
     
-class BiasCorrection( Process ):
-  def __init__( self, **kwargs ):
-    super( BiasCorrection, self ).__init__( **kwargs )
+class BiasCorrection( EchoProcess ):
+  def __init__( self ):
+    super( BiasCorrection, self ).__init__()
     self.add_trait( 't1mri', File() )
     self.add_trait( 'field_rigidity', Float() )
     self.add_trait( 'nobias', File( output=True ) )
 
     
-class HistoAnalysis( Process ):
-  def __init__( self, **kwargs ):
-    super( HistoAnalysis, self ).__init__( **kwargs )
+class HistoAnalysis( EchoProcess ):
+  def __init__( self ):
+    super( HistoAnalysis, self ).__init__()
     self.add_trait( 'image', File() )
     self.add_trait( 'histo_analysis', File( output=True ) )
 
     
-class BrainMask( Process ):
-  def __init__( self, **kwargs ):
-    super( BrainMask, self ).__init__( **kwargs )
+class BrainMask( EchoProcess ):
+  def __init__( self ):
+    super( BrainMask, self ).__init__()
     self.add_trait( 't1mri', File() )
     self.add_trait( 'histo_analysis', File() )
     self.add_trait( 'brain_mask', File( output=True ) )
 
     
-class SplitBrain( Process ):
-  def __init__( self, **kwargs ):
-    super( SplitBrain, self ).__init__( **kwargs )
+class SplitBrain( EchoProcess ):
+  def __init__( self ):
+    super( SplitBrain, self ).__init__()
     self.add_trait( 't1mri', File() )
     self.add_trait( 'histo_analysis', File() )
     self.add_trait( 'brain_mask', File() )
     self.add_trait( 'split_brain', File( output=True ) )
 
     
-class GreyWhiteClassification( Process ):
-  def __init__( self, **kwargs ):
-    super( GreyWhiteClassification, self ).__init__( **kwargs )
+class GreyWhiteClassification( EchoProcess ):
+  def __init__( self ):
+    super( GreyWhiteClassification, self ).__init__()
     self.add_trait( 't1mri', File() )
     self.add_trait( 'label_image', File() )
     self.add_trait( 'label', Int( optional=True ) )
     self.add_trait( 'gw_classification', File( output=True ) )
 
 
-class GreyWhiteSurface( Process ):
-  def __init__( self, **kwargs ):
-    super( GreyWhiteSurface, self ).__init__( **kwargs )
+class GreyWhiteSurface( EchoProcess ):
+  def __init__( self ):
+    super( GreyWhiteSurface, self ).__init__()
     self.add_trait( 't1mri', File() )
     self.add_trait( 'gw_classification', File() )
     self.add_trait( 'hemi_cortex', File( output=True ) )
     self.add_trait( 'white_mesh', File( output=True ) )
 
     
-class SphericalHemisphereSurface( Process ):
-  def __init__( self, **kwargs ):
-    super( SphericalHemisphereSurface, self ).__init__( **kwargs )
+class SphericalHemisphereSurface( EchoProcess ):
+  def __init__( self ):
+    super( SphericalHemisphereSurface, self ).__init__()
     self.add_trait( 'gw_classification', File() )
     self.add_trait( 'hemi_cortex', File() )
     self.add_trait( 'hemi_mesh', File( output=True ) )
 
 
 class GreyWhite( Pipeline ):
-  def pipeline_definition( self ):
-    #self.add_trait( 't1mri', File() )
-    
+  def pipeline_definition( self ):    
     self.add_process( 'gw_classification', GreyWhiteClassification() )
     self.export_parameter( 'gw_classification', 't1mri' )
-    #self.add_link( 't1mri->gw_classification.t1mri' )
     
     self.add_process( 'gw_surface', GreyWhiteSurface() )
     self.add_link( 't1mri->gw_surface.t1mri' )
@@ -97,7 +104,8 @@ class Morphologist( Pipeline ):
   def pipeline_definition( self ):
     self.add_trait( 't1mri', File() )
     
-    self.add_process( 'normalization', 'morphologist.process.SPMNormalization' )
+    self.add_process( 'normalization', 'soma.pipeline.sandbox.SPMNormalization' )
+    self.export_parameter( 'normalization', 'normalized', only_if_activated=True )
     self.add_switch( 'select_normalization', [ 'spm', 'none' ], 't1mri' )
     self.add_process( 'bias_correction', BiasCorrection() )
 
@@ -149,8 +157,31 @@ class Morphologist( Pipeline ):
                           'right_grey_white': (1239.0, 330.0),
                           'select_normalization': (442.0, 65.0),
                           'split_brain': (1089.0, 163.0)}
-
-
+     
+           
+class WorkflowViewer( QtGui.QWidget ):
+  def __init__( self, pipeline ):
+    super( WorkflowViewer, self ).__init__()
+    self.pipeline = pipeline
+    layout = QtGui.QVBoxLayout( self )
+    #self.setLayout( layout )
+    self.label =QtGui.QLabel()
+    layout.addWidget( self.label )
+    self.btn_update = QtGui.QPushButton( 'update' )
+    layout.addWidget( self.btn_update )
+    self.btn_update.clicked.connect( self.update )
+    self.update()
+    
+  def update( self ):
+    image = tempfile.NamedTemporaryFile( suffix='.png' )
+    dot = tempfile.NamedTemporaryFile( suffix='.png' )
+    self.pipeline.workflow().write( dot )
+    dot.flush()
+    check_call( [ 'dot', '-Tpng', '-o', image.name, dot.name ] )
+    pixmap = QtGui.QPixmap( image.name ).scaledToHeight( 600 )
+    self.label.setPixmap( pixmap )
+    
+                          
 if __name__ == '__main__':
   import sys
   from PyQt4 import QtGui
@@ -161,18 +192,14 @@ if __name__ == '__main__':
   app = QtGui.QApplication( sys.argv )
 
   morphologist = Morphologist()
-  morphologist.select_normalization = 'none'
-  #morphologist.nodes[ 'left_grey_white' ].enabled = False
+  morphologist.set_string_list( sys.argv[1:] )
+  view3 = WorkflowViewer( morphologist )
+  view3.show()
   view1 = PipelineView( morphologist )
   view1.show()
-  def set_morphologist_pipeline():
-    view1.set_pipeline( morphologist )
-  #morphologist.nodes_activation.on_trait_change( set_morphologist_pipeline )
-  morphologist.on_trait_change( set_morphologist_pipeline, 'selection_changed' )
-  morphologist.on_trait_change( partial( view1.set_pipeline, morphologist ), 'select_normalization' )
   view2 = PipelineView( GreyWhite() )
   view2.show()
-
+  
   cw = ControllerWidget( morphologist, live=True )
   cw.show()
   
@@ -192,5 +219,5 @@ if __name__ == '__main__':
   app.exec_()
   morphologist.workflow().write( sys.stdout )
   del view1
-  #del view2
-
+  del view2
+  del view3

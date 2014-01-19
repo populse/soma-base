@@ -1,8 +1,8 @@
 import sys
 try:
-  from traits.api import File, Float, Enum, Str, Int, Bool, List, Tuple, Instance, Event, CTrait
+  from traits.api import File, Float, Enum, Str, Int, Bool, List, Tuple, Instance, Any, Event, CTrait
 except ImportError:
-  from enthought.traits.api import File, Float, Enum, Str, Int, Bool, List, Tuple, Instance, Event,CTrait
+  from enthought.traits.api import File, Float, Enum, Str, Int, Bool, List, Tuple, Instance, Any, Event,CTrait
 
 from soma.controller import Controller
 from soma.sorted_dictionary import SortedDictionary
@@ -11,7 +11,8 @@ from soma.functiontools import SomaPartial
 from soma.pipeline.process_with_fom import ProcessWithFom
 from soma.pipeline.process import Process
 from soma.pipeline.pipeline_with_fom import PipelineWithFom
-    
+
+
 class Plug( Controller ):
   enabled = Bool( default_value=True )
   activated = Bool( default_value=False )
@@ -46,7 +47,6 @@ class Node( Controller ):
         name = i
         plug = Plug( output=False )
       self.plugs[ name ] = plug
-      #plug.on_trait_change( self.update_plugs_hook, 'enabled' )
       plug.on_trait_change( pipeline.update_nodes_and_plugs_activation, 'enabled' )
     for i in outputs:
       plug = Plug( output=True )
@@ -56,15 +56,24 @@ class Node( Controller ):
 
   
   def connect( self, source_parameter, dest_node, dest_parameter ):
-    callback = dest_node.connection_callback( dest_parameter )
-    self._callbacks[ ( source_parameter, dest_node, dest_parameter ) ] = callback
-    self.on_trait_change( callback, source_parameter )
+    def value_callback( value ):
+      if value is not None and self.plugs[ source_parameter ].activated and dest_node.plugs[ dest_parameter ].activated:
+        dest_node.set_plug_value( dest_parameter, value )    
+    self._callbacks[ ( source_parameter, dest_node, dest_parameter ) ] = value_callback
+    self.set_callback_on_plug( source_parameter, value_callback )
 
-  def connection_callback( self, parameter ):
-    def callback( value ):
-      setattr( self, parameter, value )
-    return callback
-
+  
+  def set_callback_on_plug( self, plug_name, callback ):
+    self.on_trait_change( callback, plug_name )
+  
+  
+  def get_plug_value( self, plug_name ):
+    return getattr( self, plug_name )
+  
+  
+  def set_plug_value( self, plug_name, value ):
+    setattr( self, plug_name, value )
+  
   
   def get_trait( self, name ):
     return self.trait( name )
@@ -86,17 +95,20 @@ class ProcessNode( Node ):
         inputs.append( dict( name=parameter, optional=bool(trait.optional) ) )
     super( ProcessNode, self ).__init__( pipeline, name, inputs, outputs )
 
-  def connect( self, source_parameter, dest_node, dest_parameter ):
-    callback = dest_node.connection_callback( dest_parameter )
-    #callback = SomaPartial( dest_node.set_parameter, dest_parameter )
-    self._callbacks[ ( source_parameter, dest_node, dest_parameter ) ] = callback
-    self.process.on_trait_change( callback, source_parameter )
-
-  def connection_callback( self, parameter ):
-    def callback( value ):
-      setattr( self.process, parameter, value )
-    return callback
   
+  
+  def set_callback_on_plug( self, plug_name, callback ):
+    self.process.on_trait_change( callback, plug_name )
+
+  
+  def get_plug_value( self, plug_name ):
+    return getattr( self.process, plug_name )
+  
+  
+  def set_plug_value( self, plug_name, value ):
+    setattr( self.process, plug_name, value )
+
+    
   def get_trait( self, name ):
     return self.process.trait( name )
     
@@ -106,24 +118,30 @@ class PipelineNode( ProcessNode ):
   pass
 
     
-    
 class Switch( Node ):
   def __init__( self, pipeline, name, inputs, output ):
+    self._output = output
     self.add_trait( 'switch', Enum( *inputs ) )
     super( Switch, self ).__init__( pipeline, name, [ 'switch' ] + [ dict( name=i, optional=True ) for i in inputs], [ output ] )
+    for i in inputs:
+      self.add_trait( i, Any() )
+    self.add_trait( output, Any() )
     for n in inputs[ 1: ]:
       self.plugs[ n ].enabled = False
-    #self.update_plugs()
+  
+  
+  def _anytrait_changed( self, name, value ):
+    output = getattr( self, '_output', None )
+    if output:
+      if name == self.switch:
+        setattr( self, output, value )
   
   
   def _switch_changed( self, old, new ):
     self.plugs[ old ].enabled = False
     self.plugs[ new ].enabled = True
-    #self.update_plugs()
     self.pipeline.update_nodes_and_plugs_activation()
-
-  #def update_plugs( self ):
-    #self.update_plugs_activation()
+    setattr( self, self._output, getattr( self, new ) )
 
 
 class Pipeline( Process ):
@@ -158,28 +176,9 @@ class Pipeline( Process ):
     output = isinstance( trait, File ) and bool( trait.output )
     plug = Plug( output=output )
     self.pipeline_node.plugs[ name ] = plug
-    ##plug.on_trait_change( self.pipeline_node.update_plugs_hook, 'enabled' )
-    #if isinstance(trait,CTrait):
-	#print 'trait in process'
-    #else:
-	#print trait
-	#plug.on_trait_change(self.trait_in_pipeline_change, name)
-	
-    #print 'traittype',trait.is_trait_type( Instance)
-    #print plug.trait
     plug.on_trait_change( self.update_nodes_and_plugs_activation, 'enabled' )
-    #print 'nodesss',self.nodes
-    #print 'nodes position',self.node_position
 
-	
-    
-    
-  #def trait_in_pipeline_change(self,object, name, old, new):
-      #print 'trait_in_pipeline_change'
-      #print object,name,old,new
 
-    
-  
   def add_process( self, name, process, **kwargs ):
     if name in self.nodes:
       raise ValueError( 'Pipeline cannot have two nodes with the same name : %s' % name )
@@ -190,9 +189,7 @@ class Pipeline( Process ):
     self.nodes_activation.add_trait( name, Bool )
     setattr( self.nodes_activation, name, node.enabled )
     self.nodes_activation.on_trait_change( self._set_node_enabled, name )
-    self.list_process_in_pipeline.append(process)
-
- 	
+    self.list_process_in_pipeline.append(process) 	
   
   
   def add_switch( self, name, inputs, output ):
@@ -227,7 +224,7 @@ class Pipeline( Process ):
     return node_name, parameter_name, node, node.plugs[ parameter_name ] 
 
     
-  def add_link( self, link ):
+  def add_link( self, link, only_if_activated=False ):
     source, dest = link.split( '->' )
     source_node_name, source_parameter, source_node, source_plug = self.parse_parameter( source )
     dest_node_name, dest_parameter, dest_node, dest_plug = self.parse_parameter( dest )
@@ -235,19 +232,18 @@ class Pipeline( Process ):
       raise ValueError( 'Cannot link from an input plug : %s' % link )
     if dest_plug.output and source_node is not self.pipeline_node:
       raise ValueError( 'Cannot link to an output plug : %s' % link )
-    source_plug.links_to.add( ( dest_node_name, dest_parameter, dest_node, dest_plug ) )
-    dest_plug.links_from.add( ( source_node_name, source_parameter, source_node, source_plug ) )
+    source_plug.links_to.add( ( dest_node_name, dest_parameter, dest_node, dest_plug, only_if_activated ) )
+    dest_plug.links_from.add( ( source_node_name, source_parameter, source_node, source_plug, False ) )
     if isinstance( dest_node, ProcessNode ) and isinstance( source_node, ProcessNode ):
       source_trait = source_node.process.trait( source_parameter )
       dest_trait = dest_node.process.trait( dest_parameter )
       if source_trait.output and not dest_trait.output:
-        #print '! %s.%s -> %s.%s'% ( source_node_name, source_parameter, dest_node_name, dest_parameter )
         dest_trait.connected_output = True
     source_node.connect( source_parameter, dest_node, dest_parameter )
     dest_node.connect( dest_parameter, source_node, source_parameter )
   
   
-  def export_parameter( self, node_name, parameter_name, pipeline_parameter='' ):
+  def export_parameter( self, node_name, parameter_name, pipeline_parameter='', only_if_activated=False ):
     node = self.nodes[ node_name ]
     trait = node.get_trait( parameter_name )
     if trait is None:
@@ -261,9 +257,9 @@ class Pipeline( Process ):
         raise ValueError( 'Parameter %(pn)s of node %(nn)s cannot be exported to pipeline parameter %(pp)s' % dict( nn=node_name, pn=parameter_name, pp=pipeline_parameter ) )
       self.add_trait( pipeline_parameter, trait )
       if isinstance( trait.handler, File ) and trait.handler.output:
-        self.add_link( '%s.%s->%s' % ( node_name, parameter_name, pipeline_parameter ) )
+        self.add_link( '%s.%s->%s' % ( node_name, parameter_name, pipeline_parameter ), only_if_activated=only_if_activated )
       else:
-        self.add_link(  '%s->%s.%s' % ( pipeline_parameter, node_name, parameter_name ) )
+        self.add_link(  '%s->%s.%s' % ( pipeline_parameter, node_name, parameter_name ), only_if_activated=only_if_activated )
   
   
   def _set_node_enabled( self, node_name, value ):
@@ -271,8 +267,15 @@ class Pipeline( Process ):
     if node:
       node.enabled = value
   
+  
   def update_nodes_and_plugs_activation( self ):
-    print 'update_nodes_and_plugs_activation'
+    inactive_links = []
+    for node in self.nodes.itervalues():
+      for source_plug_name, source_plug in node.plugs.iteritems():
+        for nn, pn, n, p, only_if_activated in source_plug.links_to:
+          if not source_plug.activated or not p.activated:
+            inactive_links.append( ( node, source_plug_name, source_plug, n, pn, p ) ) 
+            
     stack = set()
     for node in self.nodes.itervalues():
       if isinstance( node, PipelineNode ):
@@ -295,8 +298,8 @@ class Pipeline( Process ):
             if plug.links_to:
               continue
             if plug.enabled:
-              for nn, pn, n, p in plug.links_from:
-                if p.activated:
+              for nn, pn, n, p, only_if_activated in plug.links_from:
+                if p.activated and not only_if_activated:
                   plug.activated = True
                   break
               else:
@@ -308,10 +311,16 @@ class Pipeline( Process ):
               break
           if node.activated:
             for plug in node.plugs.itervalues():
-              if plug.enabled and plug.links_to:
-                plug.activated = True
-                for nn, pn, n, p in plug.links_to:
-                  new_stack.add( n )
+              if plug.enabled:
+                activated = False
+                for nn, pn, n, p, only_if_activated in plug.links_to:
+                  if not only_if_activated:
+                    activated = True
+                    break
+                if activated:
+                  plug.activated = True
+                  for nn, pn, n, p, only_if_activated in plug.links_to:
+                    new_stack.add( n )
           else:
             for plug in node.plugs.itervalues():
               plug.activated = False  
@@ -327,8 +336,8 @@ class Pipeline( Process ):
           output_connected = False
           for plug in node.plugs.itervalues():
             if plug.links_to:
-              for nn, pn, n, p in plug.links_to:
-                if p.activated:
+              for nn, pn, n, p, only_if_activated in plug.links_to:
+                if p.activated and not only_if_activated:
                   break
               else:
                 plug.activated = False
@@ -340,15 +349,15 @@ class Pipeline( Process ):
             node.activated = False
             for plug in node.plugs.itervalues():
               plug.activated = False  
-              for nn, pn, n, p in plug.links_from:
+              for nn, pn, n, p, only_if_activated in plug.links_from:
                 new_stack.add( n )
       stack = new_stack
       
     pipeline_node = self.nodes[ '' ]
     traits_changed = False
     for plug_name, plug in pipeline_node.plugs.iteritems():
-      for nn, pn, n, p in plug.links_to.union( plug.links_from ):
-        if p.activated:
+      for nn, pn, n, p, only_if_activated in plug.links_to.union( plug.links_from ):
+        if p.activated and not only_if_activated:
           break
       else:
         plug.activated = False
@@ -365,10 +374,15 @@ class Pipeline( Process ):
     if traits_changed:
       self.user_traits_changed = True
 
+    for node, source_plug_name, source_plug, n, pn, p in inactive_links:
+      if source_plug.activated and p.activated:
+        value = node.get_plug_value( source_plug_name )
+        node._callbacks[ ( source_plug_name, n, pn ) ]( value )
+        
+
   
   def workflow( self ):
     result = Workflow()
-    
     heads = {}
     tails = {}
     stack = self.nodes.items()
@@ -393,18 +407,18 @@ class Pipeline( Process ):
           nodes_to = set()
           for plug in node.plugs.itervalues():
             if plug.activated:
-              for nn, pn, n, p in plug.links_from:
-                if n.activated and isinstance( n, ProcessNode ) and not isinstance( n, PipelineNode ):
+              for nn, pn, n, p, only_if_activated in plug.links_from:
+                if p.activated and isinstance( n, ProcessNode ) and not isinstance( n, PipelineNode ):
                   nodes_from.update( tails[ n ] )
-              for nn, pn, n, p in plug.links_to:
-                if n.activated and isinstance( n, ProcessNode ) and not isinstance( n, PipelineNode ):
+              for nn, pn, n, p, only_if_activated in plug.links_to:
+                if p.activated and isinstance( n, ProcessNode ) and not isinstance( n, PipelineNode ):
                   nodes_to.update( heads[ n ] )
           for source_node in nodes_from:
             for dest_node in nodes_to:
               result.add_link( source_node, dest_node )
         elif isinstance( node, ProcessNode ) and not isinstance( node, PipelineNode ):
           for plug in node.plugs.itervalues():
-            for nn, pn, n, p in plug.links_to:
+            for nn, pn, n, p, only_if_activated in plug.links_to:
               if n.activated and isinstance( n, ProcessNode ) and not isinstance( n, PipelineNode ):
                 for source_node in tails[ node ]:
                   for dest_node in heads[ n ]:
@@ -413,7 +427,7 @@ class Pipeline( Process ):
 
 
   def __call__( self ):
-    print 'pipeline.py -> __call__ pipeline'
+    print 'Execution of', self.id
     for name, process_node in self.workflow().ordered_nodes():
       process_node()
 
@@ -479,8 +493,6 @@ class Workflow( object ):
       id = str( len( ids ) )
       ids[ n ] = id
       print >> out, '  %s [label="%s"];' % ( id, self.node_str( n ) )
-    #print >> out, 'head:', [ self.node_str( i ) for i in self.head ]
-    #print >> out, 'tail:', [ self.node_str( i ) for i in self.tail ]
     for n, v in self.links.iteritems():
       for nn in v[ 0 ]:
         print >> out, '  %s -> %s;' % ( ids[ n ], ids[ nn ] )
@@ -495,7 +507,7 @@ class Workflow( object ):
   
   def ordered_branch( self, node ):
     yield ( self.node_str( node ), node )
-    for child_node in self.links[ node ][ 0 ]:
+    for child_node in self.links.get( node, [[]] )[ 0 ]:
       for branch_node in self.ordered_branch( child_node ):
         yield branch_node
 
