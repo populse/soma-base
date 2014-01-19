@@ -132,10 +132,4 @@ def trait_ids( trait ):
         return [ main_id + '_' + i for i in inner_ids ]
     else:
         return [ main_id ]
-
-
-
-
-def add_trait (self,name, *trait ):   
-  self.add_trait( name, *trait )
-  #print 'traiit',Trait( *trait )
+  

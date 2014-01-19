@@ -6,7 +6,7 @@ except ImportError:
     from enthought.traits.api import ListStr,HasTraits,File,Float,Instance,Enum,Str
 
 from soma.sorted_dictionary import SortedDictionary
-from soma.controller import Controller,add_trait
+from soma.controller import Controller
 from soma.application import Application
 from soma.fom import PathToAttributes,AttributesToPaths,DirectoryAsDict
 from soma.path import split_path
@@ -209,7 +209,7 @@ class ProcessWithFom(Controller):
             if not att.startswith( 'fom_' ):
                 default_value = self.input_fom.attribute_definitions[ att ].get( 'default_value' )
                 self.attributes[att]=default_value
-                add_trait(self,att,Str(self.attributes[att]))                         
+                self.add_trait(att,Str(self.attributes[att]))                         
         
         #Only search other attributes if fom not the same (by default merge attributes of the same foms)        
         if self.Study.input_fom != self.Study.output_fom:
@@ -225,7 +225,7 @@ class ProcessWithFom(Controller):
                         print 'same attribute but not same default value so nothing displayed'
                     else:        
                         self.attributes[att]=default_value
-                        add_trait(self,att,Str(self.attributes[att]))                         
+                        self.add_trait(att,Str(self.attributes[att]))                         
         
         
 

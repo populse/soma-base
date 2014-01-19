@@ -5,7 +5,7 @@ try:
 except ImportError:
     from enthought.traits.api import ListStr,HasTraits,File,Float,Instance,Enum,Str
 
-from soma.controller import Controller,add_trait
+from soma.controller import Controller
 from soma.application import Application
 from soma.fom import PathToAttributes,AttributesToPaths,DirectoryAsDict
 from soma.path import split_path
@@ -92,7 +92,7 @@ class PipelineWithFom(Controller):
 		    if att not in self.attributes:
 			default_value = self.input_fom.attribute_definitions[ att ].get( 'default_value' )
 			self.attributes[att]=default_value
-			add_trait(self,att,Str(self.attributes[att]))	 		
+			self.add_trait(att,Str(self.attributes[att]))	 		
 	    
 	    #FIXME WHEN TWO DIFFERENTS FOMS
 	    #Only search other attributes if fom not the same (by default merge attributes of the same foms)	
@@ -109,7 +109,7 @@ class PipelineWithFom(Controller):
 			    print 'same attribute but not same default value so nothing displayed'
 			else:	
 			    self.attributes[att]=default_value
-			    add_trait(self,att,Str(self.attributes[att]))	 		
+			    self.add_trait(att,Str(self.attributes[att]))	 		
 	    
             self.dict_input_atp[process_specific]=self.input_atp
             self.dict_output_atp[process_specific]=self.output_atp

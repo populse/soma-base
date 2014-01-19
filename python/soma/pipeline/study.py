@@ -5,7 +5,7 @@ import collections
 import datetime
 import glob
 from soma.sorted_dictionary import SortedDictionary
-from soma.controller import Controller,add_trait
+from soma.controller import Controller
 try:
     from traits.api import HasTraits,Str,Enum,Directory,File
 except ImportError:
@@ -21,16 +21,16 @@ class Study(Controller):
 	# Find foms available     
         foms = Application().fom_manager.find_foms()
 	foms.insert(0,' ')
-	add_trait(self,'input_directory',Directory)  
-	#add_trait(self,'input_directory',Directory('/nfs/neurospin/cati/cati_shared'))  
-	add_trait(self,'input_fom',Enum(foms))   
-        add_trait(self,'output_directory',Directory)   
-	add_trait(self,'output_fom',Enum(foms))
-	add_trait(self,'shared_directory',Directory)
-	add_trait(self,'spm_directory',Directory)
-        add_trait(self,'format_image',Str)
-	add_trait(self,'format_mesh',Str) 
-	add_trait(self,'process',Enum('   ','morphologistSimp.SimplifiedMorphologist','morphologist.process.Morphologist'))
+	self.add_trait('input_directory',Directory)  
+	#self.add_trait('input_directory',Directory('/nfs/neurospin/cati/cati_shared'))  
+	self.add_trait('input_fom',Enum(foms))   
+        self.add_trait('output_directory',Directory)   
+	self.add_trait('output_fom',Enum(foms))
+	self.add_trait('shared_directory',Directory)
+	self.add_trait('spm_directory',Directory)
+        self.add_trait('format_image',Str)
+	self.add_trait('format_mesh',Str) 
+	self.add_trait('process',Enum('   ','morphologistSimp.SimplifiedMorphologist','morphologist.process.Morphologist'))
 	self.process_specific=None
 	self.compteur_run_process={}
 	self.runs=collections.OrderedDict()
@@ -38,7 +38,7 @@ class Study(Controller):
     #def _input_fom_changed(self, old, new):
 	#print 'input fom changed'
 	##Get list format
-	#add_trait(self,'coucou',Str)
+	#self.add_trait(œ'coucou',Str)
 	
 	
     @staticmethod
