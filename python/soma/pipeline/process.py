@@ -58,25 +58,29 @@ class Process( Controller ):
           module. e.g. 'soma.pipeline.sandbox.SPMNormalization'
         '''
         if isinstance( process_or_id, Process ):
-            return process_or_id
-        # Try to import a module that must contain a single Process derived class
-        try:
-          module = __import__( process_or_id, fromlist=[ '' ], level=0 )
-        except ImportError:
-          module = None
-        if module is None:
-          process_class = GlobalNaming().get_object( process_or_id )
+          result =  process_or_id
         else:
-          # 
-          processes = [ i for i in module.__dict__.itervalues() if isinstance(i,type) and issubclass( i, Process ) and i.__module__ == process_or_id ]
-          if not processes:
-            raise ImportError( 'No process defined in %s' % process_or_id )
-          elif len( processes ) > 1:
-            raise ImportError( 'Several processes declared in %s' % process_or_id )
-          process_class = processes[ 0 ]
-        if process_class is None:
-          raise ValueError( 'Cannot find process %s' % repr( process_or_id ) )
-        return process_class( **kwargs )
+          # Try to import a module that must contain a single Process derived class
+          try:
+            module = __import__( process_or_id, fromlist=[ '' ], level=0 )
+          except ImportError:
+            module = None
+          if module is None:
+            process_class = GlobalNaming().get_object( process_or_id )
+          else:
+            # 
+            processes = [ i for i in module.__dict__.itervalues() if isinstance(i,type) and issubclass( i, Process ) and i.__module__ == process_or_id ]
+            if not processes:
+              raise ImportError( 'No process defined in %s' % process_or_id )
+            elif len( processes ) > 1:
+              raise ImportError( 'Several processes declared in %s' % process_or_id )
+            process_class = processes[ 0 ]
+          if process_class is None:
+            raise ValueError( 'Cannot find process %s' % repr( process_or_id ) )
+          result = process_class()
+        for p, v in kwargs.iteritems():
+          setattr( result, p, v )
+        return result
 
         
     def string_to_parameter( self, parameter, string_value ):

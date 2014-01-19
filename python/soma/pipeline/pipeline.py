@@ -92,7 +92,7 @@ class ProcessNode( Node ):
       if isinstance( trait.handler, File ) and trait.handler.output:
         outputs.append( parameter )
       else:
-        inputs.append( dict( name=parameter, optional=bool(trait.optional) ) )
+        inputs.append( dict( name=parameter, optional=bool(trait.optional or parameter in kwargs) ) )
     super( ProcessNode, self ).__init__( pipeline, name, inputs, outputs )
 
   

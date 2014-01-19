@@ -62,7 +62,7 @@ class GreyWhiteClassification( EchoProcess ):
     super( GreyWhiteClassification, self ).__init__()
     self.add_trait( 't1mri', File() )
     self.add_trait( 'label_image', File() )
-    self.add_trait( 'label', Int( optional=True ) )
+    self.add_trait( 'label', Int() )
     self.add_trait( 'gw_classification', File( output=True ) )
 
 
