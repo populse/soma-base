@@ -152,3 +152,9 @@ SubModule: ``application``
   :members:
 
 
+SubModule: ``qtgui``
+------------------------------
+.. automodule:: soma.qtgui.api
+  :members:
+
+

@@ -5,6 +5,20 @@ BRAINVISA_PROJECT()
 find_package( python REQUIRED )
 find_package( Epydoc )
 find_package( Dot )
+find_package( SIP REQUIRED )
+find_package( Doxygen )
+find_package( Epydoc )
+
+find_package( Qt4 COMPONENTS QtCore QtGui Qt3Support REQUIRED )
+find_package( QtVersion REQUIRED )
+find_package( PyQt${DESIRED_QT_VERSION} REQUIRED )
+
+BRAINVISA_DEPENDENCY( RUN DEPENDS libqtcore4 RUN ">= ${QT_VERSION}" )
+BRAINVISA_DEPENDENCY( DEV DEPENDS libqtcore4 DEV )
+BRAINVISA_DEPENDENCY( RUN DEPENDS libqtgui4 RUN ">= ${QT_VERSION}" )
+BRAINVISA_DEPENDENCY( DEV DEPENDS libqtgui4 DEV )
+BRAINVISA_DEPENDENCY( RUN DEPENDS libqt4-qt3support RUN ">= ${QT_VERSION}" )
+BRAINVISA_DEPENDENCY( DEV DEPENDS libqt4-qt3support DEV )
 
 BRAINVISA_FIND_PACKAGE( brainvisa-share QUIET )
 if( BRAINVISA-SHARE_FOUND )
@@ -17,6 +31,12 @@ BRAINVISA_DEPENDENCY( DEV DEPENDS "${BRAINVISA_PACKAGE_NAME}" RUN "= ${${BRAINVI
 BRAINVISA_DEPENDENCY( RUN DEPENDS python RUN ">= ${PYTHON_SHORT_VERSION}" )
 BRAINVISA_DEPENDENCY( DEV DEPENDS python DEV ">= 2.4;<< 3.0" )
 BRAINVISA_DEPENDENCY( RUN RECOMMENDS brainvisa-share RUN ">= ${${BRAINVISA_PACKAGE_NAME}_VERSION}" )
+BRAINVISA_DEPENDENCY( RUN DEPENDS python-sip4 RUN )
+BRAINVISA_DEPENDENCY( DEV DEPENDS python-sip4 DEV )
+BRAINVISA_DEPENDENCY( RUN DEPENDS python-qt${DESIRED_QT_VERSION} RUN )
+BRAINVISA_DEPENDENCY( DEV DEPENDS python-qt${DESIRED_QT_VERSION} DEV )
+
+include( "${QT_USE_FILE}" )
 
 configure_file( "${CMAKE_CURRENT_SOURCE_DIR}/config/config.py.in" "${CMAKE_BINARY_DIR}/python/soma/config.py" @ONLY )
 BRAINVISA_INSTALL( FILES "${CMAKE_BINARY_DIR}/python/soma/config.py"
@@ -52,6 +72,11 @@ BRAINVISA_COPY_DIRECTORY( "${CMAKE_CURRENT_SOURCE_DIR}/examples/soma"
 BRAINVISA_COPY_DIRECTORY( "${CMAKE_CURRENT_SOURCE_DIR}/sandbox/share" 
                           "share/sandbox"
                           ${PROJECT_NAME} )
+
+add_subdirectory( src/libsomaqtgui )
+add_subdirectory( src/sipsomaqtgui )
+add_subdirectory( src/sipsomaqt )
+
 # BRAINVISA_GENERATE_EPYDOC_DOC( "${CMAKE_BINARY_DIR}/python/soma"
 #   "share/doc/soma-${BRAINVISA_PACKAGE_VERSION_MAJOR}.${BRAINVISA_PACKAGE_VERSION_MINOR}/epydoc"
 #   EXCLUDE "soma.aims*" "soma.*.qt3gui" )

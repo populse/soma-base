@@ -1,6 +1,7 @@
 if( @PROJECT_NAME_UPPER@_DEFINITIONS )
   add_definitions(  ${@PROJECT_NAME_UPPER@_DEFINITIONS} )
 endif()
+
 if( @PROJECT_NAME_UPPER@_INCLUDE_DIRS )
   include_directories( ${@PROJECT_NAME_UPPER@_INCLUDE_DIRS} )
 endif()
@@ -10,3 +11,5 @@ if( BRAINVISA-SHARE_FOUND )
 else()
   message( "WARNING: project brainvisa-share has not been found. Some programs that require access to shared directories may fail to run." )
 endif()
+
+include( "${QT_USE_FILE}" )
