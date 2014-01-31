@@ -323,15 +323,28 @@ class FileCreateWidget( object ):
   
   @staticmethod
   def file_dialog( parent, name,attribute_widget ):
+    if hasattr( parent.controller.user_traits()[name], 'output' ) \
+        and parent.controller.user_traits()[name].output:
+      outputfile = True
+    else:
+      outputfile = False
     if sipconfig.Configuration().sip_version >= 0x040a00:
       #/nfs/neurospin/cati/cati_shared/MEMENTO/CONVERTED/001/0010020_LAFR/M000/MRI/3DT1/0010020_LAFR_M000_3DT1_S002.nii.gz
         #''
-      value = QtGui.QFileDialog.getOpenFileName ( parent, 'Select a file','/home/mb236582/datafom/subjects/subject02/t1mri/default_acquisition/subject02.nii', '', 
-                                                  options=QtGui.QFileDialog.DontUseNativeDialog )
+      if not outputfile:
+        value = QtGui.QFileDialog.getOpenFileName ( parent, 'Select a file','/home/mb236582/datafom/subjects/subject02/t1mri/default_acquisition/subject02.nii', '', 
+                                                    options=QtGui.QFileDialog.DontUseNativeDialog )
+      else:
+        value = QtGui.QFileDialog.getSaveFileName ( parent, 'Select a file','/home/mb236582/datafom/subjects/subject02/t1mri/default_acquisition/subject02.nii', '', 
+                                                    options=QtGui.QFileDialog.DontUseNativeDialog )
     else:
-      value = QtGui.QFileDialog.getOpenFileName ( self._widget, 'Select a file', '', '', 
-                                                  0, QtGui.QFileDialog.DontUseNativeDialog )
-    setattr( controller_widget.controller, name, unicode( value ) )   
+      if outputfile:
+        value = QtGui.QFileDialog.getOpenFileName ( self._widget, 'Select a file', '', '', 
+                                                    0, QtGui.QFileDialog.DontUseNativeDialog )
+      else:
+        value = QtGui.QFileDialog.getSaveFileName ( self._widget, 'Select a file', '', '', 
+                                                    0, QtGui.QFileDialog.DontUseNativeDialog )
+    setattr( parent.controller, name, unicode( value ) )
 
     
   @staticmethod
