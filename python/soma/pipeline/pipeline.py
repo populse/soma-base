@@ -163,11 +163,14 @@ class Pipeline( Process ):
 
     for node_name, node in self.nodes.iteritems():
       for parameter_name, plug in node.plugs.iteritems():
-        if parameter_name in ( 'nodes_activation', 'selection_changed' ):
+        if parameter_name in \
+            ( 'nodes_activation', 'selection_changed', 'trait_added' ):
           continue
         if ( node_name, parameter_name ) not in self.do_not_export and not plug.links_to and not plug.links_from:
-          self.export_parameter( node_name, parameter_name )
-    
+          exported_name = parameter_name
+          exported_name = '%s_%s' % ( node_name, parameter_name)
+          self.export_parameter( node_name, parameter_name, exported_name )
+
     self.update_nodes_and_plugs_activation()
           
           
