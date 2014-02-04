@@ -47,23 +47,30 @@ class Node(Controller):
         self.name = name
         self.plugs = {}
         self._callbacks = {}
-        for i in inputs:
-            if isinstance(i, dict):
-                d = i.copy()
-                name = d.pop('name')
-                d['output'] = False
-                plug = Plug(**d)
+        # parameter_type is False for an input, True for an output
+        parameters = zip(inputs, [False, ] * len(inputs))
+        parameters.extend(zip(outputs, [True, ] * len(outputs)))
+        for parameter, parameter_type in parameters:
+            if isinstance(parameter, dict):
+                if "name" not in parameter:
+                    raise Exception("Can't create parameter with uknown"
+                                    "identifier and parameter {0}".format(
+                                    parameter))
+                name = parameter.pop("name")
+                if not "output" in parameter.keys():
+                    parameter["output"] = parameter_type
+                plug = Plug(**parameter)
             else:
-                name = i
-                plug = Plug(output=False)
+                name = parameter
+                if parameter_type:  # it's an output
+                    # since no plug paramters, set plug as optional
+                    plug = Plug(output=parameter_type, optional=True)
+                else:
+                    plug = Plug(output=parameter_type)
             self.plugs[name] = plug
             plug.on_trait_change(pipeline.update_nodes_and_plugs_activation,
-                                 'enabled')
-        for i in outputs:
-            plug = Plug(output=True, optional=True)
-            self.plugs[i] = plug
-            plug.on_trait_change(pipeline.update_nodes_and_plugs_activation,
-                                 'enabled')
+                                 "enabled")
+
         self.on_trait_change(pipeline.update_nodes_and_plugs_activation,
                              'enabled')
 
@@ -100,7 +107,9 @@ class ProcessNode(Node):
             # hack: Accept other output traits
             #if isinstance(trait.handler, File) and trait.handler.output:
             if trait.handler.output:
-                outputs.append(parameter)
+                outputs.append(dict(name=parameter,
+                                    optional=bool(trait.optional),
+                                    output=True))
             else:
                 inputs.append(dict(name=parameter,
                       optional=bool(trait.optional or parameter in kwargs)))
@@ -187,7 +196,7 @@ class Pipeline(Process):
       for parameter_name, plug in node.plugs.iteritems():
         if parameter_name in ( 'nodes_activation', 'selection_changed' ):
           continue
-        if ((node_name, parameter_name) not in self.do_not_export and 
+        if ((node_name, parameter_name) not in self.do_not_export and
             not plug.links_to and not plug.links_from and
             not self.nodes[node_name].get_trait(parameter_name).optional):
           self.export_parameter(node_name, parameter_name)
