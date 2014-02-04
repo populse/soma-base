@@ -7,6 +7,5 @@
 # for details.
 ##########################################################################
 
-from memory import _joblib_run_process, _run_process
-from pipeline import (Plug, Pipeline, Node, ProcessNode, PipelineNode,
-                      Switch, Workflow)
+from loader import load_objects
+from utils import ensure_is_dir

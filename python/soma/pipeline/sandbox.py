@@ -6,8 +6,8 @@ try:
 except ImportError:
   from enthought.traits.api import File, Float, Int
 
-from soma.pipeline.process import Process
-from soma.pipeline.pipeline import Pipeline
+from soma.process import Process
+from soma.pipeline import Pipeline
 
 
 class EchoProcess( Process ):  
@@ -133,10 +133,10 @@ class Morphologist( Pipeline ):
     self.export_parameter( 'left_grey_white', 'label', None )
     self.add_link( 'select_normalization.t1mri->left_grey_white.t1mri' )
     self.add_link( 'split_brain.split_brain->left_grey_white.label_image' )
-    self.export_parameter( 'left_grey_white', 'gw_classification', 'left_gw_classification' )
-    self.export_parameter( 'left_grey_white', 'hemi_cortex', 'left_hemi_cortex' )
-    self.export_parameter( 'left_grey_white', 'hemi_mesh', 'left_hemi_mesh' )
-    self.export_parameter( 'left_grey_white', 'white_mesh', 'left_white_mesh' )
+    self.export_parameter( 'left_grey_white', 'gw_classification', 'left_gw_classification', set_optional=False )
+    self.export_parameter( 'left_grey_white', 'hemi_cortex', 'left_hemi_cortex', set_optional=False  )
+    self.export_parameter( 'left_grey_white', 'hemi_mesh', 'left_hemi_mesh', set_optional=False  )
+    self.export_parameter( 'left_grey_white', 'white_mesh', 'left_white_mesh', set_optional=False  )
     
     self.add_process( 'right_grey_white', GreyWhite(), label=2 )
     self.export_parameter( 'right_grey_white', 'label', None )
@@ -192,7 +192,7 @@ if __name__ == '__main__':
   app = QtGui.QApplication( sys.argv )
 
   morphologist = Morphologist()
-  morphologist.set_string_list( sys.argv[1:] )
+  #morphologist.set_string_list( sys.argv[1:] )
   view3 = WorkflowViewer( morphologist )
   view3.show()
   view1 = PipelineView( morphologist )

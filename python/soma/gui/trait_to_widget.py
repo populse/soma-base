@@ -46,9 +46,9 @@ class StrCreateWidget( object ):
   def update_controller_widget( controller_widget, name, attribute_widget, label_widget ):
     """Traits modified so update GUI""" 
     if isinstance( attribute_widget, TimeredQLineEdit ):
-      attribute_widget.setText( getattr( controller_widget.controller, name, '' ) )
+      attribute_widget.setText( unicode( getattr( controller_widget.controller, name, '' ) ) )
     else:   
-      attribute_widget.text_widget.setText( getattr( controller_widget.controller, name, '' ) )
+      attribute_widget.text_widget.setText( unicode( getattr( controller_widget.controller, name, '' ) ) )
   
 
   @classmethod

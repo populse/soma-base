@@ -290,11 +290,12 @@ class PipelineScene(QtGui.QGraphicsScene):
     if not dest_gnode_name:
       dest_gnode_name = 'outputs'
     dest_gnode = self.gnodes[ dest_gnode_name ]
-    glink = Link( source_gnode.mapToScene( source_gnode.out_plugs[ source_param ].get_plug_point() ),
-                  dest_gnode.mapToScene( dest_gnode.in_plugs[ dest_param ].get_plug_point() ),
-                  active )
-    self.glinks[ ( (source_gnode_name, source_param), (dest_gnode_name, dest_param) ) ] = glink
-    self.addItem( glink )
+    if dest_param in dest_gnode.in_plugs:
+      glink = Link( source_gnode.mapToScene( source_gnode.out_plugs[ source_param ].get_plug_point() ),
+                    dest_gnode.mapToScene( dest_gnode.in_plugs[ dest_param ].get_plug_point() ),
+                    active )
+      self.glinks[ ( (source_gnode_name, source_param), (dest_gnode_name, dest_param) ) ] = glink
+      self.addItem( glink )
 
     
   def update_paths(self):
