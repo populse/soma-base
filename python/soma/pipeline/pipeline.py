@@ -187,7 +187,9 @@ class Pipeline(Process):
       for parameter_name, plug in node.plugs.iteritems():
         if parameter_name in ( 'nodes_activation', 'selection_changed' ):
           continue
-        if ( node_name, parameter_name ) not in self.do_not_export and not plug.links_to and not plug.links_from:
+        if ((node_name, parameter_name) not in self.do_not_export and 
+            not plug.links_to and not plug.links_from and
+            not self.nodes[node_name].get_trait(parameter_name).optional):
           self.export_parameter(node_name, parameter_name)
 
 
@@ -271,39 +273,26 @@ class Pipeline(Process):
 
 
   def export_parameter( self, node_name, parameter_name,
-                       pipeline_parameter='', only_if_activated=False,
-                       set_optional=True):
+                       pipeline_parameter=None, only_if_activated=False):
     node = self.nodes[ node_name ]
-    
-    # hack: set the plug optinal parameter to False in order to export its
-    # value in the pipeline
-    if not set_optional:
-        node.plugs[parameter_name].optional = False
-
-    #print node
     trait = node.get_trait( parameter_name )
-    #print trait, pipeline_parameter
     if trait is None:
       raise ValueError( 'Node %(n)s (%(nn)s) has no parameter %(p)s' % dict( n=node_name, nn=node.name, p=parameter_name ) )
-    if (pipeline_parameter is None or
-        self.nodes[node_name].plugs[parameter_name].optional):
-      self.do_not_export.add( ( node_name,  parameter_name ) )
+    if not pipeline_parameter:
+      pipeline_parameter = parameter_name
+    if pipeline_parameter in self.user_traits():
+      raise ValueError( 'Parameter %(pn)s of node %(nn)s cannot be exported to pipeline parameter %(pp)s' % dict( nn=node_name, pn=parameter_name, pp=pipeline_parameter ) )
+    self.add_trait( pipeline_parameter, trait )
+    # hack
+    #if isinstance( trait.handler, File ) and trait.handler.output:
+    if trait.handler.output:
+      self.add_link( '%s.%s->%s' % ( node_name, parameter_name,
+                                     pipeline_parameter ),
+                                     only_if_activated=only_if_activated )
     else:
-      if not pipeline_parameter:
-        pipeline_parameter = parameter_name
-      if pipeline_parameter in self.user_traits():
-        raise ValueError( 'Parameter %(pn)s of node %(nn)s cannot be exported to pipeline parameter %(pp)s' % dict( nn=node_name, pn=parameter_name, pp=pipeline_parameter ) )
-      self.add_trait( pipeline_parameter, trait )
-      # hack
-      #if isinstance( trait.handler, File ) and trait.handler.output:
-      if trait.handler.output:
-        self.add_link( '%s.%s->%s' % ( node_name, parameter_name,
-                                      pipeline_parameter ),
-                       only_if_activated=only_if_activated )
-      else:
-        self.add_link(  '%s->%s.%s' % ( pipeline_parameter,
-                                       node_name, parameter_name ),
-                        only_if_activated=only_if_activated )
+      self.add_link(  '%s->%s.%s' % ( pipeline_parameter,
+                                      node_name, parameter_name ),
+                                      only_if_activated=only_if_activated )
 
 
   def _set_node_enabled( self, node_name, value ):
