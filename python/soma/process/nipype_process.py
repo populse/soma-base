@@ -108,6 +108,17 @@ def nipype_factory(nipype_instance):
             expression += "traits.{0}(".format(trait_item)
             if trait_item == "Enum":
                 expression += "{0}".format(trait.get_validate()[1])
+
+            #  Range Extra args
+            if trait_item == "Range":
+                if isinstance(nipype_trait, traits.CTrait):
+                    expression += "low={0},high={1}".format(
+                        nipype_trait.handler._low,
+                        nipype_trait.handler._high)
+                else:
+                    expression += "low={0},high={1}".format(nipype_trait._low,
+                                                            nipype_trait._high)
+
         expression += ")" * len(str_description)
 
         # evaluate expression in namespace
@@ -135,7 +146,7 @@ def nipype_factory(nipype_instance):
         process_instance.add_trait(name, process_trait)
         #print name, trait_ids(trait)
         # TODO: fix this hack in Controller
-        process_instance.trait(name).optional = True #not trait.mandatory
+        process_instance.trait(name).optional = not trait.mandatory
         process_instance.trait(name).desc = trait.desc
         process_instance.get(name)
         process_instance.on_trait_change(sync_nypipe_traits, name=name)
@@ -151,7 +162,7 @@ def nipype_factory(nipype_instance):
         # TODO: fix this hack in Controller
         process_instance.trait(private_name).optional = not trait.mandatory
         process_instance.trait(private_name).desc = trait.desc
-        process_instance.trait(private_name).output = True
+        process_instance.trait(private_name).output = not trait.mandatory
         process_instance.get(private_name)
 
     return process_instance
