@@ -24,6 +24,9 @@ from memory import _joblib_run_process, _run_process
 
 
 class Plug(Controller):
+    '''
+    '''
+
     enabled = Bool(default_value=True)
     activated = Bool(default_value=False)
     output = Bool(default_value=False)
@@ -37,6 +40,9 @@ class Plug(Controller):
 
 
 class Node(Controller):
+    '''
+    '''
+
     name = Str()
     enabled = Bool(default_value=True)
     activated = Bool(default_value=False)
@@ -96,6 +102,9 @@ class Node(Controller):
 
 
 class ProcessNode(Node):
+    '''
+    '''
+
     def __init__(self, pipeline, name, process, **kwargs):
         self.process = get_process_instance(process, **kwargs)
         self.kwargs = kwargs
@@ -137,10 +146,16 @@ class ProcessNode(Node):
 
 
 class PipelineNode(ProcessNode):
+    '''
+    '''
+
     pass
 
 
 class Switch(Node):
+    '''
+    '''
+
     def __init__(self, pipeline, name, inputs, outputs):
         # hack: multi outputs
         if not isinstance(outputs, list):
@@ -171,10 +186,12 @@ class Switch(Node):
         self.plugs[old].enabled = False
         self.plugs[new].enabled = True
         self.pipeline.update_nodes_and_plugs_activation()
-        setattr(self, self._output, getattr(self, new))
+        setattr(self, self._outputs, getattr(self, new))
 
 
 class Pipeline(Process):
+  '''Pipeline containing Process nodes, and links between node parameters
+  '''
 
   selection_changed = Event()
 

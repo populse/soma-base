@@ -12,13 +12,6 @@ SubModule: ``bufferandfile``
   :members:
 
 
-SubModule: ``databases``
-------------------------
-
-.. automodule:: soma.databases
-  :members:
-
-
 SubModule: ``debug``
 --------------------
 
@@ -157,4 +150,31 @@ SubModule: ``qtgui``
 .. automodule:: soma.qtgui.api
   :members:
 
+
+Pipeline and process infrastructure
+===================================
+
+SubModule: ``process``
+----------------------
+
+Exposes some elements of soma.process.process and soma.process.loader modules: Process, get_process_instance
+
+
+SubModule: ``pipeline``
+--------------------------------
+
+Exposes some elements of the soma.pipeline.pipeline module: Plug, Pipeline, Node, ProcessNode, PipelineNode, Switch, Workflow
+
+
+SubModule: ``process.process``
+------------------------------
+
+.. automodule:: soma.process.process
+  :members:
+
+SubModule: ``pipeline.pipeline``
+--------------------------------
+
+.. automodule:: soma.pipeline.pipeline
+  :members:
 
