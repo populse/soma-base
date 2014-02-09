@@ -9,6 +9,7 @@
 
 from process import Process, NipypeProcess
 from soma.process.nipype_process import nipype_factory
+import warnings
 
 try:
     from nipype.interfaces.base import Interface
