@@ -9,6 +9,7 @@
 
 import os
 import sys
+import logging
 try:
   import traits.api as traits
   from traits.api import File, Float, Enum, Str, Int, Bool, List, Tuple, Instance, Any, Event, CTrait
@@ -21,6 +22,8 @@ from soma.sorted_dictionary import SortedDictionary
 from soma.process import Process
 from soma.process import get_process_instance
 from memory import _joblib_run_process, _run_process
+
+from topological_sort import GraphNode, Graph
 
 
 class Plug(Controller):
@@ -162,7 +165,6 @@ class Switch(Node):
             outputs = [outputs, ]
         self._outputs = outputs
         self.add_trait('switch', Enum(*inputs))
-        print outputs, [dict(name=i, optional=True) for i in outputs]
         super(Switch, self).__init__(pipeline, name,
               ['switch'] + [dict(name=i, optional=True) for i in inputs],
               outputs)
@@ -325,8 +327,7 @@ class Pipeline(Process):
     node = self.nodes.get( node_name )
     if node:
       node.enabled = value
-
-
+      
   def update_nodes_and_plugs_activation( self ):
     inactive_links = []
     for node in self.nodes.itervalues():
@@ -334,7 +335,6 @@ class Pipeline(Process):
         for nn, pn, n, p, only_if_activated in source_plug.links_to:
           if not source_plug.activated or not p.activated:
             inactive_links.append( ( node, source_plug_name, source_plug, n, pn, p ) )
-    #print inactive_links
 
     stack = set()
     for node in self.nodes.itervalues():
@@ -441,6 +441,83 @@ class Pipeline(Process):
         node._callbacks[ ( source_plug_name, n, pn ) ]( value )
 
 
+
+  def workflow_test(self):
+      """ Generate a workflow: list of process node to execute
+      
+      Returns
+      -------
+      workflow_list: list of Process
+      an ordered list of Processes to execute
+      """
+      
+      def insert(node_name, plug, dependencies, direct=True):
+          """ Browse the plug links and add the correspondings edges
+          to the node.
+          If direct is set to true, the search looks for successor nodes.
+          Otherwise, the search looks for predecessor nodes
+          """
+          # Get links
+          if direct:
+              plug_to_treat = plug.links_to
+          else:
+              plug_to_treat = plug.links_from
+        
+          # Main loop
+          for item in plug_to_treat:
+              # Plug need to be activated and must not be in the pipeline
+              if (item[2].activated and not isinstance(item[2],
+                                                       PipelineNode)):
+                  # If plug links to a switch, we need to address the switch
+                  # plugs
+                  if not isinstance(item[2], Switch):
+                      if direct:
+                          dependencies.add((node_name, item[0]))
+                      else:
+                          dependencies.add((item[0], node_name))
+                  else:
+                      for switch_plug in item[2].plugs.itervalues():
+                          insert(node_name, switch_plug, direct)
+
+      # Create a graph and a list of graph node edges
+      graph = Graph()
+      dependencies = set()
+      
+      # Add activated Process nodes in the graph
+      for node_name, node in self.nodes.iteritems():
+          # Select only Process nodes
+          if (node.activated and not isinstance(node, PipelineNode) and
+              not isinstance(node, Switch)):
+              # If Pipeline: meta in node is the workflow (list of
+              # Process)    
+              if isinstance(node.process, Pipeline):
+                  graph.add_node(GraphNode(node_name,
+                                           node.process.workflow()))
+              # If Process: meta in node is a list with one Process
+              else:
+                  graph.add_node(GraphNode(node_name, [node.process,]))
+            
+              # Add node edges (Successor: direct=True and
+              # Predecessor: direct=False)
+              for plug in node.plugs.itervalues():
+                  if plug.activated:
+                      insert(node_name, plug, dependencies, direct=False)
+                      insert(node_name, plug, dependencies, direct=True)
+
+      # Add edges to the graph
+      for d in dependencies:
+          graph.add_link(d[0], d[1])
+          
+      # Start the topologival sort
+      workflow_list = graph.topological_sort()
+      
+      # Generate the ouput
+      workflow_repr = " -> ".join([x[0] for x in workflow_list])
+      logging.debug("Workflow: {0}". format(workflow_repr))
+      workflow_list = [x[1] for x in workflow_list]
+      
+      return workflow_list
+                  
 
   def workflow( self ):
     result = Workflow()
