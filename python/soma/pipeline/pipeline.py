@@ -27,87 +27,177 @@ from topological_sort import GraphNode, Graph
 
 
 class Plug(Controller):
-    '''
-    '''
-
+    """ Overload of traits in oder to keep the pipeline memory.
+    """
+    # User parameter to control the Plug activation
     enabled = Bool(default_value=True)
+    # Parameter describing the Plug status
     activated = Bool(default_value=False)
+    # Parameter to type the Plug as an output
     output = Bool(default_value=False)
+    # Parameter to create an aptional Plug
     optional = Bool(default_value=False)
 
     def __init__(self, **kwargs):
+        """ Generate a Plug, i.e. a traits with the memory of the
+        pipeline adjacent nodes
+        """
         super(Plug, self).__init__(**kwargs)
-        # link -> ( node, plug )
+        # The links correspond to edges in the graph theory
+        # links_to = successor
+        # links_from = predecessor
+        # A link is a tuple of the form (node, plug)
         self.links_to = set()
         self.links_from = set()
 
 
 class Node(Controller):
-    '''
-    '''
-
+    """ Basic Node structure of the pipeline that need to be tuned.
+    """
+    # Node name
     name = Str()
+    # User parameter to control the Node activation
     enabled = Bool(default_value=True)
+    # Parameter describing the Node status
     activated = Bool(default_value=False)
 
     def __init__(self, pipeline, name, inputs, outputs):
+        """ Generate a Node
+
+        Parameters
+        ----------
+        pipeline: Pipeline (mandatory)
+        the pipeline object where the node is added
+        name: str (mandatory)
+        the node name
+        inputs: list of dict (mandatory)
+        a list of input parameters containing a dictionary with default
+        values (mandatory key: name)
+        outputs: dict (mandatory)
+        a list of output parameters containing a dictionary with default
+        values (mandatory key: name)
+        """
         super(Node, self).__init__()
         self.pipeline = pipeline
         self.name = name
         self.plugs = {}
+        # _callbacks -> (src_plug_name, dest_node, dest_plug_name)
         self._callbacks = {}
-        # parameter_type is False for an input, True for an output
+
+        # generate a list with all the inputs and outputs
+        # the second parameter (parameter_type) is False for an input,
+        # True for an output
         parameters = zip(inputs, [False, ] * len(inputs))
         parameters.extend(zip(outputs, [True, ] * len(outputs)))
         for parameter, parameter_type in parameters:
+            # check if parameter is a dictionary as specified in the
+            # docstring
             if isinstance(parameter, dict):
+                # check if parameter contains a name item
+                # as specified in the docstring
                 if "name" not in parameter:
-                    raise Exception("Can't create parameter with uknown"
+                    raise Exception("Can't create parameter with unknown"
                                     "identifier and parameter {0}".format(
                                     parameter))
-                name = parameter.pop("name")
-                if not "output" in parameter.keys():
-                    parameter["output"] = parameter_type
+                plug_name = parameter.pop("name")
+                # force the parameter type
+                parameter["output"] = parameter_type
+                # generate plug with input parameter and identifier name
                 plug = Plug(**parameter)
             else:
-                name = parameter
-                if parameter_type:  # it's an output
-                    # since no plug paramters, set plug as optional
-                    plug = Plug(output=parameter_type, optional=True)
-                else:
-                    plug = Plug(output=parameter_type)
-            self.plugs[name] = plug
+                raise Exception("Can't create Node. Expect a dict structure "
+                                "to initialize the Node, "
+                                "got {0}: {1}".format(type(parameter),
+                                                      parameter))
+            # update plugs list
+            self.plugs[plug_name] = plug
+            # add an event on plug to validate the pipeline
             plug.on_trait_change(pipeline.update_nodes_and_plugs_activation,
                                  "enabled")
 
+        # add an event on the Node instance traits to validate the pipeline
         self.on_trait_change(pipeline.update_nodes_and_plugs_activation,
                              'enabled')
 
-    def connect(self, source_parameter, dest_node, dest_parameter):
+    def connect(self, source_plug_name, dest_node, dest_plug_name):
+        """ Connect linked plugs of two nodes
+
+        Parameters
+        ----------
+        source_plug_name: str (mandatory)
+        the source plug name
+        dest_node: Node (mandatory)
+        the destination node
+        dest_plug_name: str (mandatory)
+        the destination plug name
+        """
         def value_callback(value):
-            if (value is not None and self.plugs[source_parameter].activated
-                and dest_node.plugs[dest_parameter].activated):
-                dest_node.set_plug_value(dest_parameter, value)
-        self._callbacks[(source_parameter, dest_node, dest_parameter)] = value_callback
-        self.set_callback_on_plug(source_parameter, value_callback)
+            """ Spread the source plug value to the destination plug
+            """
+            if (value is not None and self.plugs[source_plug_name].activated
+                and dest_node.plugs[dest_plug_name].activated):
+                dest_node.set_plug_value(dest_plug_name, value)
+        # add a callback to spread the source plug value
+        self._callbacks[(source_plug_name, dest_node,
+                         dest_plug_name)] = value_callback
+        self.set_callback_on_plug(source_plug_name, value_callback)
 
     def set_callback_on_plug(self, plug_name, callback):
+        """ Add an event when a plug change
+
+        Parameters
+        ----------
+        plug_name: str (mandatory)
+        a plug name
+        callback: @f (mandatory)
+        a callback function
+        """
         self.on_trait_change(callback, plug_name)
 
     def get_plug_value(self, plug_name):
+        """ Return the plug value
+
+        Parameters
+        ----------
+        plug_name: str (mandatory)
+        a plug name
+
+        Retruns:
+        --------
+        output: object
+        the plug value
+        """
         return getattr(self, plug_name)
 
     def set_plug_value(self, plug_name, value):
+        """ Set the plug value
+
+        Parameters
+        ----------
+        plug_name: str (mandatory)
+        a plug name
+        value: object (mandatory)
+        the plug value we want to set
+        """
         setattr(self, plug_name, value)
 
-    def get_trait(self, name):
-        return self.trait(name)
+    def get_trait(self, trait_name):
+        """ Return the desired trait
+
+        Parameters
+        ----------
+        trait_name: str (mandatory)
+        a trait name
+
+        Retruns:
+        --------
+        output: trait
+        thetrait named trait_name
+        """
+        return self.trait(trait_name)
 
 
 class ProcessNode(Node):
-    '''
-    '''
-
     def __init__(self, pipeline, name, process, **kwargs):
         self.process = get_process_instance(process, **kwargs)
         self.kwargs = kwargs
@@ -149,25 +239,24 @@ class ProcessNode(Node):
 
 
 class PipelineNode(ProcessNode):
-    '''
-    '''
-
     pass
 
 
 class Switch(Node):
-    '''
-    '''
-
     def __init__(self, pipeline, name, inputs, outputs):
         # hack: multi outputs
         if not isinstance(outputs, list):
             outputs = [outputs, ]
         self._outputs = outputs
         self.add_trait('switch', Enum(*inputs))
-        super(Switch, self).__init__(pipeline, name,
-              ['switch'] + [dict(name=i, optional=True) for i in inputs],
-              outputs)
+
+        node_inputs = ([dict(name="switch"), ] +
+                       [dict(name=i, optional=True) for i in inputs])
+        node_outputs = [dict(name=i)
+                       for i in outputs]
+        super(Switch, self).__init__(pipeline, name, node_inputs,
+                                     node_outputs)
+
         for i in inputs:
             self.add_trait(i, Any())
         for i in outputs:
@@ -188,12 +277,12 @@ class Switch(Node):
         self.plugs[old].enabled = False
         self.plugs[new].enabled = True
         self.pipeline.update_nodes_and_plugs_activation()
-        setattr(self, self._outputs, getattr(self, new))
+        setattr(self, self._output, getattr(self, new))
 
 
 class Pipeline(Process):
-  '''Pipeline containing Process nodes, and links between node parameters
-  '''
+  """ Pipeline containing Process nodes, and links between node parameters
+  """
 
   selection_changed = Event()
 
@@ -327,7 +416,7 @@ class Pipeline(Process):
     node = self.nodes.get( node_name )
     if node:
       node.enabled = value
-      
+
   def update_nodes_and_plugs_activation( self ):
     inactive_links = []
     for node in self.nodes.itervalues():
@@ -444,13 +533,13 @@ class Pipeline(Process):
 
   def workflow_test(self):
       """ Generate a workflow: list of process node to execute
-      
+
       Returns
       -------
       workflow_list: list of Process
       an ordered list of Processes to execute
       """
-      
+
       def insert(node_name, plug, dependencies, direct=True):
           """ Browse the plug links and add the correspondings edges
           to the node.
@@ -462,7 +551,7 @@ class Pipeline(Process):
               plug_to_treat = plug.links_to
           else:
               plug_to_treat = plug.links_from
-        
+
           # Main loop
           for item in plug_to_treat:
               # Plug need to be activated and must not be in the pipeline
@@ -482,21 +571,21 @@ class Pipeline(Process):
       # Create a graph and a list of graph node edges
       graph = Graph()
       dependencies = set()
-      
+
       # Add activated Process nodes in the graph
       for node_name, node in self.nodes.iteritems():
           # Select only Process nodes
           if (node.activated and not isinstance(node, PipelineNode) and
               not isinstance(node, Switch)):
               # If Pipeline: meta in node is the workflow (list of
-              # Process)    
+              # Process)
               if isinstance(node.process, Pipeline):
                   graph.add_node(GraphNode(node_name,
                                            node.process.workflow()))
               # If Process: meta in node is a list with one Process
               else:
                   graph.add_node(GraphNode(node_name, [node.process,]))
-            
+
               # Add node edges (Successor: direct=True and
               # Predecessor: direct=False)
               for plug in node.plugs.itervalues():
@@ -507,17 +596,17 @@ class Pipeline(Process):
       # Add edges to the graph
       for d in dependencies:
           graph.add_link(d[0], d[1])
-          
+
       # Start the topologival sort
       workflow_list = graph.topological_sort()
-      
+
       # Generate the ouput
       workflow_repr = " -> ".join([x[0] for x in workflow_list])
       logging.debug("Workflow: {0}". format(workflow_repr))
       workflow_list = [x[1] for x in workflow_list]
-      
+
       return workflow_list
-                  
+
 
   def workflow( self ):
     result = Workflow()
