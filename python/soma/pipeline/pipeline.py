@@ -192,7 +192,7 @@ class Node(Controller):
         Retruns:
         --------
         output: trait
-        thetrait named trait_name
+        the trait named trait_name
         """
         return self.trait(trait_name)
 
@@ -243,41 +243,94 @@ class PipelineNode(ProcessNode):
 
 
 class Switch(Node):
+    """ Switch Node to select a specific Process
+    """
     def __init__(self, pipeline, name, inputs, outputs):
-        # hack: multi outputs
+        """ Generate a Switch Node
+
+        Parameters
+        ----------
+        pipeline: Pipeline (mandatory)
+        the pipeline object where the node is added
+        name: str (mandatory)
+        the switch node name
+        inputs: list (mandatory)
+        a list of options
+        outputs: list (mandatory)
+        a list of output parameters
+        """
+        # if the user pass a simple element, create a list and add this
+        # element
         if not isinstance(outputs, list):
             outputs = [outputs, ]
+
+        # check consistency
+        if not isinstance(inputs, list) or not isinstance(outputs, list):
+            raise Exception("The Switch node input and output parameters "
+                 "are inconsistent: expect list, "
+                 "got {0}, {1}".format(type(inputs), type(outputs)))
+
+        # private copy of outputs
         self._outputs = outputs
+
+        # add switch enum trait to select the process
         self.add_trait('switch', Enum(*inputs))
 
+        # format inputs and outputs to inherit from Node class
+        flat_inputs = []
+        for switch_name in inputs:
+            flat_inputs.extend(["{0}-{1}".format(switch_name, plug_name)
+                                for plug_name in outputs])
         node_inputs = ([dict(name="switch"), ] +
-                       [dict(name=i, optional=True) for i in inputs])
+                       [dict(name=i, optional=True) for i in flat_inputs])
         node_outputs = [dict(name=i)
                        for i in outputs]
+        # inherit from Node class
         super(Switch, self).__init__(pipeline, name, node_inputs,
                                      node_outputs)
 
-        for i in inputs:
+        # add a trait for each input and each output
+        for i in flat_inputs:
             self.add_trait(i, Any())
         for i in outputs:
-            self.add_trait(i, Any())
-            # hack: set the output trait flag
-            output_trait = self.get_trait(i)
-            output_trait.handler.output = True
-        for n in inputs[1:]:
-            self.plugs[n].enabled = False
+            self.add_trait(i, Any(output=True))
 
-    def _anytrait_changed(self, name, value):
-        output = getattr(self, '_output', None)
-        if output:
-            if name == self.switch:
-                setattr(self, output, value)
+        # activate the switch first Process
+        for plug_name in flat_inputs[len(outputs):]:
+            self.plugs[plug_name].enabled = False
 
-    def _switch_changed(self, old, new):
-        self.plugs[old].enabled = False
-        self.plugs[new].enabled = True
+    def _switch_changed(self, old_selection, new_selection):
+        """ Add an event to the switch trait that enables us to select
+        the desired option.
+
+        Parameters
+        ----------
+        old_selection: str (mandatory)
+        the old option
+        new_selection: str (mandatory)
+        the new option
+        """
+        # deactivate the plugs associated with the old option
+        old_plug_names = ["{0}-{1}".format(old_selection, plug_name)
+                          for plug_name in self._outputs]
+        for plug_name in old_plug_names:
+            self.plugs[plug_name].enabled = False
+
+        # activate the plugs associated with the new option
+        new_plug_names = ["{0}-{1}".format(new_selection, plug_name)
+                          for plug_name in self._outputs]
+        for plug_name in new_plug_names:
+            self.plugs[plug_name].enabled = True
+
+        # refresh the pipeline
         self.pipeline.update_nodes_and_plugs_activation()
-        setattr(self, self._output, getattr(self, new))
+
+        # refresh the links to the output plugs
+        for output_plug_name in self._outputs:
+            corresponding_input_plug_name = "{0}-{1}".format(new_selection,
+                                                             output_plug_name)
+            setattr(self, output_plug_name,
+                    getattr(self, corresponding_input_plug_name))
 
 
 class Pipeline(Process):
@@ -322,6 +375,11 @@ class Pipeline(Process):
     self.pipeline_node.plugs[ name ] = plug
     plug.on_trait_change( self.update_nodes_and_plugs_activation, 'enabled' )
 
+
+  def remove_plug(self, node_name, plug_name):
+      """ Method to specify a plug that we won't export
+      """
+      self.do_not_export.add((node_name, plug_name))
 
   def add_process( self, name, process, **kwargs ):
     if name in self.nodes:
