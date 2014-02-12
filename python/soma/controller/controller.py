@@ -95,7 +95,7 @@ class Controller(HasTraits):
                 #del traits[name]
         for name in traits.keys():
             trait = traits[ name ]
-            if isinstance( trait.handler, Event ):
+            if not self.is_user_trait(trait):
                 del traits[name]
         sorted_keys = [t[1]
             for t in sorted((getattr(trait, 'order', ''), name)
@@ -103,6 +103,13 @@ class Controller(HasTraits):
         return SortedDictionary(*[(name, traits[name])
                                         for name in sorted_keys])
 
+    def is_user_trait(self, trait):
+        '''
+        Test if a trait is a valid user trait (i.e. not an Event).
+        '''
+        return not isinstance( trait.handler, Event )
+
+    
     def add_trait( self, name, *trait ):
        global global_compt_order
 

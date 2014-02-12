@@ -368,12 +368,14 @@ class Pipeline(Process):
 
   def add_trait( self, name, trait ):
     super( Pipeline, self ).add_trait( name, trait )
-    # hack
-    #output = isinstance( trait, File ) and bool( trait.output )
-    output = bool( trait.output )
-    plug = Plug( output=output )
-    self.pipeline_node.plugs[ name ] = plug
-    plug.on_trait_change( self.update_nodes_and_plugs_activation, 'enabled' )
+    if self.is_user_trait(trait):
+      # hack
+      #output = isinstance( trait, File ) and bool( trait.output )
+      output = bool( trait.output )
+      plug = Plug( output=output )
+      self.pipeline_node.plugs[ name ] = plug
+
+      plug.on_trait_change( self.update_nodes_and_plugs_activation, 'enabled' )
 
 
   def remove_plug(self, node_name, plug_name):
