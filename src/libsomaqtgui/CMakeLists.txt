@@ -25,6 +25,6 @@ IF ( DOXYGEN_FOUND )
   set( DOXYFILE_PREDEFINED "${SOMA-QTGUI_DEFINITIONS}")
   BRAINVISA_GENERATE_DOXYGEN_DOC( _doxygenInput  
                                   INPUT_PREFIX "${CMAKE_BINARY_DIR}/include/soma"
-                                  COMPONENT soma-qtgui )
+                                  COMPONENT soma-base )
 ENDIF ( DOXYGEN_FOUND )
 
