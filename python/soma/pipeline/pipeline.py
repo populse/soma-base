@@ -462,22 +462,23 @@ class Pipeline(Process):
         # A weak node is ignored when setting plugs and nodes activations with
         # update_nodes_and_plugs_activation.
         weak_link = False
-        if not isinstance(dest_node, Switch):
-            for plug in source_node.plugs.itervalues():
-                for nn, pn, n, p, weak_link in plug.links_to:
-                    if isinstance(n, Switch):
-                        weak_link = True
+        if not isinstance(source_node, PipelineNode):
+            if not isinstance(dest_node, Switch):
+                for plug in source_node.plugs.itervalues():
+                    for nn, pn, n, p, weak_link in plug.links_to:
+                        if isinstance(n, Switch):
+                            weak_link = True
+                            break
+                    if weak_link:
                         break
-                if weak_link:
-                    break
-        else:
-            # Creating a link to a Switch make all links not connected
-            # to the Switch become weak links
-            for plug in source_node.plugs.itervalues():
-                for nn, pn, n, p, wl in plug.links_to.copy():
-                    if not wl and not isinstance(n, Switch):
-                        plug.links_to.remove((nn, pn, n, p, wl))
-                        plug.links_to.add((nn, pn, n, p, True))
+            else:
+                # Creating a link to a Switch make all links not connected
+                # to the Switch become weak links
+                for plug in source_node.plugs.itervalues():
+                    for nn, pn, n, p, wl in plug.links_to.copy():
+                        if not wl and not isinstance(n, Switch):
+                            plug.links_to.remove((nn, pn, n, p, wl))
+                            plug.links_to.add((nn, pn, n, p, True))
         source_plug.links_to.add((dest_node_name, dest_parameter, dest_node,
                                   dest_plug, weak_link))
         dest_plug.links_from.add((source_node_name, source_parameter,
