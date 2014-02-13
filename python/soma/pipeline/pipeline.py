@@ -391,14 +391,18 @@ class Pipeline(Process):
         """
         self.do_not_export.add((node_name, plug_name))
 
-    def add_process(self, name, process, plug_to_hide=None, **kwargs):
-        plug_to_hide = plug_to_hide or []
+    def add_process(self, name, process, do_not_export=None, **kwargs):
+        if do_not_export is None:
+            do_not_export = set()
+        else:
+            do_not_export = set(do_not_export)
+        do_not_export.update(kwargs)
         if name in self.nodes:
             raise ValueError('Pipeline cannot have two nodes with the'
                              'same name : %s' % name)
         self.nodes[name] = node = ProcessNode(self, name, process, **kwargs)
         for parameter_name in self.nodes[name].plugs:
-            if parameter_name in plug_to_hide:
+            if parameter_name in do_not_export:
                 self.do_not_export.add((name, parameter_name))
         self.nodes_activation.add_trait(name, Bool)
         setattr(self.nodes_activation, name, node.enabled)
