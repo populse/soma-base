@@ -23,7 +23,6 @@ from soma.controller import Controller
 from soma.sorted_dictionary import SortedDictionary
 from soma.process import Process
 from soma.process import get_process_instance
-from memory import _joblib_run_process
 
 from topological_sort import GraphNode, Graph
 
@@ -234,7 +233,6 @@ class ProcessNode(Node):
             return None
 
     def set_plug_value(self, plug_name, value):
-        # hack: undefined trait value
         from traits.trait_base import _Undefined
         if value in ["", "<undefined>"]:
             value = _Undefined()
@@ -255,6 +253,9 @@ class Switch(Node):
 
     def __init__(self, pipeline, name, inputs, outputs):
         """ Generate a Switch Node
+
+        The input plug names are built according to the following rule:
+            <input_name>-<output_name>
 
         Parameters
         ----------
@@ -361,7 +362,6 @@ class Pipeline(Process):
         self.nodes[''] = self.pipeline_node
         self.do_not_export = set()
         self.pipeline_definition()
-        self._caller = _joblib_run_process
 
         for node_name, node in self.nodes.iteritems():
             for parameter_name, plug in node.plugs.iteritems():
@@ -391,13 +391,14 @@ class Pipeline(Process):
         """
         self.do_not_export.add((node_name, plug_name))
 
-    def add_process(self, name, process, **kwargs):
+    def add_process(self, name, process, plug_to_hide=None, **kwargs):
+        plug_to_hide = plug_to_hide or []
         if name in self.nodes:
-            raise ValueError('Pipeline cannot have two nodes with the same '
-                             'name : %s' % name)
+            raise ValueError('Pipeline cannot have two nodes with the'
+                             'same name : %s' % name)
         self.nodes[name] = node = ProcessNode(self, name, process, **kwargs)
         for parameter_name in self.nodes[name].plugs:
-            if parameter_name in kwargs:
+            if parameter_name in plug_to_hide:
                 self.do_not_export.add((name, parameter_name))
         self.nodes_activation.add_trait(name, Bool)
         setattr(self.nodes_activation, name, node.enabled)
@@ -608,33 +609,6 @@ class Pipeline(Process):
                                 new_stack.add(n)
             stack = new_stack
 
-        pipeline_node = self.nodes['']
-        traits_changed = False
-        for plug_name, plug in pipeline_node.plugs.iteritems():
-            for nn, pn, n, p, weak_link in\
-                    plug.links_to.union(plug.links_from):
-                if p.activated and not weak_link:
-                    break
-            else:
-                plug.activated = False
-            trait = self.trait(plug_name)
-            if plug.activated:
-                if getattr(trait, 'hidden', False):
-                    trait.hidden = False
-                    traits_changed = True
-            else:
-                if not getattr(trait, 'hidden', False):
-                    trait.hidden = True
-                    traits_changed = True
-        self.selection_changed = True
-        if traits_changed:
-            self.user_traits_changed = True
-
-        for node, source_plug_name, source_plug, n, pn, p in inactive_links:
-            if (source_plug.activated and p.activated):
-                value = node.get_plug_value(source_plug_name)
-                node._callbacks[(source_plug_name, n, pn)](value)
-
     def workflow_test(self):
         """ Generate a workflow: list of process node to execute
 
@@ -680,7 +654,7 @@ class Pipeline(Process):
         for node_name, node in self.nodes.iteritems():
             # Select only Process nodes
             if (node.activated and not isinstance(node, PipelineNode) and
-                    not isinstance(node, Switch)):
+                not isinstance(node, Switch)):
                 # If Pipeline: meta in node is the workflow (list of
                 # Process)
                 if isinstance(node.process, Pipeline):
@@ -702,12 +676,14 @@ class Pipeline(Process):
             graph.add_link(d[0], d[1])
 
         # Start the topologival sort
-        workflow_list = graph.topological_sort()
+        ordered_list = graph.topological_sort()
 
         # Generate the ouput
-        workflow_repr = " -> ".join([x[0] for x in workflow_list])
+        workflow_repr = " -> ".join([x[0] for x in ordered_list])
         logging.debug("Workflow: {0}". format(workflow_repr))
-        workflow_list = [x[1] for x in workflow_list]
+        workflow_list = []
+        for sub_workflow in ordered_list:
+            workflow_list.extend(sub_workflow[1])
 
         return workflow_list
 
