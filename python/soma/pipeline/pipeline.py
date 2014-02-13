@@ -11,11 +11,13 @@ import os
 import sys
 import logging
 try:
-  import traits.api as traits
-  from traits.api import File, Float, Enum, Str, Int, Bool, List, Tuple, Instance, Any, Event, CTrait
+    import traits.api as traits
+    from traits.api import File, Float, Enum, Str, Int, Bool, List, Tuple,\
+        Instance, Any, Event, CTrait
 except ImportError:
-  import enthought.traits.api as traits
-  from enthought.traits.api import File, Float, Enum, Str, Int, Bool, List, Tuple, Instance, Any, Event,CTrait
+    import enthought.traits.api as traits
+    from enthought.traits.api import File, Float, Enum, Str, Int, Bool, List,\
+        Tuple, Instance, Any, Event, CTrait
 
 from soma.controller import Controller
 from soma.sorted_dictionary import SortedDictionary
@@ -27,6 +29,7 @@ from topological_sort import GraphNode, Graph
 
 
 class Plug(Controller):
+
     """ Overload of traits in oder to keep the pipeline memory.
     """
     # User parameter to control the Plug activation
@@ -52,6 +55,7 @@ class Plug(Controller):
 
 
 class Node(Controller):
+
     """ Basic Node structure of the pipeline that need to be tuned.
     """
     # Node name
@@ -98,7 +102,7 @@ class Node(Controller):
                 if "name" not in parameter:
                     raise Exception("Can't create parameter with unknown"
                                     "identifier and parameter {0}".format(
-                                    parameter))
+                                        parameter))
                 plug_name = parameter.pop("name")
                 # force the parameter type
                 parameter["output"] = parameter_type
@@ -135,7 +139,7 @@ class Node(Controller):
             """ Spread the source plug value to the destination plug
             """
             if (value is not None and self.plugs[source_plug_name].activated
-                and dest_node.plugs[dest_plug_name].activated):
+                    and dest_node.plugs[dest_plug_name].activated):
                 dest_node.set_plug_value(dest_plug_name, value)
         # add a callback to spread the source plug value
         self._callbacks[(source_plug_name, dest_node,
@@ -198,6 +202,7 @@ class Node(Controller):
 
 
 class ProcessNode(Node):
+
     def __init__(self, pipeline, name, process, **kwargs):
         self.process = get_process_instance(process, **kwargs)
         self.kwargs = kwargs
@@ -207,14 +212,15 @@ class ProcessNode(Node):
             if parameter in ('nodes_activation', 'selection_changed'):
                 continue
             # hack: Accept other output traits
-            #if isinstance(trait.handler, File) and trait.handler.output:
+            # if isinstance(trait.handler, File) and trait.handler.output:
             if trait.handler.output:
                 outputs.append(dict(name=parameter,
                                     optional=bool(trait.optional),
                                     output=True))
             else:
                 inputs.append(dict(name=parameter,
-                      optional=bool(trait.optional or parameter in kwargs)))
+                                   optional=bool(trait.optional or
+                                                 parameter in kwargs)))
         super(ProcessNode, self).__init__(pipeline, name, inputs, outputs)
 
     def set_callback_on_plug(self, plug_name, callback):
@@ -222,7 +228,7 @@ class ProcessNode(Node):
 
     def get_plug_value(self, plug_name):
         if not isinstance(self.get_trait(plug_name).handler,
-                      traits.Event):
+                          traits.Event):
             return getattr(self.process, plug_name)
         else:
             return None
@@ -243,8 +249,10 @@ class PipelineNode(ProcessNode):
 
 
 class Switch(Node):
+
     """ Switch Node to select a specific Process
     """
+
     def __init__(self, pipeline, name, inputs, outputs):
         """ Generate a Switch Node
 
@@ -267,8 +275,8 @@ class Switch(Node):
         # check consistency
         if not isinstance(inputs, list) or not isinstance(outputs, list):
             raise Exception("The Switch node input and output parameters "
-                 "are inconsistent: expect list, "
-                 "got {0}, {1}".format(type(inputs), type(outputs)))
+                            "are inconsistent: expect list, "
+                            "got {0}, {1}".format(type(inputs), type(outputs)))
 
         # private copy of outputs
         self._outputs = outputs
@@ -284,7 +292,7 @@ class Switch(Node):
         node_inputs = ([dict(name="switch"), ] +
                        [dict(name=i, optional=True) for i in flat_inputs])
         node_outputs = [dict(name=i)
-                       for i in outputs]
+                        for i in outputs]
         # inherit from Node class
         super(Switch, self).__init__(pipeline, name, node_inputs,
                                      node_outputs)
@@ -328,12 +336,13 @@ class Switch(Node):
         # refresh the links to the output plugs
         for output_plug_name in self._outputs:
             corresponding_input_plug_name = "{0}-{1}".format(new_selection,
-                                                          output_plug_name)
+                                                             output_plug_name)
             setattr(self, output_plug_name,
                     getattr(self, corresponding_input_plug_name))
 
 
 class Pipeline(Process):
+
     """ Pipeline containing Process nodes, and links between node parameters
     """
 
@@ -359,8 +368,8 @@ class Pipeline(Process):
                 if parameter_name in ('nodes_activation', 'selection_changed'):
                     continue
                 if ((node_name, parameter_name) not in self.do_not_export and
-                    not plug.links_to and not plug.links_from and
-                    not self.nodes[node_name].get_trait(parameter_name).optional):
+                    not plug.links_to and not plug.links_from and not
+                   self.nodes[node_name].get_trait(parameter_name).optional):
                     self.export_parameter(node_name, parameter_name)
 
         self.update_nodes_and_plugs_activation()
@@ -425,8 +434,9 @@ class Pipeline(Process):
                 raise ValueError('%s is not a valid node name' % node_name)
             parameter_name = name[dot + 1:]
         if parameter_name not in node.plugs:
-            raise ValueError('%s is not a valid parameter name for node %s' %\
-                (parameter_name, (node_name if node_name else 'pipeline')))
+            raise ValueError('%s is not a valid parameter name for node %s' %
+                             (parameter_name, (node_name if node_name else
+                                               'pipeline')))
         return node_name, parameter_name, node, node.plugs[parameter_name]
 
     def add_link(self, link, only_if_activated=False):
@@ -445,7 +455,7 @@ class Pipeline(Process):
         dest_plug.links_from.add((source_node_name, source_parameter,
                                   source_node, source_plug, False))
         if isinstance(dest_node, ProcessNode) and isinstance(source_node,
-            ProcessNode):
+                                                             ProcessNode):
             source_trait = source_node.process.trait(source_parameter)
             dest_trait = dest_node.process.trait(dest_parameter)
             if source_trait.output and not dest_trait.output:
@@ -458,26 +468,26 @@ class Pipeline(Process):
         node = self.nodes[node_name]
         trait = node.get_trait(parameter_name)
         if trait is None:
-            raise ValueError('Node %(n)s (%(nn)s) has no parameter %(p)s' % \
+            raise ValueError('Node %(n)s (%(nn)s) has no parameter %(p)s' %
                              dict(n=node_name, nn=node.name, p=parameter_name))
         if not pipeline_parameter:
             pipeline_parameter = parameter_name
         if pipeline_parameter in self.user_traits():
             raise ValueError('Parameter %(pn)s of node %(nn)s cannot be '
-                             'exported to pipeline parameter %(pp)s' % \
+                             'exported to pipeline parameter %(pp)s' %
                              dict(nn=node_name, pn=parameter_name,
                                   pp=pipeline_parameter))
         self.add_trait(pipeline_parameter, trait)
         # hack
-        #if isinstance(trait.handler, File) and trait.handler.output:
+        # if isinstance(trait.handler, File) and trait.handler.output:
         if trait.handler.output:
             self.add_link('%s.%s->%s' % (node_name, parameter_name,
                                          pipeline_parameter),
-                                         only_if_activated=only_if_activated)
+                          only_if_activated=only_if_activated)
         else:
             self.add_link('%s->%s.%s' % (pipeline_parameter,
-                                          node_name, parameter_name),
-                                          only_if_activated=only_if_activated)
+                                         node_name, parameter_name),
+                          only_if_activated=only_if_activated)
 
     def _set_node_enabled(self, node_name, value):
         node = self.nodes.get(node_name)
@@ -506,307 +516,317 @@ class Pipeline(Process):
             stack.add(node)
 
         while stack:
-          new_stack = set()
-          for node in stack:
-            if isinstance(node, PipelineNode):
-              continue
-            if node.enabled:
-              node.activated = True
-              for plug_name, plug in node.plugs.iteritems():
-                if plug.links_to:
-                  continue
-                if plug.enabled:
-                  for nn, pn, n, p, only_if_activated in plug.links_from:
-                    if p.activated and not only_if_activated:
-                      plug.activated = True
-                      break
+            new_stack = set()
+            for node in stack:
+                if isinstance(node, PipelineNode):
+                    continue
+                if node.enabled:
+                    node.activated = True
+                    for plug_name, plug in node.plugs.iteritems():
+                        if plug.links_to:
+                            continue
+                        if plug.enabled:
+                            for nn, pn, n, p, only_if_activated in\
+                                    plug.links_from:
+                                if p.activated and not only_if_activated:
+                                    plug.activated = True
+                                    break
+                                else:
+                                    plug.activated = False
+                        else:
+                            plug.activated = False
+                        if not plug.activated and not (plug.optional or
+                                                       (node.name, plug_name)
+                                                       in self.do_not_export):
+                            node.activated = False
+                            break
+                    if node.activated:
+                        for plug in node.plugs.itervalues():
+                            if plug.enabled:
+                                activated = False
+                                for nn, pn, n, p, only_if_activated in\
+                                        plug.links_to:
+                                    if not only_if_activated:
+                                        activated = True
+                                        break
+                                if activated:
+                                    plug.activated = True
+                                    for nn, pn, n, p, only_if_activated in\
+                                            plug.links_to:
+                                        new_stack.add(n)
                     else:
-                      plug.activated = False
-                else:
-                  plug.activated = False
-                if not plug.activated and not (plug.optional or (node.name, plug_name) in self.do_not_export):
-                  node.activated = False
-                  break
-              if node.activated:
-                for plug in node.plugs.itervalues():
-                  if plug.enabled:
-                    activated = False
-                    for nn, pn, n, p, only_if_activated in plug.links_to:
-                      if not only_if_activated:
-                        activated = True
-                        break
-                    if activated:
-                      plug.activated = True
-                      for nn, pn, n, p, only_if_activated in plug.links_to:
-                        new_stack.add(n)
-              else:
-                for plug in node.plugs.itervalues():
-                  plug.activated = False
-          stack = new_stack
-    
+                        for plug in node.plugs.itervalues():
+                            plug.activated = False
+            stack = new_stack
+
         stack = set(self.nodes.itervalues())
         while stack:
-          new_stack = set()
-          for node in stack:
-            if isinstance(node, PipelineNode):
-              continue
-            if node.activated:
-              for plug in node.plugs.itervalues():
-                if plug.links_to:
-                  for nn, pn, n, p, only_if_activated in plug.links_to:
-                    if p.activated and not only_if_activated:
-                      break
-                  else:
-                    plug.activated = False
-                  if plug.activated:
-                    break
-              else:
-                # No output connected to an activated plug
-                # => desactivate the node
-                node.activated = False
-                for plug in node.plugs.itervalues():
-                  plug.activated = False
-                  for nn, pn, n, p, only_if_activated in plug.links_from:
-                    new_stack.add(n)
-          stack = new_stack
-    
-        pipeline_node = self.nodes[ '' ]
+            new_stack = set()
+            for node in stack:
+                if isinstance(node, PipelineNode):
+                    continue
+                if node.activated:
+                    for plug in node.plugs.itervalues():
+                        if plug.links_to:
+                            for nn, pn, n, p, only_if_activated in\
+                                    plug.links_to:
+                                if p.activated and not only_if_activated:
+                                    break
+                            else:
+                                plug.activated = False
+                            if plug.activated:
+                                break
+                    else:
+                        # No output connected to an activated plug
+                        # => desactivate the node
+                        node.activated = False
+                        for plug in node.plugs.itervalues():
+                            plug.activated = False
+                            for nn, pn, n, p, only_if_activated in\
+                                    plug.links_from:
+                                new_stack.add(n)
+            stack = new_stack
+
+        pipeline_node = self.nodes['']
         traits_changed = False
         for plug_name, plug in pipeline_node.plugs.iteritems():
-          for nn, pn, n, p, only_if_activated in plug.links_to.union(plug.links_from):
-            if p.activated and not only_if_activated:
-              break
-          else:
-            plug.activated = False
-          trait = self.trait(plug_name)
-          if plug.activated:
-            if getattr(trait, 'hidden', False):
-              trait.hidden = False
-              traits_changed = True
-          else:
-            if not getattr(trait, 'hidden', False):
-              trait.hidden = True
-              traits_changed = True
+            for nn, pn, n, p, only_if_activated in\
+                    plug.links_to.union(plug.links_from):
+                if p.activated and not only_if_activated:
+                    break
+            else:
+                plug.activated = False
+            trait = self.trait(plug_name)
+            if plug.activated:
+                if getattr(trait, 'hidden', False):
+                    trait.hidden = False
+                    traits_changed = True
+            else:
+                if not getattr(trait, 'hidden', False):
+                    trait.hidden = True
+                    traits_changed = True
         self.selection_changed = True
         if traits_changed:
-          self.user_traits_changed = True
-    
+            self.user_traits_changed = True
+
         for node, source_plug_name, source_plug, n, pn, p in inactive_links:
-          if (source_plug.activated and p.activated):
-            value = node.get_plug_value(source_plug_name)
-            node._callbacks[ (source_plug_name, n, pn) ](value)
-    
-    
-    
+            if (source_plug.activated and p.activated):
+                value = node.get_plug_value(source_plug_name)
+                node._callbacks[(source_plug_name, n, pn)](value)
+
     def workflow_test(self):
-          """ Generate a workflow: list of process node to execute
-    
-          Returns
-          -------
-          workflow_list: list of Process
-          an ordered list of Processes to execute
-          """
-    
-          def insert(node_name, plug, dependencies, direct=True):
-              """ Browse the plug links and add the correspondings edges
-              to the node.
-              If direct is set to true, the search looks for successor nodes.
-              Otherwise, the search looks for predecessor nodes
-              """
-              # Get links
-              if direct:
-                  plug_to_treat = plug.links_to
-              else:
-                  plug_to_treat = plug.links_from
-    
-              # Main loop
-              for item in plug_to_treat:
-                  # Plug need to be activated and must not be in the pipeline
-                  if (item[2].activated and not isinstance(item[2],
-                                                           PipelineNode)):
-                      # If plug links to a switch, we need to address the switch
-                      # plugs
-                      if not isinstance(item[2], Switch):
-                          if direct:
-                              dependencies.add((node_name, item[0]))
-                          else:
-                              dependencies.add((item[0], node_name))
-                      else:
-                          for switch_plug in item[2].plugs.itervalues():
-                              insert(node_name, switch_plug, direct)
-    
-          # Create a graph and a list of graph node edges
-          graph = Graph()
-          dependencies = set()
-    
-          # Add activated Process nodes in the graph
-          for node_name, node in self.nodes.iteritems():
-              # Select only Process nodes
-              if (node.activated and not isinstance(node, PipelineNode) and
-                  not isinstance(node, Switch)):
-                  # If Pipeline: meta in node is the workflow (list of
-                  # Process)
-                  if isinstance(node.process, Pipeline):
-                      graph.add_node(GraphNode(node_name,
-                                               node.process.workflow()))
-                  # If Process: meta in node is a list with one Process
-                  else:
-                      graph.add_node(GraphNode(node_name, [node.process,]))
-    
-                  # Add node edges (Successor: direct=True and
-                  # Predecessor: direct=False)
-                  for plug in node.plugs.itervalues():
-                      if plug.activated:
-                          insert(node_name, plug, dependencies, direct=False)
-                          insert(node_name, plug, dependencies, direct=True)
-    
-          # Add edges to the graph
-          for d in dependencies:
-              graph.add_link(d[0], d[1])
-    
-          # Start the topologival sort
-          workflow_list = graph.topological_sort()
-    
-          # Generate the ouput
-          workflow_repr = " -> ".join([x[0] for x in workflow_list])
-          logging.debug("Workflow: {0}". format(workflow_repr))
-          workflow_list = [x[1] for x in workflow_list]
-    
-          return workflow_list
-    
-    
+        """ Generate a workflow: list of process node to execute
+
+        Returns
+        -------
+        workflow_list: list of Process
+        an ordered list of Processes to execute
+        """
+
+        def insert(node_name, plug, dependencies, direct=True):
+            """ Browse the plug links and add the correspondings edges
+            to the node.
+            If direct is set to true, the search looks for successor nodes.
+            Otherwise, the search looks for predecessor nodes
+            """
+            # Get links
+            if direct:
+                plug_to_treat = plug.links_to
+            else:
+                plug_to_treat = plug.links_from
+
+            # Main loop
+            for item in plug_to_treat:
+                # Plug need to be activated and must not be in the pipeline
+                if (item[2].activated and not isinstance(item[2],
+                                                         PipelineNode)):
+                    # If plug links to a switch, we need to address the switch
+                    # plugs
+                    if not isinstance(item[2], Switch):
+                        if direct:
+                            dependencies.add((node_name, item[0]))
+                        else:
+                            dependencies.add((item[0], node_name))
+                    else:
+                        for switch_plug in item[2].plugs.itervalues():
+                            insert(node_name, switch_plug, direct)
+
+        # Create a graph and a list of graph node edges
+        graph = Graph()
+        dependencies = set()
+
+        # Add activated Process nodes in the graph
+        for node_name, node in self.nodes.iteritems():
+            # Select only Process nodes
+            if (node.activated and not isinstance(node, PipelineNode) and
+                    not isinstance(node, Switch)):
+                # If Pipeline: meta in node is the workflow (list of
+                # Process)
+                if isinstance(node.process, Pipeline):
+                    graph.add_node(GraphNode(node_name,
+                                             node.process.workflow()))
+                # If Process: meta in node is a list with one Process
+                else:
+                    graph.add_node(GraphNode(node_name, [node.process, ]))
+
+                # Add node edges (Successor: direct=True and
+                # Predecessor: direct=False)
+                for plug in node.plugs.itervalues():
+                    if plug.activated:
+                        insert(node_name, plug, dependencies, direct=False)
+                        insert(node_name, plug, dependencies, direct=True)
+
+        # Add edges to the graph
+        for d in dependencies:
+            graph.add_link(d[0], d[1])
+
+        # Start the topologival sort
+        workflow_list = graph.topological_sort()
+
+        # Generate the ouput
+        workflow_repr = " -> ".join([x[0] for x in workflow_list])
+        logging.debug("Workflow: {0}". format(workflow_repr))
+        workflow_list = [x[1] for x in workflow_list]
+
+        return workflow_list
+
     def workflow(self):
         result = Workflow()
         heads = {}
         tails = {}
         stack = self.nodes.items()
         while stack:
-          name, node = stack.pop(0)
-          if node.activated and isinstance(node, ProcessNode) and not isinstance(node, PipelineNode):
-            if isinstance(node.process, Pipeline):
-              workflow = node.process.workflow()
-              result.add_workflow(workflow, prefix = name + '.')
-              heads[ node ] = workflow.head
-              tails[ node ] = workflow.tail
-            else:
-              result.add_node(name, node.process)
-              heads[ node ] = tails[ node ] = [ node.process ]
-    
+            name, node = stack.pop(0)
+            if node.activated and isinstance(node, ProcessNode) and not\
+                    isinstance(node, PipelineNode):
+                if isinstance(node.process, Pipeline):
+                    workflow = node.process.workflow()
+                    result.add_workflow(workflow, prefix=name + '.')
+                    heads[node] = workflow.head
+                    tails[node] = workflow.tail
+                else:
+                    result.add_node(name, node.process)
+                    heads[node] = tails[node] = [node.process]
+
         stack = self.nodes.items()
         while stack:
-          name, node = stack.pop(0)
-          if node.activated:
-            if isinstance(node, Switch):
-              nodes_from = set()
-              nodes_to = set()
-              for plug in node.plugs.itervalues():
-                if plug.activated:
-                  for nn, pn, n, p, only_if_activated in plug.links_from:
-                    if p.activated and isinstance(n, ProcessNode) and not isinstance(n, PipelineNode):
-                      nodes_from.update(tails[ n ])
-                  for nn, pn, n, p, only_if_activated in plug.links_to:
-                    if p.activated and isinstance(n, ProcessNode) and not isinstance(n, PipelineNode):
-                      nodes_to.update(heads[ n ])
-              for source_node in nodes_from:
-                for dest_node in nodes_to:
-                  result.add_link(source_node, dest_node)
-            elif isinstance(node, ProcessNode) and not isinstance(node, PipelineNode):
-              for plug in node.plugs.itervalues():
-                for nn, pn, n, p, only_if_activated in plug.links_to:
-                  if n.activated and isinstance(n, ProcessNode) and not isinstance(n, PipelineNode):
-                    for source_node in tails[ node ]:
-                      for dest_node in heads[ n ]:
-                        result.add_link(source_node, dest_node)
+            name, node = stack.pop(0)
+            if node.activated:
+                if isinstance(node, Switch):
+                    nodes_from = set()
+                    nodes_to = set()
+                    for plug in node.plugs.itervalues():
+                        if plug.activated:
+                            for nn, pn, n, p, only_if_activated in\
+                                    plug.links_from:
+                                if p.activated and isinstance(n, ProcessNode)\
+                                        and not isinstance(n, PipelineNode):
+                                    nodes_from.update(tails[n])
+                            for nn, pn, n, p, only_if_activated in\
+                                    plug.links_to:
+                                if p.activated and isinstance(n, ProcessNode)\
+                                        and not isinstance(n, PipelineNode):
+                                    nodes_to.update(heads[n])
+                    for source_node in nodes_from:
+                        for dest_node in nodes_to:
+                            result.add_link(source_node, dest_node)
+                elif isinstance(node, ProcessNode) and not\
+                        isinstance(node, PipelineNode):
+                    for plug in node.plugs.itervalues():
+                        for nn, pn, n, p, only_if_activated in plug.links_to:
+                            if n.activated and isinstance(n, ProcessNode)\
+                                    and not isinstance(n, PipelineNode):
+                                for source_node in tails[node]:
+                                    for dest_node in heads[n]:
+                                        result.add_link(source_node, dest_node)
         return result
-    
-    def __call__(self):
-            """ Call the pipeline nodes
-            """
-            print 'Execution of', self.id
-            for cnt, node  in enumerate(self.workflow().ordered_nodes()):
-                name, process_node = node
-                print process_node.__class__.__mro__
-                self._caller(os.getcwd(), "{0}-{1}".format(cnt + 1, name),
-                             process_node)
 
+    def __call__(self):
+        """ Call the pipeline nodes
+        """
+        print 'Execution of', self.id
+        for cnt, node in enumerate(self.workflow().ordered_nodes()):
+            name, process_node = node
+            print process_node.__class__.__mro__
+            self._caller(os.getcwd(), "{0}-{1}".format(cnt + 1, name),
+                         process_node)
 
 
 class Workflow(object):
-  def __init__(self):
-    self.nodes = {}
-    self.links = {}
-    self.head = set()
-    self.tail = set()
 
-  def add_node(self, name, node):
-    self.nodes[ node ] = (name, set())
-    self.head.add(node)
-    self.tail.add(node)
+    def __init__(self):
+        self.nodes = {}
+        self.links = {}
+        self.head = set()
+        self.tail = set()
 
+    def add_node(self, name, node):
+        self.nodes[node] = (name, set())
+        self.head.add(node)
+        self.tail.add(node)
 
-  def add_link(self, source_node, dest_node):
-    source_ancestors = self.nodes[ source_node ][ 1 ]
-    dest_ancestors = self.nodes[ dest_node ][ 1 ]
-    if source_node in dest_ancestors:
-      return
-    if dest_node is source_ancestors:
-      raise ValueError('Loop detected in worflow')
-    source_links_to, source_links_from = self.links.setdefault(source_node, (set(), set()))
-    dest_links_to, dest_links_from = self.links.setdefault(dest_node, (set(), set()))
-    ancestors_stack = [ source_node ]
-    while ancestors_stack:
-      ancestor = ancestors_stack.pop(0)
-      ancestors_stack.extend(self.links.setdefault(ancestor, (set(), set()))[ 1 ])
-      ancestor_to, ancestor_from = self.links.setdefault(ancestor, (set(), set()))
-      descendant_stack = [ dest_node ]
-      while descendant_stack:
-        descendant = descendant_stack.pop(0)
-        descendant_stack.extend(self.links.setdefault(descendant, (set(), set()))[ 0 ])
-        descendant_to, descendant_from = self.links.setdefault(descendant, (set(), set()))
-        ancestor_to.discard(descendant)
-        descendant_from.discard(ancestor)
-        self.nodes[ descendant ][ 1 ].add(ancestor)
-    source_links_to.add(dest_node)
-    dest_links_from.add(source_node)
-    self.head.discard(dest_node)
-    self.tail.discard(source_node)
+    def add_link(self, source_node, dest_node):
+        source_ancestors = self.nodes[source_node][1]
+        dest_ancestors = self.nodes[dest_node][1]
+        if source_node in dest_ancestors:
+            return
+        if dest_node is source_ancestors:
+            raise ValueError('Loop detected in worflow')
+        source_links_to, source_links_from = self.links.setdefault(
+            source_node, (set(), set()))
+        dest_links_to, dest_links_from = self.links.setdefault(
+            dest_node, (set(), set()))
+        ancestors_stack = [source_node]
+        while ancestors_stack:
+            ancestor = ancestors_stack.pop(0)
+            ancestors_stack.extend(
+                self.links.setdefault(ancestor, (set(), set()))[1])
+            ancestor_to, ancestor_from = self.links.setdefault(
+                ancestor, (set(), set()))
+            descendant_stack = [dest_node]
+            while descendant_stack:
+                descendant = descendant_stack.pop(0)
+                descendant_stack.extend(
+                    self.links.setdefault(descendant, (set(), set()))[0])
+                descendant_to, descendant_from = self.links.setdefault(
+                    descendant, (set(), set()))
+                ancestor_to.discard(descendant)
+                descendant_from.discard(ancestor)
+                self.nodes[descendant][1].add(ancestor)
+        source_links_to.add(dest_node)
+        dest_links_from.add(source_node)
+        self.head.discard(dest_node)
+        self.tail.discard(source_node)
 
+    def add_workflow(self, workflow, prefix=''):
+        for i, j in workflow.nodes.iteritems():
+            self.nodes[i] = (prefix + j[0], j[1])
+        self.links.update(workflow.links)
+        self.head.update(workflow.head)
+        self.tail.update(workflow.tail)
 
-  def add_workflow(self, workflow, prefix=''):
-    for i, j in workflow.nodes.iteritems():
-      self.nodes[ i ] = (prefix + j[ 0 ], j[ 1 ])
-    self.links.update(workflow.links)
-    self.head.update(workflow.head)
-    self.tail.update(workflow.tail)
+    def node_str(self, node):
+        return self.nodes[node][0]
 
+    def write(self, out=sys.stdout):
+        print >> out, 'digraph workflow {'
+        ids = {}
+        for n in self.nodes:
+            id = str(len(ids))
+            ids[n] = id
+            print >> out, '  %s [label="%s"];' % (id, self.node_str(n))
+        for n, v in self.links.iteritems():
+            for nn in v[0]:
+                print >> out, '  %s -> %s;' % (ids[n], ids[nn])
+        print >> out, '}'
 
-  def node_str(self, node):
-    return self.nodes[ node ][ 0 ]
+    def ordered_nodes(self):
+        for head_node in self.head:
+            for branch_node in self.ordered_branch(head_node):
+                yield branch_node
 
-
-  def write(self, out=sys.stdout):
-    print >> out, 'digraph workflow {'
-    ids = {}
-    for n in self.nodes:
-      id = str(len(ids))
-      ids[ n ] = id
-      print >> out, '  %s [label="%s"];' % (id, self.node_str(n))
-    for n, v in self.links.iteritems():
-      for nn in v[ 0 ]:
-        print >> out, '  %s -> %s;' % (ids[ n ], ids[ nn ])
-    print >> out, '}'
-
-
-  def ordered_nodes(self):
-    for head_node in self.head:
-      for branch_node in self.ordered_branch(head_node):
-        yield branch_node
-
-
-  def ordered_branch(self, node):
-    yield (self.node_str(node), node)
-    for child_node in self.links.get(node, [[]])[ 0 ]:
-      for branch_node in self.ordered_branch(child_node):
-        yield branch_node
-
-
+    def ordered_branch(self, node):
+        yield (self.node_str(node), node)
+        for child_node in self.links.get(node, [[]])[0]:
+            for branch_node in self.ordered_branch(child_node):
+                yield branch_node
