@@ -455,23 +455,13 @@ class Pipeline(Process):
         # hack: cant link output parameters
         if dest_plug.output and dest_node is not self.pipeline_node:
             raise ValueError('Cannot link to an output plug : %s' % link)
+
         # Check for link weakness
-        # A link is a weak link if it is not connected to a Switch node and
-        # if there exists an output plug in source_node that is connected to
-        # a Switch node.
         # A weak node is ignored when setting plugs and nodes activations with
         # update_nodes_and_plugs_activation.
         weak_link = False
         if not isinstance(source_node, PipelineNode):
-            if not isinstance(dest_node, Switch):
-                for plug in source_node.plugs.itervalues():
-                    for nn, pn, n, p, weak_link in plug.links_to:
-                        if isinstance(n, Switch):
-                            weak_link = True
-                            break
-                    if weak_link:
-                        break
-            else:
+            if isinstance(dest_node, Switch):
                 # Creating a link to a Switch make all links not connected
                 # to the Switch become weak links
                 for plug in source_node.plugs.itervalues():
@@ -479,6 +469,31 @@ class Pipeline(Process):
                         if not wl and not isinstance(n, Switch):
                             plug.links_to.remove((nn, pn, n, p, wl))
                             plug.links_to.add((nn, pn, n, p, True))
+            else:
+                # A new link is a weak link if it is not connected to a
+                # Switch node and if there exists an output plug in
+                # source_node that is connected to a Switch node.
+                for plug in source_node.plugs.itervalues():
+                    for nn, pn, n, p, weak_link in plug.links_to:
+                        if isinstance(n, Switch):
+                            weak_link = True
+                            break
+                    if weak_link:
+                        break
+            if isinstance(dest_node,PipelineNode):
+                # If a plug linked to the PipelineNode (i.e. exported),
+                # the new link is weak if there is already a link on that
+                # plug.
+                if source_plug.links_to:
+                    weak_link = True
+            else:
+                # If a link to a non-Pipeline node is created, all links
+                # from the same plug to a Pipeline node become weak
+                for nn, pn, n, p, wl in source_plug.links_to.copy():
+                    if not wl and isinstance(n, PipelineNode):
+                        source_plug.links_to.remove((nn, pn, n, p, wl))
+                        source_plug.links_to.add((nn, pn, n, p, True))
+
         source_plug.links_to.add((dest_node_name, dest_parameter, dest_node,
                                   dest_plug, weak_link))
         dest_plug.links_from.add((source_node_name, source_parameter,

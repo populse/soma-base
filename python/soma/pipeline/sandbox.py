@@ -119,10 +119,12 @@ class Morphologist( Pipeline ):
     
     self.add_process( 'spm_normalization', 'soma.pipeline.sandbox.SPMNormalization' )
     self.add_process( 'fsl_convert', 'soma.pipeline.sandbox.ConvertForFSL' )
-    self.add_process( 'fsl_normalization', 'soma.pipeline.sandbox.FSLNormalization' )
+    self.add_process( 'fsl_normalization', 'soma.pipeline.sandbox.FSLNormalization', do_not_export=['normalized','template'] )
     self.add_switch( 'select_normalization', [ 'spm', 'fsl', 'none' ], 't1mri' )
+    print(self.nodes['select_normalization'].user_traits())
     self.add_process( 'bias_correction', BiasCorrection() )
-    
+    self.export_parameter('fsl_convert', 'output', 'fsl_converted')
+    self.add_link('fsl_normalization.normalized->select_normalization.fsl-t1mri')
 
     self.add_link( 't1mri->spm_normalization.image' )
     self.add_link( 'spm_normalization.normalized->select_normalization.spm-t1mri' )
@@ -130,7 +132,7 @@ class Morphologist( Pipeline ):
 
     self.add_link( 't1mri->fsl_convert.input' )
     self.add_link( 'fsl_convert.output->fsl_normalization.image' )
-    self.export_parameter( 'fsl_normalization', 'normalized', None )
+#    self.export_parameter( 'fsl_normalization', 'normalized' )
 
     self.add_link( 't1mri->select_normalization.none-t1mri' )
 
@@ -168,14 +170,17 @@ class Morphologist( Pipeline ):
 
     self.node_position = {'bias_correction': (620.0, 140.0),
                           'brain_mask': (930.0, 139.0),
+                          'fsl_convert': (140.0, 350.0),
+                          'fsl_normalization': (290.0, 340.0),
                           'histo_analysis': (761.0, 190.0),
-                          'inputs': (50.0, 65.0),
+                          'inputs': (-90.0, 139.0),
                           'left_grey_white': (1242.0, 55.0),
-                          'spm_normalization': (278.0, 145.0),
                           'outputs': (1457.0, 103.0),
                           'right_grey_white': (1239.0, 330.0),
                           'select_normalization': (442.0, 65.0),
-                          'split_brain': (1089.0, 163.0)}
+                          'split_brain': (1089.0, 163.0),
+                          'spm_normalization': (182.0, 210.0)}
+
      
            
 class WorkflowViewer( QtGui.QWidget ):
