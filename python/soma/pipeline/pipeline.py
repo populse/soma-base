@@ -277,13 +277,10 @@ class Switch(Node):
         self.add_trait('switch', Enum(*inputs))
 
         # format inputs and outputs to inherit from Node class
-        if len(outputs) > 1:
-            flat_inputs = []
-            for switch_name in inputs:
-                flat_inputs.extend(["{0}-{1}".format(switch_name, plug_name)
-                                    for plug_name in outputs])
-        else:
-            flat_inputs = inputs
+        flat_inputs = []
+        for switch_name in inputs:
+            flat_inputs.extend(["{0}-{1}".format(switch_name, plug_name)
+                                for plug_name in outputs])
         node_inputs = ([dict(name="switch"), ] +
                        [dict(name=i, optional=True) for i in flat_inputs])
         node_outputs = [dict(name=i)
@@ -314,20 +311,14 @@ class Switch(Node):
         the new option
         """
         # deactivate the plugs associated with the old option
-        if len(self._outputs) > 1:
-            old_plug_names = ["{0}-{1}".format(old_selection, plug_name)
-                              for plug_name in self._outputs]
-        else:
-            old_plug_names = [old_selection]
+        old_plug_names = ["{0}-{1}".format(old_selection, plug_name)
+                          for plug_name in self._outputs]
         for plug_name in old_plug_names:
             self.plugs[plug_name].enabled = False
 
         # activate the plugs associated with the new option
-        if len(self._outputs) > 1:
-            new_plug_names = ["{0}-{1}".format(new_selection, plug_name)
-                              for plug_name in self._outputs]
-        else:
-            new_plug_names = [new_selection]
+        new_plug_names = ["{0}-{1}".format(new_selection, plug_name)
+                          for plug_name in self._outputs]
         for plug_name in new_plug_names:
             self.plugs[plug_name].enabled = True
 
@@ -336,11 +327,8 @@ class Switch(Node):
 
         # refresh the links to the output plugs
         for output_plug_name in self._outputs:
-            if len(self._outputs) > 1:
-                corresponding_input_plug_name = "{0}-{1}".format(new_selection,
-                                                                 output_plug_name)
-            else:
-                corresponding_input_plug_name = new_selection
+            corresponding_input_plug_name = "{0}-{1}".format(new_selection,
+                                                          output_plug_name)
             setattr(self, output_plug_name,
                     getattr(self, corresponding_input_plug_name))
 

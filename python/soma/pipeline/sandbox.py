@@ -109,8 +109,8 @@ class Morphologist( Pipeline ):
     self.add_switch( 'select_normalization', [ 'spm', 'none' ], 't1mri' )
     self.add_process( 'bias_correction', BiasCorrection() )
 
-    self.add_link( 'normalization.normalized->select_normalization.spm' )
-    self.add_link( 't1mri->select_normalization.none' )
+    self.add_link( 'normalization.normalized->select_normalization.spm-t1mri' )
+    self.add_link( 't1mri->select_normalization.none-t1mri' )
     self.add_link( 't1mri->normalization.image' )
 
     self.add_link( 'select_normalization.t1mri->bias_correction.t1mri' )
@@ -130,16 +130,14 @@ class Morphologist( Pipeline ):
     self.add_link( 'brain_mask.brain_mask->split_brain.brain_mask' )
     
     self.add_process( 'left_grey_white', GreyWhite(), label=1 )
-    self.export_parameter( 'left_grey_white', 'label', None )
     self.add_link( 'select_normalization.t1mri->left_grey_white.t1mri' )
     self.add_link( 'split_brain.split_brain->left_grey_white.label_image' )
-    self.export_parameter( 'left_grey_white', 'gw_classification', 'left_gw_classification', set_optional=False )
-    self.export_parameter( 'left_grey_white', 'hemi_cortex', 'left_hemi_cortex', set_optional=False  )
-    self.export_parameter( 'left_grey_white', 'hemi_mesh', 'left_hemi_mesh', set_optional=False  )
-    self.export_parameter( 'left_grey_white', 'white_mesh', 'left_white_mesh', set_optional=False  )
+    self.export_parameter( 'left_grey_white', 'gw_classification', 'left_gw_classification' )
+    self.export_parameter( 'left_grey_white', 'hemi_cortex', 'left_hemi_cortex' )
+    self.export_parameter( 'left_grey_white', 'hemi_mesh', 'left_hemi_mesh' )
+    self.export_parameter( 'left_grey_white', 'white_mesh', 'left_white_mesh' )
     
     self.add_process( 'right_grey_white', GreyWhite(), label=2 )
-    self.export_parameter( 'right_grey_white', 'label', None )
     self.add_link( 'select_normalization.t1mri->right_grey_white.t1mri' )
     self.add_link( 'split_brain.split_brain->right_grey_white.label_image' )
     self.export_parameter( 'right_grey_white', 'gw_classification', 'right_gw_classification' )
