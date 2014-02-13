@@ -105,7 +105,7 @@ class Morphologist( Pipeline ):
     self.add_trait( 't1mri', File() )
     
     self.add_process( 'normalization', 'soma.pipeline.sandbox.SPMNormalization' )
-    self.export_parameter( 'normalization', 'normalized', only_if_activated=True )
+    self.export_parameter( 'normalization', 'normalized' )
     self.add_switch( 'select_normalization', [ 'spm', 'none' ], 't1mri' )
     self.add_process( 'bias_correction', BiasCorrection() )
 
