@@ -25,6 +25,19 @@ class SPMNormalization( EchoProcess ):
     self.add_trait( 'normalized', File( output=True ) )
 
     
+class FSLNormalization( EchoProcess ):
+  def __init__( self ):
+    super( FSLNormalization, self ).__init__()
+    self.add_trait( 'image', File() )
+    self.add_trait( 'template', File() )
+    self.add_trait( 'normalized', File( output=True ) )
+
+class ConvertForFSL( EchoProcess ):
+  def __init__( self ):
+    super( ConvertForFSL, self ).__init__()
+    self.add_trait( 'input', File() )
+    self.add_trait( 'output', File( output=True ) )
+
 class BiasCorrection( EchoProcess ):
   def __init__( self ):
     super( BiasCorrection, self ).__init__()
@@ -104,14 +117,22 @@ class Morphologist( Pipeline ):
   def pipeline_definition( self ):
     self.add_trait( 't1mri', File() )
     
-    self.add_process( 'normalization', 'soma.pipeline.sandbox.SPMNormalization' )
-    self.export_parameter( 'normalization', 'normalized' )
-    self.add_switch( 'select_normalization', [ 'spm', 'none' ], 't1mri' )
+    self.add_process( 'spm_normalization', 'soma.pipeline.sandbox.SPMNormalization' )
+    self.add_process( 'fsl_convert', 'soma.pipeline.sandbox.ConvertForFSL' )
+    self.add_process( 'fsl_normalization', 'soma.pipeline.sandbox.FSLNormalization' )
+    self.add_switch( 'select_normalization', [ 'spm', 'fsl', 'none' ], 't1mri' )
     self.add_process( 'bias_correction', BiasCorrection() )
+    
 
-    self.add_link( 'normalization.normalized->select_normalization.spm-t1mri' )
+    self.add_link( 't1mri->spm_normalization.image' )
+    self.add_link( 'spm_normalization.normalized->select_normalization.spm-t1mri' )
+    self.export_parameter( 'spm_normalization', 'normalized' )
+
+    self.add_link( 't1mri->fsl_convert.input' )
+    self.add_link( 'fsl_convert.output->fsl_normalization.image' )
+    self.export_parameter( 'fsl_normalization', 'normalized', None )
+
     self.add_link( 't1mri->select_normalization.none-t1mri' )
-    self.add_link( 't1mri->normalization.image' )
 
     self.add_link( 'select_normalization.t1mri->bias_correction.t1mri' )
     self.export_parameter( 'bias_correction', 'nobias' )
@@ -150,7 +171,7 @@ class Morphologist( Pipeline ):
                           'histo_analysis': (761.0, 190.0),
                           'inputs': (50.0, 65.0),
                           'left_grey_white': (1242.0, 55.0),
-                          'normalization': (278.0, 145.0),
+                          'spm_normalization': (278.0, 145.0),
                           'outputs': (1457.0, 103.0),
                           'right_grey_white': (1239.0, 330.0),
                           'select_normalization': (442.0, 65.0),
