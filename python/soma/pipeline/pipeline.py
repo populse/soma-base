@@ -613,6 +613,33 @@ class Pipeline(Process):
                                 new_stack.add(n)
             stack = new_stack
 
+        pipeline_node = self.nodes['']
+        traits_changed = False
+        for plug_name, plug in pipeline_node.plugs.iteritems():
+            for nn, pn, n, p, only_if_activated in\
+                    plug.links_to.union(plug.links_from):
+                if p.activated and not only_if_activated:
+                    break
+            else:
+                plug.activated = False
+            trait = self.trait(plug_name)
+            if plug.activated:
+                if getattr(trait, 'hidden', False):
+                    trait.hidden = False
+                    traits_changed = True
+            else:
+                if not getattr(trait, 'hidden', False):
+                    trait.hidden = True
+                    traits_changed = True
+        self.selection_changed = True
+        if traits_changed:
+            self.user_traits_changed = True
+
+        for node, source_plug_name, source_plug, n, pn, p in inactive_links:
+            if (source_plug.activated and p.activated):
+                value = node.get_plug_value(source_plug_name)
+                node._callbacks[(source_plug_name, n, pn)](value)
+
     def workflow_test(self):
         """ Generate a workflow: list of process node to execute
 
