@@ -8,11 +8,13 @@
 ##########################################################################
 
 import sys
+import os
+import types
 
 try:
     import traits.api as traits
     from traits.api import (ListStr, HasTraits, File, Float, Instance,
-                            Enum, Str)
+                            Enum, Str, Directory)
     from traits.trait_base import _Undefined
 except ImportError:
     import enthought.traits.api as traits
@@ -47,6 +49,87 @@ def nipype_factory(nipype_instance):
         "OutputList": "File"
     }
     attributes = {}
+
+    # modify nipype interface to dynamically update the working dir
+    def _run_interface(self, runtime):
+        """ Method to execute nipype interface
+
+        Parameters
+        ----------
+        runtime: Bunch (mandatory)
+        the configuration structure
+        """
+        runtime.cwd = self.inputs.output_directory
+        #print runtime
+        return self._run_interface_core(runtime)
+
+    def _list_outputs(self):
+        """ Method to list all the interface outputs
+
+        Returns
+        -------
+        outputs: dict
+        all the interface outputs
+        """
+        outputs = self._list_outputs_core()
+        corrected_outputs = {}
+        for key, value in outputs.iteritems():
+            if not isinstance(value, _Undefined):
+                corrected_outputs[key] = os.path.join(
+                    self.inputs.output_directory,
+                    os.path.basename(value))
+            else:
+                corrected_outputs[key] = value
+        return corrected_outputs
+
+    def _gen_filename(self, name):
+        """ Method to generate automatically the output file name.
+
+        Used by: nipype.interfaces.base.CommandLine._parse_inputs
+
+        Returns
+        -------
+        outputs: str
+        the generated output file name
+        """
+        output = self._gen_filename_core(name)
+        if output:
+            corrected_output = os.path.join(self.inputs.output_directory,
+                                            os.path.basename(output))
+        return corrected_output
+
+    def _parse_inputs(self, skip=None):
+        """Parse all inputs using the ``argstr`` format string in the Trait.
+
+        Any inputs that are assigned (not the default_value) are formatted
+        to be added to the command line.
+
+        Returns
+        -------
+        all_args : list
+        A list of all inputs formatted for the command line.
+        """
+        # reset input traits that has to be generated
+        metadata = dict(argstr=lambda t: t is not None)
+        for name, spec in sorted(self.inputs.traits(**metadata).items()):
+            if spec.genfile or spec.name_source:
+                setattr(self.inputs, name, _Undefined())
+        return self._parse_inputs_core(skip)
+
+    nipype_instance.inputs.add_trait("output_directory",
+                                     Directory(os.getcwd()))
+    nipype_instance._list_outputs_core = nipype_instance._list_outputs
+    nipype_instance._list_outputs = types.MethodType(_list_outputs,
+                                                     nipype_instance)
+    nipype_instance._run_interface_core = nipype_instance._run_interface
+    nipype_instance._run_interface = types.MethodType(_run_interface,
+                                                      nipype_instance)
+    nipype_instance._parse_inputs_core = nipype_instance._parse_inputs
+    nipype_instance._parse_inputs = types.MethodType(_parse_inputs,
+                                                      nipype_instance)
+    nipype_instance._gen_filename_core = nipype_instance._gen_filename
+    nipype_instance._gen_filename = types.MethodType(_gen_filename,
+                                                     nipype_instance)
 
     # add a call function
     def _nipype_call(self):
@@ -148,6 +231,7 @@ def nipype_factory(nipype_instance):
         # TODO: fix this hack in Controller
         process_instance.trait(name).optional = not trait.mandatory
         process_instance.trait(name).desc = trait.desc
+        process_instance.trait(name).output = False
         process_instance.get(name)
         process_instance.on_trait_change(sync_nypipe_traits, name=name)
         process_instance.on_trait_change(sync_process_output_traits)
@@ -162,7 +246,7 @@ def nipype_factory(nipype_instance):
         # TODO: fix this hack in Controller
         process_instance.trait(private_name).optional = not trait.mandatory
         process_instance.trait(private_name).desc = trait.desc
-        process_instance.trait(private_name).output = not trait.mandatory
+        process_instance.trait(private_name).output = True
         process_instance.get(private_name)
 
     return process_instance
