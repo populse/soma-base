@@ -480,7 +480,7 @@ class Pipeline(Process):
                             break
                     if weak_link:
                         break
-            if isinstance(dest_node,PipelineNode):
+            if isinstance(dest_node, PipelineNode):
                 # If a plug linked to the PipelineNode (i.e. exported),
                 # the new link is weak if there is already a link on that
                 # plug.
@@ -537,6 +537,13 @@ class Pipeline(Process):
             node.enabled = value
 
     def update_nodes_and_plugs_activation(self):
+        """Reset all nodes and plugs activations according to the current state
+        of the pipeline (i.e. switch selection, nodes disabled, etc.).
+        """
+
+        # Remember all links that are inactive (i.e. at least one of the two
+        # plugs is inactive) in order to execute a callback if they become
+        # active (see at the end of this method)
         inactive_links = []
         for node in self.nodes.itervalues():
             for source_plug_name, source_plug in node.plugs.iteritems():
@@ -545,7 +552,8 @@ class Pipeline(Process):
                         inactive_links.append((node, source_plug_name,
                                                source_plug, n, pn, p))
 
-        stack = set()
+        # Activate the pipeline node and all its plugs (if they are enabled)
+        # and deactivate all other nodes (and their plugs).
         for node in self.nodes.itervalues():
             if isinstance(node, PipelineNode):
                 node.activated = node.enabled
@@ -555,86 +563,118 @@ class Pipeline(Process):
                 node.activated = False
                 for plug in node.plugs.itervalues():
                     plug.activated = False
-            stack.add(node)
 
-        while stack:
-            new_stack = set()
-            for node in stack:
-                if isinstance(node, PipelineNode):
-                    continue
-                if node.enabled:
-                    node.activated = True
-                    for plug_name, plug in node.plugs.iteritems():
-                        if plug.links_to:
-                            continue
-                        if plug.enabled:
-                            for nn, pn, n, p, weak_link in\
-                                    plug.links_from:
-                                if p.activated and not weak_link:
-                                    plug.activated = True
-                                    break
-                                else:
-                                    plug.activated = False
-                        else:
-                            plug.activated = False
-                        if not plug.activated and not (plug.optional or
-                                                       (node.name, plug_name)
-                                                       in self.do_not_export):
-                            node.activated = False
-                            break
-                    if node.activated:
-                        for plug in node.plugs.itervalues():
-                            if plug.enabled:
-                                activated = False
-                                for nn, pn, n, p, weak_link in\
-                                        plug.links_to:
-                                    if not weak_link:
-                                        activated = True
-                                        break
-                                if activated:
-                                    plug.activated = True
-                                    for nn, pn, n, p, weak_link in\
-                                            plug.links_to:
-                                        new_stack.add(n)
-                    else:
-                        for plug in node.plugs.itervalues():
-                            plug.activated = False
-            stack = new_stack
+        def forward_activation(node):
+            # Activate node and its plug according only to links to its input
+            # plugs. If node is activated, its output plugs are activted (if
+            # enabled) and the plugs of activated nodes connected to these
+            # outputs are activated. node and its plugs are supposed to be
+            # deactivated when this function is called.
 
-        stack = set(self.nodes.itervalues())
-        while stack:
-            new_stack = set()
-            for node in stack:
-                if isinstance(node, PipelineNode):
-                    continue
-                if node.activated:
-                    for plug in node.plugs.itervalues():
-                        if plug.links_to:
-                            for nn, pn, n, p, weak_link in\
-                                    plug.links_to:
-                                if p.activated and not weak_link:
-                                    break
-                            else:
-                                plug.activated = False
-                            if plug.activated:
+            # Node have to be enabled to be activated
+            if node.enabled:
+                node.activated = True
+                for plug_name, plug in node.plugs.iteritems():
+                    if plug.output:
+                        continue
+                    if plug.enabled:
+                        # Look for a non weak link connected to an activated
+                        # plug in order to activate the plug
+                        for nn, pn, n, p, weak_link in plug.links_from:
+                            if not weak_link and p.activated:
+                                plug.activated = True
                                 break
-                    else:
-                        # No output connected to an activated plug
-                        # => desactivate the node
+                    # If the plug is not activated, is mandatory and must be
+                    # exported, the whole node is deactivated
+                    if not plug.activated and not\
+                            (plug.optional or
+                             (node.name, node) in self.do_not_export):
                         node.activated = False
-                        for plug in node.plugs.itervalues():
-                            plug.activated = False
-                            for nn, pn, n, p, weak_link in\
-                                    plug.links_from:
+                        break
+            else:
+                node.activated = False
+            if not node.activated:
+                # If node is not activated, all plugs must be desactivated
+                for plug in node.plugs.itervalues():
+                    plug.activated = False
+            else:
+                # If node is activated, activate enabled output plugs and plugs
+                # of other nodes that are connected to them
+                for plug_name, plug in node.plugs.iteritems():
+                    if plug.output and plug.enabled:
+                        plug.activated = True
+                        for nn, pn, n, p, weak_link in plug.links_to:
+                            if n.activated and p.enabled:
+                                p.activated = True
+            return node.activated
+
+        # Propagate activation from pipeline input plugs towards pipeline
+        # output plugs. This will also activate (and propagate activation)
+        # nodes that are not connected to pipeline to input plugs but that have
+        # no mandatory input plugs.
+        stack = self.nodes.values()
+        while stack:
+            new_stack = set()
+            for node in stack:
+                if isinstance(node, PipelineNode):
+                    continue
+                if forward_activation(node):
+                    for plug in node.plugs.itervalues():
+                        if not plug.activated:
+                            continue
+                        for nn, pn, n, p, weak_link in plug.links_to:
+                            if not weak_link and p.enabled and not n.activated:
                                 new_stack.add(n)
             stack = new_stack
 
+        def backward_deactivation(node):
+            # Desactivate node (and its plugs) according only to links to its
+            # output plugs. Node is supposed to be activated when this
+            # function is called.
+            for plug_name, plug in node.plugs.iteritems():
+                if not plug.output:
+                    continue
+                if plug.activated:
+                    plug.activated = False
+                    for nn, pn, n, p, weak_link in plug.links_to:
+                        if not weak_link and p.activated:
+                            plug.activated = True
+                            break
+                    if not plug.activated and not\
+                            (plug.optional or
+                             (node.name, node) in self.do_not_export):
+                        node.activated = False
+                        break
+                    else:
+                        plug.activated = True
+            if not node.activated:
+                for plug in node.plugs.itervalues():
+                    plug.activated = False
+            return node.activated
+
+        # Propagate deactivation from output plugs towards input plugs.
+        stack = set(node for node in self.nodes.itervalues() if
+                    node.activated)
+        while stack:
+            new_stack = set()
+            for node in stack:
+                if isinstance(node, PipelineNode):
+                    continue
+                if not backward_deactivation(node):
+                    for plug in node.plugs.itervalues():
+                        for nn, pn, n, p, weak_link in plug.links_to:
+                            if not weak_link and n.activated:
+                                new_stack.add(n)
+            stack = new_stack
+
+        # Update pipeline node plugs activation and hide or show corresponding
+        # pipeline traits
         pipeline_node = self.nodes['']
         traits_changed = False
         for plug_name, plug in pipeline_node.plugs.iteritems():
-            for nn, pn, n, p, only_if_activated in\
+            for nn, pn, n, p, weak_link in\
                     plug.links_to.union(plug.links_from):
-                if p.activated and not only_if_activated:
+                if p.activated and not weak_link:
                     break
             else:
                 plug.activated = False
@@ -651,6 +691,7 @@ class Pipeline(Process):
         if traits_changed:
             self.user_traits_changed = True
 
+        # Execute a callback for all links that have become active.
         for node, source_plug_name, source_plug, n, pn, p in inactive_links:
             if (source_plug.activated and p.activated):
                 value = node.get_plug_value(source_plug_name)
@@ -701,7 +742,7 @@ class Pipeline(Process):
         for node_name, node in self.nodes.iteritems():
             # Select only Process nodes
             if (node.activated and not isinstance(node, PipelineNode) and
-                not isinstance(node, Switch)):
+                    not isinstance(node, Switch)):
                 # If Pipeline: meta in node is the workflow (list of
                 # Process)
                 if isinstance(node.process, Pipeline):

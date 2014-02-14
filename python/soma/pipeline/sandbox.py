@@ -38,6 +38,20 @@ class ConvertForFSL( EchoProcess ):
     self.add_trait( 'input', File() )
     self.add_trait( 'output', File( output=True ) )
 
+class AnotherNormalization( EchoProcess ):
+  def __init__( self ):
+    super( AnotherNormalization, self ).__init__()
+    self.add_trait( 'image', File() )
+    self.add_trait( 'template', File() )
+    self.add_trait( 'normalized', File( output=True ) )
+
+class ConvertForAnother( EchoProcess ):
+  def __init__( self ):
+    super( ConvertForAnother, self ).__init__()
+    self.add_trait( 'input', File() )
+    self.add_trait( 'output', File( output=True ) )
+    self.add_trait( 'another_output', File( output=True ) )
+
 class BiasCorrection( EchoProcess ):
   def __init__( self ):
     super( BiasCorrection, self ).__init__()
@@ -117,22 +131,31 @@ class Morphologist( Pipeline ):
   def pipeline_definition( self ):
     self.add_trait( 't1mri', File() )
     
-    self.add_process( 'spm_normalization', 'soma.pipeline.sandbox.SPMNormalization' )
-    self.add_process( 'fsl_convert', 'soma.pipeline.sandbox.ConvertForFSL' )
-    self.add_process( 'fsl_normalization', 'soma.pipeline.sandbox.FSLNormalization', do_not_export=['normalized','template'] )
-    self.add_switch( 'select_normalization', [ 'spm', 'fsl', 'none' ], 't1mri' )
+    self.add_switch( 'select_normalization', [ 'spm', 'fsl', 'another', 'none' ], 't1mri' )
     print(self.nodes['select_normalization'].user_traits())
     self.add_process( 'bias_correction', BiasCorrection() )
-    self.export_parameter('fsl_convert', 'output', 'fsl_converted')
-    self.add_link('fsl_normalization.normalized->select_normalization.fsl-t1mri')
 
+    self.add_process( 'spm_normalization', 'soma.pipeline.sandbox.SPMNormalization' )
+    self.export_parameter('spm_normalization', 'template')
     self.add_link( 't1mri->spm_normalization.image' )
     self.add_link( 'spm_normalization.normalized->select_normalization.spm-t1mri' )
     self.export_parameter( 'spm_normalization', 'normalized' )
 
+    self.add_process( 'fsl_convert', 'soma.pipeline.sandbox.ConvertForFSL' )
+    self.add_process( 'fsl_normalization', 'soma.pipeline.sandbox.FSLNormalization', do_not_export=['normalized'] )
     self.add_link( 't1mri->fsl_convert.input' )
+    self.add_link( 'template->fsl_normalization.template' )
     self.add_link( 'fsl_convert.output->fsl_normalization.image' )
+    self.export_parameter('fsl_convert', 'output', 'fsl_converted')
+    self.add_link('fsl_normalization.normalized->select_normalization.fsl-t1mri')
 #    self.export_parameter( 'fsl_normalization', 'normalized' )
+
+    self.add_process( 'another_convert', 'soma.pipeline.sandbox.ConvertForAnother' )
+    self.add_process( 'another_normalization', 'soma.pipeline.sandbox.AnotherNormalization', do_not_export=['normalized'] )
+    self.add_link( 't1mri->another_convert.input' )
+    self.add_link( 'template->another_normalization.template' )
+    self.add_link( 'another_convert.output->another_normalization.image' )
+    self.add_link('another_normalization.normalized->select_normalization.another-t1mri')
 
     self.add_link( 't1mri->select_normalization.none-t1mri' )
 
@@ -168,10 +191,12 @@ class Morphologist( Pipeline ):
     self.export_parameter( 'right_grey_white', 'hemi_mesh', 'right_hemi_mesh' )
     self.export_parameter( 'right_grey_white', 'white_mesh', 'right_white_mesh' )
 
-    self.node_position = {'bias_correction': (620.0, 140.0),
+    self.node_position = {'another_convert': (100.0, 342.0),
+                          'another_normalization': (289.0, 385.0),
+                          'bias_correction': (620.0, 140.0),
                           'brain_mask': (930.0, 139.0),
-                          'fsl_convert': (140.0, 350.0),
-                          'fsl_normalization': (290.0, 340.0),
+                          'fsl_convert': (131.0, 222.0),
+                          'fsl_normalization': (269.0, 192.0),
                           'histo_analysis': (761.0, 190.0),
                           'inputs': (-90.0, 139.0),
                           'left_grey_white': (1242.0, 55.0),
@@ -179,7 +204,8 @@ class Morphologist( Pipeline ):
                           'right_grey_white': (1239.0, 330.0),
                           'select_normalization': (442.0, 65.0),
                           'split_brain': (1089.0, 163.0),
-                          'spm_normalization': (182.0, 210.0)}
+                          'spm_normalization': (173.0, 4.0)}
+
 
      
            
@@ -241,7 +267,7 @@ if __name__ == '__main__':
   #painter.end()
   
   app.exec_()
-  morphologist.workflow().write( sys.stdout )
+#  morphologist.workflow().write( sys.stdout )
   del view1
   del view2
   del view3
