@@ -70,15 +70,15 @@ class Node(Controller):
         Parameters
         ----------
         pipeline: Pipeline (mandatory)
-        the pipeline object where the node is added
+            the pipeline object where the node is added
         name: str (mandatory)
-        the node name
+            the node name
         inputs: list of dict (mandatory)
-        a list of input parameters containing a dictionary with default
-        values (mandatory key: name)
+            a list of input parameters containing a dictionary with default
+            values (mandatory key: name)
         outputs: dict (mandatory)
-        a list of output parameters containing a dictionary with default
-        values (mandatory key: name)
+            a list of output parameters containing a dictionary with default
+            values (mandatory key: name)
         """
         super(Node, self).__init__()
         self.pipeline = pipeline
@@ -128,11 +128,11 @@ class Node(Controller):
         Parameters
         ----------
         source_plug_name: str (mandatory)
-        the source plug name
+            the source plug name
         dest_node: Node (mandatory)
-        the destination node
+            the destination node
         dest_plug_name: str (mandatory)
-        the destination plug name
+            the destination plug name
         """
         def value_callback(value):
             """ Spread the source plug value to the destination plug
@@ -151,9 +151,9 @@ class Node(Controller):
         Parameters
         ----------
         plug_name: str (mandatory)
-        a plug name
+            a plug name
         callback: @f (mandatory)
-        a callback function
+            a callback function
         """
         self.on_trait_change(callback, plug_name)
 
@@ -163,12 +163,12 @@ class Node(Controller):
         Parameters
         ----------
         plug_name: str (mandatory)
-        a plug name
+            a plug name
 
-        Retruns:
-        --------
+        Returns
+        -------
         output: object
-        the plug value
+            the plug value
         """
         return getattr(self, plug_name)
 
@@ -178,9 +178,9 @@ class Node(Controller):
         Parameters
         ----------
         plug_name: str (mandatory)
-        a plug name
+            a plug name
         value: object (mandatory)
-        the plug value we want to set
+            the plug value we want to set
         """
         setattr(self, plug_name, value)
 
@@ -190,12 +190,12 @@ class Node(Controller):
         Parameters
         ----------
         trait_name: str (mandatory)
-        a trait name
+            a trait name
 
-        Retruns:
-        --------
+        Returns
+        -------
         output: trait
-        the trait named trait_name
+            the trait named trait_name
         """
         return self.trait(trait_name)
 
@@ -260,13 +260,13 @@ class Switch(Node):
         Parameters
         ----------
         pipeline: Pipeline (mandatory)
-        the pipeline object where the node is added
+            the pipeline object where the node is added
         name: str (mandatory)
-        the switch node name
+            the switch node name
         inputs: list (mandatory)
-        a list of options
+            a list of options
         outputs: list (mandatory)
-        a list of output parameters
+            a list of output parameters
         """
         # if the user pass a simple element, create a list and add this
         # element
@@ -315,9 +315,9 @@ class Switch(Node):
         Parameters
         ----------
         old_selection: str (mandatory)
-        the old option
+            the old option
         new_selection: str (mandatory)
-        the new option
+            the new option
         """
         # deactivate the plugs associated with the old option
         old_plug_names = ["{0}-{1}".format(old_selection, plug_name)
@@ -375,6 +375,8 @@ class Pipeline(Process):
         self.update_nodes_and_plugs_activation()
 
     def add_trait(self, name, trait):
+        '''
+        '''
         super(Pipeline, self).add_trait(name, trait)
         if self.is_user_trait(trait):
             # hack
@@ -392,6 +394,14 @@ class Pipeline(Process):
         self.do_not_export.add((node_name, plug_name))
 
     def add_process(self, name, process, do_not_export=None, **kwargs):
+        '''Add a new node in the pipeline
+
+        Parameters
+        ----------
+        name: str
+        process: Process
+        do_not_export: bool, optional
+        '''
         if do_not_export is None:
             do_not_export = set()
         else:
@@ -410,6 +420,30 @@ class Pipeline(Process):
         self.list_process_in_pipeline.append(process)
 
     def add_switch(self, name, inputs, outputs):
+        '''Add a switch node in the pipeline
+
+        Parameters
+        ----------
+        name: str
+            name for the switch node
+        inputs: list of str
+            names for switch inputs. Switch activation will select amongst
+            them.
+            Inputs names will actually be a combination of input and output,
+            in the shape "input-output".
+            This behaviour is needed when there are several outputs, and thus
+            several input groups.
+        outputs: list of str
+            names for outputs.
+
+        Examples
+        --------
+        >>> pipeline.add_switch('group_switch', ['in1', 'in2'], ['out1', 'out2'])
+
+        will create a switch with 4 inputs and 2 outputs:
+        inputs: "in1-out1", "in2-out1", "in1-out2", "in2-out2"
+        outputs: "out1", "out2"
+        '''
         if name in self.nodes:
             raise ValueError('Pipeline cannot have two nodes with the same '
                              'name : %s' % name)
@@ -445,6 +479,15 @@ class Pipeline(Process):
         return node_name, parameter_name, node, node.plugs[parameter_name]
 
     def add_link(self, link):
+        '''Add a link between pipeline nodes
+
+        Parameters
+        ----------
+        link: str
+          link description. Its shape should be:
+          "node.output->other_node.input".
+          If no node is specified, the pipeline itself is assumed.
+        '''
         source, dest = link.split('->')
         source_node_name, source_parameter, source_node, source_plug = \
             self.parse_parameter(source)
@@ -509,6 +552,8 @@ class Pipeline(Process):
 
     def export_parameter(self, node_name, parameter_name,
                          pipeline_parameter=None):
+        '''Exports one of the nodes parameters at the level of the pipeline.
+        '''
         node = self.nodes[node_name]
         trait = node.get_trait(parameter_name)
         if trait is None:
@@ -703,7 +748,7 @@ class Pipeline(Process):
         Returns
         -------
         workflow_list: list of Process
-        an ordered list of Processes to execute
+            an ordered list of Processes to execute
         """
 
         def insert(node_name, plug, dependencies, direct=True):
@@ -766,7 +811,7 @@ class Pipeline(Process):
         # Start the topologival sort
         ordered_list = graph.topological_sort()
 
-        # Generate the ouput
+        # Generate the output
         workflow_repr = " -> ".join([x[0] for x in ordered_list])
         logging.debug("Workflow: {0}". format(workflow_repr))
         workflow_list = []
@@ -776,6 +821,8 @@ class Pipeline(Process):
         return workflow_list
 
     def workflow(self):
+        '''
+        '''
         result = Workflow()
         heads = {}
         tails = {}
@@ -838,6 +885,8 @@ class Pipeline(Process):
 
 
 class Workflow(object):
+    '''
+    '''
 
     def __init__(self):
         self.nodes = {}
