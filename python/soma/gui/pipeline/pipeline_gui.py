@@ -229,14 +229,16 @@ class NodeGWidget(QtGui.QGraphicsItemGroup):
 
 class Link(QtGui.QGraphicsPathItem):
 
-  def __init__(self, origin, target, link_status, parent=None):
+  def __init__(self, origin, target, active, weak, parent=None):
     super(Link, self).__init__(parent)
     pen = QtGui.QPen()
     pen.setWidth(2)
-    if link_status:
+    if active:
       pen.setBrush(RED_2)
     else:
       pen.setBrush(QtCore.Qt.gray)
+    if weak:
+        pen.setStyle(QtCore.Qt.DashLine)
     pen.setCapStyle(QtCore.Qt.RoundCap)
     pen.setJoinStyle(QtCore.Qt.RoundJoin)
 
@@ -281,7 +283,7 @@ class PipelineScene(QtGui.QGraphicsScene):
     self.gnodes[ name ] = gnode
   
   
-  def add_link( self, source, dest, active ):
+  def add_link( self, source, dest, active, weak ):
     source_gnode_name, source_param = source
     if not source_gnode_name:
       source_gnode_name  = 'inputs'
@@ -293,7 +295,7 @@ class PipelineScene(QtGui.QGraphicsScene):
     if dest_param in dest_gnode.in_plugs:
       glink = Link( source_gnode.mapToScene( source_gnode.out_plugs[ source_param ].get_plug_point() ),
                     dest_gnode.mapToScene( dest_gnode.in_plugs[ dest_param ].get_plug_point() ),
-                    active )
+                    active, weak )
       self.glinks[ ( (source_gnode_name, source_param), (dest_gnode_name, dest_param) ) ] = glink
       self.addItem( glink )
 
@@ -341,9 +343,10 @@ class PipelineScene(QtGui.QGraphicsScene):
 
     for source_node_name, source_node in pipeline.nodes.iteritems():
       for source_parameter, source_plug in source_node.plugs.iteritems():
-        for dest_node_name, dest_parameter, dest_node, dest_plug, only_if_activated in source_plug.links_to:
-          self.add_link( ( source_node_name, source_parameter ), ( dest_node_name, dest_parameter ), 
-                         active=source_plug.activated and dest_plug.activated )
+        for dest_node_name, dest_parameter, dest_node, dest_plug, weak_link in source_plug.links_to:
+          self.add_link((source_node_name, source_parameter ), ( dest_node_name, dest_parameter ), 
+                         active=source_plug.activated and dest_plug.activated,
+                         weak=weak_link)
   
   
 
