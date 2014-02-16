@@ -507,17 +507,19 @@ class Pipeline(Process):
             if isinstance(dest_node, Switch):
                 # Creating a link to a Switch make all links not connected
                 # to the Switch become weak links
-                for plug in source_node.plugs.itervalues():
+                for plug_name, plug in source_node.plugs.iteritems():
                     for nn, pn, n, p, wl in plug.links_to.copy():
                         if not wl and not isinstance(n, Switch):
                             plug.links_to.remove((nn, pn, n, p, wl))
+                            p.links_from.remove((source_node_name, plug_name, source_node, plug, wl))
                             plug.links_to.add((nn, pn, n, p, True))
+                            p.links_from.add((source_node_name, plug_name, source_node, plug, True))
             else:
                 # A new link is a weak link if it is not connected to a
                 # Switch node and if there exists an output plug in
                 # source_node that is connected to a Switch node.
                 for plug in source_node.plugs.itervalues():
-                    for nn, pn, n, p, weak_link in plug.links_to:
+                    for nn, pn, n, p, wl in plug.links_to:
                         if isinstance(n, Switch):
                             weak_link = True
                             break
@@ -535,12 +537,13 @@ class Pipeline(Process):
                 for nn, pn, n, p, wl in source_plug.links_to.copy():
                     if not wl and isinstance(n, PipelineNode):
                         source_plug.links_to.remove((nn, pn, n, p, wl))
+                        p.links_from.remove((source_node_name, source_parameter, source_node, source_plug, wl))
                         source_plug.links_to.add((nn, pn, n, p, True))
-
+                        p.links_from.add((source_node_name, source_parameter, source_node, source_plug, True))
         source_plug.links_to.add((dest_node_name, dest_parameter, dest_node,
                                   dest_plug, weak_link))
         dest_plug.links_from.add((source_node_name, source_parameter,
-                                  source_node, source_plug, False))
+                                  source_node, source_plug, weak_link))
         if isinstance(dest_node, ProcessNode) and isinstance(source_node,
                                                              ProcessNode):
             source_trait = source_node.process.trait(source_parameter)

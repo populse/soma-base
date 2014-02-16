@@ -148,7 +148,7 @@ class Morphologist( Pipeline ):
     self.add_link( 'fsl_convert.output->fsl_normalization.image' )
     self.export_parameter('fsl_convert', 'output', 'fsl_converted')
     self.add_link('fsl_normalization.normalized->select_normalization.fsl-t1mri')
-#    self.export_parameter( 'fsl_normalization', 'normalized' )
+#    self.export_parameter( 'fsl_normalization', 'another', weak=True )
 
     self.add_process( 'another_convert', 'soma.pipeline.sandbox.ConvertForAnother' )
     self.add_process( 'another_normalization', 'soma.pipeline.sandbox.AnotherNormalization', do_not_export=['normalized'] )
