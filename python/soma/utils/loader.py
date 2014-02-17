@@ -85,7 +85,7 @@ def insert_tool(tools, tool, allowed_instances):
     """
     allowed_instances = allowed_instances or [object, ]
     for check_instance in allowed_instances:
-        if issubclass(tool, check_instance):
+        if isinstance(tool, type) and issubclass(tool, check_instance):
             tools.append(tool)
             break
             
