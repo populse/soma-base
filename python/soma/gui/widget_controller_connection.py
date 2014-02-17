@@ -84,6 +84,7 @@ class Connector_Unicode_QLineEdit( TraitWidgetConnector ):
   def update_controller( self ):
     setattr( self.controller, self.attribute_name, self.unicode_to_attribute( self.parent().text() ) )
 WidgetToControllerConnector.default_factory[ ( 'Unicode', 'QLineEdit' ) ] = Connector_Unicode_QLineEdit
+WidgetToControllerConnector.default_factory[ ( 'String', 'QLineEdit' ) ] = Connector_Unicode_QLineEdit
 WidgetToControllerConnector.default_factory[ ( 'Str', 'QLineEdit' ) ] = Connector_Unicode_QLineEdit
 
 
