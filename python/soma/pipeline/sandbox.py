@@ -6,7 +6,7 @@ try:
 except ImportError:
   from enthought.traits.api import File, Float, Int
 
-from soma.process import Process
+from soma.process import Process, get_process_instance
 from soma.pipeline import Pipeline
 
 
@@ -208,7 +208,6 @@ class Morphologist( Pipeline ):
 
 
      
-           
 class WorkflowViewer( QtGui.QWidget ):
   def __init__( self, pipeline ):
     super( WorkflowViewer, self ).__init__()
@@ -242,6 +241,10 @@ if __name__ == '__main__':
   app = QtGui.QApplication( sys.argv )
 
   morphologist = Morphologist()
+
+#  morphologist = get_process_instance('morphologist.morphologist')
+
+#  morphologist = get_process_instance('normalizationPipeline.normalizationPipeline')
   #morphologist.set_string_list( sys.argv[1:] )
   view3 = WorkflowViewer( morphologist )
   view3.show()

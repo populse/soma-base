@@ -5,6 +5,7 @@ try:
 except ImportError:
   from enthought.traits.api import File
 
+from soma.sorted_dictionary import SortedDictionary
 from soma.pipeline.pipeline import Switch 
 
 #-----------------------------------------------------------------------------
@@ -60,11 +61,21 @@ DEEP_PURPLE_2 = QtGui.QColor.fromRgb(121, 97, 124)
 
 class Plug( QtGui.QGraphicsPolygonItem ):
   
-  def __init__(self, height, width, simple=True, parent=None):
+  def __init__(self, height, width, activated=True, optional=False, parent=None):
     super(Plug, self).__init__(parent)
-    if simple:
+    if optional:
+      if activated:
+        color = QtCore.Qt.darkGreen
+      else:
+        color = QtGui.QColor( '#BFDB91' )
+    else:
+      if activated:
+        color = QtCore.Qt.black
+      else:
+        color = QtCore.Qt.gray
+    if True:
       brush = QtGui.QBrush(QtCore.Qt.SolidPattern)
-      brush.setColor(QtCore.Qt.black)
+      brush.setColor(color)
       polygon = QtGui.QPolygonF( [ QtCore.QPointF( 0,0 ),
                                    QtCore.QPointF( width, (height-5)/2.0 ),
                                    QtCore.QPointF( 0, height-5 ) 
@@ -72,7 +83,7 @@ class Plug( QtGui.QGraphicsPolygonItem ):
       self.setPen(QtGui.QPen(QtCore.Qt.NoPen))
     else:
       brush = QtGui.QBrush(QtCore.Qt.Dense4Pattern)
-      brush.setColor(QtCore.Qt.black)
+      brush.setColor(color)
       polygon = QtGui.QPolygonF( [ QtCore.QPointF( 0, 0 ),
                                    QtCore.QPointF( width/3.0, (height-5)/4.0 ),
                                    QtCore.QPointF( width/3.0, 0 ),
@@ -97,15 +108,14 @@ class NodeGWidget(QtGui.QGraphicsItemGroup):
     'switch': ( SAND_1, SAND_2, LIGHT_SAND_1, LIGHT_SAND_2 ),
   }
   
-  def __init__( self, name, input_parameters, output_parameters, 
+  def __init__( self, name, parameters, 
                 number=None, active=True,
                 style= None, parent=None ):
     super(NodeGWidget, self).__init__(parent)
     if style is None:
       style = 'default'
     self.name = name
-    self.input_parameters = input_parameters
-    self.output_parameters = output_parameters
+    self.parameters = parameters
     self.setFlag(QtGui.QGraphicsItem.ItemIsMovable)
     self.in_plugs = {}
     self.out_plugs = {}
@@ -160,15 +170,12 @@ class NodeGWidget(QtGui.QGraphicsItemGroup):
     self.addToGroup(self.title)
 
     pos = margin + margin + self.title.boundingRect().size().height()
-    for in_param in self.input_parameters:
-      if in_param.startswith( '+' ):
-        simple = False
-        in_param = in_param[ 1: ]
-      else:
-        simple=True
+    for in_param, pipeline_plug in self.parameters.iteritems():
+      output = (not pipeline_plug.output if self.name in ('inputs','outputs') else pipeline_plug.output)
+      if output:
+        continue
       param_name = QtGui.QGraphicsTextItem(in_param, self)
-      plug = Plug(param_name.boundingRect().size().height(), plug_width, simple=simple, parent=self )
-      #plug.setZValue(2)
+      plug = Plug(param_name.boundingRect().size().height(), plug_width, activated=pipeline_plug.activated, optional=pipeline_plug.optional, parent=self )
       param_name.setZValue(2)
       plug.setPos(margin, pos)
       param_name.setPos(plug.boundingRect().size().width() + margin, pos)
@@ -178,15 +185,12 @@ class NodeGWidget(QtGui.QGraphicsItemGroup):
       pos = pos + param_name.boundingRect().size().height()
 
 
-    for out_param in self.output_parameters:
-      if out_param.startswith( '+' ):
-        simple = False
-        out_param = out_param[ 1: ]
-      else:
-        simple=True
+    for out_param, pipeline_plug in self.parameters.iteritems():
+      output = (not pipeline_plug.output if self.name in ('inputs','outputs') else pipeline_plug.output)
+      if not output:
+        continue
       param_name = QtGui.QGraphicsTextItem(out_param, self)
-      plug = Plug(param_name.boundingRect().size().height(), plug_width, simple=simple, parent=self)
-      #plug.setZValue(2)
+      plug = Plug(param_name.boundingRect().size().height(), plug_width, activated=pipeline_plug.activated, optional=pipeline_plug.optional, parent=self)
       param_name.setZValue(2)
       param_name.setPos(plug.boundingRect().size().width() + margin, pos)
       plug.setPos(plug.boundingRect().size().width() + margin + param_name.boundingRect().size().width() + margin, pos)
@@ -316,30 +320,24 @@ class PipelineScene(QtGui.QGraphicsScene):
                      
 
   def set_pipeline( self, pipeline ):
-    pipeline_inputs = []
-    pipeline_outputs = []
+    pipeline_inputs = SortedDictionary()
+    pipeline_outputs = SortedDictionary()
     for name, plug in pipeline.nodes[ '' ].plugs.iteritems():
-      if plug.activated:
-        p = name
+      if plug.output:
+        pipeline_outputs[name]=plug
       else:
-        p = '+' + name
-      if plug.links_to:
-        pipeline_inputs.append( p )
-      else:
-        pipeline_outputs.append( p )
+        pipeline_inputs[name]=plug
     if pipeline_inputs:
-      self.add_node( 'inputs', NodeGWidget( 'inputs', [], pipeline_inputs, active=True ) )
+      self.add_node( 'inputs', NodeGWidget( 'inputs', pipeline_inputs, active=True ) )
     for node_name, node in pipeline.nodes.iteritems():
       if not node_name: continue
-      inputs = [(n if v.activated else '+' + n) for n, v in node.plugs.iteritems() if not v.output]
-      outputs = [(n if v.activated else '+' + n) for n, v in node.plugs.iteritems() if v.output]
       if isinstance( node, Switch ):
         style = 'switch'
       else:
         style = None
-      self.add_node( node_name, NodeGWidget( node_name, inputs, outputs, active=node.activated, style=style ) )
+      self.add_node( node_name, NodeGWidget( node_name, node.plugs, active=node.activated, style=style ) )
     if pipeline_outputs:
-      self.add_node( 'outputs', NodeGWidget( 'outputs', pipeline_outputs, [], active=True ) )
+      self.add_node( 'outputs', NodeGWidget( 'outputs', pipeline_outputs, active=True ) )
 
     for source_node_name, source_node in pipeline.nodes.iteritems():
       for source_parameter, source_plug in source_node.plugs.iteritems():
