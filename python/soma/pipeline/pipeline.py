@@ -83,7 +83,7 @@ class Node(Controller):
         super(Node, self).__init__()
         self.pipeline = pipeline
         self.name = name
-        self.plugs = {}
+        self.plugs = SortedDictionary()
         # _callbacks -> (src_plug_name, dest_node, dest_plug_name)
         self._callbacks = {}
 
@@ -506,10 +506,11 @@ class Pipeline(Process):
         if not isinstance(source_node, PipelineNode):
             if isinstance(dest_node, Switch):
                 # Creating a link to a Switch make all links not connected
-                # to the Switch become weak links
+                # to the Switch become weak links unless it is connected to the
+                # pipeline node
                 for plug_name, plug in source_node.plugs.iteritems():
                     for nn, pn, n, p, wl in plug.links_to.copy():
-                        if not wl and not isinstance(n, Switch):
+                        if not wl and not isinstance(n, (Switch,PipelineNode)):
                             plug.links_to.remove((nn, pn, n, p, wl))
                             p.links_from.remove((source_node_name, plug_name, source_node, plug, wl))
                             plug.links_to.add((nn, pn, n, p, True))
@@ -537,9 +538,12 @@ class Pipeline(Process):
                 for nn, pn, n, p, wl in source_plug.links_to.copy():
                     if not wl and isinstance(n, PipelineNode):
                         source_plug.links_to.remove((nn, pn, n, p, wl))
-                        p.links_from.remove((source_node_name, source_parameter, source_node, source_plug, wl))
+                        p.links_from.remove((source_node_name,
+                                             source_parameter, source_node,
+                                             source_plug, wl))
                         source_plug.links_to.add((nn, pn, n, p, True))
-                        p.links_from.add((source_node_name, source_parameter, source_node, source_plug, True))
+                        p.links_from.add((source_node_name, source_parameter,
+                                          source_node, source_plug, True))
         source_plug.links_to.add((dest_node_name, dest_parameter, dest_node,
                                   dest_plug, weak_link))
         dest_plug.links_from.add((source_node_name, source_parameter,
@@ -680,14 +684,28 @@ class Pipeline(Process):
             # output plugs. Node is supposed to be activated when this
             # function is called.
             for plug_name, plug in node.plugs.iteritems():
-                if not plug.output:
-                    continue
+                if plug.output:
+                    links = plug.links_to
+                else:
+                    links = plug.links_from
                 if plug.activated:
-                    plug.activated = False
-                    for nn, pn, n, p, weak_link in plug.links_to:
-                        if not weak_link and p.activated:
-                            plug.activated = True
-                            break
+                    plug_activated = None
+                    weak_activation = False
+                    for nn, pn, n, p, weak_link in links:
+                        if weak_link:
+                            weak_activation = weak_activation or p.activated
+                        else:
+                            if p.activated:
+                                plug_activated = True
+                                break
+                            else:
+                                plug_activated = False
+                    if plug_activated is None:
+                        # plug is connected only with weak links
+                        plug.activated = weak_activation
+                    else:
+                        # Non weak links takes priority over weak links
+                        plug.activated = plug_activated
                     if not plug.activated and not\
                             (plug.optional or
                              (node.name, node) in self.do_not_export):
@@ -710,8 +728,10 @@ class Pipeline(Process):
                     continue
                 if not backward_deactivation(node):
                     for plug in node.plugs.itervalues():
-                        for nn, pn, n, p, weak_link in plug.links_to:
-                            if not weak_link and n.activated:
+                        for nn, pn, n, p, weak_link in\
+                                plug.links_from.union(plug.links_to):
+#                            if not weak_link and n.activated:
+                            if n.activated:
                                 new_stack.add(n)
             stack = new_stack
 
