@@ -722,7 +722,7 @@ class Pipeline(Process):
         for plug_name, plug in pipeline_node.plugs.iteritems():
             for nn, pn, n, p, weak_link in\
                     plug.links_to.union(plug.links_from):
-                if p.activated and not weak_link:
+                if p.activated:
                     break
             else:
                 plug.activated = False
