@@ -1,8 +1,5 @@
 # -*- coding: utf-8 -*-
 import os
-import sys
-import warnings
-import datetime
 
 try:
     import traits.api as traits
@@ -15,7 +12,8 @@ except ImportError:
                                       Instance, Enum, Str)
 
 from soma.controller import Controller
-    
+
+
 class Process(Controller):
     """ TODO
     """
@@ -181,7 +179,7 @@ class Process(Controller):
 
         # get dependencies versions
         versions = {
-            "casper": get_tool_version("casper"),
+            "soma": get_tool_version("soma"),
         }
         if "_nipype_interface" in dir(self):
             versions["nipype"] = get_tool_version("nipype")
@@ -210,8 +208,9 @@ class Process(Controller):
             execution_result["cwd"] = runtime.cwd
             execution_result["environ"] = runtime.environ
 
-            self.log_file = os.path.join(execution_result["cwd"],
-                                         "log.json")
+            if not self.log_file:
+                self.log_file = os.path.join(execution_result["cwd"],
+                                             "log.json")
 
         # generate summary
         log = {

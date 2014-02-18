@@ -63,6 +63,7 @@ class StudyConfig(Controller):
         self.add_trait('output_directory', Directory(_Undefined(),
                                                      exists=True))
         self.add_trait('shared_directory', Directory(_Undefined()))
+        self.add_trait('generate_logging', Bool(False))
 
         # Add some dependencie parameters
         self.add_trait('spm_directory', Directory(_Undefined(),
@@ -106,7 +107,7 @@ class StudyConfig(Controller):
     ##############
     # Events     #
     ##############
-
+    
     def _use_smart_caching_changed(self, old_trait_value, new_trait_value):
         """ Setup the caller
         """
@@ -193,13 +194,11 @@ class StudyConfig(Controller):
 
         # execute each element
         for cnt, process_instance in enumerate(execution_list):
-
             # run
-            #process()
-
-            self._caller(self.output_directory,
-                         "{0}-{1}".format(cnt + 1, process_instance.name),
-                         process_instance)
+            returncode, log_file = self._caller(self.output_directory,
+                        "{0}-{1}".format(cnt + 1, process_instance.name),
+                         process_instance,
+                         self.generate_logging)
 
 
 if __name__ == "__main__":

@@ -13,6 +13,7 @@ from soma.utils import ensure_is_dir
 # joblib caching
 from joblib import Memory
 
+
 def set_output_dir(subj_output_dir, process_instance):
     """ Try to set the study output directory
     """
@@ -22,14 +23,23 @@ def set_output_dir(subj_output_dir, process_instance):
             process_instance._nipype_interface.inputs.output_directory = (
                 subj_output_dir)
 
-def _run_process(subj_output_dir, description, process_instance):
+
+def _run_process(subj_output_dir, description, process_instance,
+                 generate_logging):
     """ Execute the process
     """
     set_output_dir(subj_output_dir, process_instance)
-    return process_instance()
+    returncode = process_instance()
+    output_log_file = None
+    if generate_logging:
+        output_log_file = os.path.join(subj_output_dir, description + ".json")
+        process_instance.log_file = output_log_file
+        process_instance.save_log()
+    return returncode, output_log_file
 
 
-def _joblib_run_process(subj_output_dir, description, process_instance):
+def _joblib_run_process(subj_output_dir, description, process_instance,
+                        generate_logging):
     """ Use joblib smart-caching.
     Deal with files and SPM nipype processes.
     Do not check if files have been deleted by any users or scripts
@@ -101,6 +111,13 @@ def _joblib_run_process(subj_output_dir, description, process_instance):
     # call interface
     outputs = _mprocess()
 
+    # generate log
+    output_log_file = None
+    if generate_logging:
+        output_log_file = os.path.join(subj_output_dir, description + ".json")
+        process_instance.log_file = output_log_file
+        process_instance.save_log()
+
     # remove symbolic links
     to_delete = [os.path.join(subj_output_dir, x)
                   for x in os.listdir(subj_output_dir)
@@ -109,4 +126,4 @@ def _joblib_run_process(subj_output_dir, description, process_instance):
         os.unlink(item)
 
     # return the output interface information
-    return outputs
+    return outputs, output_log_file
