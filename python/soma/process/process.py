@@ -201,7 +201,8 @@ class Process(Controller):
             runtime = self.runtime.runtime
             execution_result["start_time"] = runtime.startTime
             execution_result["end_time"] = runtime.endTime
-            execution_result["cmd_line"] = runtime.cmdline
+            if "cmd_line" in dir(runtime):
+                execution_result["cmd_line"] = runtime.cmdline
             execution_result["hostname"] = runtime.hostname
             execution_result["stderr"] = runtime.stderr
             execution_result["stdout"] = runtime.stdout
