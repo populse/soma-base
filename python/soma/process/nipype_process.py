@@ -74,7 +74,8 @@ def nipype_factory(nipype_instance):
         outputs = self._list_outputs_core()
         corrected_outputs = {}
         for key, value in outputs.iteritems():
-            if not isinstance(value, _Undefined):
+            if (not isinstance(value, _Undefined) and
+                not isinstance(value, list)):
                 corrected_outputs[key] = os.path.join(
                     self.inputs.output_directory,
                     os.path.basename(value))
@@ -144,6 +145,8 @@ def nipype_factory(nipype_instance):
     attributes["_nipype_interface"] = nipype_instance
     attributes["_nipype_module"] = nipype_instance.__class__.__module__
     attributes["_nipype_class"] = nipype_instance.__class__.__name__
+    attributes["_nipype_interface_name"] = attributes["_nipype_module"].split(
+                                                      ".")[2]
 
     # create new instance derived from Process
     process_instance = type(attributes["_nipype_class"],
@@ -170,7 +173,7 @@ def nipype_factory(nipype_instance):
             nipype_outputs = process_instance. \
                              _nipype_interface._list_outputs()
             for out_name, out_value in nipype_outputs.iteritems():
-                process_instance.set_parameter(out_name, out_value)
+                process_instance.set_parameter("_" + out_name, out_value)
         except:
             pass
 
@@ -182,10 +185,16 @@ def nipype_factory(nipype_instance):
         str_description = trait_ids(trait)
 
         # normlize the description
+        add_switch = False
+        if "MultiPath" in str_description[0]:
+            add_switch = True
         for old_str, new_str in trait_cvt_table.iteritems():
             for cnt in range(len(str_description)):
                 str_description[cnt] = str_description[cnt].replace(old_str,
                                                                     new_str)
+        if add_switch:
+            str_description = [str_description[0],
+                               "_".join(str_description[0].split("_")[1:])]
 
         # create a new trait from its expression and namespace
         namespace = {"traits": traits, "process_trait": None}
