@@ -44,9 +44,9 @@ def nipype_factory(nipype_instance):
         "InputMultiPath": "List",
         "MultiPath": "List",
         "Dict_Str_Str": "DictStrStr",
-        "OutputMultiPath_TraitCompound": "File",
-        "OutputMultiPath_File": "File",
-        "OutputList": "File"
+        "OutputMultiPath_TraitCompound": "List",
+        "OutputMultiPath": "List",
+        "OutputList": "List"
     }
     attributes = {}
 
@@ -127,9 +127,11 @@ def nipype_factory(nipype_instance):
     nipype_instance._parse_inputs_core = nipype_instance._parse_inputs
     nipype_instance._parse_inputs = types.MethodType(_parse_inputs,
                                                       nipype_instance)
-    nipype_instance._gen_filename_core = nipype_instance._gen_filename
-    nipype_instance._gen_filename = types.MethodType(_gen_filename,
-                                                     nipype_instance)
+
+    if "fsl" in nipype_instance.__class__.__module__:
+        nipype_instance._gen_filename_core = nipype_instance._gen_filename
+        nipype_instance._gen_filename = types.MethodType(_gen_filename,
+                                                         nipype_instance)
 
     # add a call function
     def _nipype_call(self):
@@ -177,32 +179,45 @@ def nipype_factory(nipype_instance):
         """ Create a new trait (clone) from a trait string description
         """
         # get the string description
-        str_description = trait_ids(trait)[0]
+        str_description = trait_ids(trait)
 
         # normlize the description
         for old_str, new_str in trait_cvt_table.iteritems():
-            str_description = str_description.replace(old_str, new_str)
-        str_description = str_description.split("_")
+            for cnt in range(len(str_description)):
+                str_description[cnt] = str_description[cnt].replace(old_str,
+                                                                    new_str)
 
         # create a new trait from its expression and namespace
         namespace = {"traits": traits, "process_trait": None}
-        expression = "process_trait = "
-        for trait_item in str_description:
-            expression += "traits.{0}(".format(trait_item)
-            if trait_item == "Enum":
-                expression += "{0}".format(trait.get_validate()[1])
+        trait_expressions = []
+        for trait_spec in str_description:
+            trait_spec = trait_spec.split("_")
+            expression = ""
+            for trait_item in trait_spec:
+                expression += "traits.{0}(".format(trait_item)
+                if trait_item == "Enum":
+                    expression += "{0}".format(trait.get_validate()[1])
 
-            #  Range Extra args
-            if trait_item == "Range":
-                if isinstance(nipype_trait, traits.CTrait):
-                    expression += "low={0},high={1}".format(
-                        nipype_trait.handler._low,
-                        nipype_trait.handler._high)
-                else:
-                    expression += "low={0},high={1}".format(nipype_trait._low,
-                                                            nipype_trait._high)
+                #  Range Extra args
+                if trait_item == "Range":
+                    if isinstance(nipype_trait, traits.CTrait):
+                        expression += "low={0},high={1}".format(
+                            nipype_trait.handler._low,
+                            nipype_trait.handler._high)
+                    else:
+                        expression += "low={0},high={1}".format(
+                            nipype_trait._low,
+                            nipype_trait._high)
+            expression += ")" * len(trait_spec)
+            trait_expressions.append(expression)
 
-        expression += ")" * len(str_description)
+        if len(trait_expressions) > 1:
+            expression = "process_trait = traits.Either("
+            for trait_expression in trait_expressions:
+                expression += "{0}, ".format(trait_expression)
+            expression += ")"
+        else:
+            expression = "process_trait = {0}".format(trait_expressions[0])
 
         # evaluate expression in namespace
         def f():
