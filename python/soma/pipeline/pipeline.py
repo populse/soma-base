@@ -391,7 +391,8 @@ class Pipeline(Process):
         """
         self.do_not_export.add((node_name, plug_name))
 
-    def add_process(self, name, process, do_not_export=None, **kwargs):
+    def add_process(self, name, process, do_not_export=None,
+                    make_optional=None, **kwargs):
         '''Add a new node in the pipeline
 
         Parameters
@@ -400,6 +401,10 @@ class Pipeline(Process):
         process: Process
         do_not_export: bool, optional
         '''
+        if make_optional is None:
+            make_optional = set()
+        else:
+            make_optional = set(make_optional)
         if do_not_export is None:
             do_not_export = set()
         else:
@@ -410,8 +415,10 @@ class Pipeline(Process):
                              'same name : %s' % name)
         self.nodes[name] = node = ProcessNode(self, name, process, **kwargs)
         for parameter_name in self.nodes[name].plugs:
-            if parameter_name in do_not_export:
+            if (parameter_name in do_not_export or
+                parameter_name in make_optional):
                 self.do_not_export.add((name, parameter_name))
+            if parameter_name in make_optional:
                 # if do_not_export, set plug optional setting to True
                 self.nodes[name].plugs[parameter_name].optional = True
         self.nodes_activation.add_trait(name, Bool)
