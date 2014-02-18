@@ -7,6 +7,11 @@
 # for details.
 ##########################################################################
 
+try:
+    from traits.api import CTrait
+except ImportError:
+    from enthought.traits.api import CTrait
+
 
 _type_to_trait_id = {
     int: 'Int',
@@ -30,11 +35,21 @@ def trait_ids(trait):
         the string description (type) of the input trait
     """
     main_id = trait.handler.__class__.__name__
+    #print main_id
     inner_ids = []
     if main_id == 'TraitCoerceType':
         real_id = _type_to_trait_id.get(trait.handler.aType)
         if real_id:
             main_id = real_id
+    elif main_id == 'TraitCompound':
+        #print trait.handler, dir(trait.handler)
+        #print trait.handler.handlers
+        trait_description = []
+        for sub_trait in trait.handler.handlers:
+            sub_c_trait = CTrait(0)
+            sub_c_trait.handler = sub_trait
+            trait_description.extend(trait_ids(sub_c_trait))
+        return trait_description
     else:
         inner_id = '_'.join((trait_ids(i)[0]
                              for i in trait.handler.inner_traits()))
