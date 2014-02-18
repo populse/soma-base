@@ -5,6 +5,7 @@ import string
 
 # traits
 from traits.trait_base import _Undefined
+from soma.controller import trait_ids
 
 # spm copy tools
 from soma.pipeline.spm_memory_utils import local_map, last_timestamp
@@ -14,7 +15,7 @@ from soma.utils import ensure_is_dir
 from joblib import Memory
 
 
-def set_output_dir(subj_output_dir, process_instance):
+def set_output_dir(subj_output_dir, process_instance, spm_dir):
     """ Try to set the study output directory
     """
     if not isinstance(subj_output_dir, _Undefined):
@@ -22,13 +23,16 @@ def set_output_dir(subj_output_dir, process_instance):
         if "_nipype_interface" in dir(process_instance):
             process_instance._nipype_interface.inputs.output_directory = (
                 subj_output_dir)
+            if process_instance._nipype_interface_name == "spm":
+                process_instance._nipype_interface.mlab.inputs.prescript = \
+                    ["ver,", "try,", "addpath('{0}');".format(spm_dir)]
 
 
 def _run_process(subj_output_dir, description, process_instance,
-                 generate_logging):
+                 generate_logging, spm_dir):
     """ Execute the process
     """
-    set_output_dir(subj_output_dir, process_instance)
+    set_output_dir(subj_output_dir, process_instance, spm_dir)
     returncode = process_instance()
     output_log_file = None
     if generate_logging:
@@ -39,7 +43,7 @@ def _run_process(subj_output_dir, description, process_instance,
 
 
 def _joblib_run_process(subj_output_dir, description, process_instance,
-                        generate_logging):
+                        generate_logging, spm_dir):
     """ Use joblib smart-caching.
     Deal with files and SPM nipype processes.
     Do not check if files have been deleted by any users or scripts
@@ -52,7 +56,7 @@ def _joblib_run_process(subj_output_dir, description, process_instance,
     ensure_is_dir(subj_output_dir)
 
     # update process instance output dir
-    set_output_dir(subj_output_dir, process_instance)
+    set_output_dir(subj_output_dir, process_instance, spm_dir)
 
     # init smart-caching with joblib
     mem = Memory(cachedir=subj_output_dir, verbose=2)
@@ -70,11 +74,17 @@ def _joblib_run_process(subj_output_dir, description, process_instance,
 
     last_modified_file = last_timestamp(inputs)
 
-    #if copy:
+    if copy:
         # update function arguments : Symbolic links
-    #    local_inputs = local_map(inputs, subj_output_dir, False)
-    #else:
-    #    local_inputs = inputs.copy()
+        local_inputs = local_map(inputs, subj_output_dir, False)
+    else:
+        local_inputs = inputs.copy()
+
+    # now update process inputs
+    for trait_name, trait_value in local_inputs.iteritems():
+        #if trait_ids(process_instance.trait(trait_name)), trait_value
+        if trait_value:
+            setattr(process_instance, trait_name, trait_value)
 
     # interface smart-caching with joblib
     _mprocess = mem.cache(process_instance.__call__)

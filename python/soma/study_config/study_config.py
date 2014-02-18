@@ -138,12 +138,10 @@ class StudyConfig(Controller):
             else:
                 raise Exception("No MATLAB binary specified. "
                                 "It is impossible to configure MATLAB.")
-            if not isinstance(self.spm_directory, _Undefined):
-                matlab.MatlabCommand.set_default_paths(self.spm_directory)
-            else:
+            if isinstance(self.spm_directory, _Undefined):
                 # automatic search of SPM
-                spm_path = find_spm(self.matlab_exec)
-                matlab.MatlabCommand.set_default_paths(spm_path)
+                self.spm_directory = find_spm(self.matlab_exec)
+            matlab.MatlabCommand.set_default_paths(self.spm_directory)
 
     def _use_fsl_changed(self, new_trait_value):
         """ Setup FSL environment
@@ -198,7 +196,8 @@ class StudyConfig(Controller):
             returncode, log_file = self._caller(self.output_directory,
                         "{0}-{1}".format(cnt + 1, process_instance.name),
                          process_instance,
-                         self.generate_logging)
+                         self.generate_logging,
+                         self.spm_directory)
 
 
 if __name__ == "__main__":
