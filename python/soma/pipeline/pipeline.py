@@ -210,9 +210,7 @@ class ProcessNode(Node):
         for parameter, trait in self.process.user_traits().iteritems():
             if parameter in ('nodes_activation', 'selection_changed'):
                 continue
-            # hack: Accept other output traits
-            # if isinstance(trait.handler, File) and trait.handler.output:
-            if trait.handler.output:
+            if trait.output:
                 outputs.append(dict(name=parameter,
                                     optional=bool(trait.optional),
                                     output=True))
@@ -438,7 +436,8 @@ class Pipeline(Process):
 
         Examples
         --------
-        >>> pipeline.add_switch('group_switch', ['in1', 'in2'], ['out1', 'out2'])
+        >>> pipeline.add_switch('group_switch', ['in1', 'in2'],
+            ['out1', 'out2'])
 
         will create a switch with 4 inputs and 2 outputs:
         inputs: "in1-out1", "in2-out1", "in1-out2", "in2-out2"
@@ -576,7 +575,7 @@ class Pipeline(Process):
         self.add_trait(pipeline_parameter, trait)
         # hack
         # if isinstance(trait.handler, File) and trait.handler.output:
-        if trait.handler.output:
+        if trait.output:
             self.add_link('%s.%s->%s' % (node_name, parameter_name,
                                          pipeline_parameter))
         else:
