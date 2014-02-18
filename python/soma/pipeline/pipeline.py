@@ -412,6 +412,8 @@ class Pipeline(Process):
         for parameter_name in self.nodes[name].plugs:
             if parameter_name in do_not_export:
                 self.do_not_export.add((name, parameter_name))
+                # if do_not_export, set plug optional setting to True
+                self.nodes[name].plugs[parameter_name].optional = True
         self.nodes_activation.add_trait(name, Bool)
         setattr(self.nodes_activation, name, node.enabled)
         self.nodes_activation.on_trait_change(self._set_node_enabled, name)
