@@ -14,12 +14,12 @@ import types
 try:
     import traits.api as traits
     from traits.api import (ListStr, HasTraits, File, Float, Instance,
-                            Enum, Str, Directory)
+                            Enum, Str, Directory, CTrait)
     from traits.trait_base import _Undefined
 except ImportError:
     import enthought.traits.api as traits
     from enthought.traits.api import (ListStr, HasTraits, File, Float,
-                                      Instance, Enum, Str)
+                                      Instance, Enum, Str,CTrait)
 
 from soma.controller import trait_ids
 from process import NipypeProcess
@@ -157,14 +157,37 @@ def nipype_factory(nipype_instance):
     process_instance.id = ".".join([attributes["_nipype_module"],
                            attributes["_nipype_class"]])
 
+    # relax exists constrain
+    def relax_exists_constrain(trait):
+
+        if "exists" in dir(trait.handler):
+            trait.handler.exists = False
+
+        main_id = trait.handler.__class__.__name__
+        if main_id == 'TraitCompound':
+            for sub_trait in trait.handler.handlers:
+                sub_c_trait = CTrait(0)
+                sub_c_trait.handler = sub_trait
+                relax_exists_constrain(sub_c_trait)
+        elif len(trait.inner_traits) > 0:
+            for sub_c_trait in trait.inner_traits:
+                relax_exists_constrain(sub_c_trait)
+
     # add traits to the process instance
     def sync_nypipe_traits(process_instance, name, old, value):
         """ Event handler function to update
         the nipype interface traits
         """
         if old != value:
+            # relax exists constrain
+            trait = process_instance._nipype_interface.inputs.trait(name)
+            relax_exists_constrain(trait)
+            # sync value
             setattr(process_instance._nipype_interface.inputs, name,
                     value)
+
+
+
 
     def sync_process_output_traits(process_instance, name, value):
         """ Event handler function to update
