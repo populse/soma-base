@@ -259,3 +259,12 @@ def checkParameterCount( callable, paramCount ):
       { 'callable': getCallableString( callable ), 
         'paramCount': paramCount }  )
 
+#-------------------------------------------------------------------------------
+def drange(start, stop, step = 1):
+    '''
+    Creates lists containing arithmetic progressions of any number type (integer, float, ...)
+    '''
+    r = start
+    while r < stop:
+        yield r
+        r += step
