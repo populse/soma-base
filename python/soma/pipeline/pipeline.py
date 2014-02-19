@@ -401,14 +401,8 @@ class Pipeline(Process):
         process: Process
         do_not_export: bool, optional
         '''
-        if make_optional is None:
-            make_optional = set()
-        else:
-            make_optional = set(make_optional)
-        if do_not_export is None:
-            do_not_export = set()
-        else:
-            do_not_export = set(do_not_export)
+        make_optional = set(make_optional or [])
+        do_not_export = set(do_not_export or [])
         do_not_export.update(kwargs)
         if name in self.nodes:
             raise ValueError('Pipeline cannot have two nodes with the'
