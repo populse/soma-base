@@ -26,6 +26,8 @@ def set_output_dir(subj_output_dir, process_instance, spm_dir):
             if process_instance._nipype_interface_name == "spm":
                 process_instance._nipype_interface.mlab.inputs.prescript = \
                     ["ver,", "try,", "addpath('{0}');".format(spm_dir)]
+        elif "output_directory" in dir(process_instance):
+            process_instance.output_directory = subj_output_dir
 
 
 def _run_process(subj_output_dir, description, process_instance,
@@ -34,11 +36,25 @@ def _run_process(subj_output_dir, description, process_instance,
     """
     set_output_dir(subj_output_dir, process_instance, spm_dir)
     returncode = process_instance()
+
+    # generate some log
     output_log_file = None
     if generate_logging:
         output_log_file = os.path.join(subj_output_dir, description + ".json")
         process_instance.log_file = output_log_file
         process_instance.save_log()
+
+    # for spm, need to move the batch
+    # (create in cwd: cf nipype.interfaces.matlab.matlab l.181)
+    if ("_nipype_interface" in dir(process_instance) and
+        process_instance._nipype_interface_name == "spm"):
+            mfile = os.path.join(os.getcwd(),
+                process_instance._nipype_interface.mlab.inputs.script_file)
+            n_mfile = os.path.join(subj_output_dir,
+                process_instance._nipype_interface.mlab.inputs.script_file)
+            if os.path.isfile(mfile):
+                shutil.move(mfile, n_mfile)
+
     return returncode, output_log_file
 
 
@@ -120,6 +136,17 @@ def _joblib_run_process(subj_output_dir, description, process_instance,
 
     # call interface
     outputs = _mprocess()
+
+    # for spm, need to move the batch
+    # (create in cwd: cf nipype.interfaces.matlab.matlab l.181)
+    if ("_nipype_interface" in dir(process_instance) and
+        process_instance._nipype_interface_name == "spm"):
+            mfile = os.path.join(os.getcwd(),
+                process_instance._nipype_interface.mlab.inputs.script_file)
+            n_mfile = os.path.join(subj_output_dir,
+                process_instance._nipype_interface.mlab.inputs.script_file)
+            if os.path.isfile(mfile):
+                shutil.move(mfile, n_mfile)
 
     # generate log
     output_log_file = None
