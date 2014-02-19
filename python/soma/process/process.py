@@ -198,16 +198,20 @@ class Process(Controller):
         # get execution information
         execution_result = {}
         if self.runtime:
-            runtime = self.runtime.runtime
-            execution_result["start_time"] = runtime.startTime
-            execution_result["end_time"] = runtime.endTime
-            if "cmd_line" in dir(runtime):
-                execution_result["cmd_line"] = runtime.cmdline
-            execution_result["hostname"] = runtime.hostname
-            execution_result["stderr"] = runtime.stderr
-            execution_result["stdout"] = runtime.stdout
-            execution_result["cwd"] = runtime.cwd
-            execution_result["environ"] = runtime.environ
+            if "_nipype_interface" in dir(self):
+                runtime = self.runtime.runtime
+                execution_result["start_time"] = runtime.startTime
+                execution_result["end_time"] = runtime.endTime
+                if "cmd_line" in dir(runtime):
+                    execution_result["cmd_line"] = runtime.cmdline
+                execution_result["hostname"] = runtime.hostname
+                execution_result["stderr"] = runtime.stderr
+                execution_result["stdout"] = runtime.stdout
+                execution_result["cwd"] = runtime.cwd
+                execution_result["environ"] = runtime.environ
+            else:
+                execution_result.update(self.runtime)
+
 
             if not self.log_file:
                 self.log_file = os.path.join(execution_result["cwd"],
