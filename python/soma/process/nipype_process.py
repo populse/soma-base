@@ -186,9 +186,6 @@ def nipype_factory(nipype_instance):
             setattr(process_instance._nipype_interface.inputs, name,
                     value)
 
-
-
-
     def sync_process_output_traits(process_instance, name, value):
         """ Event handler function to update
         the process instance outputs """
