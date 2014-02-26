@@ -9,10 +9,8 @@ import read_csv_gw
 
 #from filter_window import Filter
 
-     
     
 class MainWindow(QtGui.QMainWindow):
-
     def __init__(self):
         super(MainWindow, self).__init__()
         #self.data=read_csv.Data()   
@@ -26,7 +24,6 @@ class MainWindow(QtGui.QMainWindow):
         self.check_box_locality={}
         #self.filter_window=MyFilter(self.dirname)
         #self.filter_window.setParent(self)
-        
         self.create_actions()
         self.create_gui()
         self.create_menu()
@@ -62,14 +59,13 @@ class MainWindow(QtGui.QMainWindow):
         #self.comment.setMaximumSize(10000,50)
         self.text_in_comment=QtCore.QString()
         self.comment.textChanged.connect(self.on_comment_change)
-        
         self.number_current_image=QtGui.QLabel()
         
         
         #self.display_xls=QtGui.QPushButton('Display_xls')
         #self.xls_comment=QtGui.QTextEdit()
         #self.xls_comment.setReadOnly(True)
-        #self.xls_comment.setVisible(False)     
+        #self.xls_comment.setVisible(False)   
         self.hbox.addWidget(self.button_prev)
         self.hbox.addWidget(self.button_next)
         self.hbox.addWidget(QtGui.QLabel('Grade Image Display'))         
@@ -313,11 +309,6 @@ class MainWindow(QtGui.QMainWindow):
                    item.widget().hide() 
 
 
-            
-                 
-                
-
-
     def resizeEvent(self,resizeEvent):
         if self.data_file_name is not None:
             self.open_image(self.pictures_absolute_path[self.index_picture_display]) 
@@ -526,22 +517,22 @@ class MainWindow(QtGui.QMainWindow):
     def on_open_filter(self):
         print 'on open filter'
         if self.data_file_name is not None:
-            try:
-                from create_bdd import CreateBDD  
-                from filter_window import Filter
-                self.filter_window=Filter(self.dirname)        
-                self.data.save(self.dirname,self.pictures_relatif_path)  
-                setattr(self.filter_window,'dirname_snap',self.dirname) 
-                setattr(self.filter_window,'bdd',CreateBDD.get_instance())
-                self.filter_window.choice_studies.addItems(self.filter_window.bdd.studies())
+            #try:
+                #from create_bdd import CreateBDD  
+                #from filter_window import Filter
+                #self.filter_window=Filter(self.dirname,self.data_file_name)        
+                #self.data.save(self.dirname,self.pictures_relatif_path)  
+                #setattr(self.filter_window,'dirname_snap',self.dirname) 
+                #setattr(self.filter_window,'bdd',CreateBDD.get_instance())
+                #self.filter_window.choice_studies.addItems(self.filter_window.bdd.studies())
     
 
-            except ImportError:
-                print 'NO USE DATABASE FOR FILTER'
-                from filter_window_basic import FilterBasic
-                self.filter_window=FilterBasic(self.dirname)
-                self.data.save(self.dirname,self.pictures_relatif_path)  
-                setattr(self.filter_window,'dirname_snap',self.dirname) 
+            #except ImportError:
+            print 'NO USE DATABASE FOR FILTER'
+            from filter_window_basic import FilterBasic
+            self.filter_window=FilterBasic(self.dirname,self.data_file_name)
+            self.data.save(self.dirname,self.pictures_relatif_path)  
+            setattr(self.filter_window,'dirname_snap',self.dirname) 
             
             self.filter_window.open()
                     

@@ -6,10 +6,12 @@ import glob
 import os
 
 class Filter(QtGui.QDialog):
-    def __init__(self,dirname):
+    def __init__(self,dirname,data_file_name):
         super(Filter, self).__init__()
-        self.dirname_bdd='/neurospin/cati/Memento/MEMENTO_fevrier2013/geoCorrected'
+        #self.dirname_bdd='/neurospin/cati/Memento/MEMENTO_fevrier2013/geoCorrected'
         self.dirname_snap=dirname
+        self.data_file_name=data_file_name
+        self.path_data_file_name = os.path.join(self.dirname_snap,self.data_file_name)
         self.list_subject=''
         #Files and marks in the data.csv  
         self.filenames = []
@@ -19,12 +21,10 @@ class Filter(QtGui.QDialog):
         self.sign_filter_str=''
         self.number=0
         self.word_to_find=''
-        self.bdd=None
-        
+        self.bdd=None   
         self.hbox = QtGui.QHBoxLayout()
-        self.hbox2=QtGui.QHBoxLayout()
-        self.vbox = QtGui.QVBoxLayout()    
-        
+        self.hbox2 = QtGui.QHBoxLayout()
+        self.vbox = QtGui.QVBoxLayout()        
         self.choice_studies=QtGui.QComboBox()
         self.display_dirnam=QtGui.QLabel(self.dirname_snap)
         self.choice_type=QtGui.QComboBox()
@@ -51,24 +51,18 @@ class Filter(QtGui.QDialog):
         self.setLayout(self.vbox)
         self.signals()
         
-        
-     
+   
     def signals(self):    
        self.choice_type.currentIndexChanged.connect(self.filter_process)   
        self.choice_sign.currentIndexChanged.connect(self.filter_process)   
        self.choice_number.currentIndexChanged.connect(self.filter_process)   
        self.button_save_quit.clicked.connect(self.save_quit)
 
-       
-       
-        
-  
+
     def get_files_and_marks(self): 
         print 'IN GET FILE'
-        print 'CURRENT DIRECTORY FOR FILTER',self.dirname_snap 
-        data_file_name = os.path.join(self.dirname_snap,'data.csv')
         try:
-            with open(data_file_name, 'rb') as csvfile:
+            with open(self.path_data_file_name, 'rb') as csvfile:
                 myreader = csv.reader(csvfile, delimiter=';', quotechar='|')
                 for row in myreader:
                     self.filenames.append(row[0])
@@ -89,18 +83,22 @@ class Filter(QtGui.QDialog):
             self.get_files_and_marks()
         compteur=0 
         index=0
-        for file in self.filenames:
-            if self.word_in_the_file in file:
-                compteur=compteur+1
-                sign=self.choice_sign.currentText()
-                self.number=self.choice_number.currentIndex()
-                if len(self.marks[index])>2:
-                    if self.comparison(sign,self.number,int(self.marks[index].split(' ')[0]))==1:
-                        self.raw_data(file)
-                else:
-                    if self.comparison(sign,self.number,int(self.marks[index]))==1:
-                        self.raw_data(file)
-                            
+        print 'foler',self.filenames
+        for file_name in self.filenames:
+            print 'file_name',file_name
+            if self.word_in_the_file in file_name:
+                print 'ok world found'
+                compteur = compteur+1
+                sign = self.choice_sign.currentText()
+                self.number = self.choice_number.currentIndex()
+                #if len(self.marks[index])>2:
+                    #if self.comparison(sign,self.number,int(self.marks[index].split(' ')[0]))==1:
+                        #self.raw_data(file_name)
+                #else:
+                if self.comparison(sign,self.number,int(self.marks[index]))==1:
+                    print 'ok comparaison return 1'
+                    self.raw_data(file_name)
+                        
             index=index+1 
         self.text_res.setText(str(self.nb_subject))
     
@@ -109,8 +107,8 @@ class Filter(QtGui.QDialog):
             f.write(self.list_subject)       
         
 
-    def raw_data(self,file):  
-        filename=file.split('.')[0]
+    def raw_data(self,file_name):  
+        filename=file_name.split('.')[0]
         expresion=r"([0-9]{7})([A-Za-z]{4})"
         m=re.search(expresion, filename)
 
@@ -134,6 +132,9 @@ class Filter(QtGui.QDialog):
 
 
     def comparison(self,sign,number,number_file):
+        print 'sign',sign
+        print 'numer',number
+        print 'number_file',number_file
         if sign == '<':
             self.sign_filter_str='inf'
             if number_file < number:

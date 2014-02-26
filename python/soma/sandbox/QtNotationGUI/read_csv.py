@@ -35,8 +35,7 @@ class Data:
                         self.filenames.append(row[0])                      
                         self.marks.append(row[1])   
                         self.comments.append(row[2])
-                    nb_row=nb_row+1
-                        
+                    nb_row=nb_row+1               
                         
         except IOError:
             pass
