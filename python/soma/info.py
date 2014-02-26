@@ -46,6 +46,7 @@ MATPLOTLIB_MIN_VERSION = '1.1.1rc'
 
 # Main setup parameters
 NAME = 'soma'
+ORGANISATION = "CEA"
 MAINTAINER = "Antoine Grigis"
 MAINTAINER_EMAIL = "antoine.grigis@cea.fr"
 DESCRIPTION = description
