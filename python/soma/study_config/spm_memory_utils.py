@@ -9,15 +9,21 @@ def local_map(inputs, root, copy=False):
     File concerned : .mat .nii .txt (.hdr,.img)?
     Note that when using analyse images a .mat file is created.
 
-    **Parameters:**
-        * inputs : dict : the inputs of the SPM interface.
-        * root : str : the destination folder.
-        * copy : bool : if False create symbolic link if file does
+    Parameters
+    ----------
+    inputs : dict
+        the inputs of the SPM interface.
+    root : str
+        the destination folder.
+    copy : bool
+        if False create symbolic link if file does
         not exists (required Traits)
-                        else copy the file.
+        else copy the file.
 
-    **Outputs:**
-        * outputs : dict : the local inputs of the SPM interface.
+    Returns
+    -------
+    outputs : dict
+        the local inputs of the SPM interface.
     """
     # init the modified parameters to the original values
     outputs = inputs.copy()
