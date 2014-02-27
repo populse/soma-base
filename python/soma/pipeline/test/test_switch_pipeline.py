@@ -176,11 +176,11 @@ if __name__ == "__main__":
     from soma.gui.pipeline.pipeline_gui import PipelineView
 
     app = QtGui.QApplication(sys.argv)
-    sl_pipeline = SwitchPipeline()
-    sl_pipeline.switch = "two"
-    view1 = PipelineView(sl_pipeline)
+    pipeline = SwitchPipeline()
+    pipeline.switch = "two"
+    view1 = PipelineView(pipeline)
     view1.show()
-    cw = ControllerWidget(sl_pipeline, live=True)
+    cw = ControllerWidget(pipeline, live=True)
     cw.show()
     app.exec_()
     del view1
