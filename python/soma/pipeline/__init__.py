@@ -8,4 +8,4 @@
 ##########################################################################
 
 from pipeline import (Plug, Pipeline, Node, ProcessNode, PipelineNode,
-                      Switch, Workflow)
+                      Switch)
