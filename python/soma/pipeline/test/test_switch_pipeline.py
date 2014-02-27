@@ -66,7 +66,11 @@ class SwitchPipeline(Pipeline):
         self.export_parameter("node", "other_output",
                               pipeline_parameter = "hard_output")
         self.export_parameter("way21", "other_output",
-                              pipeline_parameter = "weak_output", weak_link=True)
+                              pipeline_parameter = "weak_output_1",
+                              weak_link=True)
+        self.export_parameter("way22", "other_output",
+                              pipeline_parameter = "weak_output_2",
+                              weak_link=True)
         self.export_parameter("switch", "switch_image",
                               pipeline_parameter = "result_image")
         self.export_parameter("switch", "switch_output",
@@ -94,31 +98,51 @@ class TestSwitchPipeline(unittest.TestCase):
 
     def test_weak_on(self):
         self.pipeline.switch = "two"
+
+        def is_valid():
+            self.assertTrue(src_weak_plug.activated)
+            self.assertTrue(dest_weak_plug.activated)
+            is_weak = False
+            for nn, pn, n, p, wl in src_weak_plug.links_to:
+                if isinstance(n, PipelineNode):
+                    is_weak = is_weak or wl
+            self.assertTrue(is_weak)
+
         src_node = self.pipeline.nodes["way21"]
         src_weak_plug = src_node.plugs["other_output"]
-        self.assertTrue(src_weak_plug.activated)
         dest_node = self.pipeline.nodes[""]
-        dest_weak_plug = dest_node.plugs["weak_output"]
-        self.assertTrue(dest_weak_plug.activated)
-        is_weak = False
-        for nn, pn, n, p, wl in src_weak_plug.links_to:
-            if isinstance(n, PipelineNode):
-                is_weak = is_weak or wl
-        self.assertTrue(is_weak)
+        dest_weak_plug = dest_node.plugs["weak_output_1"]
+        is_valid()
+
+        src_node = self.pipeline.nodes["way22"]
+        src_weak_plug = src_node.plugs["other_output"]
+        dest_node = self.pipeline.nodes[""]
+        dest_weak_plug = dest_node.plugs["weak_output_2"]
+        is_valid()
 
     def test_weak_off(self):
         self.pipeline.switch = "one"
+
+        def is_valid():
+            self.assertFalse(src_weak_plug.activated)
+            self.assertFalse(dest_weak_plug.activated)
+            is_weak = False
+            for nn, pn, n, p, wl in src_weak_plug.links_to:
+                if isinstance(n, PipelineNode):
+                    is_weak = is_weak or wl
+            self.assertTrue(is_weak)
+
         src_node = self.pipeline.nodes["way21"]
         src_weak_plug = src_node.plugs["other_output"]
-        self.assertFalse(src_weak_plug.activated)
         dest_node = self.pipeline.nodes[""]
-        dest_weak_plug = dest_node.plugs["weak_output"]
-        self.assertFalse(dest_weak_plug.activated)
-        is_weak = False
-        for nn, pn, n, p, wl in src_weak_plug.links_to:
-            if isinstance(n, PipelineNode):
-                is_weak = is_weak or wl
-        self.assertTrue(is_weak)
+        dest_weak_plug = dest_node.plugs["weak_output_1"]
+        is_valid()
+
+        src_node = self.pipeline.nodes["way22"]
+        src_weak_plug = src_node.plugs["other_output"]
+        dest_node = self.pipeline.nodes[""]
+        dest_weak_plug = dest_node.plugs["weak_output_2"]
+        is_valid()
 
     def test_hard(self):
         self.pipeline.switch = "one"
