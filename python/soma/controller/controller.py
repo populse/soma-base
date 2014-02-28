@@ -54,7 +54,7 @@ class MetaController( HasTraits.__metaclass__ ):
         if controlled_class is not None:
             ControllerFactories.register_global_factory( controlled_class, cls )
 
-        gui = dictionary.get( 'create_widget_from_ui' )
+        gui = dictionary.get('create_widget_from_ui')
         if gui is not None:
             from soma.gui.widget_factory import WidgetFactories, create_widget_from_ui
             WidgetFactories.register_global_factory( cls, partial( create_widget_from_ui, gui ) )
@@ -94,7 +94,7 @@ class Controller(HasTraits):
             #if name in traits.keys():
                 #del traits[name]
         for name in traits.keys():
-            trait = traits[ name ]
+            trait = traits[name]
             if not self.is_user_trait(trait):
                 del traits[name]
         sorted_keys = [t[1]
@@ -107,13 +107,13 @@ class Controller(HasTraits):
         '''
         Test if a trait is a valid user trait (i.e. not an Event).
         '''
-        return not isinstance( trait.handler, Event )
+        return not isinstance(trait.handler, Event)
 
-    
-    def add_trait( self, name, *trait ):
+    def add_trait(self, name, *trait):
        global global_compt_order
 
        super( Controller, self ).add_trait( name, *trait )
        global_compt_order=global_compt_order+1
        self.trait( name ).order = global_compt_order
        self.trait(name).defaultvalue = self.trait(name).default
+       self.get(name)

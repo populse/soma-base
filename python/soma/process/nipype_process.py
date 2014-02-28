@@ -81,6 +81,7 @@ def nipype_factory(nipype_instance):
                     os.path.basename(value))
             else:
                 corrected_outputs[key] = value
+        print "mlmlmlml", corrected_outputs
         return corrected_outputs
 
     def _gen_filename(self, name):
@@ -94,9 +95,11 @@ def nipype_factory(nipype_instance):
         the generated output file name
         """
         output = self._gen_filename_core(name)
+        print "+-+-+-", self.inputs.output_directory
         if output:
             corrected_output = os.path.join(self.inputs.output_directory,
                                             os.path.basename(output))
+        print corrected_output
         return corrected_output
 
     def _parse_inputs(self, skip=None):
@@ -119,6 +122,7 @@ def nipype_factory(nipype_instance):
 
     nipype_instance.inputs.add_trait("output_directory",
                                      Directory(os.getcwd()))
+    
     nipype_instance._list_outputs_core = nipype_instance._list_outputs
     nipype_instance._list_outputs = types.MethodType(_list_outputs,
                                                      nipype_instance)
@@ -192,6 +196,7 @@ def nipype_factory(nipype_instance):
         try:
             nipype_outputs = process_instance. \
                              _nipype_interface._list_outputs()
+            print "SYNCCCC", nipype_outputs
             for out_name, out_value in nipype_outputs.iteritems():
                 process_instance.set_parameter("_" + out_name, out_value)
         except:

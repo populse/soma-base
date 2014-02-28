@@ -11,6 +11,9 @@ from soma.controller import trait_ids
 from soma.pipeline.spm_memory_utils import local_map, last_timestamp
 from soma.utils import ensure_is_dir
 
+# soma
+from soma.process import ProcessResult
+
 # joblib caching
 from joblib import Memory
 
@@ -26,7 +29,8 @@ def set_output_dir(subj_output_dir, process_instance, spm_dir):
             if process_instance._nipype_interface_name == "spm":
                 process_instance._nipype_interface.mlab.inputs.prescript = \
                     ["ver,", "try,", "addpath('{0}');".format(spm_dir)]
-        elif "output_directory" in dir(process_instance):
+
+        if "output_directory" in dir(process_instance):
             process_instance.output_directory = subj_output_dir
 
 
@@ -136,6 +140,11 @@ def _joblib_run_process(subj_output_dir, description, process_instance,
 
     # call interface
     outputs = _mprocess()
+
+    # for Process, need to set the class instance attributes returned
+    if isinstance(outputs, ProcessResult):
+        for trait_name, trait_value in outputs.outputs.iteritems():
+            setattr(process_instance, trait_name, trait_value)
 
     # for spm, need to move the batch
     # (create in cwd: cf nipype.interfaces.matlab.matlab l.181)

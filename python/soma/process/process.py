@@ -1,17 +1,22 @@
 # -*- coding: utf-8 -*-
 import os
+from socket import getfqdn
+from datetime import datetime as datetime
+from copy import deepcopy
 
 try:
     import traits.api as traits
     from traits.api import (ListStr, HasTraits, File, Float, Instance,
-                            Enum, Str)
+                            Enum, Str, Directory)
     from traits.trait_base import _Undefined
 except ImportError:
     import enthought.traits.api as traits
     from enthought.traits.api import (ListStr, HasTraits, File, Float,
-                                      Instance, Enum, Str)
+                                      Instance, Enum, Str, Directory)
 
 from soma.controller import Controller
+from soma.controller import trait_ids
+from soma.utils import LateBindingProperty
 
 
 class Process(Controller):
@@ -43,20 +48,52 @@ class Process(Controller):
         # log file name
         self.log_file = None
 
-        # process caller
-        #self._caller = _joblib_run_process
-        #self._run = None
-
-    #def __call__(self):
-        #if "__call__" in dir(self.run):
-        #    self.runtime = self._caller(
-        #        os.getcwd(),
-        #        "{0} {1}".format(self._nipype_class, "node_id"),
-        #        self)
+        # Add trait to store processing output directory
+        #self.add_trait("output_directory", Directory(os.getcwd(),
+        #                                             optional=True))
 
     ##############
     # Members    #
     ##############
+
+    def __call__(self):
+        """ Execute the Process
+
+        Returns
+        -------
+        results:  ProcessResult object
+            Contains all execution information
+        """
+        # Get class
+        process = self.__class__
+
+        # Execution report
+        runtime = {
+            "start_time": datetime.isoformat(datetime.utcnow()),
+            "cwd": os.getcwd(),
+            "returncode": None,
+            "environ": deepcopy(os.environ.data),
+            "end_time": None,
+            "hostname": getfqdn(),
+        }
+
+        # Call
+        self._run_process()
+
+        # End timer
+        runtime["end_time"] = datetime.isoformat(datetime.utcnow())
+
+        # Result
+        results = ProcessResult(process, runtime, self.get_inputs(),
+                                self.get_outputs())
+
+        return results
+
+    def _run_process(self):
+        """ Process function that will be call.
+        This function must be defined in derived classes.
+        """
+        raise NotImplementedError()
 
     def auto_nipype_process_qc(self):
         """ From a nipype process instance call automatically
@@ -98,6 +135,49 @@ class Process(Controller):
     ##############
     # Properties #
     ##############
+
+    def get_input_spec(self):
+        """ Pipeline input specification
+
+        Returns
+        -------
+        outputs: str
+            a dictionary with all the input Plugs' specifications
+        """
+        output = "\nINPUT SPECIFICATIONS\n\n"
+        for trait_name, trait in self.user_traits().iteritems():
+            if not trait.output:
+                output += "{0}: {1}\n".format(trait_name,
+                                            trait_ids(self.trait(trait_name)))
+        return output
+
+    def get_inputs(self):
+        """ Pipeline inputs
+
+        Returns
+        -------
+        outputs: dict
+            a dictionary with all the input Plugs' names and values
+        """
+        output = {}
+        for trait_name, trait in self.user_traits().iteritems():
+            if not trait.output:
+                output[trait_name] = getattr(self, trait_name)
+        return output
+
+    def get_outputs(self):
+        """ Pipeline outputs
+
+        Returns
+        -------
+        outputs: dict
+            a dictionary with all the output Plugs' names and values
+        """
+        output = {}
+        for trait_name, trait in self.user_traits().iteritems():
+            if trait.output:
+                output[trait_name] = getattr(self, trait_name)
+        return output
 
     def set_qc(self, name, qc_id, **kwargs):
         """ Create and set a viewer.
@@ -238,13 +318,8 @@ class Process(Controller):
             print >> f, json_struct
             f.close()
 
-    #def _get_call(self):
-    #    """ Process function that will be call.
-    #    This function must be defined in derived classes.
-    #    """
-    #    raise NotImplementedError()
-
-    #run = LateBindingProperty(_get_call, None, None, "Call function")
+    run = LateBindingProperty(_run_process, None, None,
+                              "Processing function that has to be defined")
     log = property(_get_log, None, None, "Process information")
 
 
@@ -256,3 +331,25 @@ class NipypeProcess(Process):
         """
         # inheritance
         super(NipypeProcess, self).__init__(*args, **kwargs)
+
+
+class ProcessResult(object):
+    """Object that contains the results of running a particular Process.
+
+    Parameters
+    ----------
+    process : class type (mandatory)
+        A copy of the `Process` class that was call to generate the result.
+    runtime : dict (mandatory)
+        Execution attributes.
+    inputs :  dict (optional)
+        Representation of the process inputs.
+    outputs : dict (optional)
+        Representation of the process outputs.
+    """
+
+    def __init__(self, process, runtime, inputs=None, outputs=None):
+        self.process = process
+        self.runtime = runtime
+        self.inputs = inputs
+        self.outputs = outputs
