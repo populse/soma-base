@@ -7,5 +7,5 @@
 # for details.
 ##########################################################################
 
-from process import Process
+from process import Process, ProcessResult
 from loader import get_process_instance

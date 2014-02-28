@@ -9,3 +9,4 @@
 
 from loader import load_objects
 from utils import ensure_is_dir
+from late_binding_property import LateBindingProperty
