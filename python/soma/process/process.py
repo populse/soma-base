@@ -3,20 +3,23 @@ import os
 from socket import getfqdn
 from datetime import datetime as datetime
 from copy import deepcopy
+import json
 
 try:
     import traits.api as traits
     from traits.api import (ListStr, HasTraits, File, Float, Instance,
-                            Enum, Str, Directory)
+                            Enum, Str, Directory, Dict)
     from traits.trait_base import _Undefined
 except ImportError:
     import enthought.traits.api as traits
     from enthought.traits.api import (ListStr, HasTraits, File, Float,
-                                      Instance, Enum, Str, Directory)
+                                      Instance, Enum, Str, Directory, Dict)
 
 from soma.controller import Controller
 from soma.controller import trait_ids
-from soma.utils import LateBindingProperty
+from soma.utils import (LateBindingProperty, get_tool_version)
+
+from nipype.interfaces.base import InterfaceResult
 
 
 class Process(Controller):
@@ -49,8 +52,14 @@ class Process(Controller):
         self.log_file = None
 
         # Add trait to store processing output directory
-        #self.add_trait("output_directory", Directory(os.getcwd(),
-        #                                             optional=True))
+        super(Process, self).add_trait("output_directory",
+                                       Directory(_Undefined(),
+                                       exists=True, optional=True))
+
+        # Add trait to store the execution information
+        super(Process, self).add_trait("exec_info",
+                                       Dict(output=True,
+                                            optional=True))
 
     ##############
     # Members    #
@@ -78,14 +87,38 @@ class Process(Controller):
         }
 
         # Call
-        self._run_process()
+        returncode = self._run_process()
 
         # End timer
         runtime["end_time"] = datetime.isoformat(datetime.utcnow())
 
+        # Get dependencies' versions
+        versions = {
+            "soma": get_tool_version("soma"),
+        }
+        if "_nipype_interface" in dir(self):
+            versions["nipype"] = get_tool_version("nipype")
+            interface_name = self._nipype_interface.__module__.split(".")[2]
+            versions[interface_name] = self._nipype_interface.version
+        runtime["versions"] = versions
+
+        # If run a Nipype process, get more informations
+        if isinstance(returncode, InterfaceResult):
+            process = returncode.interface
+            if "cmd_line" in dir(returncode.runtime):
+                runtime["cmd_line"] = returncode.runtime.cmdline
+            runtime["stderr"] = returncode.runtime.stderr
+            runtime["stdout"] = returncode.runtime.stdout
+            runtime["cwd"] = returncode.runtime.cwd
+            runtime["returncode"] = returncode.runtime.returncode
+
         # Result
         results = ProcessResult(process, runtime, self.get_inputs(),
                                 self.get_outputs())
+
+        # Sotre execution informations
+        setattr(self, "exec_info", self._get_log(results))
+        results.outputs["exec_info"] = self.exec_info
 
         return results
 
@@ -95,17 +128,17 @@ class Process(Controller):
         """
         raise NotImplementedError()
 
-    def auto_nipype_process_qc(self):
-        """ From a nipype process instance call automatically
-        quality control tools
-        """
-        pass
-        #interface_name = self._nipype_interface.__class__.__name__
-        #qc_id = ("casper.use_cases.qc."
-        #         "{0}QualityCheck".format(interface_name))
-        #qc_instance = get_instance(qc_id,
-        #                      nipype_interface=self._nipype_interface)
-        #self.qc_processes["automatic"] = qc_instance
+#    def auto_nipype_process_qc(self):
+#        """ From a nipype process instance call automatically
+#        quality control tools
+#        """
+#        pass
+#        #interface_name = self._nipype_interface.__class__.__name__
+#        #qc_id = ("casper.use_cases.qc."
+#        #         "{0}QualityCheck".format(interface_name))
+#        #qc_instance = get_instance(qc_id,
+#        #                      nipype_interface=self._nipype_interface)
+#        #self.qc_processes["automatic"] = qc_instance
 
 #==============================================================================
 #
@@ -211,116 +244,33 @@ class Process(Controller):
         """
         return getattr(self, name)
 
-    def _get_log(self):
+    def _get_log(self, exec_info):
         """ Get process execution information
         """
-        def get_tool_version(tool):
-            """ Get the version of a python tool
-            Parameters
-            ----------
-            tool: str (mandatory)
-            a tool name
-
-            Returns
-            -------
-            version: str (default None)
-            the tool version.
-            """
-            version = None
-            try:
-                module = __import__(tool)
-                version = module.__version__
-            except:
-                pass
-            return version
-
-        def get_nipype_interfaces_versions():
-            """
-            """
-            try:
-                nipype_module = __import__("nipype.interfaces")
-                sub_modules = ["{0}".format(i)
-                                for i in dir(nipype_module)
-                                if (not i.startswith("_") and
-                                    not i[0].isupper())]
-                versions = {}
-                for module in sub_modules:
-                    try:
-                        version = eval("nipype_module.{0}."
-                                       "Info.version()".format(module))
-                        if version:
-                            versions[module] = version
-                    except:
-                        pass
-
-                return versions
-            except:
-                return {}
-
-        # get dependencies versions
-        versions = {
-            "soma": get_tool_version("soma"),
-        }
-        if "_nipype_interface" in dir(self):
-            versions["nipype"] = get_tool_version("nipype")
-            interface_name = self._nipype_interface.__module__.split(".")[2]
-            versions[interface_name] = self._nipype_interface.version
-
-        # get inputs and outputs
-        inputs = {}
-        outputs = {}
-        for name, trait in self.user_traits().iteritems():
-            if trait.output:
-                outputs[name] = repr(self.get_parameter(name))
-            else:
-                inputs[name] = repr(self.get_parameter(name))
-
-        # get execution information
-        execution_result = {}
-        if self.runtime:
-            if "_nipype_interface" in dir(self):
-                runtime = self.runtime.runtime
-                execution_result["start_time"] = runtime.startTime
-                execution_result["end_time"] = runtime.endTime
-                if "cmd_line" in dir(runtime):
-                    execution_result["cmd_line"] = runtime.cmdline
-                execution_result["hostname"] = runtime.hostname
-                execution_result["stderr"] = runtime.stderr
-                execution_result["stdout"] = runtime.stdout
-                execution_result["cwd"] = runtime.cwd
-                execution_result["environ"] = runtime.environ
-            else:
-                execution_result.update(self.runtime)
-
-
-            if not self.log_file:
-                self.log_file = os.path.join(execution_result["cwd"],
-                                             "log.json")
-
-        # generate summary
-        log = {
-            "process": self.id,
-            "versions": versions,
-            "inputs": inputs,
-            "outputs": outputs,
-            "execution_result": execution_result,
-        }
+        log = exec_info.runtime
+        log["process"] = self.id
+        log["inputs"] = exec_info.inputs.copy()
+        log["outputs"] = exec_info.outputs.copy()
+        del log["outputs"]["exec_info"]
 
         return log
 
     def save_log(self):
         """ Save the Process meta information in json format
         """
-        import json
-        json_struct = unicode(json.dumps(self._get_log(), indent=4))
+        if not self.log_file:
+            self.log_file = os.path.join(self.exec_info["cwd"],
+                                         "log.json")
+
+        json_struct = unicode(json.dumps(self.exec_info, sort_keys=True,
+                                         check_circular=True, indent=4))
         if self.log_file:
             f = open(self.log_file, 'w')
             print >> f, json_struct
             f.close()
 
     run = LateBindingProperty(_run_process, None, None,
-                              "Processing function that has to be defined")
-    log = property(_get_log, None, None, "Process information")
+                             "Processing function that has to be defined")
 
 
 class NipypeProcess(Process):
@@ -331,6 +281,11 @@ class NipypeProcess(Process):
         """
         # inheritance
         super(NipypeProcess, self).__init__(*args, **kwargs)
+
+    def _run_process(self):
+        pass
+
+    run = property(_run_process)
 
 
 class ProcessResult(object):
