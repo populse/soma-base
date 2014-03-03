@@ -32,39 +32,41 @@ def local_map(inputs, root, copy=False):
     for key, value in inputs.items():
         if key not in ["tissue_prob_maps", ]:
             if isinstance(value, str) and os.path.isfile(value):
-                copy_resources(outputs, key, root, value, copy)
+                outputs[key] = copy_resources(root, value, copy)
             elif isinstance(value, list):
+                new_list = []
                 for item in value:
                     if isinstance(item, str) and os.path.isfile(item):
-                        copy_resources(outputs, key, root, item, copy)
+                        new_list.append(copy_resources(root, item, copy))
+                outputs[key] = new_list
 
     return outputs
 
 
-def copy_resources(inputs, key, root, file, copy):
+def copy_resources(root, file, copy):
     """ Function to 'copy' the files on disk
     """
     # get file name and extension
     _, filename = os.path.split(file)
     _, extension = os.path.splitext(file)
+    new_file = file
 
     # copy if the extension is in [".mat",".nii",".txt"]
     if extension in [".mat", ".nii", ".txt"]:
         new_file = os.path.join(root, filename)
         _copy(file, new_file, copy)
-        inputs[key] = new_file
     elif extension in [".img"]:
         new_file = os.path.join(root, filename)
         _copy(file, new_file, copy)
-        inputs[key] = new_file
         _copy(file.replace(".img", ".hdr"), new_file.replace(".img", ".hdr"),
               copy)
     elif extension in [".hdr"]:
         new_file = os.path.join(root, filename)
         _copy(file, new_file, copy)
-        inputs[key] = new_file
         _copy(file.replace(".hdr", ".img"), new_file.replace(".hdr", ".img"),
               copy)
+
+    return new_file
 
 
 def _copy(source, destination, copy):

@@ -8,7 +8,7 @@ from traits.trait_base import _Undefined
 from soma.controller import trait_ids
 
 # spm copy tools
-from soma.pipeline.spm_memory_utils import local_map, last_timestamp
+from spm_memory_utils import local_map, last_timestamp
 from soma.utils import ensure_is_dir
 
 # soma

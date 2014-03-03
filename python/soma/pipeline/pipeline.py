@@ -14,11 +14,11 @@ import logging
 try:
     import traits.api as traits
     from traits.api import File, Float, Enum, Str, Int, Bool, List, Tuple,\
-        Instance, Any, Event, CTrait
+        Instance, Any, Event, CTrait, Directory
 except ImportError:
     import enthought.traits.api as traits
     from enthought.traits.api import File, Float, Enum, Str, Int, Bool, List,\
-        Tuple, Instance, Any, Event, CTrait
+        Tuple, Instance, Any, Event, CTrait, Directory
 
 from soma.controller import Controller
 from soma.sorted_dictionary import SortedDictionary
@@ -910,7 +910,8 @@ class Pipeline(Process):
                             dependencies.add((item[0], node_name))
                     else:
                         for switch_plug in item[2].plugs.itervalues():
-                            insert(node_name, switch_plug, direct)
+                            insert(node_name, switch_plug, dependencies,
+                                   direct)
 
         # Create a graph and a list of graph node edges
         graph = Graph()
@@ -932,7 +933,7 @@ class Pipeline(Process):
 
                 # Add node edges (Successor: direct=True and
                 # Predecessor: direct=False)
-                for plug in node.plugs.itervalues():
+                for plug_name, plug in node.plugs.iteritems():
                     if plug.activated:
                         insert(node_name, plug, dependencies, direct=False)
                         insert(node_name, plug, dependencies, direct=True)
