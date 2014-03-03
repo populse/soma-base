@@ -99,9 +99,9 @@ def get_process_instance(process_or_id, **kwargs):
         for name, value in kwargs.iteritems():
             result.set_parameter(name, value)
 
-        if do_nipype_qc:
-            # Try to run automatic QC
-            result.auto_nipype_process_qc()
+#        if do_nipype_qc:
+#            # Try to run automatic QC
+#            result.auto_nipype_process_qc()
     else:
         raise ValueError('Invalid process_or_id argument.'
                          'Got {0} and expect a Process instance/string'
