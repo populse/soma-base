@@ -57,9 +57,8 @@ class Process(Controller):
                                        exists=True, optional=True))
 
         # Add trait to store the execution information
-        super(Process, self).add_trait("exec_info",
-                                       Dict(output=True,
-                                            optional=True))
+        #super(Process, self).add_trait("exec_info",
+        #    Dict(output=True, optional=True))
 
     ##############
     # Members    #
@@ -117,7 +116,7 @@ class Process(Controller):
                                 self.get_outputs())
 
         # Sotre execution informations
-        setattr(self, "exec_info", self._get_log(results))
+        self.exec_info = self._get_log(results)
         results.outputs["exec_info"] = self.exec_info
 
         return results
@@ -251,7 +250,14 @@ class Process(Controller):
         log["process"] = self.id
         log["inputs"] = exec_info.inputs.copy()
         log["outputs"] = exec_info.outputs.copy()
-        del log["outputs"]["exec_info"]
+        #del log["outputs"]["exec_info"]
+
+        # Need to take the representation of undefined input or outputs
+        # traits
+        for parameter_type in ["inputs", "outputs"]:
+            for key, value in log[parameter_type].iteritems():
+                if isinstance(value, _Undefined):
+                    log[parameter_type][key] = repr(value)
 
         return log
 
@@ -276,14 +282,24 @@ class Process(Controller):
 class NipypeProcess(Process):
     """ Dummy class for interfaces.
     """
-    def __init__(self, *args, **kwargs):
+    def __init__(self, nipype_instance, *args, **kwargs):
         """ Init the nipype process class.
         """
-        # inheritance
+        # Inheritance
         super(NipypeProcess, self).__init__(*args, **kwargs)
 
+        # Some interface identification parameters
+        self._nipype_interface = nipype_instance
+        self._nipype_module = nipype_instance.__class__.__module__
+        self._nipype_class = nipype_instance.__class__.__name__
+        self._nipype_interface_name = self._nipype_module.split(".")[2]
+
+        # reset the process name and id
+        self.id = ".".join([self._nipype_module, self._nipype_class])
+        self.name = self._nipype_interface.__class__.__name__
+        
     def _run_process(self):
-        pass
+        return self._nipype_interface.run()
 
     run = property(_run_process)
 

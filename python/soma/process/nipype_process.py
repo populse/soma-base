@@ -135,28 +135,24 @@ def nipype_factory(nipype_instance):
         nipype_instance._gen_filename = types.MethodType(_gen_filename,
                                                          nipype_instance)
 
-    # add a call function
-    def _nipype_call(self):
-        return nipype_instance.run()
-
-    attributes["_run_process"] = _nipype_call
-
-    # store the nipype interface instance
-    attributes["_nipype_interface"] = nipype_instance
-    attributes["_nipype_module"] = nipype_instance.__class__.__module__
-    attributes["_nipype_class"] = nipype_instance.__class__.__name__
-    attributes["_nipype_interface_name"] = attributes["_nipype_module"].split(
-                                                      ".")[2]
+#    # add method in order to enable the cache pickling the instance.
+#    # add the virtual mathod
+#    attributes["_run_process"] = _call_nipype
+#    # store the nipype interface instance
+#    attributes["_nipype_interface"] = nipype_instance
+#    attributes["_nipype_module"] = nipype_instance.__class__.__module__
+#    attributes["_nipype_class"] = nipype_instance.__class__.__name__
+#    attributes["_nipype_interface_name"] = attributes["_nipype_module"].split(
+#                                                      ".")[2]
+#
+#    # create new instance derived from Process
+#    process_class = type(attributes["_nipype_class"],
+#                         (NipypeProcess, ),
+#                         attributes)
+#    process_instance = process_class()
 
     # create new instance derived from Process
-    process_class = type(attributes["_nipype_class"],
-                            (NipypeProcess, ),
-                            attributes)   
-    process_instance = process_class()
-
-    # reset the process name
-    process_instance.id = ".".join([attributes["_nipype_module"],
-                           attributes["_nipype_class"]])
+    process_instance = NipypeProcess(nipype_instance)
 
     # relax exists constrain
     def relax_exists_constrain(trait):
