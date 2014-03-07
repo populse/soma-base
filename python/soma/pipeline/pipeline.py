@@ -121,6 +121,7 @@ class Node(Controller):
         self.on_trait_change(pipeline.update_nodes_and_plugs_activation,
                              'enabled')
 
+
     def connect(self, source_plug_name, dest_node, dest_plug_name):
         """ Connect linked plugs of two nodes
 
@@ -144,6 +145,7 @@ class Node(Controller):
                          dest_plug_name)] = value_callback
         self.set_callback_on_plug(source_plug_name, value_callback)
 
+
     def set_callback_on_plug(self, plug_name, callback):
         """ Add an event when a plug change
 
@@ -155,6 +157,7 @@ class Node(Controller):
             a callback function
         """
         self.on_trait_change(callback, plug_name)
+
 
     def get_plug_value(self, plug_name):
         """ Return the plug value
@@ -171,6 +174,7 @@ class Node(Controller):
         """
         return getattr(self, plug_name)
 
+
     def set_plug_value(self, plug_name, value):
         """ Set the plug value
 
@@ -182,6 +186,7 @@ class Node(Controller):
             the plug value we want to set
         """
         setattr(self, plug_name, value)
+
 
     def get_trait(self, trait_name):
         """ Return the desired trait
@@ -219,8 +224,10 @@ class ProcessNode(Node):
                                                  parameter in kwargs)))
         super(ProcessNode, self).__init__(pipeline, name, inputs, outputs)
 
+
     def set_callback_on_plug(self, plug_name, callback):
         self.process.on_trait_change(callback, plug_name)
+
 
     def get_plug_value(self, plug_name):
         if not isinstance(self.get_trait(plug_name).handler,
@@ -229,11 +236,13 @@ class ProcessNode(Node):
         else:
             return None
 
+
     def set_plug_value(self, plug_name, value):
         from traits.trait_base import _Undefined
         if value in ["", "<undefined>"]:
             value = _Undefined()
         setattr(self.process, plug_name, value)
+
 
     def get_trait(self, name):
         return self.process.trait(name)
@@ -309,6 +318,7 @@ class Switch(Node):
             self.plugs[plug_name].activated = True
             self.plugs[plug_name].enabled = True
 
+
     def _switch_changed(self, old_selection, new_selection):
         """ Add an event to the switch trait that enables us to select
         the desired option.
@@ -343,6 +353,7 @@ class Switch(Node):
                                                              output_plug_name)
             setattr(self, output_plug_name,
                     getattr(self, corresponding_input_plug_name))
+
 
     def _anytrait_changed(self, name, old, new):
         """ Add an event to the switch trait that enables us to select
@@ -397,6 +408,7 @@ class Pipeline(Process):
 
         self.update_nodes_and_plugs_activation()
 
+
     def add_trait(self, name, trait):
         '''
         '''
@@ -413,10 +425,12 @@ class Pipeline(Process):
             plug.on_trait_change(self.update_nodes_and_plugs_activation,
                                  'enabled')
 
+
     def remove_plug(self, node_name, plug_name):
         """ Method to specify a plug that we won't export
         """
         self.do_not_export.add((node_name, plug_name))
+
 
     def add_process(self, name, process, do_not_export=None,
                     make_optional=None, **kwargs):
@@ -446,6 +460,7 @@ class Pipeline(Process):
         setattr(self.nodes_activation, name, node.enabled)
         self.nodes_activation.on_trait_change(self._set_node_enabled, name)
         self.list_process_in_pipeline.append(process)
+
 
     def add_switch(self, name, inputs, outputs):
         '''Add a switch node in the pipeline
@@ -480,6 +495,7 @@ class Pipeline(Process):
         self.nodes[name] = node
         self.export_parameter(name, 'switch', name)
 
+
     def parse_link(self, link):
         source, dest = link.split('->')
         source_node_name, source_parameter, source_node, source_plug = \
@@ -488,6 +504,7 @@ class Pipeline(Process):
             self.parse_parameter(dest)
         return (source_node_name, source_parameter, source_node, source_plug,
                 dest_node_name, dest_parameter, dest_node, dest_plug)
+
 
     def parse_parameter(self, name):
         dot = name.find('.')
@@ -506,6 +523,7 @@ class Pipeline(Process):
                              (parameter_name, (node_name if node_name else
                                                'pipeline')))
         return node_name, parameter_name, node, node.plugs[parameter_name]
+
 
     def add_link(self, link, weak_link=False):
         '''Add a link between pipeline nodes
@@ -588,6 +606,7 @@ class Pipeline(Process):
         source_node.connect(source_parameter, dest_node, dest_parameter)
         dest_node.connect(dest_parameter, source_node, source_parameter)
 
+
     def export_parameter(self, node_name, parameter_name,
                          pipeline_parameter=None, weak_link=False):
         '''Exports one of the nodes parameters at the level of the pipeline.
@@ -613,10 +632,12 @@ class Pipeline(Process):
             self.add_link('%s->%s.%s' % (pipeline_parameter,
                                          node_name, parameter_name), weak_link)
 
+
     def _set_node_enabled(self, node_name, value):
         node = self.nodes.get(node_name)
         if node:
             node.enabled = value
+
 
     def update_nodes_and_plugs_activation(self):
 
@@ -696,6 +717,7 @@ class Pipeline(Process):
                         plug.activated = False
 
         self.selection_changed = True
+
 
     def update_nodes_and_plugs_activation_bis(self):
         """Reset all nodes and plugs activations according to the current state
@@ -875,13 +897,15 @@ class Pipeline(Process):
                 value = node.get_plug_value(source_plug_name)
                 node._callbacks[(source_plug_name, n, pn)](value)
 
-    def workflow(self):
-        """ Generate a workflow: list of process node to execute
+
+    def workflow_graph(self):
+        """ Generate a workflow graph: list of process node to execute
 
         Returns
         -------
-        workflow_list: list of Process
-            an ordered list of Processes to execute
+        graph: topological_sort.Graph
+            grpah representation of the workflow from the current state of
+            the pipeline
         """
 
         def insert(node_name, plug, dependencies, direct=True):
@@ -926,7 +950,7 @@ class Pipeline(Process):
                 # Process)
                 if isinstance(node.process, Pipeline):
                     graph.add_node(GraphNode(node_name,
-                                             node.process.workflow()))
+                                             node.process.workflow_graph()))
                 # If Process: meta in node is a list with one Process
                 else:
                     graph.add_node(GraphNode(node_name, [node.process, ]))
@@ -942,6 +966,19 @@ class Pipeline(Process):
         for d in dependencies:
             graph.add_link(d[0], d[1])
 
+        return graph
+
+
+    def workflow_ordered_nodes(self):
+        """ Generate a workflow: list of process node to execute
+
+        Returns
+        -------
+        workflow_list: list of Process
+            an ordered list of Processes to execute
+        """
+        # Create a graph and a list of graph node edges
+        graph = self.workflow_graph()
         # Start the topologival sort
         ordered_list = graph.topological_sort()
 
