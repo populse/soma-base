@@ -19,7 +19,11 @@ from soma.controller import Controller
 from soma.controller import trait_ids
 from soma.utils import (LateBindingProperty, get_tool_version)
 
-from nipype.interfaces.base import InterfaceResult
+try:
+    from nipype.interfaces.base import InterfaceResult
+except:
+    class InterfaceResult(object):
+        pass
 
 
 class Process(Controller):
