@@ -83,17 +83,17 @@ class TestSwitchPipeline(unittest.TestCase):
 
     def test_way1(self):
         self.pipeline.switch = "one"
-        self.pipeline.workflow()
+        self.pipeline.workflow_ordered_nodes()
         self.assertEqual(self.pipeline.workflow_repr, "node->way1")
 
     def test_way2(self):
         self.pipeline.switch = "two"
-        self.pipeline.workflow()
+        self.pipelineworkflow_ordered_nodes()
         self.assertEqual(self.pipeline.workflow_repr, "node->way21->way22")
 
     def test_way3(self):
         self.pipeline.switch = "none"
-        self.pipeline.workflow()
+        self.pipeline.workflow_ordered_nodes()
         self.assertEqual(self.pipeline.workflow_repr, "node")
 
     def test_weak_on(self):

@@ -224,7 +224,7 @@ class WorkflowViewer( QtGui.QWidget ):
   def update( self ):
     image = tempfile.NamedTemporaryFile( suffix='.png' )
     dot = tempfile.NamedTemporaryFile( suffix='.png' )
-    self.pipeline.workflow().write( dot )
+    self.pipeline.workflow_graph().write( dot )
     dot.flush()
     check_call( [ 'dot', '-Tpng', '-o', image.name, dot.name ] )
     pixmap = QtGui.QPixmap( image.name ).scaledToHeight( 600 )
@@ -270,7 +270,7 @@ if __name__ == '__main__':
   #painter.end()
   
   app.exec_()
-#  morphologist.workflow().write( sys.stdout )
+#  morphologist.workflow_graph().write( sys.stdout )
   del view1
   del view2
   del view3

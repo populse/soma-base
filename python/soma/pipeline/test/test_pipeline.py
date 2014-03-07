@@ -62,7 +62,7 @@ class TestPipeline(unittest.TestCase):
         self.pipeline = MyPipeline()
 
     def test_constant(self):
-        self.pipeline.workflow()
+        self.pipeline.workflow_ordered_nodes()
         self.assertEqual(self.pipeline.workflow_repr,
                          "constant->node1->node2")
 

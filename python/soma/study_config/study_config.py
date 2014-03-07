@@ -182,7 +182,7 @@ class StudyConfig(Controller):
         # generate ordered execution list
         execution_list = []
         if isinstance(process_or_pipeline, Pipeline):
-            execution_list = process_or_pipeline.workflow()
+            execution_list = process_or_pipeline.workflow_ordered_nodes()
         elif isinstance(process_or_pipeline, Process):
             execution_list.append(process_or_pipeline)
         else:
