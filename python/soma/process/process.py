@@ -62,7 +62,9 @@ class Process(Controller):
 
         # Add trait to store the execution information
         #super(Process, self).add_trait("exec_info",
-        #    Dict(output=True, optional=True))
+                                       #Dict(output=True,
+                                            #optional=True))
+        self.exec_info = {}
 
     ##############
     # Members    #
