@@ -70,13 +70,18 @@ class Process(Controller):
     # Members    #
     ##############
 
-    def __call__(self):
+    def __call__(self, **kwargs):
         """ Execute the Process
 
         Returns
         -------
         results:  ProcessResult object
             Contains all execution information
+
+        Keyword arguments may be passed to set parameters, to allow calling the
+        process like a standard python function. In such case keyword arguments
+        are set in the process in addition to those already set before the
+        call. kwargs should correspond to the declared parameter traits.
         """
         # Get class
         process = self.__class__
@@ -90,6 +95,17 @@ class Process(Controller):
             "end_time": None,
             "hostname": getfqdn(),
         }
+
+        # set parameters
+        if kwargs:
+            user_traits = self.user_traits()
+            for arg_name, arg_val in kwargs.iteritems():
+                if arg_name not in user_traits:
+                    raise TypeError(
+                        "__call__ got an unexpected keyword argument '%s'" \
+                        % arg_name)
+                setattr(self, arg_name, arg_val)
+            del user_traits
 
         # Call
         returncode = self._run_process()
@@ -133,13 +149,22 @@ class Process(Controller):
         return results
 
     def _run_process(self):
-        """ Process function that will be call.
-        This function must be defined in derived classes.
+        """ Process function that will be called by __call__().
+        Either this function or get_commandline() must be defined in derived
+        classes.
         """
-        raise NotImplementedError()
+        # check if get_commandline() is specialized. If yes, we can make use of
+        # it to execute the process
+        if self.__class__.get_commandline != Process.get_commandline:
+            commandline = self.get_commandline()
+            subprocess.check_call(commandline)
+        else:
+            raise NotImplementedError()
 
     def get_commandline(self):
-        """ Commandline representation of the process with parameters
+        """ Commandline representation of the process with parameters.
+        Either this function or _run_process() must be defined in derived
+        classes.
         """
         def _is_defined(self, name):
             value = getattr(self, name)

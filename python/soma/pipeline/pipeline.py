@@ -974,3 +974,13 @@ class Pipeline(Process):
         walk_wokflow(ordered_list, self.workflow_list) 
 
         return self.workflow_list
+
+    def _run_process(self):
+        """ Execution of the pipeline, in a sequential, single-processor mode
+        """
+        nodes_list = self.workflow_ordered_nodes()
+        returned = []
+        for node in nodes_list:
+            node_ret = node() # execute node
+            returned.append( node_ret )
+        return returned
