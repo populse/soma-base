@@ -29,6 +29,14 @@ def set_output_dir(subj_output_dir, process_instance, spm_dir):
             if "spm" in process_instance._nipype_interface_name:
                 process_instance._nipype_interface.mlab.inputs.prescript = \
                     ["ver,", "try,", "addpath('{0}');".format(spm_dir)]
+            elif process_instance._nipype_interface_name == "dcm2nii":
+                process_instance.output_dir = subj_output_dir
+                trait = process_instance._nipype_interface.inputs.trait(
+                    "output_dir")
+                trait.genfile = False
+                trait = process_instance._nipype_interface.inputs.trait(
+                    "config_file")
+                trait.genfile = False
 
         if "output_directory" in dir(process_instance):
             process_instance.output_directory = subj_output_dir
