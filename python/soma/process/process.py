@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 import os
+import sys
+import types
 from socket import getfqdn
 from datetime import datetime as datetime
 from copy import deepcopy
@@ -8,12 +10,12 @@ import json
 try:
     import traits.api as traits
     from traits.api import (ListStr, HasTraits, File, Float, Instance,
-                            Enum, Str, Directory, Dict)
-    from traits.trait_base import _Undefined
+                            Enum, Str, Directory, Dict, Undefined)
 except ImportError:
     import enthought.traits.api as traits
     from enthought.traits.api import (ListStr, HasTraits, File, Float,
-                                      Instance, Enum, Str, Directory, Dict)
+                                      Instance, Enum, Str, Directory, Dict,
+                                      Undefined)
 
 from soma.controller import Controller
 from soma.controller import trait_ids
@@ -57,7 +59,7 @@ class Process(Controller):
 
         # Add trait to store processing output directory
         super(Process, self).add_trait("output_directory",
-                                       Directory(_Undefined(),
+                                       Directory(Undefined,
                                        exists=True, optional=True))
 
         # Add trait to store the execution information
@@ -135,6 +137,31 @@ class Process(Controller):
         This function must be defined in derived classes.
         """
         raise NotImplementedError()
+
+    def get_commandline(self):
+        """ Commandline representation of the process with parameters
+        """
+        def _is_defined(self, name):
+            value = getattr(self, name)
+            if value is None or value is Undefined \
+                    or (type(value) in types.StringTypes and value == ''):
+                return False
+            return True
+
+        reserved_params = ('nodes_activation', 'selection_changed')
+        args = [name for name in self.user_traits().iterkeys() \
+            if name not in reserved_params and _is_defined(self, name)]
+        # temporary representation as python function call
+        argslist = ['%s=%s' % (name, repr(getattr(self, name))) \
+            for name in args]
+        module_name = sys.modules[self.__module__].__name__
+        class_name = self.__class__.__name__
+        commandline = ['python',
+            '-c',
+            'from %s import %s; %s()(%s)' \
+            % (module_name, class_name, class_name, ', '.join(argslist)),
+        ]
+        return commandline
 
 #    def auto_nipype_process_qc(self):
 #        """ From a nipype process instance call automatically
@@ -265,7 +292,7 @@ class Process(Controller):
         # traits
         for parameter_type in ["inputs", "outputs"]:
             for key, value in log[parameter_type].iteritems():
-                if isinstance(value, _Undefined):
+                if value is Undefined:
                     log[parameter_type][key] = repr(value)
 
         return log

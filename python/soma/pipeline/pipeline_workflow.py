@@ -18,7 +18,8 @@ def workflow_from_pipeline(pipeline):
     '''
 
     def build_job(name, process):
-        command = ['sleep', '1']
+        # command = ['sleep', '1']
+        command = process.get_commandline()
         job = swclient.Job(name=name, command=command)
         return job
 
