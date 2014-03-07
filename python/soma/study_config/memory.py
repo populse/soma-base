@@ -26,7 +26,7 @@ def set_output_dir(subj_output_dir, process_instance, spm_dir):
         if "_nipype_interface" in dir(process_instance):
             process_instance._nipype_interface.inputs.output_directory = (
                 subj_output_dir)
-            if process_instance._nipype_interface_name == "spm":
+            if "spm" in process_instance._nipype_interface_name:
                 process_instance._nipype_interface.mlab.inputs.prescript = \
                     ["ver,", "try,", "addpath('{0}');".format(spm_dir)]
 
