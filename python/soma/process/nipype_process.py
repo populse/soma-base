@@ -48,7 +48,6 @@ def nipype_factory(nipype_instance):
         "OutputMultiPath": "List",
         "OutputList": "List"
     }
-    attributes = {}
 
     # modify nipype interface to dynamically update the working dir
     def _run_interface(self, runtime):
