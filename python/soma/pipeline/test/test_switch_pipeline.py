@@ -46,8 +46,8 @@ class SwitchPipeline(Pipeline):
                         ["switch_image", "switch_output", ])
 
         # Links
-        self.add_link("node.output_image->switch.none-switch_image")
-        self.add_link("node.other_output->switch.none-switch_output")   
+        self.add_link("node.output_image->switch.none_switch_switch_image")
+        self.add_link("node.other_output->switch.none_switch_switch_output")   
         self.add_link("node.output_image->way1.input_image")
         self.add_link("node.other_output->way1.other_input")
         self.add_link("node.output_image->way21.input_image")
@@ -56,11 +56,11 @@ class SwitchPipeline(Pipeline):
         self.add_link("way21.output_image->way22.input_image")
         self.add_link("way21.other_output->way22.other_input")
 
-        self.add_link("way1.output_image->switch.one-switch_image")
-        self.add_link("way1.other_output->switch.one-switch_output")
+        self.add_link("way1.output_image->switch.one_switch_switch_image")
+        self.add_link("way1.other_output->switch.one_switch_switch_output")
 
-        self.add_link("way22.output_image->switch.two-switch_image")
-        self.add_link("way22.other_output->switch.two-switch_output")
+        self.add_link("way22.output_image->switch.two_switch_switch_image")
+        self.add_link("way22.other_output->switch.two_switch_switch_output")
 
         # Outputs
         self.export_parameter("node", "other_output",
@@ -88,7 +88,7 @@ class TestSwitchPipeline(unittest.TestCase):
 
     def test_way2(self):
         self.pipeline.switch = "two"
-        self.pipelineworkflow_ordered_nodes()
+        self.pipeline.workflow_ordered_nodes()
         self.assertEqual(self.pipeline.workflow_repr, "node->way21->way22")
 
     def test_way3(self):
