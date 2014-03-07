@@ -186,8 +186,8 @@ def nipype_factory(nipype_instance):
         """ Event handler function to update
         the process instance outputs """
         try:
-            nipype_outputs = process_instance. \
-                             _nipype_interface._list_outputs()
+            nipype_outputs = (process_instance.
+                             _nipype_interface._list_outputs())
             for out_name, out_value in nipype_outputs.iteritems():
                 process_instance.set_parameter("_" + out_name, out_value)
         except:

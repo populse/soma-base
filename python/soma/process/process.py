@@ -62,9 +62,7 @@ class Process(Controller):
 
         # Add trait to store the execution information
         #super(Process, self).add_trait("exec_info",
-                                       #Dict(output=True,
-                                            #optional=True))
-        self.exec_info = {}
+        #    Dict(output=True, optional=True))
 
     ##############
     # Members    #
@@ -116,10 +114,15 @@ class Process(Controller):
             runtime["stdout"] = returncode.runtime.stdout
             runtime["cwd"] = returncode.runtime.cwd
             runtime["returncode"] = returncode.runtime.returncode
+            outputs = dict(("_" + x[0],
+                            self._nipype_interface._list_outputs()[x[0]])
+                            for x in returncode.outputs.get().iteritems())
+        else:
+            outputs = self.get_outputs()
 
         # Result
         results = ProcessResult(process, runtime, self.get_inputs(),
-                                self.get_outputs())
+                                outputs)
 
         # Sotre execution informations
         self.exec_info = self._get_log(results)
@@ -303,6 +306,13 @@ class NipypeProcess(Process):
         # reset the process name and id
         self.id = ".".join([self._nipype_module, self._nipype_class])
         self.name = self._nipype_interface.__class__.__name__
+        
+        if self._nipype_interface_name == "dcm2nii":
+            self.output_files = _Undefined()
+            self.reoriented_files = _Undefined()
+            self.reoriented_and_cropped_files = _Undefined()
+            self.bvecs = _Undefined()
+            self.bvals = _Undefined()
 
     def _run_process(self):
         return self._nipype_interface.run()
@@ -330,3 +340,4 @@ class ProcessResult(object):
         self.runtime = runtime
         self.inputs = inputs
         self.outputs = outputs
+        
