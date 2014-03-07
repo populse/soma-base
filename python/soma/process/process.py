@@ -148,6 +148,13 @@ class Process(Controller):
                 return False
             return True
 
+        # check if _run_process() is specialized, because if not,
+        # it will definitely not work.
+        if self.__class__._run_process == Process._run_process:
+            raise NotImplementedError('Either get_commandline() or '\
+            '_run_process() should be redefined in a process (%s)' \
+            % self.__class__.__name__)
+
         reserved_params = ('nodes_activation', 'selection_changed')
         args = [name for name in self.user_traits().iterkeys() \
             if name not in reserved_params and _is_defined(self, name)]
