@@ -956,12 +956,21 @@ class Pipeline(Process):
         graph = self.workflow_graph()
         # Start the topologival sort
         ordered_list = graph.topological_sort()
+        
+        def walk_wokflow(wokflow, workflow_list):
+            """ Recursive fonction to go throw pipelines' graphs
+            """
+            for sub_workflow in wokflow:
+                if isinstance(sub_workflow[1], list):
+                    workflow_list.extend(sub_workflow[1])
+                else:
+                    tmp = sub_workflow[1].topological_sort()
+                    walk_wokflow(tmp, workflow_list)
 
         # Generate the output
         self.workflow_repr = "->".join([x[0] for x in ordered_list])
         logging.debug("Workflow: {0}". format(self.workflow_repr))
         self.workflow_list = []
-        for sub_workflow in ordered_list:
-            self.workflow_list.extend(sub_workflow[1])
+        walk_wokflow(ordered_list, self.workflow_list) 
 
         return self.workflow_list
