@@ -303,7 +303,7 @@ class NipypeProcess(Process):
         # reset the process name and id
         self.id = ".".join([self._nipype_module, self._nipype_class])
         self.name = self._nipype_interface.__class__.__name__
-        
+
     def _run_process(self):
         return self._nipype_interface.run()
 

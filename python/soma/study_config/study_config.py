@@ -199,7 +199,6 @@ class StudyConfig(Controller):
                          self.generate_logging,
                          self.spm_directory)
 
-
 if __name__ == "__main__":
 
     study = StudyConfig()

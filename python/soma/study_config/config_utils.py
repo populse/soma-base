@@ -9,10 +9,7 @@
 
 import os
 import re
-import sys
 import subprocess
-
-import nipype.interfaces.matlab as mlab
 
 
 def environment(sh_file=None):
