@@ -1,9 +1,15 @@
 # -*- coding: utf-8 -*-
 import sipconfig
 from PyQt4 import QtGui, QtCore
-from soma.controller import trait_ids, Controller
+try:
+  from capsul.controller import trait_ids, Controller
+  from capsul.utils.functiontools import partial, SomaPartial
+  print 'trait_to_widget uses CAPSUL.'
+except:
+  from soma.controller import trait_ids, Controller
+  from soma.functiontools import partial, SomaPartial
+  print 'trait_to_widget uses Soma.'
 from soma.qt4gui.api import TimeredQLineEdit
-from soma.functiontools import partial, SomaPartial
 from soma.global_naming import GlobalNaming
 from soma.gui.icon_factory import IconFactory
 try:

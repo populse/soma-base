@@ -1,8 +1,14 @@
 # -*- coding: utf-8 -*-
 import sipconfig
 from PyQt4 import QtGui, QtCore
-from soma.controller import trait_ids, Controller
-from soma.functiontools import partial, SomaPartial
+try:
+  from capsul.controller import trait_ids, Controller
+  from capsul.functiontools import partial, SomaPartial
+  print 'widget_controller_creation uses CAPSUL.'
+except:
+  from soma.controller import trait_ids, Controller
+  from soma.functiontools import partial, SomaPartial
+  print 'widget_controller_creation uses soma.'
 from trait_to_widget import StrCreateWidget,FloatCreateWidget,IntCreateWidget,\
 LongCreateWidget,BoolCreateWidget,EnumCreateWidget,StrEnumCreateWidget,\
 FileCreateWidget,DirectoryCreateWidget

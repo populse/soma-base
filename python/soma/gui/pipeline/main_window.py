@@ -3,29 +3,25 @@ from PyQt4 import QtGui, QtCore
 from soma.gui.widget_controller_creation import ControllerWidget
 from soma.gui.pipeline.display_bdd import DisplayBDD
 from soma.application import Application 
-#from soma.gui.simple_process import SimpleProcess
 try:
-  from capsul.process.process import ProcessWithFom,Process, get_process_instance
-  from capsul.pipeline.study import Study
+  from capsul.process import Process, get_process_instance
 except ImportError:
   from soma.process import Process, get_process_instance
-  from soma.pipeline.process_with_fom import ProcessWithFom
-  from soma.pipeline.study import Study
+from soma.pipeline.process_with_fom import ProcessWithFom
+from soma.pipeline.study import Study
 from soma.gui.pipeline.process_gui import ProcessGui
 from soma.gui.pipeline.iteration_gui import IterationGui,ChoiceParameters
-#from morphologistSimp import SimpMorpho
-#from attributs import Attributs
 from soma.gui.pipeline.selection_widget import Selection
 from soma.functiontools import SomaPartial as partial
 from soma.gui.pipeline.pipeline_gui import PipelineView
-import subprocess        
+import subprocess
 import os
 
 
 class MainWindow(QtGui.QMainWindow):
-    """Class to create study and to launch Simple or iteration process"""   
-    def __init__(self):     
-        super(MainWindow, self).__init__()         
+    """Class to create study and to launch Simple or iteration process"""
+    def __init__(self):
+        super(MainWindow, self).__init__()
         self.main_widget=QtGui.QWidget()
         self.vbox=QtGui.QVBoxLayout()
         
@@ -159,14 +155,7 @@ class MainWindow(QtGui.QMainWindow):
 
     def get_object_process(self):
         """This will be automatic"""
-        print 'get_object_process:', type(Study.get_instance().process)
-        print 'process:', Study.get_instance().process
         return get_process_instance(str(Study.get_instance().process))
 
-        #if Study.get_instance().process=='morphologist.process.morphologist_simplified.SimplifiedMorphologist':
-            #import morphologist.process.morphologist_simplified
-            #obj = morphologist.process.morphologist_simplified.SimplifiedMorphologist()
-            #print 'process:', obj
-            #return obj
 
 

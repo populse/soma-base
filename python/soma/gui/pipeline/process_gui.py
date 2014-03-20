@@ -1,5 +1,5 @@
 from PyQt4 import QtGui, QtCore
-from soma.application import Application  
+from soma.application import Application
 from soma.gui.widget_controller_creation import ControllerWidget
 from soma.study_data import StudyData
 import collections

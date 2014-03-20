@@ -7,11 +7,13 @@ except ImportError:
 
 try:
   import capsul
-  from capsul.sorted_dictionary import SortedDictionary
-  from capsul.pipeline.pipeline import Switch
+  from capsul.utils.sorted_dictionary import SortedDictionary
+  from capsul.pipeline import Switch
+  print 'pipeline_gui uses CAPSUL.'
 except ImportError:
   from soma.sorted_dictionary import SortedDictionary
-  from soma.pipeline.pipeline import Switch
+  from soma.pipeline import Switch
+  print 'pipeline_gui uses Soma.'
 
 #-----------------------------------------------------------------------------
 # Globals and constants
