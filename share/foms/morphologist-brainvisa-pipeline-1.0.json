@@ -87,34 +87,122 @@
        "head_mesh":[ ["output:{analysis}/segmentation/mesh/<subject>_head","mesh"] ],
        "head_mask":[ ["output:{analysis}/segmentation/head_<subject>","images"] ], 
        "remove_mask":[ ["input:  ","images"] ],
-       }
+       },
 
-#
-#       "left_grey_white": [ ["output:{analysis}/segmentation/<side>_grey_white_<subject>","images",{'side':'left'}] ], 
-#       "right_grey_white": [ ["output:{analysis}/segmentation/<side>_grey_white_<subject>","images",{'side':'right'}] ],
-#
-#       #Grey/White Surface
-#       "left_hemi_cortex": [ ["output:{analysis}/segmentation/<side>_cortex_<subject>","images",{'side':'left'}] ], 
-#       "left_white_mesh": [ ["output:{analysis}/segmentation/mesh/<subject>_<side>_white","mesh",{'side':'left'}] ], 
-#       "right_hemi_cortex": [ ["output:{analysis}/segmentation/<side>_cortex_<subject>","images",{'side':'right'}] ], 
-#       "right_white_mesh": [ ["output:{analysis}/segmentation/mesh/<subject>_<side>_white","mesh",{'side':'right'}] ], 
-#
-#       #Spherical Hemispheres Surface
-#       "left_hemi_mesh": [ ["output:{analysis}/segmentation/mesh/<subject>_<side>_hemi","mesh",{'side':'left'}] ], 
-#       "right_hemi_mesh": [ ["output:{analysis}/segmentation/mesh/<subject>_<side>_hemi","mesh",{'side':'right'}] ], 
-#
-#       #Cortical Folds Graph
-#       "left_graph": [ ["output:{analysis}/folds/<graph_version>/<side>_<subject>","Graph and data", {'side':'left','labelled':'No', 'graph_version':'3.1'} ] ], 
-#       "left_skeleton": [ ["output:{analysis}/segmentation/<side>_skeleton_<subject>","images",{'side':'left'}] ], 
-#       "left_roots": [ ["output:{analysis}/segmentation/<side>_roots_<subject>","images",{'side':'left'}] ], 
-#       "left_sulci_voronoi": [ ["output:{acquisition}/folds/<graph_version>/<side>_sulcivoronoi_<subject>","images",{'side':'left','graph_version':'3.1'}],["output:{analysis}/folds/<graph_version>/<side>_sulcivoronoi_<subject>", "images",{'side':'left','graph_version':'3.1'} ] ],
-#       "left_middle_cortex": [ [ "output:{analysis}/segmentation/<side>_gw_interface_<subject>","images",{'side':'left'}] ], 
-#       "right_graph": [ ["output:{analysis}/folds/<graph_version>/<side>_<subject>","Graph and data", {'side':'right','labelled':'No', 'graph_version':'3.1'}] ], 
-#       "right_skeleton": [ ["output:{analysis}/segmentation/<side>_skeleton_<subject>","images",{'side':'right'}] ], 
-#       "right_roots": [ [ "output:{analysis}/segmentation/<side>_roots_<subject>", "images", { "side": "right" } ] ], 
-#       "right_sulci_voronoi": [ ["output:{acquisition}/folds/<graph_version>/<side>_sulcivoronoi_<subject>","images",{'side':'right','graph_version':'3.1'}],["output:{analysis}/folds/<graph_version>/<side>_sulcivoronoi_<subject>", "images",{'side':'right','graph_version':'3.1'} ] ],
-#       "right_middle_cortex": [ ["output:{analysis}/segmentation/<side>_gw_interface_<subject>","images",{ "side": "right" }] ], 
-#
+
+    "morphologistPipeline.LeftHemisphere" : {
+       "morphologistPipeline.WhiteClassification" : {
+          "t1mri_nobias": [ ["input:{analysis}/nobias_<subject>", "images" ] ], 
+          "histo_analysis": [ ["input:{analysis}/nobias_<subject>", "Histo Analysis"   ] ] , 
+          "split_brain": [ ["input:{analysis}/segmentation/voronoi_<subject>","images"] ],  
+          "edges": [ ["input:{analysis}/edges_<subject>","images"] ],
+          "commissure_coordinates": [ [ "input:{acquisition}/<subject>", "Commissure coordinates" ] ],
+          "left_grey_white": [ ["output:{analysis}/segmentation/<side>grey_white_<subject>","images",{"side":"left"}]], 
+          },
+
+       "morphologistPipeline.WhiteTopologyCorrection" : {
+          "left_grey_white": [ ["input:{analysis}/segmentation/<side>grey_white_<subject>","images",{"side":"left"}]], 
+          "t1mri_nobias": [ ["input:{analysis}/nobias_<subject>", "images" ] ], 
+          "histo_analysis": [ ["input:{analysis}/nobias_<subject>", "Histo Analysis"   ] ] , 
+          "left_hemi_cortex": [ ["output:{analysis}/segmentation/<side>cortex_<subject>","images",{"side":"left"}] ], 
+          },
+
+       "morphologistPipeline.GreyWhiteMesh" : {
+          "left_hemi_cortex": [ ["input:{analysis}/segmentation/<side>cortex_<subject>","images",{"side":"left"}] ], 
+          "left_white_mesh": [ ["output:{analysis}/segmentation/mesh/<subject>_<side>white","mesh",{"side":"left"}] ], 
+          },
+
+       "morphologistPipeline.SulciSkeletonandRoots" : {
+          "left_hemi_cortex": [ ["input:{analysis}/segmentation/<side>cortex_<subject>","images",{"side":"left"}] ], 
+          "left_grey_white": [ ["input:{analysis}/segmentation/<side>grey_white_<subject>","images",{"side":"left"}]], 
+          "t1mri_nobias": [ ["input:{analysis}/nobias_<subject>", "images" ] ], 
+          "left_skeleton": [ ["output:{analysis}/segmentation/<side>skeleton_<subject>","images",{"side":"left"}] ], 
+          "left_roots": [ ["output:{analysis}/segmentation/<side>roots_<subject>","images",{"side":"left"}] ], 
+          },
+ 
+       "morphologistPipeline.PialMesh" : {
+          "left_hemi_cortex": [ ["input:{analysis}/segmentation/<side>cortex_<subject>","images",{"side":"left"}] ], 
+          "left_grey_white": [ ["input:{analysis}/segmentation/<side>grey_white_<subject>","images",{"side":"left"}]], 
+          "t1mri_nobias": [ ["input:{analysis}/nobias_<subject>", "images" ] ], 
+          "left_skeleton": [ ["input:{analysis}/segmentation/<side>skeleton_<subject>","images",{"side":"left"}] ],
+          "left_pial_mesh":[ ["output:{analysis}/segmentation/mesh/<subject>_<side>hemi","images",{"side":"left"}] ],
+          },
+
+       "morphologistPipeline.CorticalFoldsGraph" : {
+          "left_skeleton": [ ["input:{analysis}/segmentation/<side>skeleton_<subject>","images",{"side":"left"}] ],
+          "left_roots": [ ["input:{analysis}/segmentation/<side>roots_<subject>","images",{"side":"left"}] ], 
+          "left_grey_white": [ ["input:{analysis}/segmentation/<side>grey_white_<subject>","images",{"side":"left"}]], 
+          "left_hemi_cortex": [ ["input:{analysis}/segmentation/<side>cortex_<subject>","images",{"side":"left"}] ], 
+          "split_brain": [ ["input:{analysis}/segmentation/voronoi_<subject>","images"] ],  
+          "left_white_mesh": [ ["input:{analysis}/segmentation/mesh/<subject>_<side>white","mesh",{"side":"left"}] ], 
+          "left_pial_mesh":[ ["input:{analysis}/segmentation/mesh/<subject>_<side>hemi","images",{"side":"left"}] ],
+          "commissure_coordinates": [ [ "input:{acquisition}/<subject>", "Commissure coordinates" ] ],
+          "talairach_transform": [ [ "input:{acquisition}/registration/RawT1-<subject>_<acquisition>_TO_Talairach-ACPC","Transformation matrix"] ], 
+          "left_graph": [ ["output:{analysis}/folds/<graph_version>/<side><subject>","Graph and data", {"side":"L","labelled":"No", "graph_version":"3.1"} ] ], 
+          "left_sulci_voronoi": [ ["output:{acquisition}/folds/<graph_version>/<side>sulcivoronoi_<subject>","images",{"side":"left","graph_version":"3.1"}],["output:{analysis}/folds/<graph_version>/<side>sulcivoronoi_<subject>", "images",{"side":"left","graph_version":"3.1"} ] ],
+          "left_cortex_mid_interface": [ [ "output:{analysis}/segmentation/<side>gw_interface_<subject>","images",{"side":"left"}] ],         
+          },
+    },
+
+
+
+    "morphologistPipeline.RightHemisphere" : {
+       "morphologistPipeline.WhiteClassification" : {
+          "t1mri_nobias": [ ["input:{analysis}/nobias_<subject>", "images" ] ], 
+          "histo_analysis": [ ["input:{analysis}/nobias_<subject>", "Histo Analysis"   ] ] , 
+          "split_brain": [ ["input:{analysis}/segmentation/voronoi_<subject>","images"] ],  
+          "edges": [ ["input:{analysis}/edges_<subject>","images"] ],
+          "commissure_coordinates": [ [ "input:{acquisition}/<subject>", "Commissure coordinates" ] ],
+          "right_grey_white": [ ["output:{analysis}/segmentation/<side>grey_white_<subject>","images",{"side":"right"}]], 
+          },
+
+       "morphologistPipeline.WhiteTopologyCorrection" : {
+          "right_grey_white": [ ["input:{analysis}/segmentation/<side>grey_white_<subject>","images",{"side":"right"}]], 
+          "t1mri_nobias": [ ["input:{analysis}/nobias_<subject>", "images" ] ], 
+          "histo_analysis": [ ["input:{analysis}/nobias_<subject>", "Histo Analysis"   ] ] , 
+          "right_hemi_cortex": [ ["output:{analysis}/segmentation/<side>cortex_<subject>","images",{"side":"right"}] ], 
+          },
+
+       "morphologistPipeline.GreyWhiteMesh" : {
+          "right_hemi_cortex": [ ["input:{analysis}/segmentation/<side>cortex_<subject>","images",{"side":"right"}] ], 
+          "right_white_mesh": [ ["output:{analysis}/segmentation/mesh/<subject>_<side>white","mesh",{"side":"right"}] ], 
+          },
+
+       "morphologistPipeline.SulciSkeletonandRoots" : {
+          "right_hemi_cortex": [ ["input:{analysis}/segmentation/<side>cortex_<subject>","images",{"side":"right"}] ], 
+          "right_grey_white": [ ["input:{analysis}/segmentation/<side>grey_white_<subject>","images",{"side":"right"}]], 
+          "t1mri_nobias": [ ["input:{analysis}/nobias_<subject>", "images" ] ], 
+          "right_skeleton": [ ["output:{analysis}/segmentation/<side>skeleton_<subject>","images",{"side":"right"}] ], 
+          "right_roots": [ ["output:{analysis}/segmentation/<side>roots_<subject>","images",{"side":"right"}] ], 
+          },
+ 
+       "morphologistPipeline.PialMesh" : {
+          "right_hemi_cortex": [ ["input:{analysis}/segmentation/<side>cortex_<subject>","images",{"side":"right"}] ], 
+          "right_grey_white": [ ["input:{analysis}/segmentation/<side>grey_white_<subject>","images",{"side":"right"}]], 
+          "t1mri_nobias": [ ["input:{analysis}/nobias_<subject>", "images" ] ], 
+          "right_skeleton": [ ["input:{analysis}/segmentation/<side>skeleton_<subject>","images",{"side":"right"}] ],
+          "right_pial_mesh":[ ["output:{analysis}/segmentation/mesh/<subject>_<side>hemi","images",{"side":"right"}] ],
+          },
+
+       "morphologistPipeline.CorticalFoldsGraph" : {
+          "right_skeleton": [ ["input:{analysis}/segmentation/<side>skeleton_<subject>","images",{"side":"right"}] ],
+          "right_roots": [ ["input:{analysis}/segmentation/<side>roots_<subject>","images",{"side":"right"}] ], 
+          "right_grey_white": [ ["input:{analysis}/segmentation/<side>grey_white_<subject>","images",{"side":"right"}]], 
+          "right_hemi_cortex": [ ["input:{analysis}/segmentation/<side>cortex_<subject>","images",{"side":"right"}] ], 
+          "split_brain": [ ["input:{analysis}/segmentation/voronoi_<subject>","images"] ],  
+          "right_white_mesh": [ ["input:{analysis}/segmentation/mesh/<subject>_<side>white","mesh",{"side":"right"}] ], 
+          "right_pial_mesh":[ ["input:{analysis}/segmentation/mesh/<subject>_<side>hemi","images",{"side":"right"}] ],
+          "commissure_coordinates": [ [ "input:{acquisition}/<subject>", "Commissure coordinates" ] ],
+          "talairach_transform": [ [ "input:{acquisition}/registration/RawT1-<subject>_<acquisition>_TO_Talairach-ACPC","Transformation matrix"] ], 
+          "right_graph": [ ["output:{analysis}/folds/<graph_version>/<side><subject>","Graph and data", {"side":"right","labelled":"No", "graph_version":"3.1"} ] ], 
+          "right_sulci_voronoi": [ ["output:{acquisition}/folds/<graph_version>/<side>sulcivoronoi_<subject>","images",{"side":"right","graph_version":"3.1"}],["output:{analysis}/folds/<graph_version>/<side>sulcivoronoi_<subject>", "images",{"side":"right","graph_version":"3.1"} ] ],
+          "right_cortex_mid_interface": [ [ "output:{analysis}/segmentation/<side>gw_interface_<subject>","images",{"side":"right"}] ],         
+          }
+
+    }
+  }
+}
+
 #       #Sulci Recognition
 #       "labels_translation_map": "{shared.surface_referential_translation_map}", 
 #        ##Left
@@ -155,5 +243,3 @@
 #      "right_global_to_local_transforms": [ [ "output:{analysis}/folds/<graph_version>/<sulci_recognition_session>_auto/<side>_<subject>_<sulci_recognition_session>_auto_global_TO_local","Directory",{'side':'right','graph_version':'3.1'} ] ], 
 #
 #   }
-  }
-}
