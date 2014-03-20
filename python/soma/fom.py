@@ -359,7 +359,11 @@ class FileOrganizationModels( object ):
               rule_attributes = {}
             else:
               #print '!', rule, len( rule )
-              pattern, formats, rule_attributes = rule
+              try:
+                pattern, formats, rule_attributes = rule
+              except Exception, e:
+                print 'error in FOM: %s, process: %s, param: %s, rule:' % (fom_name, process, parameter), rule
+                raise
             rule_attributes[ 'fom_process' ] = process
             rule_attributes[ 'fom_parameter' ] = parameter
             parameter_rules.append( [ pattern, formats, rule_attributes ] )

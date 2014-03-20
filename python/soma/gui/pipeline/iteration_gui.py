@@ -3,7 +3,7 @@ from soma.application import Application
 #from morphologistSimp import SimpMorpho
 from soma.gui.file_selection import FileAttributeSelection
 from soma.controller import trait_ids
-from soma.pipeline.process import ProcessWithFom
+from soma.pipeline.process_with_fom import ProcessWithFom
 from soma.pipeline.study import Study
 from soma.gui.widget_controller_creation import ControllerWidget
 from functools import partial

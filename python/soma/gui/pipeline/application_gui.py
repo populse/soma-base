@@ -18,7 +18,7 @@ for qt_class in qt_api:
 del qt_api, qt_class
 from PyQt4 import QtGui, QtCore
 from soma.gui.pipeline.main_window import MainWindow
-from soma.application import Application  
+from soma.application import Application
 from soma.global_naming import GlobalNaming
 
 

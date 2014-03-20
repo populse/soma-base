@@ -5,8 +5,13 @@ try:
 except ImportError:
   from enthought.traits.api import File
 
-from soma.sorted_dictionary import SortedDictionary
-from soma.pipeline.pipeline import Switch 
+try:
+  import capsul
+  from capsul.sorted_dictionary import SortedDictionary
+  from capsul.pipeline.pipeline import Switch
+except ImportError:
+  from soma.sorted_dictionary import SortedDictionary
+  from soma.pipeline.pipeline import Switch
 
 #-----------------------------------------------------------------------------
 # Globals and constants
@@ -397,7 +402,10 @@ class PipelineView(QtGui.QGraphicsView):
       
 if __name__ == '__main__':
   import sys
-  from soma.pipeline.pipeline import Morphologist, GreyWhite
+  try:
+    from capsul.pipeline.pipeline import Morphologist, GreyWhite
+  except ImportError:
+    from soma.pipeline.pipeline import Morphologist, GreyWhite
   from soma.gui.widget_controller_creation import ControllerWidget
   from soma.functiontools import SomaPartial as partial
   

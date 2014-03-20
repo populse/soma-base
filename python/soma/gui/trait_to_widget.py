@@ -311,16 +311,17 @@ class FileCreateWidget( object ):
 
     viewers = getattr( parent.controller, 'viewers', None)
     if viewers and name in viewers :
-      btn_viewer = QtGui.QPushButton( attribute_widget )       
+      btn_viewer = QtGui.QPushButton( attribute_widget )
       horizontal_layout.addWidget( btn_viewer )
       btn_viewer.setFixedSize( 20, 20 )
-      btn_viewer.setIcon( QtGui.QIcon( IconFactory()._imageViewer ) )                          
-      attribute_widget.btn_viewer = btn_viewer        
-      viewer_hook = partial( parent.controller.call_viewer, parent, name )
-      attribute_widget._viewer_hook = viewer_hook
-      attribute_widget.btn_viewer.clicked.connect( viewer_hook )  
+      btn_viewer.setIcon( QtGui.QIcon( IconFactory()._imageViewer ) )
+      attribute_widget.btn_viewer = btn_viewer
+      if hasattr( parent.controller, 'call_viewer' ):
+        viewer_hook = partial( parent.controller.call_viewer, parent, name )
+        attribute_widget._viewer_hook = viewer_hook
+        attribute_widget.btn_viewer.clicked.connect( viewer_hook )
     return ( attribute_widget, label_widget )
-  
+
   @staticmethod
   def file_dialog( parent, name,attribute_widget ):
     if hasattr( parent.controller.user_traits()[name], 'output' ) \

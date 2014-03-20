@@ -30,7 +30,7 @@ class Study(Controller):
 	self.add_trait('spm_directory',Directory)
         self.add_trait('format_image',Str)
 	self.add_trait('format_mesh',Str) 
-	self.add_trait('process',Enum('   ','morphologistSimp.SimplifiedMorphologist','morphologist.process.Morphologist'))
+	self.add_trait('process',Enum('   ','morphologist.process.morphologist_simplified.SimplifiedMorphologist','morphologist.process.morphologist.Morphologist'))
 	self.process_specific=None
 	self.compteur_run_process={}
 	self.runs=collections.OrderedDict()
@@ -104,7 +104,7 @@ class Study(Controller):
 	    self.compteur_run_process[process_specific.name_process]=number
 	      
 	run=collections.OrderedDict()   
-	run['name_process']='morphologistSimp.SimplifiedMorphologist'
+	run['name_process']='morphologist.process.morphologist_simplified.SimplifiedMorphologist'
 	#self.inc_nb_run_process(process_specific.name_process )
 	run['attributes']={}
 	for key in attributes:
