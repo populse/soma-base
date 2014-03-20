@@ -149,7 +149,6 @@ class MainWindow(QtGui.QMainWindow):
 
     def on_display_bdd(self):
         print 'on display bdd'
-        import morphologistSimp
         process_specific = self.get_object_process()
         self.display_bdd=DisplayBDD(process_specific)
         self.display_bdd.open()

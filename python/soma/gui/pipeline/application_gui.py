@@ -30,7 +30,7 @@ if __name__ == '__main__':
     # Application initialization (e.g. configuration file may be read here)
     soma_app.initialize()
 
-    app = QtGui.QApplication( sys.argv )       
+    app = QtGui.QApplication( sys.argv )
     w=MainWindow()
     w.show()
     app.exec_()
