@@ -3,236 +3,258 @@ from __future__ import absolute_import
 
 import sys, os, stat, posix, time, re, pprint, sqlite3, bz2, json
 try:
-  import yaml as json_reader
+    import yaml as json_reader
 except ImportError:
-  import json as json_reader
+    import json as json_reader
 
 
 from soma.path import split_path
 from soma.config import short_version
 from soma.sorted_dictionary import SortedDictionary
 
-class DirectoryAsDict( object ):
-  def __new__( cls, directory, cache=None ):
-    if os.path.isdir( directory ):
-      return super( DirectoryAsDict, cls ).__new__( cls, directory, cache )
-    else:
-      return json.load( open( directory ) )
-  
-  
-  def __init__( self, directory, cache=None ):
-    self.directory = directory
-    if cache is None:
-      self.cache = DirectoriesCache()
-    else:
-      self.cache = cache
+
+class DirectoryAsDict(object):
+
+    def __new__(cls, directory, cache=None):
+        if os.path.isdir(directory):
+            return super(DirectoryAsDict, cls).__new__(cls, directory, cache)
+        else:
+            return json.load(open(directory))
 
 
-  def __repr__( self ):
-    return '<DirectoryAsDict( %s )>' % repr( self.directory )
-  
-  
-  def iteritems( self ):
-    st_content = self.cache.get_directory( self.directory )
-    if st_content is not None:
-      st, content = st_content
-      for i in content.iteritems():
-        yield i
-    else:
-      try:
-        listdir = os.listdir( self.directory )
-      except OSError:
-        yield '', [ None, None ]
-        return
-      for name in listdir:
-        full_path = os.path.join( self.directory, name )
-        st_content = self.cache.get_directory( full_path )
+    def __init__(self, directory, cache=None):
+        self.directory = directory
+        if cache is None:
+            self.cache = DirectoriesCache()
+        else:
+            self.cache = cache
+
+
+    def __repr__(self):
+        return '<DirectoryAsDict( %s )>' % repr(self.directory)
+
+
+    def iteritems(self):
+        st_content = self.cache.get_directory(self.directory)
         if st_content is not None:
-          yield st_content
+            st, content = st_content
+            for i in content.iteritems():
+                yield i
         else:
-          st = os.stat( full_path )
-          if stat.S_ISDIR( st.st_mode ):
-            yield ( name, [ tuple( st ), DirectoryAsDict( full_path ) ] )
-          else:
-            yield ( name, [ tuple( st ), None ] )
-
-        
-  @staticmethod
-  def get_directory( directory, debug=None ):
-    return DirectoryAsDict._get_directory( directory, debug, 0, 0, 0, 0, 0, 0, 0 )[ 0 ]
-  
-  @staticmethod
-  def _get_directory( directory, debug, directories, files, links,
-                      files_size, path_size, errors, count ):
-    try:
-      listdir = os.listdir( directory )
-      result = {}
-    except OSError:
-      errors += 1
-      result = None
-    if result is not None:
-      for name in listdir:
-        if debug and count % 100 == 0:
-          debug.info( '%s files=%d, directories=%d, size=%d' % ( time.asctime(), files+links, directories, files_size ) )
-        path_size += len( name )
-        count += 1
-        full_path = os.path.join( directory, name )
-        st = os.lstat( full_path )
-        if stat.S_ISREG( st.st_mode ):
-          files += 1
-          files_size += st.st_size
-          result[ name ] = [ tuple( st ), None ]
-        elif stat.S_ISDIR( st.st_mode ):
-          content, directories, files, links, files_size, path_size, errors, count =  DirectoryAsDict._get_directory( full_path, debug, directories + 1, files, links, files_size, path_size, errors, count )
-          result[ name ] = [ tuple( st ), content ]
-        else:
-          links += 1
-          result[ name ] = [ tuple( st ), None ]
-    return result, directories, files, links, files_size, path_size, errors, count
-
-    
-  @staticmethod
-  def paths_to_dict( *paths ):
-    result = {}
-    for path in paths:
-      current_dir = result
-      path_list = split_path( path )
-      for name in path_list[ :-1 ]:
-        st_content = current_dir.setdefault( name, [ None, {} ] )
-        if st_content[ 1 ] is None:
-          st_content[ 1 ] = {}
-        current_dir = st_content[ 1 ]
-      current_dir.setdefault( path_list[ -1 ], [ None, None ] )
-    return result
+            try:
+                listdir = os.listdir(self.directory)
+            except OSError:
+                yield '', [None, None]
+                return
+            for name in listdir:
+                full_path = os.path.join(self.directory, name)
+                st_content = self.cache.get_directory(full_path)
+                if st_content is not None:
+                    yield st_content
+                else:
+                    st = os.stat(full_path)
+                    if stat.S_ISDIR(st.st_mode):
+                        yield (name, [tuple(st), DirectoryAsDict(full_path)])
+                    else:
+                        yield (name, [tuple(st), None])
 
 
-  @staticmethod
-  def get_statistics( dirdict, debug=None ):
-    return DirectoryAsDict._get_statistics( dirdict, debug, 0, 0, 0, 0, 0, 0, 0 )[ :-1 ]
-    
-  
-  @staticmethod
-  def _get_statistics( dirdict, debug, directories, files, links, files_size, path_size, errors, count ):
-    
-    if debug and count % 100 == 0:
-      debug.info( '%s files=%d, directories=%d, size=%d' % ( time.asctime(), files+links, directories, files_size ) )
-    count += 1
-    for name, content in dirdict.iteritems():
-      path_size += len( name )
-      st, content = content
-      if st:
-        st = posix.stat_result( st )
-        if stat.S_ISREG( st.st_mode ):
-          files += 1
-          files_size += st.st_size
-        elif stat.S_ISDIR( st.st_mode ):
-          if content is None:
-            directories += 1
+    @staticmethod
+    def get_directory(directory, debug=None):
+        return DirectoryAsDict._get_directory(
+            directory, debug, 0, 0, 0, 0, 0, 0, 0)[0]
+
+    @staticmethod
+    def _get_directory(directory, debug, directories, files, links,
+                       files_size, path_size, errors, count):
+        try:
+            listdir = os.listdir(directory)
+            result = {}
+        except OSError:
             errors += 1
-          else:
-            directories, files, links, files_size, path_size, errors, count = DirectoryAsDict._get_statistics( content, debug, directories + 1, files, links, files_size, path_size, errors, count )
+            result = None
+        if result is not None:
+            for name in listdir:
+                if debug and count % 100 == 0:
+                    debug.info('%s files=%d, directories=%d, size=%d' \
+                        % (time.asctime(), files + links, directories,
+                            files_size))
+                path_size += len(name)
+                count += 1
+                full_path = os.path.join(directory, name)
+                st = os.lstat(full_path)
+                if stat.S_ISREG(st.st_mode):
+                    files += 1
+                    files_size += st.st_size
+                    result[name] = [tuple(st), None]
+                elif stat.S_ISDIR(st.st_mode):
+                    content, directories, files, links, files_size, \
+                            path_size, errors, count =  \
+                        DirectoryAsDict._get_directory(full_path, debug,
+                            directories + 1, files, links, files_size,
+                            path_size, errors, count)
+                    result[name] = [tuple(st), content]
+                else:
+                    links += 1
+                    result[name] = [tuple(st), None]
+        return result, directories, files, links, files_size, path_size, \
+            errors, count
+
+
+    @staticmethod
+    def paths_to_dict(*paths):
+        result = {}
+        for path in paths:
+            current_dir = result
+            path_list = split_path(path)
+            for name in path_list[:-1]:
+                st_content = current_dir.setdefault(name, [None, {}])
+                if st_content[1] is None:
+                    st_content[1] = {}
+                current_dir = st_content[1]
+            current_dir.setdefault(path_list[-1], [None, None])
+        return result
+
+
+    @staticmethod
+    def get_statistics(dirdict, debug=None):
+        return DirectoryAsDict._get_statistics(
+            dirdict, debug, 0, 0, 0, 0, 0, 0, 0)[:-1]
+
+
+    @staticmethod
+    def _get_statistics(dirdict, debug, directories, files, links, files_size,
+            path_size, errors, count):
+
+        if debug and count % 100 == 0:
+            debug.info('%s files=%d, directories=%d, size=%d' \
+                % (time.asctime(), files + links, directories, files_size))
+        count += 1
+        for name, content in dirdict.iteritems():
+            path_size += len(name)
+            st, content = content
+            if st:
+                st = posix.stat_result(st)
+                if stat.S_ISREG(st.st_mode):
+                    files += 1
+                    files_size += st.st_size
+                elif stat.S_ISDIR(st.st_mode):
+                    if content is None:
+                        directories += 1
+                        errors += 1
+                    else:
+                        directories, files, links, files_size, path_size, \
+                                errors, count \
+                            = DirectoryAsDict._get_statistics(
+                                content, debug, directories + 1, files, links,
+                                files_size, path_size, errors, count)
+                else:
+                    links += 1
+            else:
+                errors += 1
+        return (directories, files, links, files_size, path_size, errors,
+            count)
+
+
+class DirectoriesCache(object):
+    def __init__(self):
+        self.directories = {}
+
+
+    def add_directory(self, directory, content=None, debug=None):
+        if content is None:
+            st = tuple(os.stat(directory))
+            content = DirectoryAsDict.get_directory(directory, debug=debug)
         else:
-          links += 1
-      else:
-        errors += 1
-    return ( directories, files, links, files_size, path_size, errors, count )
+            st = None
+        self.directories[directory] = [st, content]
 
 
-class DirectoriesCache( object ):
-  def __init__( self ):
-    self.directories = {}
-  
-  
-  def add_directory( self, directory, content=None, debug=None ):
-    if content is None:
-      st = tuple( os.stat( directory ) )
-      content = DirectoryAsDict.get_directory( directory, debug=debug )
-    else:
-      st = None
-    self.directories[ directory ] = [ st, content ]
-  
-  
-  def remove_directory( self, directory ):
-    del self.directories[ directory ]
-  
-  
-  def has_directory( self, directory ):
-    return directory in self.directories
-  
-  
-  def get_directory( self, directory ):
-    return self.directories.get( directory )
-
-  
-  def save( self, path ):
-    f = bz2.BZ2File( path, 'w' )
-    json.dump( self.directories, f )
-  
-  @classmethod
-  def load( cls, path ):
-    result = cls()
-    f = bz2.BZ2File( path, 'r' )
-    result.directories = json.load( f )
-    return result
+    def remove_directory(self, directory):
+        del self.directories[directory]
 
 
-class FileOrganizationModelManager( object ):
-  '''
-  Manage the discovery and instanciation of available FileOrganizationModel (FOM). A FOM can be represented as a JSON file (or a series of JSON files in a directory). This class allows to identify these files contained in a predefined set of directories (see find_fom method) and to instanciate a FileOrganizationModel for each identified file (see get_fom method).
-  '''
-  def __init__( self, paths ):
+    def has_directory(self, directory):
+        return directory in self.directories
+
+
+    def get_directory(self, directory):
+        return self.directories.get(directory)
+
+
+    def save(self, path):
+        f = bz2.BZ2File(path, 'w')
+        json.dump(self.directories, f)
+
+    @classmethod
+    def load(cls, path):
+        result = cls()
+        f = bz2.BZ2File(path, 'r')
+        result.directories = json.load(f)
+        return result
+
+
+class FileOrganizationModelManager(object):
     '''
-    Create a FOM manager that will use the given paths to find available FOMs.
+    Manage the discovery and instanciation of available FileOrganizationModel (FOM). A FOM can be represented as a JSON file (or a series of JSON files in a directory). This class allows to identify these files contained in a predefined set of directories (see find_fom method) and to instanciate a FileOrganizationModel for each identified file (see get_fom method).
     '''
-    self.paths = paths
-    self._cache = None
-  
-  
-  def find_foms( self ):
-    '''Return a list of file organisation model (FOM) names. 
-    These FOMs can be loaded with load_foms. FOM files (or directories) are
-    looked for in self.paths.'''
-    self._cache = {}
-    for path in self.paths:
-      for i in os.listdir( path ):
-        full_path = os.path.join( path, i )
-        if os.path.isdir( full_path ):
-          for ext in ( '.json', '.yaml' ):
-            main_file = os.path.join( full_path, i + ext )
-            if os.path.exists( main_file ):
-              d = json_reader.load( open( main_file ) )
-              name = d.get( 'fom_name' )
-              if not name:
-                raise ValueError( 'file %s does not contain fom_name' % main_file )
-              self._cache[ name ] = full_path
-        elif i.endswith( '.json' ) or i.endswith( '.yaml' ):
-          try:
-            d = json_reader.load( open( full_path ) )
-          except ValueError, e:
-            raise ValueError( '%s: %s' % ( full_path, str( e ) ) )
-          if d:
-            name = d.get( 'fom_name' )
-            if not name:
-              raise ValueError( 'file %s does not contain fom_name' % full_path )
-            self._cache[ name ] = full_path
-    return self._cache.keys()
-   
-   
-  def load_foms( self, *names ):
-    if self._cache is None:
-      self.find_foms()
-    foms = FileOrganizationModels()
-    for name in names:
-     foms.import_file( self._cache[ name ], foms_manager=self )
-    return foms
+    def __init__(self, paths):
+        '''
+        Create a FOM manager that will use the given paths to find available FOMs.
+        '''
+        self.paths = paths
+        self._cache = None
 
-    
-  def file_name( self, fom ):
-    if self._cache is None:
-      self.find_foms()
-    return self._cache[ fom ]
 
-    
+    def find_foms(self):
+        '''Return a list of file organisation model (FOM) names.
+        These FOMs can be loaded with load_foms. FOM files (or directories) are
+        looked for in self.paths.'''
+        self._cache = {}
+        for path in self.paths:
+            for i in os.listdir(path):
+                full_path = os.path.join(path, i)
+                if os.path.isdir(full_path):
+                    for ext in ('.json', '.yaml'):
+                        main_file = os.path.join(full_path, i + ext)
+                        if os.path.exists(main_file):
+                            d = json_reader.load(open(main_file))
+                            name = d.get('fom_name')
+                            if not name:
+                                raise ValueError(
+                                  'file %s does not contain fom_name' \
+                                  % main_file)
+                            self._cache[name] = full_path
+                elif i.endswith('.json') or i.endswith('.yaml'):
+                    try:
+                        d = json_reader.load(open(full_path))
+                    except ValueError, e:
+                        raise ValueError('%s: %s' % (full_path, str(e)))
+                    if d:
+                        name = d.get('fom_name')
+                        if not name:
+                            raise ValueError(
+                                'file %s does not contain fom_name' \
+                                % full_path)
+                        self._cache[name] = full_path
+        return self._cache.keys()
+
+
+    def load_foms(self, *names):
+        if self._cache is None:
+            self.find_foms()
+        foms = FileOrganizationModels()
+        for name in names:
+            foms.import_file(self._cache[name], foms_manager=self)
+        return foms
+
+
+    def file_name(self, fom):
+        if self._cache is None:
+            self.find_foms()
+        return self._cache[fom]
+
+
 class FileOrganizationModels( object ):
   def __init__( self ):
     self._directories_regex = re.compile( r'{([A-Za-z][A-Za-z0-9_]*)}' )
