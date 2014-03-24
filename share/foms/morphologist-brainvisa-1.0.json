@@ -7,15 +7,15 @@
     "acquisition" : { "default_value" : "default_acquisition" },
     "analysis" : { "default_value" : "default_analysis" },
     "sulci_recognition_session" :  { "default_value" : "default_session"}
-    
+
   },
-  
+
   "shared_patterns" : {
     "acquisition" : "<protocol>/<subject>/t1mri/<acquisition>",
     "analysis" : "{acquisition}/<analysis>",
   },
-  
-  "processes" : {  
+
+  "processes" : {
     "morphologistSimp.SimplifiedMorphologist" : {
        "t1mri": [ [ "input:{acquisition}/<subject>", "images" ],
                   [ "input:{acquisition}/normalized_<normalization>_<subject>", "images" ] ],

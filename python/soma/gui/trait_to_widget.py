@@ -43,7 +43,10 @@ class StrCreateWidget( object ):
   def update_controller( controller_widget, name, attribute_widget ):
     """GUI modified so update traits"""
     if isinstance( attribute_widget, TimeredQLineEdit ):
-      setattr(controller_widget.controller, name, unicode( attribute_widget.text() ) )
+      try:
+        setattr(controller_widget.controller, name, unicode( attribute_widget.text() ) )
+      except:
+        print 'Warning - StrCreateWidget.update_controller: controller widget set failure'
     else: 
       setattr(controller_widget.controller, name, unicode( attribute_widget.text_widget.text() ) )
     

@@ -20,9 +20,8 @@ from soma.pipeline.study import Study
 
 class ProcessWithFom(Controller):
     """Class who create attributs and create completion"""
-    #name = 'morphologistSimp.SimplifiedMorphologist'   
-    def __init__(self,process_specific):   
-        HasTraits.__init__(self) 
+    def __init__(self,process_specific):
+        super(Controller, self).__init__()
         self.process_specific=process_specific
         self.list_process_iteration=[]
         #self.fom=fom
@@ -158,6 +157,7 @@ class ProcessWithFom(Controller):
                     atp=self.input_atp
                 parameter_attributes = [ 'fom_process' ] + atp.find_discriminant_attributes( fom_parameter=parameter )
                 d = dict( ( i, self.attributes[ i ] ) for i in parameter_attributes if i in self.attributes )
+                #d = dict( ( i, getattr(self, i) or self.attributes[ i ] ) for i in parameter_attributes if i in self.attributes )
                 d['fom_parameter'] = parameter
                 d['fom_format']='fom_prefered'
                 for h in atp.find_paths(d):

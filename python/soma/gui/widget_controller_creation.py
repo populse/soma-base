@@ -3,12 +3,13 @@ import sipconfig
 from PyQt4 import QtGui, QtCore
 try:
   from capsul.controller import trait_ids, Controller
-  from capsul.functiontools import partial, SomaPartial
+  from soma.functiontools import SomaPartial
   print 'widget_controller_creation uses CAPSUL.'
 except:
   from soma.controller import trait_ids, Controller
-  from soma.functiontools import partial, SomaPartial
+  from soma.functiontools import SomaPartial
   print 'widget_controller_creation uses soma.'
+from functools import partial
 from trait_to_widget import StrCreateWidget,FloatCreateWidget,IntCreateWidget,\
 LongCreateWidget,BoolCreateWidget,EnumCreateWidget,StrEnumCreateWidget,\
 FileCreateWidget,DirectoryCreateWidget
@@ -20,12 +21,12 @@ class ControllerWidget( QtGui.QWidget ):
   # (it simply exits the program). But for documentation with epydoc, all
   # modules are loaded without C{QApplication}. Therefore, the creation of
   # the following two static QPixmap instances has been put in __init__.
- 
+
   _create_widget = {}
-  
+
   def __init__( self, controller,
-                parent=None, name=None, live=False, hide_labels=False ):          
-    
+                parent=None, name=None, live=False, hide_labels=False ):
+
     super( ControllerWidget, self ).__init__( parent )
     if name:
       self.setObjectName(name)
