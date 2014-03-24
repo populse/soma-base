@@ -13,9 +13,9 @@ from soma.qt4gui.api import TimeredQLineEdit
 from soma.global_naming import GlobalNaming
 from soma.gui.icon_factory import IconFactory
 try:
-    from traits.api import File,Directory
+    from traits.api import File, Directory
 except ImportError:
-    from enthought.traits.api import File,Directory
+    from enthought.traits.api import File, Directory
 
 
 

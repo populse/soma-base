@@ -3,13 +3,13 @@ import sipconfig
 from PyQt4 import QtGui, QtCore
 try:
   from capsul.controller import trait_ids, Controller
-  from soma.functiontools import SomaPartial
+  from capsul.utils.functiontools import partial, SomaPartial
   print 'widget_controller_creation uses CAPSUL.'
 except:
   from soma.controller import trait_ids, Controller
-  from soma.functiontools import SomaPartial
+  from soma.functiontools import partial, SomaPartial
   print 'widget_controller_creation uses soma.'
-from functools import partial
+#from functools import partial
 from trait_to_widget import StrCreateWidget,FloatCreateWidget,IntCreateWidget,\
 LongCreateWidget,BoolCreateWidget,EnumCreateWidget,StrEnumCreateWidget,\
 FileCreateWidget,DirectoryCreateWidget
@@ -95,7 +95,7 @@ class ControllerWidget( QtGui.QWidget ):
 
   @classmethod
   def find_create_widget_from_trait( cls, trait ):
-    """Find widget corresponding to the trait, call the class create_create widget corresponding"""     
+    """Find widget corresponding to the trait, call the class create_create widget corresponding"""
     create_widget = None
     for trait_id in trait_ids( trait ):
       for create_widget in cls._create_widget.get( trait_id, [] ):
@@ -106,10 +106,10 @@ class ControllerWidget( QtGui.QWidget ):
       if create_widget is not None:
         break
     return create_widget
-  
-  
+
+
   def _create_widgets( self ):
-    #print '!_create_widgets!', self.controller.user_traits().keys()
+    # print '!_create_widgets!', self.controller.user_traits().keys()
     for name, trait in self.controller.user_traits().iteritems():
       create_widget = self._widgets.get( name )
       if create_widget is None:
@@ -121,7 +121,7 @@ class ControllerWidget( QtGui.QWidget ):
           tooltip = '<b>' + name + ':</b> ' + trait.desc
         else:
           tooltip = None
-        if label_widget is None: 
+        if label_widget is None:
           self._grid_layout.addWidget( attribute_widget, self._grid_layout.rowCount(), 0, 1, 2 )
           if tooltip:
             attribute_widget.setToolTip( tooltip )
@@ -174,7 +174,7 @@ class ControllerWidget( QtGui.QWidget ):
           for i in l:
             i.show()
 
-      
+
   def update_widgets( self ):
     user_traits = self.controller.user_traits()
     was_connected = self.connected
@@ -369,16 +369,17 @@ ControllerWidget._create_widget[ 'Unicode' ] = [ StrCreateWidget ]
 ControllerWidget._create_widget[ 'Float' ] = [ FloatCreateWidget ]
 ControllerWidget._create_widget[ 'Int' ] = [ IntCreateWidget ]
 
-ControllerWidget._create_widget[ 'Long' ] = [ LongCreateWidget ]    
+ControllerWidget._create_widget[ 'Long' ] = [ LongCreateWidget ]
 ControllerWidget._create_widget[ 'Bool' ] = [ BoolCreateWidget ]
-    
+
 ControllerWidget._create_widget[ 'Enum' ] = [ EnumCreateWidget ]
 ControllerWidget._create_widget[ 'Str' ].insert( 0, StrEnumCreateWidget )
 ControllerWidget._create_widget[ 'Unicode' ].insert( 0, StrEnumCreateWidget )
 ControllerWidget._create_widget[ 'File' ] = [ FileCreateWidget ]
 ControllerWidget._create_widget[ 'Directory' ] = [ DirectoryCreateWidget ]
 ControllerWidget._create_widget[ 'Instance_Controller' ] = [ ControllerCreateWidget ]
-     
+ControllerWidget._create_widget[ 'Any' ] = [ StrCreateWidget ]
+
 ControllerWidget._create_widget[ 'List_Str' ] = [ ListCreateWidget ]
 ControllerWidget._create_widget[ 'List_Float' ] = [ ListCreateWidget ]
 ControllerWidget._create_widget[ 'List_Int' ] = [ ListCreateWidget ]
@@ -387,6 +388,7 @@ ControllerWidget._create_widget[ 'List_Bool' ] = [ ListCreateWidget ]
 ControllerWidget._create_widget[ 'List_Enum' ] = [ ListCreateWidget ]
 ControllerWidget._create_widget[ 'List_Directory' ] = [ ListCreateWidget ]
 ControllerWidget._create_widget[ 'List_File' ] = [ ListCreateWidget ]
+ControllerWidget._create_widget[ 'List_Any' ] = [ ListCreateWidget ]
 
 
 #-------------------------------------------------------------------------------

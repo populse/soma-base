@@ -123,7 +123,9 @@ class ProcessGui(QtGui.QDialog):
         
             print 'here'
             print self.process_with_fom.attributes
-            self.process_with_fom.find_attributes(self.lineedit_input.lineedit.text())
+            if self.lineedit_input.lineedit.text() != '':
+                self.process_with_fom.find_attributes(
+                    self.lineedit_input.lineedit.text())
             self.scroll_area2.show()
 
         else:
