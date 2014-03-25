@@ -17,7 +17,7 @@ for qt_class in qt_api:
     sip.setapi( qt_class, PYQT_API_VERSION )
 del qt_api, qt_class
 from PyQt4 import QtGui, QtCore
-from soma.gui.pipeline.main_window import MainWindow
+from soma.gui.pipeline.main_window import StudyWindow
 from soma.application import Application
 from soma.global_naming import GlobalNaming
 
@@ -31,6 +31,6 @@ if __name__ == '__main__':
     soma_app.initialize()
 
     app = QtGui.QApplication( sys.argv )
-    w=MainWindow()
+    w = StudyWindow()
     w.show()
     app.exec_()

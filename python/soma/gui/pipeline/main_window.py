@@ -20,10 +20,10 @@ import subprocess
 import os
 
 
-class MainWindow(QtGui.QMainWindow):
+class StudyWindow(QtGui.QMainWindow):
     """Class to create study and to launch Simple or iteration process"""
     def __init__(self):
-        super(MainWindow, self).__init__()
+        super(StudyWindow, self).__init__()
         self.main_widget=QtGui.QWidget()
         self.vbox=QtGui.QVBoxLayout()
 
