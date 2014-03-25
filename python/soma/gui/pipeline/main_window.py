@@ -85,11 +85,11 @@ class MainWindow(QtGui.QMainWindow):
         print 'RUN SIMPLE PROCESS'
         #FIXME utile je pense pour creer fichier json si existe pas..
         Study.get_instance().save()
-        process_specific=self.get_object_process()
-        print 'process_specific:', process_specific
+        process=self.get_object_process()
+        print 'process:', process
         #To have attributes on header
-        process_with_fom=ProcessWithFom(process_specific)
-        self.process_gui=ProcessGui(process_with_fom,process_specific)
+        process_with_fom=ProcessWithFom(process)
+        self.process_gui=ProcessGui(process_with_fom,process)
         self.process_gui.open()
 
 
@@ -104,14 +104,14 @@ class MainWindow(QtGui.QMainWindow):
     def run_iteration_process(self):
         """Launch iteration process"""
         print 'RUN ITERATION PROCESS' 
-        process_specific=self.get_object_process()
-        process_with_fom=ProcessWithFom(process_specific)
+        process=self.get_object_process()
+        process_with_fom=ProcessWithFom(process)
         self.wizard=QtGui.QWizard()
         self.wizard.setButtonText(3,'Run all')
         self.connect(self.wizard,QtCore.SIGNAL( 'currentIdChanged( int )' ),self.on_page_changed)
         self.first_page=IterationGui()
         self.wizard.addPage(self.first_page)
-        self.second_page=ChoiceParameters(process_specific,process_with_fom)
+        self.second_page=ChoiceParameters(process,process_with_fom)
         self.connect(self.wizard.button(3), QtCore.SIGNAL('clicked()'), process_with_fom.iteration_run)
         self.wizard.addPage(self.second_page)
         self.wizard.show()
@@ -149,8 +149,8 @@ class MainWindow(QtGui.QMainWindow):
 
     def on_display_bdd(self):
         print 'on display bdd'
-        process_specific = self.get_object_process()
-        self.display_bdd=DisplayBDD(process_specific)
+        process = self.get_object_process()
+        self.display_bdd=DisplayBDD(process)
         self.display_bdd.open()
 
 

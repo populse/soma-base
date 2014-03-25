@@ -14,13 +14,13 @@ except ImportError:
 
 class ProcessGui(QtGui.QDialog):
     """Class who created Interface for execute a process on one subject"""
-    def __init__(self,process_with_fom,process_specific): 
+    def __init__(self,process_with_fom,process):
         super(ProcessGui, self).__init__()
         self.Study=Study.get_instance()
         self.setLayout( QtGui.QVBoxLayout() )
         #Get the object process (SimpMorpho)
         self.process_with_fom = process_with_fom
-        self.process_specific=process_specific
+        self.process=process
 
         #To show output directory and select file
         self.lineedit_input=Selection('File','File for attributes input',165)
@@ -55,11 +55,11 @@ class ProcessGui(QtGui.QDialog):
         self.layout().addWidget( self.scroll_area )
 
         #Create controller widget for process and object_attribute
-        self.controller_widget = ControllerWidget( self.process_specific, live=True, parent=self.scroll_area )
+        self.controller_widget = ControllerWidget( self.process, live=True, parent=self.scroll_area )
         self.controller_widget2=ControllerWidget( self.process_with_fom, live=True, parent=self.scroll_area2 )
-        #self.process_specific.on_trait_change(self.process_with_fom.process_changed,'anytrait')
+        #self.process.on_trait_change(self.process_with_fom.process_changed,'anytrait')
         self.process_with_fom.on_trait_change(self.process_with_fom.attributes_changed,'anytrait')
-        #self.process_specific.on_trait_change(self.process_with_fom.process_changed,'anytrait')
+        #self.process.on_trait_change(self.process_with_fom.process_changed,'anytrait')
 
         #Set controller of attributs and controller of process for each corresponding area
         self.scroll_area2.setWidget(self.controller_widget2 ) 
@@ -92,7 +92,7 @@ class ProcessGui(QtGui.QDialog):
             #number=len(self.Study.runs.keys())+1
             #name_run='run'+str(number)
         #self.Study.runs[name_run]=collections.OrderedDict()
-        #self.Study.runs[name_run]['name_process']='morphologistSimp.SimplifiedMorphologist'
+        #self.Study.runs[name_run]['process_name']='morphologistSimp.SimplifiedMorphologist'
         #self.Study.inc_nb_run_process('morphologistSimp.SimplifiedMorphologist' )
         #self.Study.runs[name_run]['fom_name']=self.object_attribute.fom_name
         #self.Study.runs[name_run]['attributs']={}
@@ -100,9 +100,9 @@ class ProcessGui(QtGui.QDialog):
         #for key in self.object_attribute.dictionnary_attributes:
             #self.Study.runs[name_run]['attributs'][key]=self.object_attribute.dictionnary_attributes[key]
         #self.Study.runs[name_run]['output']={}
-        #for name, trait in self.process_specific.user_traits().iteritems():
+        #for name, trait in self.process.user_traits().iteritems():
             #if trait.output is True:
-                #self.Study.runs[name_run]['output'][name]=getattr(self.process_specific,name)
+                #self.Study.runs[name_run]['output'][name]=getattr(self.process,name)
         #self.Study.save()
         
         
@@ -112,13 +112,13 @@ class ProcessGui(QtGui.QDialog):
  
         if ret == QtGui.QMessageBox.Ok:
             #reset attributs and trait of process
-            #self.process_specific.on_trait_change(self.process_with_fom.process_changed,'anytrait')
+            #self.process.on_trait_change(self.process_with_fom.process_changed,'anytrait')
             self.process_with_fom.on_trait_change(self.process_with_fom.attributes_changed,'anytrait')
-            for name,trait in self.process_specific.user_traits().iteritems():
+            for name,trait in self.process.user_traits().iteritems():
                 if trait.is_trait_type( File):
-                    setattr(self.process_specific,name,'')
+                    setattr(self.process,name,'')
             self.process_with_fom.create_completion()
-            #self.process_with_fom.__init__(self.process_specific)
+            #self.process_with_fom.__init__(self.process)
         
         
             print 'here'
@@ -139,7 +139,7 @@ class ProcessGui(QtGui.QDialog):
        else:
            print 'YOU WANT BE OUTSIDE RULES OF FOM'
            self.scroll_area2.hide()
-           #self.process_specific.on_trait_change(self.process_with_fom.process_changed,'anytrait',remove=True)
+           #self.process.on_trait_change(self.process_with_fom.process_changed,'anytrait',remove=True)
            self.process_with_fom.on_trait_change(self.process_with_fom.attributes_changed,'anytrait',remove=True)
 
 
@@ -154,8 +154,8 @@ class ProcessGui(QtGui.QDialog):
     def on_run(self):
         print 'IN THE FUNCTION RUN'
         #To execute the process
-        self.process_specific()
+        self.process()
         #How pass atributes
-        self.Study.save_run(self.process_with_fom.attributes,self.process_specific)
+        self.Study.save_run(self.process_with_fom.attributes,self.process)
         
         

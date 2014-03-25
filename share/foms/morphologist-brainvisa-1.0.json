@@ -16,7 +16,7 @@
   },
 
   "processes" : {
-    "morphologistSimp.SimplifiedMorphologist" : {
+    "SimplifiedMorphologist" : {
        "t1mri": [ [ "input:{acquisition}/<subject>", "images" ],
                   [ "input:{acquisition}/normalized_<normalization>_<subject>", "images" ] ],
        #Commissure Coordinates

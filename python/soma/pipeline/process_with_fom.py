@@ -19,10 +19,53 @@ from soma.pipeline.study import Study
 
 
 class ProcessWithFom(Controller):
-    """Class who create attributs and create completion"""
-    def __init__(self,process_specific):
+    """Class who creates attributes and completion
+    Associates a Process and FOMs.
+
+    * A soma.Application needs to be created first, and associated with FOMS:
+
+    ::
+
+        from soma.application import Application
+        soma_app = Application( 'soma.fom', '1.0' )
+        soma_app.plugin_modules.append( 'soma.fom' )
+        soma_app.initialize()
+
+    * A Study also needs to be configured with selected FOMS and directories:
+
+    ::
+
+        from soma.pipeline.study import Study
+        study = Study.get_instance()
+        study.load('study_config.json')
+
+    * Only then a ProcessWithFom can be created:
+
+    ::
+
+        process = get_process_instance('morphologist')
+        process_with_fom = ProcessWithFom(process)
+
+    Parameters
+    ----------
+    process: Process instance (mandatory)
+        the process (or piprline) to be associated with FOMS
+    name: string (optional)
+        name of the process in the FOM dictionary. By default the
+        process.name variable will be used.
+
+    Methods
+    -------
+    create_completion()
+    create_attributes_with_fom()
+    """
+    def __init__(self, process, name=None):
         super(Controller, self).__init__()
-        self.process_specific=process_specific
+        self.process=process
+        if name is None:
+            self.name = process.name
+        else:
+            self.name = name
         self.list_process_iteration=[]
         #self.fom=fom
         self.attributes={}
@@ -69,19 +112,27 @@ class ProcessWithFom(Controller):
         ## Create an AttributesToPaths specialized for our process
         formats=tuple(getattr(self.Study,key) for key in self.Study.user_traits() if key.startswith('format'))
 
-        self.input_atp = AttributesToPaths( self.input_fom, selection=dict( fom_process=self.process_specific.name_process ),
+        self.input_atp = AttributesToPaths( self.input_fom, selection=dict( fom_process=self.process.name ),
                              directories=self.directories,prefered_formats=set((formats)) )
 
-        self.output_atp = AttributesToPaths( self.output_fom, selection=dict( fom_process=self.process_specific.name_process ),
+        self.output_atp = AttributesToPaths( self.output_fom, selection=dict( fom_process=self.process.name ),
                              directories=self.directories,prefered_formats=set((formats)) )
 
 
         #Get attributes in input fom
-        process_specific_attributes=set()
-        for parameter in self.input_fom.patterns[self.process_specific.name_process]:
-            process_specific_attributes.update(self.input_atp.find_discriminant_attributes(fom_parameter=parameter))
+        process_attributes=set()
+        names_search_list = (self.name, self.process.id, self.process.name)
+        for name in names_search_list:
+            fom_patterns = self.input_fom.patterns.get(name)
+            if fom_patterns is not None:
+                break
+        else:
+            raise KeyError('Process not found in FOMs amongst %s' \
+                % repr(names_search_list))
+        for parameter in fom_patterns:
+            process_attributes.update(self.input_atp.find_discriminant_attributes(fom_parameter=parameter))
 
-        for att in process_specific_attributes:
+        for att in process_attributes:
             if not att.startswith( 'fom_' ):
                 default_value = self.input_fom.attribute_definitions[ att ].get( 'default_value' )
                 self.attributes[att]=default_value
@@ -90,14 +141,14 @@ class ProcessWithFom(Controller):
         #Only search other attributes if fom not the same (by default merge attributes of the same foms)
         if self.Study.input_fom != self.Study.output_fom:
             #Get attributes in output fom
-            process_specific_attributes2=set()
-            for parameter in self.output_fom.patterns[self.process_specific.name_process]:
-                process_specific_attributes2.update(self.output_atp.find_discriminant_attributes(fom_parameter=parameter))
+            process_attributes2=set()
+            for parameter in self.output_fom.patterns[self.process.name]:
+                process_attributes2.update(self.output_atp.find_discriminant_attributes(fom_parameter=parameter))
 
-            for att in process_specific_attributes2:
+            for att in process_attributes2:
                 if not att.startswith( 'fom_' ):
                     default_value = self.output_fom.attribute_definitions[ att ].get( 'default_value' )
-                    if att in process_specific_attributes and  default_value != self.attributes[att]:
+                    if att in process_attributes and  default_value != self.attributes[att]:
                         print 'same attribute but not same default value so nothing displayed'
                     else:
                         self.attributes[att]=default_value
@@ -110,8 +161,8 @@ class ProcessWithFom(Controller):
     def find_attributes(self,value):
         print 'FIND ATTRIBUTES'
         #By the value find attributes
-        print 'coucou',self.process_specific.name_process
-        pta = PathToAttributes( self.input_fom, selection=dict( fom_process=self.process_specific.name_process)) #, fom_parameter=name ) )
+        print 'coucou',self.process.name
+        pta = PathToAttributes( self.input_fom, selection=dict( fom_process=self.process.name)) #, fom_parameter=name ) )
 
         # Extract the attributes from the first result returned by parse_directory
         liste=split_path(value)
@@ -130,7 +181,7 @@ class ProcessWithFom(Controller):
               break
             except StopIteration:
               if element == liste[-1]:
-                raise ValueError( '%s is not recognized for parameter "%s" of "%s"' % ( new_value,None, self.process_specific.name_process ) )
+                raise ValueError( '%s is not recognized for parameter "%s" of "%s"' % ( new_value,None, self.process.name ) )
 
         for att in attributes:
             if att in self.attributes:
@@ -139,18 +190,29 @@ class ProcessWithFom(Controller):
 
 
     def create_completion(self):
+        '''Completes the underlying process parameters according to the attributes set.
+        '''
         print 'CREATE COMPLETION'
         #Create completion
-        completion={}
-        #for i in self.process_specific.user_traits():
-            #parameter = self.output_fom.patterns[ self.process_specific.name_process ].get( i )
-        for parameter in self.output_fom.patterns[self.process_specific.name_process]:
+        #completion={}
+        #for i in self.process.user_traits():
+            #parameter = self.output_fom.patterns[ self.process.name ].get( i )
+        names_search_list = (self.name, self.process.id, self.process.name)
+        for name in names_search_list:
+            fom_patterns = self.output_fom.patterns.get(name)
+            if fom_patterns is not None:
+                break
+        else:
+            raise KeyError('Process not found in FOMs amongst %s' \
+                % repr(names_search_list))
+
+        for parameter in fom_patterns:
         #if parameter is not None:
             # Select only the attributes that are discriminant for this parameter
             # otherwise other attibutes can prevent the appropriate rule to match
-            if parameter in self.process_specific.user_traits():
+            if parameter in self.process.user_traits():
                 #print 'parameter',parameter
-                if self.process_specific.trait( parameter ).output:
+                if self.process.trait( parameter ).output:
                     atp=self.output_atp
                 else:
                     #print 'input ',parameter
@@ -161,7 +223,7 @@ class ProcessWithFom(Controller):
                 d['fom_parameter'] = parameter
                 d['fom_format']='fom_prefered'
                 for h in atp.find_paths(d):
-                    setattr(self.process_specific,parameter,h[0])
+                    setattr(self.process,parameter,h[0])
 
 
     def attributes_changed(self,object,name,old,new):

@@ -139,11 +139,11 @@ class IterationGui(QtGui.QWizardPage):
 
 
 class ChoiceParameters(QtGui.QWizardPage):
-    def __init__(self,process_specific,process_with_fom): 
+    def __init__(self,process,process_with_fom):
         super(ChoiceParameters, self).__init__()
         self.list_subjects_selected=[]
         #self.list_subjects_selected_prec=None
-        self.process_specific=process_specific
+        self.process=process
         self.process_with_fom=process_with_fom
         self.dict_parameters={}
         self.dict_default_value={}
@@ -158,13 +158,13 @@ class ChoiceParameters(QtGui.QWizardPage):
         self.setLayout(self.vbox)
         
         header_horizontal=1
-        for trait in self.process_specific.user_traits():
-            if self.process_specific.trait(trait).is_trait_type(File) is False:
-                #for trait_id in trait_ids(self.process_specific.trait(trait)):
+        for trait in self.process.user_traits():
+            if self.process.trait(trait).is_trait_type(File) is False:
+                #for trait_id in trait_ids(self.process.trait(trait)):
                     self.table.insertColumn(header_horizontal)
-                    self.dict_parameters[trait]=[trait_ids(self.process_specific.trait(trait))[0],self.process_specific.trait(trait).handler.values,self.process_specific.trait(trait).default ]
+                    self.dict_parameters[trait]=[trait_ids(self.process.trait(trait))[0],self.process.trait(trait).handler.values,self.process.trait(trait).default ]
                     #print self.dict_parameters[trait]
-                    self.dict_default_value[trait]=self.process_specific.trait(trait).default
+                    self.dict_default_value[trait]=self.process.trait(trait).default
                     self.table.setHorizontalHeaderItem(header_horizontal,QtGui.QTableWidgetItem(trait))
                     header_horizontal=header_horizontal+1
         
@@ -184,14 +184,14 @@ class ChoiceParameters(QtGui.QWizardPage):
         
     
     def combo_parameter_changed(self,trait,text):
-        setattr(self.process_specific,trait,text)
+        setattr(self.process,trait,text)
         
     
     def checkbox_parameter_changed(self,trait,state):
         if state==0:
-            setattr(self.process_specific,trait,False)
+            setattr(self.process,trait,False)
         else:
-            setattr(self.process_specific,trait,True)
+            setattr(self.process,trait,True)
 
 
     
@@ -199,7 +199,7 @@ class ChoiceParameters(QtGui.QWizardPage):
     def on_back_default_value(self):
         print 'on back default value'
         #print '1 - d value',self.dict_default_value[trait]
-        #print '2 - d value',self.process_specific.trait(trait).default
+        #print '2 - d value',self.process.trait(trait).default
         
 
         
@@ -217,8 +217,8 @@ class ChoiceParameters(QtGui.QWizardPage):
             self.table.insertRow(nb_row)
             self.table.setItem(nb_row,0,QtGui.QTableWidgetItem(ele))
             nb_param=1
-            for trait in self.process_specific.user_traits():
-                if self.process_specific.trait(trait).is_trait_type(File) is False:
+            for trait in self.process.user_traits():
+                if self.process.trait(trait).is_trait_type(File) is False:
                     self.table.setCellWidget(nb_row,nb_param,self.trait_parameter_to_widget(trait,self.dict_parameters[trait][0],self.dict_parameters[trait][1],self.dict_parameters[trait][2]))
                     nb_param=nb_param+1
         
@@ -232,8 +232,8 @@ class ChoiceParameters(QtGui.QWizardPage):
                 self.table.insertRow(nb_sub)
             self.table.setItem(nb_sub,0,QtGui.QTableWidgetItem(sub))
             nb_param=1
-            for trait in self.process_specific.user_traits():
-                if self.process_specific.trait(trait).is_trait_type(File) is False:
+            for trait in self.process.user_traits():
+                if self.process.trait(trait).is_trait_type(File) is False:
                     self.table.setCellWidget(nb_sub,nb_param,self.trait_parameter_to_widget(trait,self.dict_parameters[trait][0],self.dict_parameters[trait][1],self.dict_parameters[trait][2]))
                     nb_param=nb_param+1
             nb_sub=nb_sub+1
