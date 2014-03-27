@@ -25,17 +25,23 @@ class ProcessGui(QtGui.QDialog):
         #To show output directory and select file
         self.lineedit_input=Selection('File','File for attributes input',165)
         self.connect(self.lineedit_input, QtCore.SIGNAL("editChanged(const QString & )"),self.on_lineedit)
+        self.lineedit_input.setSizePolicy(QtGui.QSizePolicy(
+            QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Fixed))
 
         self.layout().addWidget(self.lineedit_input)
         if self.Study.input_fom != self.Study.output_fom:
             self.lineedit_output=Selection('File','File for attributes output',165)
+            self.lineedit_output.setSizePolicy(QtGui.QSizePolicy(
+                QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Fixed))
             self.layout().addWidget(self.lineedit_output)
             self.connect(self.lineedit_output,  QtCore.SIGNAL("editChanged(const QString & )"),self.on_lineedit)
 
         #Scroll area to show attributs
         self.scroll_area2=QtGui.QScrollArea( parent=self )
         self.scroll_area2.setWidgetResizable( True )
-        self.layout().addStretch(1)
+        self.scroll_area2.setSizePolicy(QtGui.QSizePolicy(
+            QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Preferred))
+        #self.layout().addStretch(1)
         self.layout().addWidget( self.scroll_area2 )
 
         #CheckBox to foms rules or not
@@ -52,6 +58,8 @@ class ProcessGui(QtGui.QDialog):
         #Scroll area to show completion
         self.scroll_area = QtGui.QScrollArea( parent=self )
         self.scroll_area.setWidgetResizable( True )
+        self.scroll_area.setSizePolicy(QtGui.QSizePolicy(
+            QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding))
         self.layout().addWidget( self.scroll_area )
 
         #Create controller widget for process and object_attribute
