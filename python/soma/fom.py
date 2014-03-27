@@ -18,8 +18,8 @@ except ImportError:
 
 
 from soma.path import split_path
-from soma.config import short_version
-from soma.sorted_dictionary import SortedDictionary
+#from soma.sorted_dictionary import SortedDictionary as OrderedDict
+from collections import OrderedDict
 
 
 class DirectoryAsDict(object):
@@ -593,7 +593,7 @@ class PathToAttributes(object):
 
     def __init__(self, foms, selection=None):
         self._attributes_regex = re.compile('<([^>]+)>')
-        self.hierarchical_patterns = SortedDictionary()
+        self.hierarchical_patterns = OrderedDict()
         for rule_pattern, rule_attributes in foms.selected_rules(selection):
             rule_formats = rule_attributes.get('fom_formats', [])
             parent = self.hierarchical_patterns
