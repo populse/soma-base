@@ -60,7 +60,7 @@ class ProcessWithFom(Controller):
     create_attributes_with_fom()
     """
     def __init__(self, process, name=None):
-        super(Controller, self).__init__()
+        super(ProcessWithFom, self).__init__()
         self.process=process
         if name is None:
             self.name = process.name
