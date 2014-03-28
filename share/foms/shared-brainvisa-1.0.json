@@ -4,6 +4,7 @@
   "shared_patterns" : {
     "shared.anatomical_templates" : [ [ "shared:anatomical_templates/MNI152_T1_1mm ", "images" ],[ "shared:anatomical_templates/MNI152_T1_2mm ", "images" ],[ "shared:anatomical_templates/MNI152_T1_1mm_brain", "images" ],[ "shared:anatomical_templates/MNI152_T1_2mm_brain", "images" ] ],
   "shared.mni_spm_referential" : [ [ "shared:registration/Talairach-MNI_template-SPM", "Referential" ] ],
+  "shared.acpc_referential" : [ [ "shared:registration/Talairach-AC_PC-Anatomist.referential", "Referential" ] ],
   "shared.talairach_TO_spm_transform" : [ ["shared:transformation/talairach_TO_spm_template_novoxels","Transformation matrix"] ],
   "shared.surface_referential_translation_map" : [ ["shared:nomenclature/surfaceanalysis/surfaceReferential", "label translations"], ],
   "shared.spam_distribs" : [ ["shared:models/models_<sulci_database>/descriptive_models/segments/<sulci_segments_model_type>_<side>/spam_distribs" ,"Text Data Table",{"sulci_database":"2008","sulci_segments_model_type":"global_registered_spam","side":"left"}] ]
