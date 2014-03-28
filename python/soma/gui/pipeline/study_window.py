@@ -59,7 +59,7 @@ class StudyWindow(QtGui.QMainWindow):
         self.vbox.addWidget(self.btn_run_pipeline_process)
         self.vbox.addWidget(self.btn_run_iteration_process)
         self.vbox.addWidget(self.btn_display_bdd)
-        self.vbox.addStretch(1)
+        #self.vbox.addStretch(1)
         self.signals()
         self.main_widget.setLayout(self.vbox)
         self.setCentralWidget(self.main_widget)
