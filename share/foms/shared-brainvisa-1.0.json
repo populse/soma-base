@@ -7,7 +7,8 @@
   "shared.acpc_referential" : [ [ "shared:registration/Talairach-AC_PC-Anatomist.referential", "Referential" ] ],
   "shared.talairach_TO_spm_transform" : [ ["shared:transformation/talairach_TO_spm_template_novoxels","Transformation matrix"] ],
   "shared.surface_referential_translation_map" : [ ["shared:nomenclature/surfaceanalysis/surfaceReferential", "label translations"], ],
-  "shared.spam_distribs" : [ ["shared:models/models_<sulci_database>/descriptive_models/segments/<sulci_segments_model_type>_<side>/spam_distribs" ,"Text Data Table",{"sulci_database":"2008","sulci_segments_model_type":"global_registered_spam","side":"left"}] ]
+  "shared.spam_distribs" : [ ["shared:models/models_<sulci_database>/descriptive_models/segments/<sulci_segments_model_type>_<side>/spam_distribs" ,"Text Data Table",{"sulci_database":"2008","sulci_segments_model_type":"global_registered_spam","side":"left"}] ],
+  "sulci_recognition_ann_model": "models/models_<sulci_database>/discriminative_models/<graph_version>/<side>folds_noroots",
   }
 }
   
