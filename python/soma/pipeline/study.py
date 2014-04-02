@@ -40,7 +40,8 @@ class Study(Controller):
             '   ',
             'morphologist.process.morphologist_simplified.SimplifiedMorphologist',
             'morphologist.process.morphologist.Morphologist',
-            'morpho.morphologist.morphologist'))
+            'morpho.morphologist.morphologist',
+            'morphologist.process.customized.morphologist.CustomMorphologist'))
         #self.process_specific=None
         self.compteur_run_process={}
         self.runs=collections.OrderedDict()
