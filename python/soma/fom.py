@@ -18,8 +18,12 @@ except ImportError:
 
 
 from soma.path import split_path
-#from soma.sorted_dictionary import SortedDictionary as OrderedDict
-from collections import OrderedDict
+
+try :
+  from collections import OrderedDict
+except :
+  # It is necessary to keep this for compatibility with python 2.6.*
+  from soma.sorted_dictionary import SortedDictionary as OrderedDict
 
 
 class DirectoryAsDict(object):
