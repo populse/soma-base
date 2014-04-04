@@ -159,5 +159,9 @@ class Application( Singleton, Controller ):
       __import__( plugin_module, level=0 )
       return sys.modules[ plugin_module ]
     except:
-      traceback.print_last()
+      # Python 2.6 hack : print_last may fail here (maybe due to threads management)
+      # traceback.print_last()
+      exceptionType, exceptionValue, exceptionTraceback = sys.exc_info()
+      traceback.print_exception(exceptionType, exceptionValue, exceptionTraceback)
     return None
+    
