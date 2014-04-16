@@ -5,8 +5,8 @@
         "shared.anatomical_templates" :
             [["shared:anatomical_templates/MNI152_T1_1mm ", "images"],
                 ["shared:anatomical_templates/MNI152_T1_2mm ", "images"],
-                ["shared:anatomical_templates/MNI152_T1_1mm_brain", "images"],
-                ["shared:anatomical_templates/MNI152_T1_2mm_brain", "images"            ]
+                ["shared:anatomical_templates/MNI152_T1_1mm_brain", "NIFTI"],
+                ["shared:anatomical_templates/MNI152_T1_2mm_brain", "NIFTI"            ]
             ],
         "shared.mni_spm_referential" :
             [["shared:registration/Talairach-MNI_template-SPM", "Referential"]],
