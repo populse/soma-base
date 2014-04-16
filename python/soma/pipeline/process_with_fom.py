@@ -7,8 +7,10 @@ except ImportError:
 
 try:
     from capsul.controller import Controller
+    from capsul.pipeline import Pipeline
 except:
     from soma.controller import Controller
+    from soma.pipeline import Pipeline
 from soma.application import Application
 from soma.fom import PathToAttributes,AttributesToPaths,DirectoryAsDict
 from soma.path import split_path
@@ -193,6 +195,23 @@ class ProcessWithFom(Controller):
         '''Completes the underlying process parameters according to the attributes set.
         '''
         print 'CREATE COMPLETION'
+
+        # if process is a pipeline, create completions for its nodes and sub-pipelines
+        if isinstance(self.process, Pipeline):
+            for node_name, node in self.process.nodes.iteritems():
+                if node_name == '':
+                    continue
+                if hasattr(node, 'process'):
+                    subprocess = node.process
+                    try:
+                        pwf = ProcessWithFom(subprocess)
+                        pwf.attributes.update(self.attributes)
+                        pwf.create_completion()
+                    except Exception, e:
+                        print 'warning, node %s cound not complete FOM' \
+                            % node_name
+                        print e
+
         #Create completion
         #completion={}
         #for i in self.process.user_traits():
