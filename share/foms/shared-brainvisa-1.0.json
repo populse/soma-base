@@ -11,7 +11,7 @@
         "shared.mni_spm_referential" :
             [["shared:registration/Talairach-MNI_template-SPM", "Referential"]],
         "shared.acpc_referential" :
-            [["shared:registration/Talairach-AC_PC-Anatomist.referential", "Referential"]],
+            [["shared:registration/Talairach-AC_PC-Anatomist", "Referential"]],
         "shared.talairach_TO_spm_transform" :
             [["shared:transformation/talairach_TO_spm_template_novoxels","Transformation matrix"]],
         "shared.surface_referential_translation_map" :
