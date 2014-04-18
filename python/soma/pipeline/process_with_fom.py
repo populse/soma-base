@@ -21,7 +21,8 @@ from soma.pipeline.study import Study
 
 
 class ProcessWithFom(Controller):
-    """Class who creates attributes and completion
+    """
+    Class who creates attributes and completion
     Associates a Process and FOMs.
 
     * A soma.Application needs to be created first, and associated with FOMS:
@@ -193,20 +194,51 @@ class ProcessWithFom(Controller):
 
     def create_completion(self):
         '''Completes the underlying process parameters according to the attributes set.
-        '''
-        print 'CREATE COMPLETION'
 
-        # if process is a pipeline, create completions for its nodes and sub-pipelines
-        if isinstance(self.process, Pipeline):
-            for node_name, node in self.process.nodes.iteritems():
+        This is equivalent to:
+
+        >>> proc_with_fom.process_completion(proc_with_fom.process,
+                proc_with_fom.name)
+        '''
+        print 'CREATE COMPLETION, name:', self.name
+        self.process_completion(self.process, self.name)
+
+
+    def process_completion(self, process, name=None):
+        '''Completes the given process parameters according to the attributes set.
+
+        Parameters
+        ----------
+        process: Process / Pipeline: (mandatory)
+            process on which perform completion
+        name: string (optional)
+            name under which the process will be sear'ched in the FOM. This
+            enables specialized used of otherwise generic processes in the
+            context of a given pipeline
+        '''
+        if name is None:
+            name = self.name
+
+        # if process is a pipeline, create completions for its nodes and
+        # sub-pipelines.
+        #
+        # Note: for now we do so first, so that parameters can be overwritten
+        # afterwards by the higher-level pipeline FOM.
+        # Ideally we should process the other way: complete high-level,
+        # specific parameters first, then complete with lower-level, more
+        # generic ones, while blocking already set ones.
+        # as this blocking mechanism does not exist yet, we do it this way for
+        # now, but it is sub-optimal since many parameters will be set many
+        # times.
+        if isinstance(process, Pipeline):
+            for node_name, node in process.nodes.iteritems():
                 if node_name == '':
                     continue
                 if hasattr(node, 'process'):
                     subprocess = node.process
                     try:
-                        pwf = ProcessWithFom(subprocess)
-                        pwf.attributes.update(self.attributes)
-                        pwf.create_completion()
+                        pname = '.'.join([name, node_name])
+                        self.process_completion(subprocess, pname)
                     except Exception, e:
                         print 'warning, node %s cound not complete FOM' \
                             % node_name
@@ -214,11 +246,11 @@ class ProcessWithFom(Controller):
 
         #Create completion
         #completion={}
-        #for i in self.process.user_traits():
-            #parameter = self.output_fom.patterns[ self.process.name ].get( i )
-        names_search_list = (self.name, self.process.id, self.process.name)
-        for name in names_search_list:
-            fom_patterns = self.output_fom.patterns.get(name)
+        #for i in process.user_traits():
+            #parameter = self.output_fom.patterns[ process.name ].get( i )
+        names_search_list = (name, process.id, process.name)
+        for fname in names_search_list:
+            fom_patterns = self.output_fom.patterns.get(fname)
             if fom_patterns is not None:
                 break
         else:
@@ -226,23 +258,26 @@ class ProcessWithFom(Controller):
                 % repr(names_search_list))
 
         for parameter in fom_patterns:
-        #if parameter is not None:
-            # Select only the attributes that are discriminant for this parameter
-            # otherwise other attibutes can prevent the appropriate rule to match
-            if parameter in self.process.user_traits():
+            # Select only the attributes that are discriminant for this
+            # parameter otherwise other attibutes can prevent the appropriate
+            # rule to match
+            if parameter in process.user_traits():
                 #print 'parameter',parameter
-                if self.process.trait( parameter ).output:
-                    atp=self.output_atp
+                if process.trait( parameter ).output:
+                    atp = self.output_atp
                 else:
                     #print 'input ',parameter
-                    atp=self.input_atp
-                parameter_attributes = [ 'fom_process' ] + atp.find_discriminant_attributes( fom_parameter=parameter )
-                d = dict( ( i, self.attributes[ i ] ) for i in parameter_attributes if i in self.attributes )
+                    atp = self.input_atp
+                parameter_attributes = [ 'fom_process' ] \
+                    + atp.find_discriminant_attributes(
+                        fom_parameter=parameter )
+                d = dict( ( i, self.attributes[ i ] ) \
+                    for i in parameter_attributes if i in self.attributes )
                 #d = dict( ( i, getattr(self, i) or self.attributes[ i ] ) for i in parameter_attributes if i in self.attributes )
                 d['fom_parameter'] = parameter
                 d['fom_format']='fom_prefered'
                 for h in atp.find_paths(d):
-                    setattr(self.process,parameter,h[0])
+                    setattr(process,parameter,h[0])
 
 
     def attributes_changed(self,object,name,old,new):
