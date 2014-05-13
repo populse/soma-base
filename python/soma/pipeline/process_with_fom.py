@@ -10,7 +10,6 @@ from capsul.pipeline import Pipeline
 from soma.application import Application
 from soma.fom import PathToAttributes, AttributesToPaths, DirectoryAsDict
 from soma.path import split_path
-from soma_workflow.client import Job, Workflow, WorkflowController
 from soma.pipeline.study import Study
 
 
@@ -89,6 +88,11 @@ class ProcessWithFom(Controller):
         return pwd
 
     def iteration_run(self):
+        # this method should be replaced by a call to
+        # pipeline_workflow.workflow_from_pipeline()
+        # (but first, the iteration has to be an actual pipeline)
+        from soma_workflow.client import Job, Workflow, WorkflowController
+
         print 'ITERATION RUN'
         jobs = {}
         i = 0
