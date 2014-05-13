@@ -53,14 +53,16 @@ statement::
 
 Main classes
 ------------
- - Application: an Application instance contains all information that is 
-   shared across all modules of an application.
+- :class:`Application <soma.application.Application>`: an Application instance 
+  contains all information that is shared across all modules of an application.
 
 Advanced classes
 ----------------
- - Singleton: A class deriving from Singleton can have only one instance.
+- :class:`Singleton <soma.singleton.Singleton>`: A class deriving from 
+  Singleton can have only one instance.
 
-
+Information
+-----------
 - Yann Cointepas
 - NeuroSpin (http://www.neurospin.org) and IFR 49 (http://www.ifr49.org)
 - License: CeCILL version 2 (http://www.cecill.info/licences/Licence_CeCILL_V2-en.html)

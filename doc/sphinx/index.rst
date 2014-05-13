@@ -5,162 +5,146 @@ Soma-base documentation
 Many miscelaneous all-purpose classes and functions...
 
 
+Main module: ``soma.api``
++++++++++++++++++++++++++
+
+.. automodule:: soma.api
+  :members:
+
+
+Sub-modules
++++++++++++
+
+SubModule: ``application``
+--------------------------
+
+:mod:`soma.application`
+
+
 SubModule: ``bufferandfile``
 ----------------------------
 
-.. automodule:: soma.bufferandfile
-  :members:
-
-
-SubModule: ``debug``
---------------------
-
-.. automodule:: soma.debug
-  :members:
-
-
-SubModule: ``functiontools``
-----------------------------
-
-.. automodule:: soma.functiontools
-  :members:
-
-
-SubModule: ``gui``
-------------------
-
-.. automodule:: soma.gui
-  :members:
-
-
-SubModule: ``html``
--------------------
-
-.. automodule:: soma.html
-  :members:
-
-
-SubModule: ``importer``
------------------------
-
-.. automodule:: soma.importer
-  :members:
-
-
-SubModule: ``minf``
--------------------
-
-.. automodule:: soma.minf.api
-  :members:
-
-
-SubModule: ``notification``
----------------------------
-
-.. automodule:: soma.notification
-  :members:
-
-
-SubModule: ``path``
--------------------
-
-.. automodule:: soma.path
-  :members:
-
-
-SubModule: ``pyro``
--------------------
-
-.. automodule:: soma.pyro
-  :members:
-
-
-SubModule: ``singleton``
-------------------------
-
-.. automodule:: soma.singleton
-  :members:
-
-
-SubModule: ``somatime``
------------------------
-
-.. automodule:: soma.somatime
-  :members:
-
-
-SubModule: ``sorted_dictionary``
---------------------------------
-
-.. automodule:: soma.sorted_dictionary
-  :members:
-
-
-SubModule: ``stringtools``
---------------------------
-
-.. automodule:: soma.stringtools
-  :members:
-
-
-SubModule: ``thread_calls``
----------------------------
-
-.. automodule:: soma.thread_calls
-  :members:
-
-
-SubModule: ``translation``
---------------------------
-
-.. automodule:: soma.translation
-  :members:
-
-
-SubModule: ``undefined``
-------------------------
-
-.. automodule:: soma.undefined
-  :members:
-
-
-SubModule: ``uuid``
--------------------
-
-.. automodule:: soma.uuid
-  :members:
-
-
-SubModule: ``zipfile``
-----------------------
-
-.. automodule:: soma.zipfile
-  :members:
-
-
-SubModule: ``application``
-------------------------------
-
-.. automodule:: soma.application
-  :members:
-
-
-SubModule: ``qtgui``
-------------------------------
-.. automodule:: soma.qtgui.api
-  :members:
+:mod:`soma.bufferandfile`
 
 
 SubModule: ``controller``
 -------------------------
 
-:mod:`soma.controller`
+:ref:`controller`
+
+
+SubModule: ``debug``
+--------------------
+
+:mod:`soma.debug`
 
 
 SubModule: ``fom``
 ------------------
 
 :mod:`soma.fom`
+
+
+SubModule: ``functiontools``
+----------------------------
+
+:mod:`soma.functiontools`
+
+
+SubModule: ``gui``
+------------------
+
+:mod:`soma.gui`
+
+
+SubModule: ``html``
+-------------------
+
+:mod:`soma.html`
+
+
+SubModule: ``importer``
+-----------------------
+
+:mod:`soma.importer`
+
+
+SubModule: ``minf``
+-------------------
+
+:mod:`soma.minf`
+
+
+SubModule: ``notification``
+---------------------------
+
+:mod:`soma.notification`
+
+
+SubModule: ``path``
+-------------------
+
+:mod:`soma.path`
+
+
+SubModule: ``pyro``
+-------------------
+
+:mod:`soma.pyro`
+
+
+SubModule: ``singleton``
+------------------------
+
+:mod:`soma.singleton`
+
+
+SubModule: ``somatime``
+-----------------------
+
+:mod:`soma.somatime`
+
+
+SubModule: ``sorted_dictionary``
+--------------------------------
+
+:mod:`soma.sorted_dictionary`
+
+
+SubModule: ``stringtools``
+--------------------------
+
+:mod:`soma.stringtools`
+
+
+SubModule: ``thread_calls``
+---------------------------
+
+:mod:`soma.thread_calls`
+
+
+SubModule: ``translation``
+--------------------------
+
+:mod:`soma.translation`
+
+
+SubModule: ``undefined``
+------------------------
+
+:mod:`soma.undefined`
+
+
+SubModule: ``uuid``
+-------------------
+
+:mod:`soma.uuid`
+
+
+SubModule: ``zipfile``
+----------------------
+
+:mod:`soma.zipfile`
 
 
 .. toctree::
