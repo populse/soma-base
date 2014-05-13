@@ -3,13 +3,6 @@ from PyQt4 import QtGui, QtCore
 from soma.gui.widget_controller_creation import ControllerWidget
 from soma.gui.pipeline.display_bdd import DisplayBDD
 from soma.application import Application 
-try:
-  from capsul.process import Process, get_process_instance
-  print '%s uses CAPSUL.' % __name__
-except ImportError:
-  from soma.process import Process, get_process_instance
-  print '%s uses Soma.' % __name__
-from soma.pipeline.process_with_fom import ProcessWithFom
 from soma.pipeline.study import Study
 from soma.gui.pipeline.process_gui import ProcessGui
 from soma.gui.pipeline.iteration_gui import IterationGui,ChoiceParameters

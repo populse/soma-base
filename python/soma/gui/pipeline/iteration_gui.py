@@ -2,15 +2,9 @@ from PyQt4 import QtGui, QtCore,QtSql
 from soma.application import Application
 #from morphologistSimp import SimpMorpho
 from soma.gui.file_selection import FileAttributeSelection
-try:
-    from capsul.controller import trait_ids
-    from capsul.process import get_process_instance
-    print '%s uses CAPSUL.' % __name__
-except:
-    from soma.controller import trait_ids
-    from soma.process import get_process_instance
-    print '%s uses Soma.' % __name__
-from soma.pipeline.process_with_fom import ProcessWithFom
+from capsul.controller import trait_ids
+from capsul.process import get_process_instance
+from capsul.process.process_with_fom import ProcessWithFom
 from soma.pipeline.study import Study
 from soma.gui.widget_controller_creation import ControllerWidget
 from functools import partial

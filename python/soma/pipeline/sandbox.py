@@ -6,8 +6,8 @@ try:
 except ImportError:
   from enthought.traits.api import File, Float, Int
 
-from soma.process import Process, get_process_instance
-from soma.pipeline import Pipeline
+from capsul.process import Process, get_process_instance
+from capsul.pipeline import Pipeline
 
 
 class EchoProcess( Process ):  

@@ -5,15 +5,9 @@ try:
 except ImportError:
   from enthought.traits.api import File
 
-try:
-  import capsul
-  from capsul.utils.sorted_dictionary import SortedDictionary
-  from capsul.pipeline import Switch
-  print 'pipeline_gui uses CAPSUL.'
-except ImportError:
-  from soma.sorted_dictionary import SortedDictionary
-  from soma.pipeline import Switch
-  print 'pipeline_gui uses Soma.'
+import capsul
+from capsul.utils.sorted_dictionary import SortedDictionary
+from capsul.pipeline import Switch
 
 #-----------------------------------------------------------------------------
 # Globals and constants
@@ -400,17 +394,14 @@ class PipelineView(QtGui.QGraphicsView):
     else:
       QtGui.QGraphicsView.wheelEvent(self, event)
 
-      
-      
+
+
 if __name__ == '__main__':
   import sys
-  try:
-    from capsul.pipeline.pipeline import Morphologist, GreyWhite
-  except ImportError:
-    from soma.pipeline.pipeline import Morphologist, GreyWhite
+  from capsul.pipeline.pipeline import Morphologist, GreyWhite
   from soma.gui.widget_controller_creation import ControllerWidget
   from soma.functiontools import SomaPartial as partial
-  
+
   app = QtGui.QApplication( sys.argv )
 
   morphologist = Morphologist()
