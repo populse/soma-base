@@ -6,9 +6,6 @@ from soma.application import Application
 from soma.pipeline.study import Study
 from soma.gui.pipeline.process_gui import ProcessGui
 from soma.gui.pipeline.iteration_gui import IterationGui,ChoiceParameters
-from soma.gui.pipeline.selection_widget import Selection
-from functools import partial
-from soma.gui.pipeline.pipeline_gui import PipelineView
 import subprocess
 import os
 

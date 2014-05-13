@@ -236,8 +236,8 @@ if __name__ == '__main__':
   from PyQt4 import QtGui
   from soma.gui.widget_controller_creation import ControllerWidget
   from soma.functiontools import SomaPartial as partial
-  from soma.gui.pipeline.pipeline_gui import PipelineView
-  
+  from capsul.apps_qt.base.pipeline_widgets import PipelineDevelopperView
+
   app = QtGui.QApplication( sys.argv )
 
   morphologist = Morphologist()
@@ -248,9 +248,9 @@ if __name__ == '__main__':
   #morphologist.set_string_list( sys.argv[1:] )
   view3 = WorkflowViewer( morphologist )
   view3.show()
-  view1 = PipelineView( morphologist )
+  view1 = PipelineDevelopperView( morphologist )
   view1.show()
-  view2 = PipelineView( GreyWhite() )
+  view2 = PipelineDevelopperView( GreyWhite() )
   view2.show()
   
   cw = ControllerWidget( morphologist, live=True )
