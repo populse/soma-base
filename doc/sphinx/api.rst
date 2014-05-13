@@ -63,6 +63,24 @@ SubModule: ``gui``
 .. automodule:: soma.gui
   :members:
 
+.. automodule:: soma.gui.api
+  :members:
+
+.. automodule:: soma.gui.file_selection
+  :members:
+
+.. automodule:: soma.gui.icon_factory
+  :members:
+
+.. automodule:: soma.gui.trait_to_widget
+  :members:
+
+.. automodule:: soma.gui.widget_controller_creation
+  :members:
+
+.. automodule:: soma.gui.widget_factory
+  :members:
+
 
 SubModule: ``html``
 ===================
