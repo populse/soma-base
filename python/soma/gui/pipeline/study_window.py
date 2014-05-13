@@ -6,6 +6,8 @@ from soma.application import Application
 from soma.pipeline.study import Study
 from soma.gui.pipeline.process_gui import ProcessGui
 from soma.gui.pipeline.iteration_gui import IterationGui,ChoiceParameters
+from capsul.process import get_process_instance
+from capsul.process.process_with_fom import ProcessWithFom
 import subprocess
 import os
 
