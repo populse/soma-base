@@ -151,21 +151,17 @@ SubModule: ``qtgui``
   :members:
 
 
-Pipeline and process infrastructure
-===================================
+SubModule: ``controller``
+-------------------------
 
-SubModule: ``process``
-----------------------
+:mod:`soma.controller`
 
-Now :mod:`capsul.process`
-
-SubModule: ``pipeline``
------------------------
-
-Now :mod:`capsul.pipeline`
 
 SubModule: ``fom``
 ------------------
+
+:mod:`soma.fom`
+
 
 .. toctree::
     :maxdepth: 1
