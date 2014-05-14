@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from enthought.traits.api import HasTraits
-from PyQt4.uic import loadUi
+from soma.gui.qt_backend import set_qt_backend, loadUi
 from soma.factory import Factories
 from soma.controller import Controller
 from soma.application import Application
@@ -48,6 +48,7 @@ WidgetFactories.register_global_factory( Controller, traits_widget_factory )
 
 
 def create_widget_from_ui( ui, controller, parent=None, live=False ):
+  set_qt_backend()
   widget = loadUi( ui )
   if parent is not None:
     widget.setParent( parent )

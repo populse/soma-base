@@ -33,64 +33,23 @@
 # knowledge of the CeCILL license version 2 and that you accept its terms.
 
 '''
-Facilitation of run-time creation and usage of C{Qt} widgets from C{*.ui} 
+Facilitation of run-time creation and usage of Qt widgets from *.ui 
 files created with 
-U{Qt designer<http://doc.trolltech.com/designer-manual.html>}.
+`Qt designer<http://doc.trolltech.com/designer-manual.html>`_.
 
-@author: Yann Cointepas
-@organization: U{NeuroSpin<http://www.neurospin.org>} and U{IFR 49<http://www.ifr49.org>}
-@license: U{CeCILL version 2<http://www.cecill.info/licences/Licence_CeCILL_V2-en.html>}
+author: Yann Cointepas
+organization: `NeuroSpin<http://www.neurospin.org>`_ and `IFR 49<http://www.ifr49.org>`_
+license: `CeCILL version 2<http://www.cecill.info/licences/Licence_CeCILL_V2-en.html>`_
 '''
-__docformat__ = "epytext en"
+
+# obsolete: use soma.gui.qt_backend instead.
+
+__docformat__ = "restructuredtext en"
 
 
 import os
 from functools import partial
-from PyQt4 import QtGui, QtCore
-use_pyside = False
-try:
-  from PyQt4 import uic
-  from PyQt4.uic.Loader import loader
-  from PyQt4.uic import loadUiType
-except: # maybe PySide
-  from PyQt4.QtUiTools import QUiLoader
-  use_pyside = True
-
-def _iconset(self, prop):
-  return QtGui.QIcon( os.path.join( self._basedirectory, prop.text ).replace("\\", "\\\\") )
-def _pixmap(self, prop):
-  return QtGui.QPixmap(os.path.join( self._basedirectory, prop.text ).replace("\\", "\\\\"))
-
-
-def loadUi( ui, *args, **kwargs ):
-  '''
-  This function is a replacement of PyQt4.uic.loadUi. The only difference is 
-  that relative icon or pixmap file names that are stored in the *.ui file 
-  are considered to be relative to the directory containing the ui file. With
-  PyQt4.uic.loadUi, relative file names are considered relative to the current
-  working directory therefore if this directory is not the one containing the 
-  ui file, icons cannot be loaded.
-  '''
-  if not use_pyside:
-    # the problem is corrected in version > 4.7.2,
-    # anyway there is no ui files containing relative icons or pixmaps in brainvisa
-    if QtCore.PYQT_VERSION > 0x040702:
-      return uic.loadUi(ui, *args, **kwargs)
-    else:
-      uiLoader = loader.DynamicUILoader()
-      uiLoader.wprops._basedirectory = os.path.dirname( os.path.abspath( ui ) )
-      uiLoader.wprops._iconset = partial( _iconset, uiLoader.wprops )
-      uiLoader.wprops._pixmap = partial( _pixmap, uiLoader.wprops )
-      return uiLoader.loadUi( ui, *args, **kwargs )
-  else:
-    return QUiLoader().load( ui ) #, *args, **kwargs )
-
-
-def loadUiType( uifile, from_imports=False ):
-  if not use_pyside:
-    return uic.loadUiType( uifile ) # the parameter from_imports doesn't exist in our version of PyQt
-  else:
-    raise NotImplementedError( 'loadUiType does not work with PySide' )
-    #ui = loadUi( uifile )
-    #return ui.__class__, QtGui.QWidget # FIXME
+from soma.gui.qt_backend import QtGui, QtCore, get_qt_backend, loadUi, \
+    loadUiType
+use_pyside = (get_qt_backend() == 'PySide')
 

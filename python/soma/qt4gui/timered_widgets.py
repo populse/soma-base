@@ -43,7 +43,7 @@ modification only after an inactivity period.
 '''
 __docformat__ = "epytext en"
 
-from PyQt4 import QtCore, QtGui
+from soma.gui.qt_backend import QtCore, QtGui
 
 #-------------------------------------------------------------------------------
 class QLineEditModificationTimer( QtCore.QObject ):

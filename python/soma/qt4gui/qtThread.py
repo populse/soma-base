@@ -42,7 +42,7 @@ It enables to do thread safe calls because all tasks sent are executed in the sa
 
 import sys
 import threading
-from PyQt4.QtCore import QObject, QTimer, QEvent, SIGNAL, QCoreApplication
+from soma.gui.qt_backend.QtCore import QObject, QTimer, QEvent, SIGNAL, QCoreApplication
 from soma import singleton
 
 class FakeQtThreadCall( QObject ):

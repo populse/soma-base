@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import sipconfig
-from PyQt4 import QtGui, QtCore
+from soma.gui.qt_backend import QtGui, QtCore
 try:
   from capsul.controller import trait_ids, Controller
   from capsul.utils.functiontools import partial, SomaPartial

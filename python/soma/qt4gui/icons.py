@@ -42,7 +42,7 @@ Manipulation of icons and images.
 __docformat__ = "epytext en"
 
 from weakref import WeakValueDictionary
-from PyQt4.QtGui import QPixmap
+from soma.gui.qt_backend.QtGui import QPixmap
 from soma.wip.application.api import findIconFile
 
 

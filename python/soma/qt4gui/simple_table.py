@@ -40,16 +40,18 @@
 __docformat__ = "epytext en"
 
 
-from PyQt4.QtCore import Qt, QAbstractTableModel, SIGNAL, QModelIndex
-from PyQt4.QtGui import QBrush
-from PyQt4 import QtCore
-try:
-  import sip
-  use_qvariant = sip.getapi( 'QVariant' ) < 2
-  if use_qvariant:
-    from PyQt4.QtCore import QVariant
-except:
-  pass # PySide doesn't have QVariant at all.
+from soma.gui.qt_backend.QtCore import Qt, QAbstractTableModel, SIGNAL, QModelIndex
+from soma.gui.qt_backend.QtGui import QBrush
+from soma.gui.qt_backend import QtCore, get_qt_backend
+use_qvariant = False
+if get_qt_backend() == 'PyQt4':
+  try:
+    import sip
+    use_qvariant = sip.getapi( 'QVariant' ) < 2
+    if use_qvariant:
+      from PyQt4.QtCore import QVariant
+  except:
+    pass # PySide doesn't have QVariant at all.
 import operator
 
 class SimpleTable( QAbstractTableModel ):

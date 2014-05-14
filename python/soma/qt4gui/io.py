@@ -40,7 +40,7 @@ import errno
 import time
 import sys
 
-from PyQt4.QtCore import QObject, QSocketNotifier, SIGNAL
+from soma.gui.qt_backend.QtCore import QObject, QSocketNotifier, SIGNAL
 
 class Socket( QObject ):
     """

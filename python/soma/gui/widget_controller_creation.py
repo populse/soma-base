@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import sipconfig
-from PyQt4 import QtGui, QtCore
+from soma.gui.qt_backend import QtGui, QtCore
 from capsul.controller import trait_ids, Controller
 from soma.functiontools import partial, SomaPartial
 from trait_to_widget import StrCreateWidget,FloatCreateWidget,IntCreateWidget,\

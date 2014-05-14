@@ -38,8 +38,8 @@
 @license: U{CeCILL version 2<http://www.cecill.info/licences/Licence_CeCILL_V2-en.html>}
 '''
 
-from PyQt4 import QtGui, QtCore
-from PyQt4 import QtWebKit
+from soma.gui.qt_backend import QtGui, QtCore
+from soma.gui.qt_backend import QtWebKit
 
 class TextEditWithSearch(QtGui.QTextEdit):
   """
