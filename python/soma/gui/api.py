@@ -47,6 +47,7 @@ __docformat__ = "epytext en"
 
 import sys
 from soma.gui.qt_backend import init_matplotlib_backend
+import matplotlib
 
 def choose_matplotlib_backend():
   '''
