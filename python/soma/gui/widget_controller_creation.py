@@ -30,7 +30,7 @@ class ControllerWidget( QtGui.QWidget ):
     self._grid_layout = QtGui.QGridLayout()
     self._grid_layout.setAlignment( QtCore.Qt.AlignTop )
     self._grid_layout.setSpacing( 3 )
-    self._grid_layout.setMargin( 5 )
+    self._grid_layout.setContentsMargins( 5, 5, 5, 5 )
     self.setLayout(self._grid_layout )
     
     self.btn_expand = None

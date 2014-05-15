@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from soma.gui.qt_backend import QtGui, QtCore
+from soma.gui.qt_backend import QtGui, QtCore, getOpenFileName
 from soma.gui.widget_controller_creation import ControllerWidget
 from soma.gui.pipeline.display_bdd import DisplayBDD
 from soma.application import Application 
@@ -66,7 +66,7 @@ class StudyWindow(QtGui.QMainWindow):
 
 
     def on_get_study(self):
-        name_json = QtGui.QFileDialog.getOpenFileName (self, 'Select a .json study','/home', '*.json')
+        name_json = getOpenFileName(self, 'Select a .json study','/home', '*.json')
         if name_json:
             Study.get_instance().load(name_json)
 

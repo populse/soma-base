@@ -301,7 +301,7 @@ class FileCreateWidget( object ):
     text_widget, label_widget = StrCreateWidget.create_widget( parent, name, trait, value )   
     attribute_widget = QtGui.QWidget( parent )
     horizontal_layout = QtGui.QHBoxLayout( attribute_widget )
-    horizontal_layout.setMargin( 0 )
+    horizontal_layout.setContentsMargins( 0, 0, 0, 0 )
     horizontal_layout.addWidget( text_widget )
     attribute_widget.text_widget = text_widget   
 

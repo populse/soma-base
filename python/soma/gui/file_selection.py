@@ -1,6 +1,7 @@
 import os, re
 from glob import glob
-from soma.gui.qt_backend.QtGui import QDialog, QTableWidgetItem, loadUi
+from soma.gui.qt_backend.QtGui import QDialog, QTableWidgetItem
+from soma.gui.qt_backend import loadUi
 
 
 class CATIScanSelector( QDialog ):

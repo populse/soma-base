@@ -7,6 +7,9 @@ import sys
     #~ from enthought.etsconfig.api import ETSConfig
     #~ ETSConfig.toolkit = 'null'
 
+if __name__ == '__main__':
+    from soma.gui.qt_backend import set_qt_backend
+    set_qt_backend('PyQt4')
 from soma.gui.qt_backend import QtGui, QtCore
 from soma.gui.pipeline.study_window import StudyWindow
 from soma.application import Application

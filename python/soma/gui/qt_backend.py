@@ -236,9 +236,17 @@ def getOpenFileName(parent=None, caption='', directory='', filter='',
         selectedFilter=None, options=0):
     '''PyQt4 / PySide compatible call to QFileDialog.getOpenFileName'''
     if get_qt_backend() == 'PyQt4':
+        kwargs = {}
+        # kwargs are used because passing None or '' as selectedFilter
+        # does not work, at least in PyQt 4.10
+        # On the other side I don't know if this kwargs works with older
+        # sip/PyQt versions.
+        if selectedFilter:
+            kwargs['selectedFilter'] = selectedFilter
+        if options:
+            kwargs['options'] = QtGui.QFileDialog.Options(options)
         return get_qt_module().QtGui.QFileDialog.getOpenFileName(parent,
-            caption, directory, filter, selectedFilter,
-            QtGui.QFileDialog.Options(options))
+            caption, directory, filter, **kwargs )
     else:
         return get_qt_module().QtGui.QFileDialog.getOpenFileName(parent,
             caption, directory, filter, selectedFilter,
@@ -249,8 +257,17 @@ def getSaveFileName(parent=None, caption='', directory='', filter='',
         selectedFilter=None, options=0):
     '''PyQt4 / PySide compatible call to QFileDialog.getSaveFileName'''
     if get_qt_backend() == 'PyQt4':
+        kwargs = {}
+        # kwargs are used because passing None or '' as selectedFilter
+        # does not work, at least in PyQt 4.10
+        # On the other side I don't know if this kwargs works with older
+        # sip/PyQt versions.
+        if selectedFilter:
+            kwargs['selectedFilter'] = selectedFilter
+        if options:
+            kwargs['options'] = QtGui.QFileDialog.Options(options)
         return get_qt_module().QtGui.QFileDialog.getSaveFileName(parent,
-            caption, directory, filter, selectedFilter, options)
+            caption, directory, filter, **kwargs)
     else:
         return get_qt_module().QtGui.QFileDialog.getSaveFileName(parent,
             caption, directory, filter, selectedFilter, options)[0]
