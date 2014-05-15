@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from PyQt4 import QtGui, QtCore
+from soma.gui.qt_backend import QtGui, QtCore
 from soma.gui.widget_controller_creation import ControllerWidget
 from soma.gui.pipeline.display_bdd import DisplayBDD
 from soma.application import Application 

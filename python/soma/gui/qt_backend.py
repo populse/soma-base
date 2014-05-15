@@ -263,7 +263,13 @@ def init_matplotlib_backend():
     and returned by this function.
     '''
     import matplotlib
-    matplotlib.use('Qt4Agg')
+    guiBackend = 'Qt4Agg'
+    if 'matplotlib.backends' not in sys.modules:
+        matplotlib.use(guiBackend)
+    elif matplotlib.get_backend() != guiBackend:
+        raise RuntimeError( 
+            'Mismatch between Qt version and matplotlib backend: '
+            'matplotlib uses ' + matplotlib.get_backend() + ' but ' + guiBackend + ' is required.')
     if get_qt_backend() == 'PySide':
         if 'backend.qt4' in matplotlib.rcParams.keys():
             matplotlib.rcParams['backend.qt4'] = 'PySide'

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from PyQt4 import QtGui, QtCore
+from soma.gui.qt_backend import QtGui, QtCore
 import os
 
 ICON_PATH=os.path.join(os.path.dirname( __file__ ),'icons')

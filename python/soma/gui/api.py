@@ -43,32 +43,28 @@ but independant of GUI backend (Qt3, Qt4, wxWidget, Tcl/TK, etc).
 from __future__ import absolute_import
 __docformat__ = "epytext en"
  
+# obsolete: use soma.gui.qt_backend instead.
 
 import sys
+from soma.gui.qt_backend import init_matplotlib_backend
 
 def choose_matplotlib_backend():
   '''
   Tries to identify running graphical interface an select the appropriate
   backend for Matplotlib. This function must be called after GUI is started.
   
-  Currently only works with Qt4Agg and QtAgg
+  Currently only works with Qt4Agg
   
   Example::
     from soma.gui.api import chooseMatplotlibBackend
     chooseMatplotlibBackend()
+
+  WARNING:
+  This function is obsolete. Use soma.gui.qt_backend.init_matplotlib_backend() 
+  instead.
   '''
-  
-  if sys.modules.has_key( 'PyQt4' ):
-    runningGUIBackend = 'Qt4Agg'
-  else:
-    runningGUIBackend = 'QtAgg'
-  
-  import matplotlib
-  if 'matplotlib.backends' not in sys.modules:
-    matplotlib.use( runningGUIBackend )
-  elif matplotlib.get_backend() != runningGUIBackend:
-    raise RuntimeError( 'Mismatch between Qt version and matplotlib backend: '
-      'matplotlib uses ' + matplotlib.get_backend() + ' but ' + runningGUIBackend + ' is required.' )
+
+  init_matplotlib_backend()
   return matplotlib.get_backend()
 
 # For backward compatibility:

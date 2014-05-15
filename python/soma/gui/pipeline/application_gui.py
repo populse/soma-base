@@ -7,16 +7,7 @@ import sys
     #~ from enthought.etsconfig.api import ETSConfig
     #~ ETSConfig.toolkit = 'null'
 
-# Force QString API version in order to be compatible with recent version
-# of enthought.traits.ui (3.6 for instance)
-import sip
-PYQT_API_VERSION = 2
-qt_api = [ "QDate", "QDateTime", "QString", "QTextStream", "QTime", "QUrl",
-"QVariant" ]
-for qt_class in qt_api:
-    sip.setapi( qt_class, PYQT_API_VERSION )
-del qt_api, qt_class
-from PyQt4 import QtGui, QtCore
+from soma.gui.qt_backend import QtGui, QtCore
 from soma.gui.pipeline.study_window import StudyWindow
 from soma.application import Application
 from soma.global_naming import GlobalNaming

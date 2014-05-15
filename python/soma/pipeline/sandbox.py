@@ -1,6 +1,6 @@
 import tempfile
 from subprocess import check_call
-from PyQt4 import QtGui
+from soma.gui.qt_backend import QtGui
 try:
   from traits.api import File, Float, Int, String
 except ImportError:
@@ -233,7 +233,7 @@ class WorkflowViewer( QtGui.QWidget ):
                           
 if __name__ == '__main__':
   import sys
-  from PyQt4 import QtGui
+  from soma.gui.qt_backend import QtGui
   from soma.gui.widget_controller_creation import ControllerWidget
   from soma.functiontools import SomaPartial as partial
   from capsul.apps_qt.base.pipeline_widgets import PipelineDevelopperView
