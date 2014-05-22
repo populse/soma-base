@@ -35,11 +35,11 @@
 '''
 Some useful functions to manage file or directorie names.
 
-@author: Yann Cointepas
-@organization: U{NeuroSpin<http://www.neurospin.org>} and U{IFR 49<http://www.ifr49.org>}
-@license: U{CeCILL version 2<http://www.cecill.info/licences/Licence_CeCILL_V2-en.html>}
+author: Yann Cointepas
+organization: U{NeuroSpin<http://www.neurospin.org>} and U{IFR 49<http://www.ifr49.org>}
+license: U{CeCILL version 2<http://www.cecill.info/licences/Licence_CeCILL_V2-en.html>}
 '''
-__docformat__ = "epytext en"
+__docformat__ = "restructuredtext en"
 
 import os, platform, fnmatch
 
@@ -66,8 +66,8 @@ def split_path( path ):
   else:
     result.insert( 0, b )
   return result
-  
-  
+
+
 def relative_path( path, referenceDirectory ):
   '''
   Return a relative version of a path given a
@@ -193,3 +193,14 @@ def which(program):
                 return exe_file
     
     return None
+
+
+def ensure_is_dir(d, clear_dir=False):
+    """ If the directory doesn't exist, use os.makedirs """
+    if not os.path.exists(d):
+        os.makedirs(d)
+    elif clear_dir:
+        shutil.rmtree(d)
+        os.makedirs(d)
+
+
