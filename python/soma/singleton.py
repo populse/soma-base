@@ -82,3 +82,5 @@ class Singleton( object ):
     nothing. 
     Derived classes must define :py:meth:`__singleton_init__` instead of __init__.
     '''
+    super(Singleton, self).__init__()
+

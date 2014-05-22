@@ -39,7 +39,7 @@
 '''
 
 from __future__ import absolute_import
-__docformat__ = "epytext en"
+__docformat__ = "restructuredtext en"
 
 
 import os, sys, platform, traceback
@@ -68,7 +68,7 @@ class Application( Singleton, Controller ):
   def __singleton_init__( self, name, version=None, *args, **kwargs ):
     '''Replaces __init__ in Singleton.'''
     super( Application, self ).__init__( *args, **kwargs )
-    
+
     # Warning : Traits bug
     # Using the trait Directory() might instanciate a QApplication (seems to depend on the
     # traits release). If it is declared in the class, the QApplication is instanciated at
