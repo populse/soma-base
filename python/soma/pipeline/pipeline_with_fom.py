@@ -5,10 +5,7 @@ try:
 except ImportError:
     from enthought.traits.api import ListStr,HasTraits,File,Float,Instance,Enum,Str
 
-try:
-    from capsul.controller import Controller
-except:
-    from soma.controller import Controller
+from soma.controller import Controller
 from soma.application import Application
 from soma.fom import PathToAttributes,AttributesToPaths,DirectoryAsDict
 from soma.path import split_path

@@ -4,19 +4,13 @@ import os
 import collections 
 import datetime
 import glob
-try:
-    from capsul.utils.sorted_dictionary import SortedDictionary
-    from capsul.controller import Controller
-    print '%s uses CAPSUL.' % __name__
-except:
-    from soma.sorted_dictionary import SortedDictionary
-    from soma.controller import Controller
-    print '%s uses Soma.' % __name__
+from soma.sorted_dictionary import SortedDictionary
+from soma.controller import Controller
 try:
     from traits.api import HasTraits,Str,Enum,Directory,File
 except ImportError:
     from enthought.traits.api import HasTraits,Str,Enum,Directory,File
-from soma.application import Application     
+from soma.application import Application
 
 class Study(Controller):
     _instance=None
