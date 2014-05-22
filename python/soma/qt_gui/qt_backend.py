@@ -25,7 +25,7 @@ without such settings.
 
 Qt submodules can be imported in two ways:
 
->>> from soma.qu_gui import qt_backend
+>>> from soma.qt_gui import qt_backend
 >>> qt_backend.import_qt_submodule('QtWebKit')
 
 or using the import statement:
