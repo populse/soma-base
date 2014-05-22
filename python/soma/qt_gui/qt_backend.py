@@ -1,5 +1,5 @@
 ##########################################################################
-# CAPSUL - Copyright (C) CEA, 2013
+# Soma-base - Copyright (C) CEA, 2013
 # Distributed under the terms of the CeCILL-B license, as published by
 # the CEA-CNRS-INRIA. Refer to the LICENSE file or to
 # http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html
@@ -106,7 +106,7 @@ def set_qt_backend(backend=None):
 
     Examples
     --------
-        >>> from capsul.apps_qt import qt_backend
+        >>> from soma.qt_gui import qt_backend
         >>> qt_backend.set_qt_backend('PySide')
         >>> qt_backend.import_qt_submodule('QtCore')
         <module 'PySide.QtCore' from '/usr/lib/python2.7/dist-packages/PySide/QtCore.so'>
@@ -153,7 +153,7 @@ def import_qt_submodule(submodule):
     '''Import a specified Qt submodule.
     An alternative to the standard statement:
 
-    >>> from capsul.apps_qt.qt_backend import <submodule>
+    >>> from soma.qt_gui.qt_backend import <submodule>
 
     The main differences is that it forces loading the module from the 
     appropriate backend, whereas the import statement will reuse the already
@@ -161,14 +161,14 @@ def import_qt_submodule(submodule):
 
     For instance,
 
-    >>> from capsul.apps_qt import qt_backend
+    >>> from soma.qt_gui import qt_backend
     >>> qt_backend.set_qt_backend('PyQt4')
-    >>> from capsul.apps_qt.qt_backend import QtWebKit
+    >>> from soma.qt_gui.qt_backend import QtWebKit
     >>> QtWebKit
     <module 'PyQt4.QtWebKit' from '/usr/lib/python2.7/dist-packages/PyQt4/QtWebKit.so'>
     >>> qt_backend.set_qt_backend('PySide') # changing backend
     WARNING:root:set_qt_backend: a different backend, PyQt4, has already be set, and PySide is now requested
-    >>> from capsul.apps_qt.qt_backend import QtWebKit
+    >>> from soma.qt_gui.qt_backend import QtWebKit
     >>> QtWebKit
     <module 'PyQt4.QtWebKit' from '/usr/lib/python2.7/dist-packages/PyQt4/QtWebKit.so'>
 
