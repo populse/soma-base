@@ -43,10 +43,10 @@ but independant of GUI backend (Qt3, Qt4, wxWidget, Tcl/TK, etc).
 from __future__ import absolute_import
 __docformat__ = "epytext en"
  
-# obsolete: use soma.gui.qt_backend instead.
+# obsolete: use soma.qt_gui.qt_backend instead.
 
 import sys
-from soma.gui.qt_backend import init_matplotlib_backend
+from soma.qt_gui.qt_backend import init_matplotlib_backend
 import matplotlib
 
 def choose_matplotlib_backend():
@@ -61,8 +61,8 @@ def choose_matplotlib_backend():
     chooseMatplotlibBackend()
 
   WARNING:
-  This function is obsolete. Use soma.gui.qt_backend.init_matplotlib_backend() 
-  instead.
+  This function is obsolete.
+  Use soma.qt_gui.qt_backend.init_matplotlib_backend() instead.
   '''
 
   init_matplotlib_backend()

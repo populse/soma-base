@@ -8,9 +8,9 @@ import sys
     #~ ETSConfig.toolkit = 'null'
 
 if __name__ == '__main__':
-    from soma.gui.qt_backend import set_qt_backend
+    from soma.qt_gui.qt_backend import set_qt_backend
     set_qt_backend('PyQt4')
-from soma.gui.qt_backend import QtGui, QtCore
+from soma.qt_gui.qt_backend import QtGui, QtCore
 from soma.gui.pipeline.study_window import StudyWindow
 from soma.application import Application
 from soma.global_naming import GlobalNaming

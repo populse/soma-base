@@ -1,4 +1,4 @@
-from soma.gui.qt_backend import QtGui, QtCore
+from soma.qt_gui.qt_backend import QtGui, QtCore
 from soma.pipeline.study import Study
 import glob
 import json

@@ -1,7 +1,7 @@
 import os, re
 from glob import glob
-from soma.gui.qt_backend.QtGui import QDialog, QTableWidgetItem
-from soma.gui.qt_backend import loadUi
+from soma.qt_gui.qt_backend.QtGui import QDialog, QTableWidgetItem
+from soma.qt_gui.qt_backend import loadUi
 
 
 class CATIScanSelector( QDialog ):
@@ -147,7 +147,7 @@ class FileAttributeSelection( object ):
   
 if __name__ == '__main__':
   import sys
-  from soma.gui.qt_backend.QtGui import QApplication
+  from soma.qt_gui.qt_backend.QtGui import QApplication
   from pprint import pprint
   
   from soma.application import Application

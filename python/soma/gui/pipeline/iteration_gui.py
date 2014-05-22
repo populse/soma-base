@@ -1,4 +1,4 @@
-from soma.gui.qt_backend import QtGui, QtCore,QtSql
+from soma.qt_gui.qt_backend import QtGui, QtCore,QtSql
 from soma.application import Application
 #from morphologistSimp import SimpMorpho
 from soma.gui.file_selection import FileAttributeSelection

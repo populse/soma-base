@@ -39,10 +39,10 @@ Manipulation of icons and images.
 @organization: U{NeuroSpin<http://www.neurospin.org>} and U{IFR 49<http://www.ifr49.org>}
 @license: U{CeCILL version 2<http://www.cecill.info/licences/Licence_CeCILL_V2-en.html>}
 '''
-__docformat__ = "epytext en"
+__docformat__ = "restructuredtext en"
 
 from weakref import WeakValueDictionary
-from soma.gui.qt_backend.QtGui import QPixmap
+from soma.qt_gui.qt_backend.QtGui import QPixmap
 from soma.wip.application.api import findIconFile
 
 

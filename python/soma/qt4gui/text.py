@@ -38,8 +38,8 @@
 @license: U{CeCILL version 2<http://www.cecill.info/licences/Licence_CeCILL_V2-en.html>}
 '''
 
-from soma.gui.qt_backend import QtGui, QtCore
-from soma.gui.qt_backend import QtWebKit
+from soma.qt_gui.qt_backend import QtGui, QtCore
+from soma.qt_gui.qt_backend import QtWebKit
 
 class TextEditWithSearch(QtGui.QTextEdit):
   """

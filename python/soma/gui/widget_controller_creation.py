@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import sipconfig
-from soma.gui.qt_backend import QtGui, QtCore
+from soma.qt_gui.qt_backend import QtGui, QtCore
 from soma.controller import trait_ids, Controller
 from soma.functiontools import partial, SomaPartial
 from trait_to_widget import StrCreateWidget,FloatCreateWidget,IntCreateWidget,\

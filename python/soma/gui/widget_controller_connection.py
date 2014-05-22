@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-from soma.gui.qt_backend import QtCore, QtGui
-from soma.gui.qt_backend.QtCore import QObject, SIGNAL
-from soma.gui.qt_backend.QtGui import QWidget, QVBoxLayout
+from soma.qt_gui.qt_backend import QtCore, QtGui
+from soma.qt_gui.qt_backend.QtCore import QObject, SIGNAL
+from soma.qt_gui.qt_backend.QtGui import QWidget, QVBoxLayout
 
 from soma.application import Application
 from soma.controller import trait_ids

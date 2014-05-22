@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from soma.gui.qt_backend import QtCore, QtGui
+from soma.qt_gui.qt_backend import QtCore, QtGui
 from soma.qt4gui.api import TimeredQLineEdit
 
 class Selection(QtGui.QWidget):

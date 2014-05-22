@@ -37,12 +37,12 @@
 @organization: U{NeuroSpin<http://www.neurospin.org>} and U{IFR 49<http://www.ifr49.org>}
 @license: U{CeCILL version 2<http://www.cecill.info/licences/Licence_CeCILL_V2-en.html>}
 '''
-__docformat__ = "epytext en"
+__docformat__ = "restructuredtext en"
 
 
-from soma.gui.qt_backend.QtCore import Qt, QAbstractTableModel, SIGNAL, QModelIndex
-from soma.gui.qt_backend.QtGui import QBrush
-from soma.gui.qt_backend import QtCore, get_qt_backend
+from soma.qt_gui.qt_backend.QtCore import Qt, QAbstractTableModel, SIGNAL, QModelIndex
+from soma.qt_gui.qt_backend.QtGui import QBrush
+from soma.qt_gui.qt_backend import QtCore, get_qt_backend
 use_qvariant = False
 if get_qt_backend() == 'PyQt4':
   try:

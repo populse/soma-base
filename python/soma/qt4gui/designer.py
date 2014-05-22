@@ -42,14 +42,14 @@ organization: `NeuroSpin<http://www.neurospin.org>`_ and `IFR 49<http://www.ifr4
 license: `CeCILL version 2<http://www.cecill.info/licences/Licence_CeCILL_V2-en.html>`_
 '''
 
-# obsolete: use soma.gui.qt_backend instead.
+# obsolete: use soma.qt_gui.qt_backend instead.
 
 __docformat__ = "restructuredtext en"
 
 
 import os
 from functools import partial
-from soma.gui.qt_backend import QtGui, QtCore, get_qt_backend, loadUi, \
+from soma.qt_gui.qt_backend import QtGui, QtCore, get_qt_backend, loadUi, \
     loadUiType
 use_pyside = (get_qt_backend() == 'PySide')
 

@@ -1,4 +1,4 @@
-from soma.gui.qt_backend import QtGui, QtCore
+from soma.qt_gui.qt_backend import QtGui, QtCore
 from soma.application import Application
 from soma.gui.widget_controller_creation import ControllerWidget
 from soma.study_data import StudyData
