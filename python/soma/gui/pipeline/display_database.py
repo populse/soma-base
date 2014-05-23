@@ -3,7 +3,7 @@ from soma.pipeline.study import Study
 import glob
 import json
 import os
-import collections 
+import collections
 from soma.gui.file_selection import FileAttributeSelection
 try:
     from traits.api import HasTraits,File
