@@ -218,6 +218,7 @@ def loadUi(ui_file, *args, **kwargs):
     '''
     if get_qt_backend() == 'PyQt4':
         # the problem is corrected in version > 4.7.2,
+        from PyQt4 import QtCore
         if QtCore.PYQT_VERSION > 0x040702:
             from PyQt4 import uic
             return uic.loadUi(ui_file, *args, **kwargs)
