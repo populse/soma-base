@@ -1,6 +1,9 @@
 import os, re
 from glob import glob
-from soma.qt_gui.qt_backend.QtGui import QDialog, QTableWidgetItem
+from soma.qt_gui import qt_backend
+if __name__ == '__main__':
+  qt_backend.set_qt_backend('PyQt4')
+from soma.qt_gui.qt_backend.QtGui import QDialog, QTableWidgetItem, QVBoxLayout
 from soma.qt_gui.qt_backend import loadUi
 
 
@@ -17,7 +20,13 @@ class CATIScanSelector( QDialog ):
   def __init__( self, directory = None, parent = None ):
     super( CATIScanSelector, self ).__init__( parent=parent )
     ui = os.path.join( __file__[ : __file__.rfind( '.' ) ] + '.ui' )
-    loadUi( ui, self )
+    ui_obj = loadUi( ui, self )
+    if qt_backend.get_qt_backend() == 'PySide':
+      self.table = ui_obj.table
+      self.status = ui_obj.status
+      layout = QVBoxLayout(self)
+      self.setLayout(layout)
+      layout.addWidget(ui_obj)
     if directory:
       self.reset( directory )
   
@@ -149,7 +158,7 @@ if __name__ == '__main__':
   import sys
   from soma.qt_gui.qt_backend.QtGui import QApplication
   from pprint import pprint
-  
+
   from soma.application import Application
   # First thing to do is to create an Application with name and version
   app = Application( 'soma.fom', '1.0' )
