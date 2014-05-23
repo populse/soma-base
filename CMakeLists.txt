@@ -46,16 +46,6 @@ BRAINVISA_COPY_DIRECTORY( "${CMAKE_CURRENT_SOURCE_DIR}/examples/soma"
 BRAINVISA_COPY_PYTHON_DIRECTORY( "${CMAKE_CURRENT_SOURCE_DIR}/tests"
                                   ${PROJECT_NAME}
                                   python )
-BRAINVISA_COPY_PYTHON_DIRECTORY( "${CMAKE_CURRENT_SOURCE_DIR}/sandbox/python"
-                                  ${PROJECT_NAME}
-                                  python/sandbox )
-BRAINVISA_COPY_DIRECTORY( "${CMAKE_CURRENT_SOURCE_DIR}/sandbox/share" 
-                          "share/sandbox"
-                          ${PROJECT_NAME} )
-
-# BRAINVISA_GENERATE_EPYDOC_DOC( "${CMAKE_BINARY_DIR}/python/soma"
-#   "share/doc/soma-${BRAINVISA_PACKAGE_VERSION_MAJOR}.${BRAINVISA_PACKAGE_VERSION_MINOR}/epydoc"
-#   EXCLUDE "soma.aims*" "soma.*.qt3gui" )
 
 find_package( Sphinx )
 BRAINVISA_GENERATE_SPHINX_DOC( "doc/sphinx"
