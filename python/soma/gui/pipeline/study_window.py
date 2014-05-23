@@ -4,7 +4,7 @@ from soma.gui.widget_controller_creation import ControllerWidget
 from soma.gui.pipeline.display_bdd import DisplayBDD
 from soma.application import Application 
 from soma.pipeline.study import Study
-from soma.gui.pipeline.process_gui import ProcessGui
+from soma.gui.pipeline.process_gui import ProcessWithFomWidget
 from soma.gui.pipeline.iteration_gui import IterationGui,ChoiceParameters
 from capsul.process import get_process_instance
 from capsul.process.process_with_fom import ProcessWithFom
@@ -74,23 +74,19 @@ class StudyWindow(QtGui.QMainWindow):
 
     def run_simple_process(self):
         """Launch simple process"""
-        print 'RUN SIMPLE PROCESS'
         #FIXME utile je pense pour creer fichier json si existe pas..
         Study.get_instance().save()
-        process=self.get_object_process()
-        print 'process:', process
+        process = self.get_object_process()
         #To have attributes on header
-        process_with_fom=ProcessWithFom(process)
-        self.process_gui=ProcessGui(process_with_fom,process)
-        self.process_gui.open()
+        process_with_fom = ProcessWithFom(process)
+        self.process_gui = ProcessWithFomWidget(process_with_fom,process)
+        self.process_gui.show()
 
 
     def run_pipeline_process(self):
         """Launch pipeline process"""
-        subprocess.check_call(['python', '-m', 'morphologist.process'])
-
-
-
+        raise NotImplementedError(
+            'StudyWindow.run_pipeline_process(): not working yet.')
 
 
     def run_iteration_process(self):

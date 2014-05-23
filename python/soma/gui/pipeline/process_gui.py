@@ -11,10 +11,10 @@ try:
 except ImportError:
     from enthought.traits.api import File,HasTraits
 
-class ProcessGui(QtGui.QDialog):
+class ProcessWithFomWidget(QtGui.QWidget):
     """Process interface with FOM handling, and execution running"""
     def __init__(self, process_with_fom, process):
-        super(ProcessGui, self).__init__()
+        super(ProcessWithFomWidget, self).__init__()
         self.Study = Study.get_instance()
         self.setLayout( QtGui.QVBoxLayout() )
         # Get the object process (SimpMorpho)
