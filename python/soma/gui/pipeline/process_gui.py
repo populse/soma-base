@@ -3,7 +3,7 @@ from soma.application import Application
 from soma.gui.widget_controller_creation import ControllerWidget
 import collections
 from soma.gui.icon_factory import IconFactory
-from soma.gui.pipeline.selection_widget import Selection
+from soma.qt_gui.widgets.file_selection_widget import FileSelectionWidget
 from soma.qt4gui.api import TimeredQLineEdit
 from soma.pipeline.study import Study
 try:
@@ -12,75 +12,80 @@ except ImportError:
     from enthought.traits.api import File,HasTraits
 
 class ProcessGui(QtGui.QDialog):
-    """Class who created Interface for execute a process on one subject"""
-    def __init__(self,process_with_fom,process):
+    """Process interface with FOM handling, and execution running"""
+    def __init__(self, process_with_fom, process):
         super(ProcessGui, self).__init__()
-        self.Study=Study.get_instance()
+        self.Study = Study.get_instance()
         self.setLayout( QtGui.QVBoxLayout() )
-        #Get the object process (SimpMorpho)
+        # Get the object process (SimpMorpho)
         self.process_with_fom = process_with_fom
-        self.process=process
+        self.process = process
 
-        #To show output directory and select file
-        self.lineedit_input=Selection('File','File for attributes input',165)
-        self.connect(self.lineedit_input, QtCore.SIGNAL("editChanged(const QString & )"),self.on_lineedit)
+        # To show output directory and select file
+        self.lineedit_input = FileSelectionWidget(
+            'File','File for attributes input', 165)
+        self.connect(self.lineedit_input,
+            QtCore.SIGNAL("editChanged(const QString & )"), self.on_lineedit)
         self.lineedit_input.setSizePolicy(QtGui.QSizePolicy(
             QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Fixed))
 
         self.layout().addWidget(self.lineedit_input)
         if self.Study.input_fom != self.Study.output_fom:
-            self.lineedit_output=Selection('File','File for attributes output',165)
+            self.lineedit_output = FileSelectionWidget(
+                'File','File for attributes output', 165)
             self.lineedit_output.setSizePolicy(QtGui.QSizePolicy(
                 QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Fixed))
             self.layout().addWidget(self.lineedit_output)
-            self.connect(self.lineedit_output,  QtCore.SIGNAL("editChanged(const QString & )"),self.on_lineedit)
+            self.connect(self.lineedit_output,
+                QtCore.SIGNAL("editChanged(const QString & )"),
+                self.on_lineedit)
 
-        #Scroll area to show attributs
-        self.scroll_area2=QtGui.QScrollArea( parent=self )
+        # Scroll area to show attributs
+        self.scroll_area2 = QtGui.QScrollArea( parent=self )
         self.scroll_area2.setWidgetResizable( True )
         self.scroll_area2.setSizePolicy(QtGui.QSizePolicy(
             QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Preferred))
-        #self.layout().addStretch(1)
         self.layout().addWidget( self.scroll_area2 )
 
-        #CheckBox to foms rules or not
-        self.checkbox_fom=QtGui.QCheckBox('CHECK = YOU FOLLOW RULES OF THE FOM')
+        # CheckBox to foms rules or not
+        self.checkbox_fom = QtGui.QCheckBox('Follow FOM rules')
         self.checkbox_fom.setChecked(True)
         self.checkbox_fom.stateChanged.connect(self.on_checkbox_change)
         self.layout().addWidget(self.checkbox_fom)
 
-        #Button Show/Hide completion
+        # Button Show/Hide completion
         self.btn_show_completion=QtGui.QPushButton('Show/Hide completion')
         self.layout().addWidget(self.btn_show_completion)
         self.btn_show_completion.clicked.connect(self.on_show_completion)
 
-        #Scroll area to show completion
+        # Scroll area to show completion
         self.scroll_area = QtGui.QScrollArea( parent=self )
         self.scroll_area.setWidgetResizable( True )
         self.scroll_area.setSizePolicy(QtGui.QSizePolicy(
             QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding))
         self.layout().addWidget( self.scroll_area )
 
-        #Create controller widget for process and object_attribute
-        self.controller_widget = ControllerWidget( self.process, live=True, parent=self.scroll_area )
-        self.controller_widget2=ControllerWidget( self.process_with_fom, live=True, parent=self.scroll_area2 )
-        #self.process.on_trait_change(self.process_with_fom.process_changed,'anytrait')
-        self.process_with_fom.on_trait_change(self.process_with_fom.attributes_changed,'anytrait')
-        #self.process.on_trait_change(self.process_with_fom.process_changed,'anytrait')
+        # Create controller widget for process and object_attribute
+        self.controller_widget = ControllerWidget( self.process, live=True,
+            parent=self.scroll_area )
+        self.controller_widget2=ControllerWidget( self.process_with_fom,
+            live=True, parent=self.scroll_area2 )
+        self.process_with_fom.on_trait_change(
+            self.process_with_fom.attributes_changed, 'anytrait')
 
-        #Set controller of attributs and controller of process for each corresponding area
-        self.scroll_area2.setWidget(self.controller_widget2 ) 
-        self.scroll_area.setWidget( self.controller_widget )
+        # Set controller of attributs and controller of process for each
+        # corresponding area
+        self.scroll_area2.setWidget(self.controller_widget2)
+        self.scroll_area.setWidget(self.controller_widget)
         self.scroll_area.hide()
 
         self.btn_save_json=QtGui.QPushButton('Save Json')
         self.layout().addWidget(self.btn_save_json)
         self.btn_save_json.clicked.connect(self.on_btn_save_json)
 
-        self.btn_run=QtGui.QPushButton( 'RUN', parent=self )
+        self.btn_run=QtGui.QPushButton('RUN', parent=self)
         self.btn_run.clicked.connect(self.on_run)
-        self.layout().addWidget( self.btn_run )
-
+        self.layout().addWidget(self.btn_run)
 
 
     def on_lineedit(self,text):
@@ -88,8 +93,8 @@ class ProcessGui(QtGui.QDialog):
         self.process_with_fom.find_attributes(text)
 
 
-    """Save results on json"""
     def on_btn_save_json(self):
+        """Save results in a json file"""
         print 'on btn save json'
         #if the user wants to save with a diffent name
         #QtGui.QFileDialog.getSaveFileName(self, 'Select a .json study','', '*.json')
@@ -111,24 +116,22 @@ class ProcessGui(QtGui.QDialog):
             #if trait.output is True:
                 #self.Study.runs[name_run]['output'][name]=getattr(self.process,name)
         #self.Study.save()
-        
-        
+
+
     def message_box_critical(self):
-        ret = QtGui.QMessageBox.critical(self, "Critical", 
-              'If you go back to rules of foms, it will reset all path files. Are you sure?', QtGui.QMessageBox.Ok, QtGui.QMessageBox.Cancel)
- 
+        ret = QtGui.QMessageBox.critical(self, "Critical",
+            'Going back to FOM rules will reset all path files. Are you sure?',
+            QtGui.QMessageBox.Ok, QtGui.QMessageBox.Cancel)
+
         if ret == QtGui.QMessageBox.Ok:
             #reset attributs and trait of process
-            #self.process.on_trait_change(self.process_with_fom.process_changed,'anytrait')
-            self.process_with_fom.on_trait_change(self.process_with_fom.attributes_changed,'anytrait')
+            self.process_with_fom.on_trait_change(
+                self.process_with_fom.attributes_changed, 'anytrait')
             for name,trait in self.process.user_traits().iteritems():
-                if trait.is_trait_type( File):
-                    setattr(self.process,name,'')
+                if trait.is_trait_type(File):
+                    setattr(self.process,name, '')
             self.process_with_fom.create_completion()
-            #self.process_with_fom.__init__(self.process)
-        
-        
-            print 'here'
+
             print self.process_with_fom.attributes
             if self.lineedit_input.lineedit.text() != '':
                 self.process_with_fom.find_attributes(
@@ -137,17 +140,16 @@ class ProcessGui(QtGui.QDialog):
 
         else:
             self.checkbox_fom.setChecked(False)
-        
-        
+
+
     def on_checkbox_change(self,state):
        if state == QtCore.Qt.Checked:
            self.message_box_critical()
-
        else:
-           print 'YOU WANT BE OUTSIDE RULES OF FOM'
            self.scroll_area2.hide()
-           #self.process.on_trait_change(self.process_with_fom.process_changed,'anytrait',remove=True)
-           self.process_with_fom.on_trait_change(self.process_with_fom.attributes_changed,'anytrait',remove=True)
+           self.process_with_fom.on_trait_change(
+              self.process_with_fom.attributes_changed, 'anytrait',
+              remove=True)
 
 
     def on_show_completion(self):
@@ -159,10 +161,10 @@ class ProcessGui(QtGui.QDialog):
 
     #Run excecution of the process
     def on_run(self):
-        print 'IN THE FUNCTION RUN'
+        print 'IN THE RUN FUNCTION'
         #To execute the process
         self.process()
         #How pass atributes
         self.Study.save_run(self.process_with_fom.attributes,self.process)
-        
-        
+
+
