@@ -1,7 +1,6 @@
 from soma.qt_gui.qt_backend import QtGui, QtCore
 from soma.application import Application
 from soma.gui.widget_controller_creation import ControllerWidget
-from soma.study_data import StudyData
 import collections
 from soma.gui.icon_factory import IconFactory
 from soma.gui.pipeline.selection_widget import Selection

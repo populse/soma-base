@@ -280,6 +280,24 @@ def getSaveFileName(parent=None, caption='', directory='', filter='',
             caption, directory, filter, selectedFilter, options)[0]
 
 
+def getExistingDirectory(parent=None, caption='', directory='', options=None):
+    '''PyQt4 / PySide compatible call to QFileDialog.getExistingDirectory'''
+    if get_qt_backend() == 'PyQt4':
+        kwargs = {}
+        if options is not None:
+            kwargs['options'] = QtGui.QFileDialog.Options(options)
+        return get_qt_module().QtGui.QFileDialog.getExistingDirectory(parent,
+            caption, directory, **kwargs )
+    else:
+        if options is not None:
+            return get_qt_module().QtGui.QFileDialog.getExistingDirectory(
+                parent, caption, directory,
+                QtGui.QFileDialog.Options(options))[0]
+        else:
+            return get_qt_module().QtGui.QFileDialog.getExistingDirectory(
+                parent, caption, directory)[0]
+
+
 def init_matplotlib_backend():
     '''Initialize Matplotlib to use Qt, and the appropriate Qt/Python binding
     (PySide or PyQt) according to the configured/loaded toolkit.

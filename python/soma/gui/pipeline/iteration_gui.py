@@ -2,7 +2,7 @@ from soma.qt_gui.qt_backend import QtGui, QtCore,QtSql
 from soma.application import Application
 #from morphologistSimp import SimpMorpho
 from soma.gui.file_selection import FileAttributeSelection
-from capsul.controller import trait_ids
+from soma.controller import trait_ids
 from capsul.process import get_process_instance
 from capsul.process.process_with_fom import ProcessWithFom
 from soma.pipeline.study import Study
