@@ -16,7 +16,6 @@ class Selection(QtGui.QWidget):
         self.fname = None
         self.lineedit = TimeredQLineEdit()
         self.button.clicked.connect(self.on_button)
-        #self.connect(self.lineedit, QtCore.SIGNAL("textChanged(QString)"),self.on_lineedit)
         self.connect(self.lineedit, QtCore.SIGNAL('userModification'),self.on_lineedit)
         self.lay.addWidget(self.label)
         self.lay.addWidget(self.lineedit)
