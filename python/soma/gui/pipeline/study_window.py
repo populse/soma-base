@@ -119,7 +119,7 @@ class StudyWindow(QtGui.QMainWindow):
                 self.second_page.go()
             elif self.second_page.list_subjects_selected \
                     == self.first_page.list_subjects_selected:
-                print 'NO SUBJECTS ADDDED'
+                print 'NO SUBJECTS ADDED'
 
             else:
                 self.add_element(self.first_page.list_subjects_selected,
