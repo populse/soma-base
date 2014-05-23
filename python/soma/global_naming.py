@@ -56,8 +56,3 @@ def get_object( global_name ):
   
 def get_name( obj ):
   return GlobalNaming().get_name( obj )
-
-#if __name__ == '__main__':
-  #gn = GlobalNaming()
-  #for i in ( 'soma.stringtools.string_to_list', 'soma.sorted_dictionary.SortedDictionary', 'soma.sorted_dictionary.SortedDictionary()', 'soma.sorted_dictionary.SortedDictionary().get', 'soma.sorted_dictionary.SortedDictionary().get.im_func' ):
-    #print i, '->', gn.get_name( gn.get_object( i ) )
