@@ -138,7 +138,7 @@ class Morphologist( Pipeline ):
     self.add_process( 'spm_normalization', 'soma.pipeline.sandbox.SPMNormalization' )
     self.export_parameter('spm_normalization', 'template')
     self.add_link( 't1mri->spm_normalization.image' )
-    self.add_link( 'spm_normalization.normalized->select_normalization.spm-t1mri' )
+    #self.add_link( 'spm_normalization.normalized->select_normalization.spm-t1mri' )
     self.export_parameter( 'spm_normalization', 'normalized' )
 
     self.add_process( 'fsl_convert', 'soma.pipeline.sandbox.ConvertForFSL' )
@@ -147,7 +147,7 @@ class Morphologist( Pipeline ):
     self.add_link( 'template->fsl_normalization.template' )
     self.add_link( 'fsl_convert.output->fsl_normalization.image' )
     self.export_parameter('fsl_convert', 'output', 'fsl_converted')
-    self.add_link('fsl_normalization.normalized->select_normalization.fsl-t1mri')
+    #self.add_link('fsl_normalization.normalized->select_normalization.fsl-t1mri')
 #    self.export_parameter( 'fsl_normalization', 'another', weak=True )
 
     self.add_process( 'another_convert', 'soma.pipeline.sandbox.ConvertForAnother' )
@@ -155,9 +155,9 @@ class Morphologist( Pipeline ):
     self.add_link( 't1mri->another_convert.input' )
     self.add_link( 'template->another_normalization.template' )
     self.add_link( 'another_convert.output->another_normalization.image' )
-    self.add_link('another_normalization.normalized->select_normalization.another-t1mri')
+    #self.add_link('another_normalization.normalized->select_normalization.another-t1mri')
 
-    self.add_link( 't1mri->select_normalization.none-t1mri' )
+    #self.add_link( 't1mri->select_normalization.none-t1mri' )
 
     self.add_link( 'select_normalization.t1mri->bias_correction.t1mri' )
     self.export_parameter( 'bias_correction', 'nobias' )
@@ -224,11 +224,11 @@ class WorkflowViewer( QtGui.QWidget ):
   def update( self ):
     image = tempfile.NamedTemporaryFile( suffix='.png' )
     dot = tempfile.NamedTemporaryFile( suffix='.png' )
-    self.pipeline.workflow_graph().write( dot )
-    dot.flush()
-    check_call( [ 'dot', '-Tpng', '-o', image.name, dot.name ] )
-    pixmap = QtGui.QPixmap( image.name ).scaledToHeight( 600 )
-    self.label.setPixmap( pixmap )
+    #self.pipeline.workflow_graph().write( dot )
+    #dot.flush()
+    #check_call( [ 'dot', '-Tpng', '-o', image.name, dot.name ] )
+    #pixmap = QtGui.QPixmap( image.name ).scaledToHeight( 600 )
+    #self.label.setPixmap( pixmap )
     
                           
 if __name__ == '__main__':
