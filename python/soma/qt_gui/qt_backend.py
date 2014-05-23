@@ -41,6 +41,7 @@ import logging
 import sys
 import os
 import imp
+from soma.utils.functiontools import partial
 
 
 # make qt_backend a fake module package, with Qt modules as sub-modules
@@ -196,6 +197,15 @@ def import_qt_submodule(submodule):
     return mod
 
 
+def _iconset(self, prop):
+    return QtGui.QIcon(os.path.join(self._basedirectory,
+        prop.text).replace("\\", "\\\\"))
+
+def _pixmap(self, prop):
+    return QtGui.QPixmap(os.path.join(self._basedirectory,
+        prop.text).replace("\\", "\\\\"))
+
+
 def loadUi(ui_file, *args, **kwargs):
     '''Load a .ui file and returns the widget instance.
 
@@ -214,7 +224,7 @@ def loadUi(ui_file, *args, **kwargs):
         else:
             from PyQt4.uic.Loader import loader
             uiLoader = loader.DynamicUILoader()
-            uiLoader.wprops._basedirectory = os.path.dirname( 
+            uiLoader.wprops._basedirectory = os.path.dirname(
                 os.path.abspath(ui_file))
             uiLoader.wprops._iconset = partial(_iconset, uiLoader.wprops)
             uiLoader.wprops._pixmap = partial(_pixmap, uiLoader.wprops)
@@ -305,13 +315,15 @@ def init_matplotlib_backend():
     and returned by this function.
     '''
     import matplotlib
+    mpl_ver = [int(x) for x in matplotlib.__version__.split('.')[:2]]
     guiBackend = 'Qt4Agg'
     if 'matplotlib.backends' not in sys.modules:
         matplotlib.use(guiBackend)
     elif matplotlib.get_backend() != guiBackend:
         raise RuntimeError( 
             'Mismatch between Qt version and matplotlib backend: '
-            'matplotlib uses ' + matplotlib.get_backend() + ' but ' + guiBackend + ' is required.')
+            'matplotlib uses ' + matplotlib.get_backend() + ' but '
+            + guiBackend + ' is required.')
     if get_qt_backend() == 'PySide':
         if 'backend.qt4' in matplotlib.rcParams.keys():
             matplotlib.rcParams['backend.qt4'] = 'PySide'
@@ -322,8 +334,10 @@ def init_matplotlib_backend():
         if 'backend.qt4' in matplotlib.rcParams.keys():
             matplotlib.rcParams['backend.qt4'] = 'PyQt4'
         else:
-            raise RuntimeError("Could not use Matplotlib, the backend using " \
-                "PyQt4 is missing.")
+            # older versions of matplotlib used only PyQt4.
+            if mpl_ver >= 1.1:
+                raise RuntimeError("Could not use Matplotlib, the backend " \
+                    "using PyQt4 is missing.")
     from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg \
         as FigureCanvas
     sys.modules[__name__].FigureCanvas = FigureCanvas
