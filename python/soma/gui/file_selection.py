@@ -117,6 +117,7 @@ class FileAttributeSelection(object):
     _selectors = {
         ('.*cati.*', '.*'): CATIScanSelector,
         ('.*brainvisa.*', '.*'): BrainVISAScanSelector,
+        ('morphologist.*', '.*'): BrainVISAScanSelector,
     }
 
     def __init__(self):
@@ -154,8 +155,8 @@ class FileAttributeSelection(object):
             - a list of dictionaries (one for each selected item)
         '''
         selector_class = self.find_selector(fom_name, process, parameters)
+        print 'selection_class', selector_class
         if selector_class:
-            print 'selection_classe', selector_class
             return selector_class(directory=directory).select()
         return None
 
