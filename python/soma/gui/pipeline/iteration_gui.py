@@ -62,12 +62,13 @@ class IterationGui(QtGui.QWizardPage):
         self.table.setHorizontalHeaderItem(num_col,
             QtGui.QTableWidgetItem('delete'))
 
+
     def on_add_subjects(self):
         """ Add a subject in the database and create Attributes and process
         objects for each
         """
         file_selection = FileAttributeSelection()
-        selection = file_selection.select( self.Study.input_fom, 'unused',
+        selection = file_selection.select(self.Study.input_fom, 'unused',
             [ 'unused' ], self.Study.input_directory)
         if selection is None:
             return
@@ -190,7 +191,8 @@ class ChoiceParameters(QtGui.QWizardPage):
 
 
     def combo_parameter_changed(self, trait, text):
-        setattr(self.process, trait, text)
+        conv_value = type(trait.default)(text)
+        setattr(self.process, trait, conv_value)
 
 
     def checkbox_parameter_changed(self,trait,state):
@@ -255,7 +257,7 @@ class ChoiceParameters(QtGui.QWizardPage):
         if type_trait == 'Enum':
             wid = QtGui.QComboBox()
             for val in all_value:
-                wid.addItem(val)
+                wid.addItem(str(val))
                 #wid.currentIndexChanged.connect(self.parameter_changed)
             self.connect(wid,QtCore.SIGNAL(
                 "currentIndexChanged(const QString &)"),
@@ -267,6 +269,8 @@ class ChoiceParameters(QtGui.QWizardPage):
             self.connect(wid,QtCore.SIGNAL("stateChanged(int)"),
                 partial(self.checkbox_parameter_changed, trait))
             #wid.stateChanged.connect(self.parameter_changed)
+        else:
+            wid = None
         return wid
 
 
