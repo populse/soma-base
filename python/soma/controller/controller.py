@@ -17,7 +17,7 @@ except ImportError:
 
 from weakref import WeakKeyDictionary
 from soma.utils.functiontools import partial
-from collections import OrderedDict
+from soma.sorted_dictionary import SortedDictionary
 
 from soma.controller.factory import Factories
 
@@ -82,7 +82,13 @@ class Controller(HasTraits):
 
     def __init__(self, *args, **kwargs):
         super(Controller, self).__init__(*args, **kwargs)
-        self._ordered_traits = OrderedDict()
+        self._user_traits = SortedDictionary()
+        class_traits = self.class_traits()
+        sorted_keys = [t[1]
+            for t in sorted((getattr(trait, 'order', ''), name)
+            for name, trait in class_traits.iteritems() if self.is_user_trait(trait))]
+        for name in sorted_keys:
+            self._user_traits[name] = class_traits[name]
 
     def user_traits(self):
         """
@@ -92,33 +98,7 @@ class Controller(HasTraits):
         Returned values are sorted according to the "order" trait
         meta-attribute.
         """
-        traits = OrderedDict()
-        for name, trait in self._ordered_traits.iteritems():
-            if self.is_user_trait(trait):
-                traits[name] = trait
-        class_traits = self.class_traits()
-        sorted_keys = [t[1]
-            for t in sorted((getattr(trait, 'order', ''), name)
-            for name, trait in class_traits.iteritems() if self.is_user_trait(trait) and name not in traits)]
-        for name in sorted_keys:
-            traits[name] = class_traits[name]
-        return traits
-
-        #traits = dict((i, j) for i, j in self.class_traits().iteritems()
-                              #if not i.startswith('trait_'))
-        #traits.update(self._instance_traits())
-        ##for name in ["selection_changed", "user_traits_changed"]:
-            ##if name in traits.keys():
-                ##del traits[name]
-        #for name in traits.keys():
-            #trait = traits[name]
-            #if not self.is_user_trait(trait):
-                #del traits[name]
-        #sorted_keys = [t[1]
-            #for t in sorted((getattr(trait, 'order', ''), name)
-            #for name, trait in traits.iteritems())]
-        #return SortedDictionary(*[(name, traits[name])
-                                        #for name in sorted_keys])
+        return self._user_traits
 
     def is_user_trait(self, trait):
         '''
@@ -127,19 +107,16 @@ class Controller(HasTraits):
         return not isinstance(trait.handler, Event)
 
     def add_trait(self, name, *trait):   
-       #global global_compt_order
-
-       super(Controller, self).add_trait(name, *trait)
-       #global_compt_order = global_compt_order+1
-       trait_instance = self.trait(name)
-       #if trait_instance.order is None:
-          #print 'add_trait, name: %s, order: %d' % (name, global_compt_order)
-          #trait_instance.order = global_compt_order
-       trait_instance.defaultvalue = trait_instance.default
-       self.get(name)
-       self._ordered_traits[name] = trait_instance
+        super(Controller, self).add_trait(name, *trait)
+        trait_instance = self.trait(name)
+        if self.is_user_trait(trait_instance):
+            trait_instance.defaultvalue = trait_instance.default
+            #self.get(name)
+            self._user_traits[name] = trait_instance
 
     def remove_trait(self,name):
         super(Controller, self).remove_trait(name)
-        del self._ordered_traits[name]
+        # Remove name from _user_traits without error if it
+        # is not present
+        self._user_traits.pop(name,None)
 
