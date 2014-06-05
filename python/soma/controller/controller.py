@@ -84,11 +84,12 @@ class Controller(HasTraits):
         super(Controller, self).__init__(*args, **kwargs)
         self._user_traits = SortedDictionary()
         class_traits = self.class_traits()
-        sorted_keys = [t[1]
-            for t in sorted((getattr(trait, 'order', ''), name)
-            for name, trait in class_traits.iteritems() if self.is_user_trait(trait))]
-        for name in sorted_keys:
-            self._user_traits[name] = class_traits[name]
+        if class_traits:
+          sorted_keys = [t[1]
+              for t in sorted((getattr(trait, 'order', ''), name)
+              for name, trait in class_traits.iteritems() if self.is_user_trait(trait))]
+          for name in sorted_keys:
+              self._user_traits[name] = class_traits[name]
 
     def user_traits(self):
         """
