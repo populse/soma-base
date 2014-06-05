@@ -136,8 +136,8 @@ def getArgumentsSpecification( callable ):
     except AttributeError:
       return [], None, None, None
     return getArgumentsSpecification( init )
-  elif isinstance( callable, partial ):
-    args, varargs, varkw, defaults = inspect.getargspec( callable.func )
+  elif isinstance( callable, (partial,SomaPartial) ):
+    args, varargs, varkw, defaults = getArgumentsSpecification( callable.func )
     if defaults:
       d = dict( izip( reversed( args ), reversed( defaults ) ) )
     else:
