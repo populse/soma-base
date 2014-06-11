@@ -64,7 +64,6 @@ class SortedDictionary( UserDict, object ):
     super(SortedDictionary, self).__init__()
     #UserDict.__init__(self)
     self.sortedKeys = []
-    self.sortedItems = []
     self.data = {}
     for key, value in args:
       self[ key ] = value
@@ -81,7 +80,7 @@ class SortedDictionary( UserDict, object ):
     @rtype: list
     @return: sorted list of C{( key, value)} pairs
     '''
-    return self.sortedItems
+    return [x for x in self.iteritems()]
 
   def values( self ):
     '''
@@ -93,14 +92,11 @@ class SortedDictionary( UserDict, object ):
   def __setitem__( self, key, value ):
     if not self.data.has_key( key ):
       self.sortedKeys.append( key )
-      self.sortedItems.append( (key, value) )
     self.data[ key ] = value
 
   def __delitem__( self, key ):
     del self.data[ key ]
-    i = self.sortedKeys.index(key)
-    del self.sortedKeys[i]
-    del self.sortedItems[i]
+    self.sortedKeys.remove( key )
 
   def __getstate__( self ):
     return self.items()
@@ -124,14 +120,19 @@ class SortedDictionary( UserDict, object ):
     '''
     returns an iterator over the sorted values
     '''
-    for k,v in self.sortedItems:
-      yield v
+    for k in self:
+      yield self[ k ]
 
   def iteritems( self ):
     '''
     returns an iterator over the sorted (key, value) pairs
     '''
-    return iter(self.sortedItems)
+    for k in self:
+      try:
+        yield ( k, self[ k ] )
+      except KeyError:
+        print '!SortedDictionary error!', self.data.keys(), self.sortedKeys
+        raise
 
         
   def insert( self, index, key, value ):
@@ -146,7 +147,6 @@ class SortedDictionary( UserDict, object ):
     if self.data.has_key( key ):
       raise KeyError( key )
     self.sortedKeys.insert( index, key )
-    self.sortedItems.insert( index, (key, value) )
     self.data[ key ] = value
 
   def index(self, key):
@@ -164,7 +164,6 @@ class SortedDictionary( UserDict, object ):
     Remove all items from dictionary
     '''
     del self.sortedKeys[:]
-    del self.sortedItems[:]
     self.data.clear()
 
 
@@ -175,7 +174,23 @@ class SortedDictionary( UserDict, object ):
     @param func: comparison function, return -1 if e1<e2, 1 if e1>e2, 0 if e1==e2
     """
     self.sortedKeys.sort(func)
-    self.sortedItems = [(k,self[k]) for k in self.sortedKeys]
+
+
+  def compValues(self, key1, key2):
+    """
+    Use this comparaison function in sort method parameter in order to sort the dictionary by values.
+    if data[key1]<data[key2] return -1
+    if data[key1]>data[key2] return 1
+    if data[key1]==data[key2] return 0
+    """
+    e1=self.data[key1]
+    e2=self.data[key2]
+    print "comp", e1, e2
+    if e1 < e2:
+      return -1
+    elif e1 > e2:
+      return 1
+    return 0
   
   
   def setdefault( self, key, value=None ):
@@ -193,17 +208,16 @@ class SortedDictionary( UserDict, object ):
       result = self.data.pop(key,Undefined)
       if result is Undefined:
         return default
-    i = self.sortedKeys.index( key )
-    del self.sortedKeys[i]
-    del self.sortedItems[i]
+    self.sortedKeys.remove( key )
     return result
 
 
   def popitem( self ):
-    result = self.sortedItems[0]
-    del self.sortedKeys[0]
-    del self.sortedItems[0]
-    del self.data[result[0]]
+    result = self.data.popitem()
+    try:
+      self.sortedKeys.remove( result[0] )
+    except ValueError:
+      pass
     return result
 
   
