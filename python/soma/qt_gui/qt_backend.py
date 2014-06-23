@@ -223,10 +223,17 @@ def loadUi(ui_file, *args, **kwargs):
             from PyQt4 import uic
             return uic.loadUi(ui_file, *args, **kwargs)
         else:
+            # needed import and def
             from PyQt4.uic.Loader import loader
+            if not hasattr(globals(), 'partial') :
+                from soma.functiontools import partial
+            def _iconset(self, prop):
+                return QtGui.QIcon( os.path.join( self._basedirectory, prop.text ).replace("\\", "\\\\") )
+            def _pixmap(self, prop):
+                return QtGui.QPixmap(os.path.join( self._basedirectory, prop.text ).replace("\\", "\\\\"))
             uiLoader = loader.DynamicUILoader()
             uiLoader.wprops._basedirectory = os.path.dirname(
-                os.path.abspath(ui_file))
+                os.path.abspath(ui_file)) 
             uiLoader.wprops._iconset = partial(_iconset, uiLoader.wprops)
             uiLoader.wprops._pixmap = partial(_pixmap, uiLoader.wprops)
             return uiLoader.loadUi(ui_file, *args, **kwargs)
@@ -336,7 +343,7 @@ def init_matplotlib_backend():
             matplotlib.rcParams['backend.qt4'] = 'PyQt4'
         else:
             # older versions of matplotlib used only PyQt4.
-            if mpl_ver >= 1.1:
+            if mpl_ver >= [1,1]:
                 raise RuntimeError("Could not use Matplotlib, the backend " \
                     "using PyQt4 is missing.")
     from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg \
