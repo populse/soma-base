@@ -86,7 +86,8 @@ class QtThreadCall( singleton.Singleton, QObject ):
   @ivar timer: timer to wake this object periodically
   """
   def __singleton_init__( self ):
-    QObject.__init__( self, None )
+    # QObject.__init__( self, None )
+    super( QtThreadCall, self ).__singleton_init__( None )
     self.lock = threading.RLock()
     self.actions = []
     # look for the main thread

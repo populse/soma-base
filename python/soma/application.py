@@ -67,7 +67,7 @@ class Application( Singleton, Controller ):
 
   def __singleton_init__( self, name, version=None, *args, **kwargs ):
     '''Replaces __init__ in Singleton.'''
-    super( Application, self ).__init__( *args, **kwargs )
+    super( Application, self ).__singleton_init__( *args, **kwargs )
 
     # Warning : Traits bug
     # Using the trait Directory() might instanciate a QApplication (seems to depend on the
@@ -82,11 +82,11 @@ class Application( Singleton, Controller ):
     self.add_trait( 'site_directory',  Directory( 
       desc='Base directory where site specifc information can be find' ) )
     self._controller_factories = None
-    
+
     self.name = name
     self.version = version
     self.loaded_plugin_modules = {}
-    
+
 
   def initialize( self ):
     '''This method must be called once to setup the application.'''

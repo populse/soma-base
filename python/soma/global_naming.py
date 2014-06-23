@@ -8,6 +8,7 @@ from soma.singleton import Singleton
 
 class GlobalNaming( Singleton ):
   def __singleton_init__( self ):
+    super( GlobalNaming, self ).__singleton_init__()
     self._global_name_re = re.compile( r'(([A-Za-z][A-Za-z0-9_.]*)\.([A-Za-z0-9_]+))(\(\))?((\.)([A-Za-z][A-Za-z0-9_.]+))?' )
     self._names = WeakKeyDictionary()
 
