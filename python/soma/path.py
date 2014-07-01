@@ -41,7 +41,10 @@ license: U{CeCILL version 2<http://www.cecill.info/licences/Licence_CeCILL_V2-en
 '''
 __docformat__ = "restructuredtext en"
 
-import os, platform, fnmatch
+import os
+import platform
+import fnmatch
+import hashlib
 
 def split_path( path ):
   '''
@@ -193,6 +196,32 @@ def which(program):
                 return exe_file
     
     return None
+
+def update_hash_from_directory(directory, hash):
+    '''
+    Update a hash object from the content of a directory. The hash will
+    reflect the recursive content of all files as well as the paths in all 
+    directories.
+    '''
+    for root, dirs, files in sorted(os.walk(directory)):
+        for file in sorted(files):
+            hash.update(file)
+            hash.update(open(os.path.join(root, file)).read())
+        for dir in sorted(dirs):
+            hash.update(dir)
+            update_hash_from_directory(os.path.join(root,dir), hash)
+
+def path_hash(path, hash=None):
+    '''
+    Return a hash hexdigest for a file or a directory.
+    '''
+    if hash is None:
+        hash = hashlib.md5()
+    if os.path.isdir(path):
+        update_hash_from_directory(path, hash)
+    else:
+        hash.update(open(path).read())
+    return hash.hexdigest()
 
 
 def ensure_is_dir(d, clear_dir=False):
