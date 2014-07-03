@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 
-from enthought.traits.api import HasTraits
+try:
+    from traits.api import HasTraits
+except:
+    from enthought.traits.api import HasTraits
 from soma.qt_gui.qt_backend import set_qt_backend, loadUi
 from soma.factory import Factories
 from soma.controller import Controller
