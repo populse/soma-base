@@ -10,7 +10,7 @@
     "Label Translation" : "trl",
     "DEF Label Translation" : "def",
     "Text Data Table": "dat",
-    "CSV file": "CSV",
+    "CSV file": "csv",
     "Commissure coordinates" : "APC",
     "Matlab" : "mat",
     "Matlab bz2" : "mat.bz2",
@@ -25,14 +25,14 @@
     "Referential" : "referential",
     "Directory" : "",
     "PLY": "ply",
-    "Energy": "nrj",
+    "Energy": "nrj"
   },
-  
-  
+
+
   "format_lists" : {
-    "images" : [ "NIFTI gz","GIS","MINC", "SPM","NIFTI"],
+    "images" : [ "NIFTI gz", "GIS", "MINC", "SPM", "NIFTI"],
     "label translations" : [ "Label Translation", "DEF Label Translation" ],
-    "mesh" : ["GIFTI","MESH","PLY"],
-  },
+    "mesh" : ["GIFTI", "MESH", "PLY"]
+  }
 
 }
