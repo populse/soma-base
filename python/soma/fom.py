@@ -18,7 +18,6 @@ except ImportError:
 
 
 from soma.path import split_path
-
 try :
   from collections import OrderedDict
 except :
@@ -26,6 +25,20 @@ except :
   from soma.sorted_dictionary import SortedDictionary as OrderedDict
 
 
+def deep_update(update, original):
+    '''
+    Recursively update a dict.
+    Subdict's won't be overwritten but also updated.
+    '''
+    for key, value in original.iteritems():
+        if not key in update:
+            update[key] = value
+        elif isinstance(value, dict):
+            deep_update(update[key], value)
+        elif value != update[key]:
+            raise ValueError('In deep_update, for key %s, cannot merge %s and %s' % (repr(key), repr(update[key]), repr(value)))
+
+            
 class DirectoryAsDict(object):
 
     def __new__(cls, directory, cache=None):
@@ -255,6 +268,28 @@ class FileOrganizationModelManager(object):
         if self._cache is None:
             self.find_foms()
         return self._cache[fom]
+        
+    
+    def read_definition(self, fom_name, done=None):
+        jsons = OrderedDict()
+        stack = [fom_name]
+        while stack:
+            fom_name = stack.pop(0)
+            if fom_name not in jsons:
+                json = jsons[fom_name] = json_reader.load(open(self.file_name(fom_name), 'r'))
+                stack.extend(json.get('fom_import', []))        
+        jsons = jsons.values()
+        result = jsons.pop(0)
+        for json in jsons:
+            for n in ('attribute_definitions','formats', 'format_lists', 'shared_patterns', 'patterns', 'processes'):
+                d = json.get(n)
+                if d:
+                    deep_update(d, result.get(n,{}))
+                    result[n] = d
+            r = json.get('rules',[])
+            if r:
+                result.setdefault('rules',[]).extend(r) 
+        return result
 
 
 class FileOrganizationModels(object):
@@ -402,6 +437,7 @@ class FileOrganizationModels(object):
                 process_patterns, new_patterns, {'fom_name': fom_name})
             self._parse_patterns(new_patterns, self.patterns)
 
+    
     def get_attributes_without_value(self):
         att_no_value = {}
         for att in self.shared_patterns:
