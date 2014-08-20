@@ -56,6 +56,7 @@ class QLineEditModificationTimer( QtCore.QObject ):
   '''
   # Default timer interval in milliseconds
   defaultTimerInterval = 2000
+  userModification = QtCore.Signal()
 
   def __init__( self, qLineEdit, timerInterval=None ):
     '''
@@ -68,6 +69,7 @@ class QLineEditModificationTimer( QtCore.QObject ):
     
     @see: L{TimeredQLineEdit}
     '''
+
     QtCore.QObject.__init__( self )
     # QLineEdit<qt.QLineEdit> instance associated with this
     # QLineEditModificationTimer
@@ -80,33 +82,29 @@ class QLineEditModificationTimer( QtCore.QObject ):
     self.__timer = QtCore.QTimer( self )
     self.__timer.setSingleShot(True)
     self.__internalModification = False
-    self.connect( self.qLineEdit, QtCore.SIGNAL( 'textChanged( const QString & )'), 
-                  self._userModification )
-    self.connect( self.qLineEdit, QtCore.SIGNAL( 'lostFocus()' ), 
-                  self._noMoreUserModification,  )
-    self.connect( self.__timer, QtCore.SIGNAL( 'timeout()' ), self.modificationTimeout )
+    self.qLineEdit.textChanged.connect(self._userModification)
+    self.qLineEdit.lostFocus.connect(self._noMoreUserModification)
+    self.__timer.timeout.connect(self.modificationTimeout)
 
   
   def close( self ):
     self.stop()
-    self.disconnect( self.qLineEdit, QtCore.SIGNAL( 'textChanged( const QString & )'), 
-                  self._userModification )
-    self.disconnect( self.qLineEdit, QtCore.SIGNAL( 'lostFocus()' ), 
-                  self._noMoreUserModification,  )
-    self.disconnect( self.__timer, QtCore.SIGNAL( 'timeout()' ), self.modificationTimeout )
+    self.qLineEdit.textChanged.disconnect(self._userModification)
+    self.qLineEdit.lostFocus.disconnect(self._noMoreUserModification)
+    self.__timer.timeout.disconnect(self.modificationTimeout)
     
     
-  def _userModification( self ):
+  def _userModification( self, value ):
     if not self.__internalModification:
       self.__timer.start( self.timerInterval )
 
   def modificationTimeout(self):
-    self.emit( QtCore.SIGNAL( 'userModification'),self.qLineEdit.text() ) 
-    
+    self.userModification.emit() #self.qLineEdit.text())
+
   def _noMoreUserModification( self ):
     if self.__timer.isActive():
       self.__timer.stop()
-      self.emit( QtCore.SIGNAL( 'userModification'),self.qLineEdit.text() )
+      self.userModification.emit() #self.qLineEdit.text())
 
 
   def stopInternalModification( self ):
@@ -152,6 +150,9 @@ class TimeredQLineEdit( QtGui.QLineEdit ):
   'userModification' )} signal, this signal is also emited by the 
   L{TimeredQLineEdit} instance.
   '''
+
+  userModification = QtCore.Signal()
+
   def __init__( self, *args, **kwargs ):
     '''
     All non keyword parameters of the constructor are passed to
@@ -168,8 +169,7 @@ class TimeredQLineEdit( QtGui.QLineEdit ):
       QtGui.QLineEdit.__init__( self, *args )
     self.__timer = QLineEditModificationTimer( self,
                                                timerInterval=timerInterval )
-    self.connect( self.__timer, QtCore.SIGNAL( 'userModification' ),
-                  QtCore.SIGNAL( 'userModification' ) )
+    self.__timer.userModification.connect(self.userModification)
 
 
   def stopInternalModification( self ):

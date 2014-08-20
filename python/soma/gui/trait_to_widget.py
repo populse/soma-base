@@ -56,14 +56,12 @@ class StrCreateWidget( object ):
 
   @classmethod
   def connect_controller( cls, controller_widget, name, attribute_widget, label_widget ):  
-    widget_hook = partial( cls.update_controller, controller_widget, name, attribute_widget )  
+    widget_hook = partial( cls.update_controller, controller_widget, name, attribute_widget )
     if isinstance( attribute_widget, TimeredQLineEdit ):
-      attribute_widget.connect( attribute_widget, QtCore.SIGNAL( 'userModification' ), 
-                                widget_hook )
+      attribute_widget.userModification.connect(widget_hook)
     else:
-      attribute_widget.connect( attribute_widget.text_widget, QtCore.SIGNAL( 'userModification' ), 
-                                widget_hook )  
-                                            
+      attribute_widget.text_widget.userModification.connect(widget_hook)
+
     controller_hook = SomaPartial( cls.update_controller_widget, controller_widget, name, attribute_widget, label_widget )
     controller_widget.controller.on_trait_change( controller_hook, name=name )
     attribute_widget._controller_connections = ( widget_hook, controller_hook )
@@ -73,14 +71,10 @@ class StrCreateWidget( object ):
     widget_hook, controller_hook = attribute_widget._controller_connections
     controller_widget.controller.on_trait_change( controller_hook, name=name, remove=True )
     if isinstance( attribute_widget, TimeredQLineEdit ):
-      attribute_widget.disconnect( attribute_widget, QtCore.SIGNAL( 'userModification' ), 
-                                   widget_hook )
+      attribute_widget.userModification.disconnect(widget_hook)
     else:
-      attribute_widget.disconnect( attribute_widget.text_widget, QtCore.SIGNAL( 'userModification' ), 
-                                   widget_hook )  
+      attribute_widget.text_widget.userModification.disconnect(widget_hook)
     del attribute_widget._controller_connections
-    
-  
 
 
 #-------------------------------------------------------------------------------
@@ -146,8 +140,7 @@ class BoolCreateWidget( object ):
   @classmethod
   def connect_controller( cls, controller_widget, name, attribute_widget, label_widget ):
     widget_hook = partial( cls.update_controller, controller_widget, name, attribute_widget )
-    attribute_widget.connect( attribute_widget, QtCore.SIGNAL( 'clicked()' ), 
-                              widget_hook )
+    attribute_widget.clicked.connect(widget_hook)
     controller_hook = SomaPartial( cls.update_controller_widget, controller_widget, name, attribute_widget, label_widget )
     controller_widget.controller.on_trait_change( controller_hook, name=name )
     attribute_widget._controller_connections = ( widget_hook, controller_hook )
@@ -157,8 +150,7 @@ class BoolCreateWidget( object ):
   def disconnect_controller( controller_widget, name, attribute_widget, label_widget ):
     widget_hook, controller_hook = attribute_widget._controller_connections
     controller_widget.controller.on_trait_change( controller_hook, name=name, remove=True )
-    attribute_widget.disconnect( attribute_widget, QtCore.SIGNAL( 'clicked()' ), 
-                                 widget_hook )
+    attribute_widget.clicked.disconnect(widget_hook)
     del attribute_widget._controller_connections
     
 
@@ -192,7 +184,7 @@ class EnumCreateWidget( object ):
     return ( attribute_widget, label_widget )
 
   @staticmethod
-  def update_controller( controller_widget, name, attribute_widget ):
+  def update_controller( controller_widget, name, attribute_widget, value ):
     #default_value_change(getattr(controller_widget.controller,name),attribute_widget._values[ attribute_widget.currentIndex() ],attribute_widget.btn_default_value)
     setattr( controller_widget.controller, name, attribute_widget._values[ attribute_widget.currentIndex() ] )
 
@@ -206,8 +198,7 @@ class EnumCreateWidget( object ):
   @classmethod
   def connect_controller( cls, controller_widget, name, attribute_widget, label_widget ):
     widget_hook = partial( cls.update_controller, controller_widget, name, attribute_widget )
-    attribute_widget.connect( attribute_widget, QtCore.SIGNAL( 'activated( int )' ), 
-                              widget_hook )
+    attribute_widget.activated.connect(widget_hook)
     controller_hook = SomaPartial( cls.update_controller_widget, controller_widget, name, attribute_widget, label_widget )
     controller_widget.controller.on_trait_change( controller_hook, name=name )
     attribute_widget._controller_connections = ( widget_hook, controller_hook )
@@ -217,8 +208,7 @@ class EnumCreateWidget( object ):
   def disconnect_controller( controller_widget, name, attribute_widget, label_widget ):
     widget_hook, controller_hook = attribute_widget._controller_connections
     controller_widget.controller.on_trait_change( controller_hook, name=name, remove=True )
-    attribute_widget.disconnect( attribute_widget, QtCore.SIGNAL( 'activated( int )' ), 
-                              widget_hook )
+    attribute_widget.activated.disconnect(widget_hook)
     del attribute_widget._controller_connections
 
     
@@ -249,7 +239,7 @@ class StrEnumCreateWidget( object ):
     return ( attribute_widget, label_widget )
 
   @staticmethod
-  def update_controller( controller_widget, name, attribute_widget ):
+  def update_controller( controller_widget, name, attribute_widget, value ):
     setattr( controller_widget.controller, name, unicode( attribute_widget.currentText() ) )
   
   
@@ -268,8 +258,7 @@ class StrEnumCreateWidget( object ):
   @classmethod
   def connect_controller( cls, controller_widget, name, attribute_widget, label_widget ):
     widget_hook = partial( cls.update_controller, controller_widget, name, attribute_widget )
-    attribute_widget.connect( attribute_widget, QtCore.SIGNAL( 'editTextChanged ( const QString & )' ), 
-                              widget_hook )
+    attribute_widget.editTextChanged.connect(widget_hook)
     controller_hook = SomaPartial( cls.update_controller_widget, controller_widget, name, attribute_widget, label_widget )
     controller_widget.controller.on_trait_change( controller_hook, name=name )
     attribute_widget._controller_connections = ( widget_hook, controller_hook )
@@ -279,8 +268,7 @@ class StrEnumCreateWidget( object ):
   def disconnect_controller( controller_widget, name, attribute_widget, label_widget ):
     widget_hook, controller_hook = attribute_widget._controller_connections
     controller_widget.controller.on_trait_change( controller_hook, name=name, remove=True )
-    attribute_widget.disconnect( attribute_widget, QtCore.SIGNAL( 'editTextChanged ( const QString & )' ), 
-                                 widget_hook )
+    attribute_widget.editTextChanged.disconnect(widget_hook)
     del attribute_widget._controller_connections
 
 
