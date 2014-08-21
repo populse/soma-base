@@ -7,6 +7,7 @@ from trait_to_widget import StrCreateWidget,FloatCreateWidget,IntCreateWidget,\
 LongCreateWidget,BoolCreateWidget,EnumCreateWidget,StrEnumCreateWidget,\
 FileCreateWidget,DirectoryCreateWidget
 from soma.gui.icon_factory import IconFactory
+import weakref
 
 
 class ControllerWidget( QtGui.QWidget ):
@@ -32,7 +33,7 @@ class ControllerWidget( QtGui.QWidget ):
     self._grid_layout.setSpacing( 3 )
     self._grid_layout.setContentsMargins( 5, 5, 5, 5 )
     self.setLayout(self._grid_layout )
-    
+
     self.btn_expand = None
     self._widgets = {}
     self._create_widgets()
@@ -40,35 +41,38 @@ class ControllerWidget( QtGui.QWidget ):
       self.connect_controller()
     else:
      self.update_controller_widget()
-    
 
- 
+
+  def __del__(self):
+      self.disconnect_controller()
+
+
   def update_controller( self ):
     """Update traits when GUI change"""
     for name, tuple in self._widgets.iteritems():
       trait, create_widget, attribute_widget, label_widget = tuple
       create_widget.update_controller( self, name, attribute_widget )
-    
-  
+
+
   def update_controller_widget( self ):
     """Update GUI when traits change"""
     for name, tuple in self._widgets.iteritems():
       trait, create_widget, attribute_widget, label_widget = tuple
       create_widget.update_controller_widget( self, name, attribute_widget, label_widget )
-      
-  
-  ##def back_default_value(self,attribute_widget,name):  
-      #print 'here back default value' 
+
+
+  ##def back_default_value(self,attribute_widget,name):
+      #print 'here back default value'
       #print self.controller.trait(name)
       #print self.controller.trait(name).defaultvalue
       #setattr( self.controller, name, self.controller.trait(name).defaultvalue )
       #attribute_widget.btn_default_value.setVisible(False)
-      
-  
-  
+
+
+
   def connect_controller( self ):
     """To connect traits and GUI, use update_controller and update controller_widget"""
-    if not self.connected:  
+    if not self.connected:
       for name, tupl in self._widgets.iteritems():
         trait, create_widget, attribute_widget, label_widget = tupl
         create_widget.connect_controller( self, name, attribute_widget, label_widget )
@@ -134,18 +138,18 @@ class ControllerWidget( QtGui.QWidget ):
             self._grid_layout.addWidget( attribute_widget, row, 0, 1, 2 )
             if tooltip:
               attribute_widget.setToolTip( tooltip )
-          else: 
+          else:
             self._grid_layout.addWidget( label_widget, row, 0 )
             self._grid_layout.addWidget( attribute_widget, row, 1 )
             #btn_default_value = QtGui.QPushButton()
             #btn_default_value.setIcon( QtGui.QIcon( IconFactory()._valueModified) )
             #btn_default_value.setVisible(False)
-            #attribute_widget.btn_default_value = btn_default_value  
+            #attribute_widget.btn_default_value = btn_default_value
             #self._grid_layout.addWidget( btn_default_value,row,2 )
-            if tooltip: 
+            if tooltip:
               label_widget.setToolTip( tooltip )
               attribute_widget.setToolTip( tooltip )
-        self._widgets[ name ] = ( trait, create_widget, attribute_widget, label_widget ) 
+        self._widgets[ name ] = ( trait, create_widget, attribute_widget, label_widget )
       else:
         trait, create_widget, attribute_widget, label_widget = create_widget
       if getattr( trait, 'hidden', False ):
@@ -205,9 +209,9 @@ class ListCreateWidget( object ):
     item_trait = trait.inner_traits[ 0 ]
     create_widget = ControllerWidget.find_create_widget_from_trait( item_trait )
     return create_widget is not None
-  
+
   @classmethod
-  def create_widget( cls, parent, name, trait, value ):   
+  def create_widget( cls, parent, name, trait, value ):
     item_trait = trait.inner_traits[ 0 ]
     #print '!ListCreateWidget!', name, 'List( %s )' % trait_ids( item_trait )
     list_controller = cls.ListController()
@@ -230,8 +234,8 @@ class ListCreateWidget( object ):
       for i in xrange( len( attribute_widget.list_controller.user_traits() ) ) ]
     #print '!update_controller!', name, len( items ), items
     setattr( controller_widget.controller, name, items )
-  
-  
+
+
   @classmethod
   def update_controller_widget( cls,controller_widget, name, attribute_widget, label_widget ):
     was_connected = attribute_widget.connected
@@ -259,7 +263,7 @@ class ListCreateWidget( object ):
       attribute_widget.list_controller.user_traits_changed = True
     if was_connected:
       cls.connect_controller( controller_widget, name, attribute_widget, label_widget )
-  
+
 
 
   @classmethod
@@ -271,11 +275,13 @@ class ListCreateWidget( object ):
         items[ int( key ) ] = new
       for n in attribute_widget.list_controller.user_traits():
         attribute_widget.list_controller.on_trait_change( list_controller_hook, n )
-      controller_hook = SomaPartial( cls.update_controller_widget, controller_widget, name, attribute_widget, label_widget )
+      controller_hook = SomaPartial(
+        cls.update_controller_widget,
+        weakref.proxy(controller_widget), name, attribute_widget, label_widget )
       controller_widget.controller.on_trait_change( controller_hook, name + '[]' )
       attribute_widget._controller_connections = ( list_controller_hook, controller_hook)
       attribute_widget.connected = True
-  
+
   @staticmethod
   def disconnect_controller( controller_widget, name, attribute_widget, label_widget ):
     if attribute_widget.connected:
@@ -285,16 +291,16 @@ class ListCreateWidget( object ):
         attribute_widget.list_controller.on_trait_change( list_controller_hook, n, remove=True )
       del attribute_widget._controller_connections
       attribute_widget.connected = False
- 
+
 
 
 #-------------------------------------------------------------------------------
 class ControllerCreateWidget( object ):
-  """Class for instance trait"""    
+  """Class for instance trait"""
   @staticmethod
   def is_valid_trait( trait ):
     return True
-  
+
   @classmethod
   def create_widget( cls, parent, name, trait, sub_controller ):
     label = getattr( trait, 'label', None )
@@ -307,19 +313,19 @@ class ControllerCreateWidget( object ):
 
     btn_expand = QtGui.QPushButton( parent )
     btn_expand.setIcon( QtGui.QIcon( IconFactory()._imageExpand ) )
-    
+
     scroll_area = QtGui.QScrollArea( parent=parent )
     scroll_area.setWidgetResizable( True )
     #scroll_area.setSizePolicy( QtGui.QSizePolicy( QtGui.QSizePolicy.Expanding,
-                                                  #QtGui.QSizePolicy.Expanding ) )                                           
-    sub_controller_widget = ControllerWidget( sub_controller, 
+                                                  #QtGui.QSizePolicy.Expanding ) )
+    sub_controller_widget = ControllerWidget( sub_controller,
       parent=scroll_area )
     scroll_area.setWidget( sub_controller_widget )
     #sub_controller_widget.setSizePolicy( QtGui.QSizePolicy( QtGui.QSizePolicy.Expanding,
                                                   #QtGui.QSizePolicy.MinimumExpanding ) )
     scroll_area.setFrameShape( QtGui.QFrame.StyledPanel )
     expand_hook = partial( cls.expand_collapse, scroll_area )
-    btn_expand.connect( btn_expand, QtCore.SIGNAL( 'clicked()' ), 
+    btn_expand.connect( btn_expand, QtCore.SIGNAL( 'clicked()' ),
                         expand_hook )
     attribute_widget = scroll_area
     attribute_widget.btn_expand = btn_expand
@@ -330,13 +336,13 @@ class ControllerCreateWidget( object ):
     return ( attribute_widget, ( label_widget, btn_expand ) )
 
   @staticmethod
-  def update_controller( controller_widget, name, attribute_widget ): 
+  def update_controller( controller_widget, name, attribute_widget ):
     attribute_widget.controller_widget.update_controller()
-  
+
   @staticmethod
   def update_controller_widget( controller_widget, name, attribute_widget, label_widget ):
     attribute_widget.controller_widget.update_controller_widget()
-  
+
   @staticmethod
   def connect_controller( controller_widget, name, attribute_widget, label_widget ):
     attribute_widget.controller_widget.connect_controller()
@@ -344,7 +350,7 @@ class ControllerCreateWidget( object ):
   @staticmethod
   def disconnect_controller( controller_widget, name, attribute_widget, label_widget ):
     attribute_widget.controller_widget.disconnect_controller()
-  
+
   @staticmethod
   def expand_collapse( attribute_widget ):
     if attribute_widget.isVisible():
@@ -392,9 +398,9 @@ ControllerWidget._create_widget[ 'List_Any' ] = [ ListCreateWidget ]
   #except:
     #from enthought.traits.api import Str, Unicode, Float, Int, Long, Bool, Enum, Directory, File, Instance, List
   #from soma.controller import Controller
-  
+
   #app = QtGui.QApplication( sys.argv )
-  
+
   #class InstanceTraits( Controller ):
     #def __init__( self ):
       #self.add_trait( 'str', Str( desc='This is a string', order=1, viewer='viewers.image.ImageViewer' ) )
@@ -428,8 +434,8 @@ ControllerWidget._create_widget[ 'List_Any' ] = [ ListCreateWidget ]
     ##traits_on_class = Instance( ClassTraits, desc='All traits on this attribute are defined on class', order=2 )
     ##traits_on_instance0 = Instance( InstanceTraits, desc='All traits on this attribute are defined on class', order=2 )
     #traits_on_instance = Instance( SimpMorpho, desc='All traits on this attribute are defined on instance', order=3 )
-    
-    
+
+
     #def __init__( self ):
       #super( WidgetOnGui, self ).__init__()
       ##self.traits_on_class = ClassTraits()
@@ -441,12 +447,12 @@ ControllerWidget._create_widget[ 'List_Any' ] = [ ListCreateWidget ]
     #def on_run(self):
       #print 'IN THE FUNCTION RUN'
       #self.traits_on_instance()
-      
-      
-      
-    
 
-  
+
+
+
+
+
   #def resize( main, old, new ):
     ##for o in ( main.traits_on_class, main.traits_on_instance ):
     #for o in main.traits_on_instance :
@@ -461,7 +467,7 @@ ControllerWidget._create_widget[ 'List_Any' ] = [ ListCreateWidget ]
           ##print '!resize! - ', a, len_list, main.lists_size
           #setattr( o, a, list[ : main.lists_size ] )
           ##print '!resize! done'
-  
+
   #def f( connected ):
     #print '!f!', connected
     #if connected:
@@ -469,21 +475,21 @@ ControllerWidget._create_widget[ 'List_Any' ] = [ ListCreateWidget ]
     #else:
       #w1.disconnect_controller()
   #o.on_trait_change( f, 'connected' )
-  
+
 
   #w2 = ControllerWidget( o, live=True )
   #w2.show()
-  
+
   #def f(object,name,old,new ):
-    #print 'in f'  
+    #print 'in f'
     #print ( object,name,old,new )
-  
+
   #o.traits_on_instance.on_trait_change( f )
   #o.on_trait_change( resize, 'lists_size' )
   #app.exec_()
 
 
   #w1.on_trait_change(update,'t1mri')
-  
+
   #def update(object,name,old,new):
-      #o.traits_on_instance._t1mri_changed()  
+      #o.traits_on_instance._t1mri_changed()

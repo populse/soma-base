@@ -239,7 +239,7 @@ SubModule: ``undefined``
 
 
 SubModule: ``utils``
-===================
+====================
 
 .. automodule:: soma.utils
     :members:

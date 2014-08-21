@@ -10,7 +10,7 @@ try:
     from traits.api import File, Directory
 except ImportError:
     from enthought.traits.api import File, Directory
-
+import weakref
 
 
 #-------------------------------------------------------------------------------
@@ -55,14 +55,19 @@ class StrCreateWidget( object ):
   
 
   @classmethod
-  def connect_controller( cls, controller_widget, name, attribute_widget, label_widget ):  
-    widget_hook = partial( cls.update_controller, controller_widget, name, attribute_widget )
+  def connect_controller( cls, controller_widget, name, attribute_widget, label_widget ):
+    widget_hook = partial( cls.update_controller,
+                           weakref.proxy(controller_widget), name,
+                           attribute_widget )
     if isinstance( attribute_widget, TimeredQLineEdit ):
       attribute_widget.userModification.connect(widget_hook)
     else:
       attribute_widget.text_widget.userModification.connect(widget_hook)
 
-    controller_hook = SomaPartial( cls.update_controller_widget, controller_widget, name, attribute_widget, label_widget )
+    controller_hook = SomaPartial( cls.update_controller_widget,
+                                   weakref.proxy(controller_widget), name,
+                                   attribute_widget,
+                                   label_widget )
     controller_widget.controller.on_trait_change( controller_hook, name=name )
     attribute_widget._controller_connections = ( widget_hook, controller_hook )
 
@@ -139,9 +144,14 @@ class BoolCreateWidget( object ):
 
   @classmethod
   def connect_controller( cls, controller_widget, name, attribute_widget, label_widget ):
-    widget_hook = partial( cls.update_controller, controller_widget, name, attribute_widget )
+    widget_hook = partial( cls.update_controller,
+                           weakref.proxy(controller_widget), name,
+                           attribute_widget )
     attribute_widget.clicked.connect(widget_hook)
-    controller_hook = SomaPartial( cls.update_controller_widget, controller_widget, name, attribute_widget, label_widget )
+    controller_hook = SomaPartial( cls.update_controller_widget,
+                                   weakref.proxy(controller_widget), name,
+                                   attribute_widget,
+                                   label_widget )
     controller_widget.controller.on_trait_change( controller_hook, name=name )
     attribute_widget._controller_connections = ( widget_hook, controller_hook )
     
@@ -197,9 +207,14 @@ class EnumCreateWidget( object ):
   
   @classmethod
   def connect_controller( cls, controller_widget, name, attribute_widget, label_widget ):
-    widget_hook = partial( cls.update_controller, controller_widget, name, attribute_widget )
+    widget_hook = partial( cls.update_controller,
+                           weakref.proxy(controller_widget), name,
+                           attribute_widget )
     attribute_widget.activated.connect(widget_hook)
-    controller_hook = SomaPartial( cls.update_controller_widget, controller_widget, name, attribute_widget, label_widget )
+    controller_hook = SomaPartial( cls.update_controller_widget,
+                                   weakref.proxy(controller_widget), name,
+                                   attribute_widget,
+                                   label_widget )
     controller_widget.controller.on_trait_change( controller_hook, name=name )
     attribute_widget._controller_connections = ( widget_hook, controller_hook )
 
@@ -257,9 +272,14 @@ class StrEnumCreateWidget( object ):
   
   @classmethod
   def connect_controller( cls, controller_widget, name, attribute_widget, label_widget ):
-    widget_hook = partial( cls.update_controller, controller_widget, name, attribute_widget )
+    widget_hook = partial( cls.update_controller,
+                           weakref.proxy(controller_widget), name,
+                           attribute_widget )
     attribute_widget.editTextChanged.connect(widget_hook)
-    controller_hook = SomaPartial( cls.update_controller_widget, controller_widget, name, attribute_widget, label_widget )
+    controller_hook = SomaPartial( cls.update_controller_widget,
+                                   weakref.proxy(controller_widget), name,
+                                   attribute_widget,
+                                   label_widget )
     controller_widget.controller.on_trait_change( controller_hook, name=name )
     attribute_widget._controller_connections = ( widget_hook, controller_hook )
 
@@ -297,7 +317,9 @@ class FileCreateWidget( object ):
     horizontal_layout.addWidget( btn_browse )
     btn_browse.setFixedSize( 20, 20 )
     attribute_widget.btn_browse = btn_browse
-    attribute_widget._browse_hook = partial( cls.file_dialog, parent, name ,attribute_widget )
+    attribute_widget._browse_hook = partial(
+      cls.file_dialog, weakref.proxy(parent), name,
+      weakref.proxy(attribute_widget) )
     attribute_widget.btn_browse.clicked.connect( attribute_widget._browse_hook )
 
     viewers = getattr( parent.controller, 'viewers', None)
@@ -324,10 +346,10 @@ class FileCreateWidget( object ):
       #/nfs/neurospin/cati/cati_shared/MEMENTO/CONVERTED/001/0010020_LAFR/M000/MRI/3DT1/0010020_LAFR_M000_3DT1_S002.nii.gz
         #''
       if not outputfile:
-        value = QtGui.QFileDialog.getOpenFileName ( parent, 'Select a file','/home/mb236582/datafom/subjects/subject02/t1mri/default_acquisition/subject02.nii', '', 
+        value = QtGui.QFileDialog.getOpenFileName ( parent, 'Select a file','', '',
                                                     options=QtGui.QFileDialog.DontUseNativeDialog )
       else:
-        value = QtGui.QFileDialog.getSaveFileName ( parent, 'Select a file','/home/mb236582/datafom/subjects/subject02/t1mri/default_acquisition/subject02.nii', '', 
+        value = QtGui.QFileDialog.getSaveFileName ( parent, 'Select a file','', '',
                                                     options=QtGui.QFileDialog.DontUseNativeDialog )
     else:
       if outputfile:
@@ -380,7 +402,9 @@ class FileCreateWidget( object ):
     StrCreateWidget.connect_controller( controller_widget, name, attribute_widget.text_widget, label_widget )
     
     # Function call when traits change to update if viewer enabled or not
-    controller_hook = SomaPartial( cls.update_viewer, controller_widget, name, attribute_widget )
+    controller_hook = SomaPartial( cls.update_viewer,
+                                   weakref.proxy(controller_widget), name,
+                                   attribute_widget )
     controller_widget.controller.on_trait_change( controller_hook, name )
     
     attribute_widget._controller_connections = controller_hook
