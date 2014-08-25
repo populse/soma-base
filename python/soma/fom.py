@@ -717,12 +717,14 @@ class PathToAttributes(object):
         for name, content in dirdict.iteritems():
             st, content = content
             # Split extention on left most dot
-            split = name.split('.', 1)
-            name_no_ext = split[0]
-            if len(split) == 2:
-                ext = split[1]
-            else:
-                ext = ''
+            l = name.split('.')
+            possible_extension_split = [('.'.join(l[:i]),'.'.join(l[i:])) for i in range(1,len(l)+1)]
+            #split = name.split('.', 1)
+            #name_no_ext = split[0]
+            #if len(split) == 2:
+                #ext = split[1]
+            #else:
+                #ext = ''
 
             matched_directories = []
             matched = False
@@ -733,62 +735,57 @@ class PathToAttributes(object):
                         pattern_attributes) + ' ' + repr(hierarchical_patterns.keys()))
                 branch_matched = False
                 for pattern, rules_subpattern in hierarchical_patterns.iteritems():
-                    ext_rules, subpattern = rules_subpattern
-                    pattern = pattern % pattern_attributes
-                    if subpattern:
-                        match = re.match(pattern, name)
-                        if log:
-                            log.debug(
-                                'try %s for %s' % (repr(pattern), repr(name)))
-                    else:
+                    stop_parsing = False
+                    for name_no_ext, ext in possible_extension_split:
+                        ext_rules, subpattern = rules_subpattern
+                        pattern = pattern % pattern_attributes
                         match = re.match(pattern, name_no_ext)
                         if log:
                             log.debug(
                                 'try %s for %s' % (repr(pattern), repr(name_no_ext)))
-                    if match:
-                        if log:
-                            log.debug('match ' + pattern)
-                        new_attributes = match.groupdict()
-                        new_attributes.update(pattern_attributes)
-
-                        stop_parsing = False
-                        rules = ext_rules.get(ext)
-                        if rules is not None:
-                            matched = branch_matched = True
+                        if match:
                             if log:
-                                log.debug('extension matched: ' + repr(ext))
-                            for rule_attributes in rules:
-                                yield_attributes = new_attributes.copy()
-                                yield_attributes.update(rule_attributes)
-                                stop_parsing = single_match or yield_attributes.pop(
-                                    'fom_stop_parsing', False)
+                                log.debug('match ' + pattern)
+                            new_attributes = match.groupdict()
+                            new_attributes.update(pattern_attributes)
+
+                            rules = ext_rules.get(ext)
+                            if subpattern and not ext and (st is None or stat.S_ISDIR(posix.stat_result(st).st_mode)):
+                                matched = branch_matched = True
+                                stop_parsing = single_match
+                                full_path = path + [name]
+                                if log:
+                                    log.debug('directory matched: %s %s' % (
+                                        repr(full_path), (repr([i[0] for i in content.iteritems()]) if content else None)))
+                                matched_directories.append(
+                                    (full_path, subpattern, new_attributes))
+                            else:
                                 if log:
                                     log.debug(
-                                        '-> ' + '/'.join(path + [name]) + ' ' + repr(yield_attributes))
-                                yield path + [name], st, yield_attributes
-                                if stop_parsing:
+                                        'no directory matched for %s' % repr(name))
+                            if rules is not None:
+                                matched = branch_matched = True
+                                if log:
+                                    log.debug('extension matched: ' + repr(ext))
+                                for rule_attributes in rules:
+                                    yield_attributes = new_attributes.copy()
+                                    yield_attributes.update(rule_attributes)
+                                    stop_parsing = single_match or yield_attributes.pop(
+                                        'fom_stop_parsing', False)
+                                    if log:
+                                        log.debug(
+                                            '-> ' + '/'.join(path + [name]) + ' ' + repr(yield_attributes))
+                                    yield path + [name], st, yield_attributes
                                     break
-                        else:
-                            if log:
-                                log.debug(
-                                    'no extension matched: ' + repr(ext))
-                        if subpattern and (st is None or stat.S_ISDIR(posix.stat_result(st).st_mode)):
-                            matched = branch_matched = True
-                            stop_parsing = single_match
-                            full_path = path + [name]
-                            if log:
-                                log.debug('directory matched: %s %s' % (
-                                    repr(full_path), repr([i[0] for i in content.iteritems()])))
-                            matched_directories.append(
-                                (full_path, subpattern, new_attributes))
-                            if stop_parsing:
                                 break
-                        else:
-                            if log:
-                                log.debug(
-                                    'no directory matched for %s' % repr(name))
+                            else:
+                                if log:
+                                    log.debug(
+                                        'no extension matched: ' + repr(ext))
                         if stop_parsing:
                             break
+                    if stop_parsing:
+                        break
                 if branch_matched:
                     for full_path, subpattern, new_attributes in matched_directories:
                         if content:
