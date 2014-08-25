@@ -12,8 +12,10 @@ traits based controller."""
 
 try:
     from traits.api import HasTraits, Event
+    from traits.trait_types import Disallow
 except ImportError:
     from enthought.traits.api import HasTraits, Event
+    from enthought.traits.trait_types import Disallow
 
 from weakref import WeakKeyDictionary
 from soma.utils.functiontools import partial
@@ -89,7 +91,8 @@ class Controller(HasTraits):
               for t in sorted((getattr(trait, 'order', ''), name)
               for name, trait in class_traits.iteritems() if self.is_user_trait(trait))]
           for name in sorted_keys:
-              self._user_traits[name] = class_traits[name]
+              trait = class_traits[name]
+              self._user_traits[name] = trait
 
     def user_traits(self):
         """
@@ -105,7 +108,8 @@ class Controller(HasTraits):
         '''
         Test if a trait is a valid user trait (i.e. not an Event).
         '''
-        return not isinstance(trait.handler, Event)
+        return not isinstance(trait.handler, Event) and \
+               not trait.handler is Disallow
 
     def add_trait(self, name, *trait):   
         super(Controller, self).add_trait(name, *trait)
