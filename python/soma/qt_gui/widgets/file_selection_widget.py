@@ -30,8 +30,7 @@ class FileSelectionWidget(QtGui.QWidget):
         self.fname = None
         self.lineedit = TimeredQLineEdit()
         self.button.clicked.connect(self._on_button)
-        self.connect(self.lineedit,
-            QtCore.SIGNAL('userModification'), self._on_lineedit)
+        self.lineedit.userModification.connect(self._on_lineedit)
         self.lay.addWidget(self.label)
         self.lay.addWidget(self.lineedit)
         self.lay.addWidget(self.button)

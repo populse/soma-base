@@ -33,13 +33,13 @@
 # knowledge of the CeCILL license version 2 and that you accept its terms.
 
 '''
-L{QLineEditModificationTimer} and L{TimeredQLineEdit} classes associate a
-L{QTimer<qt.QTimer>} to a L{QLineEdit<qt.QLineEdit>} in order to signal user
+QLineEditModificationTimer and TimeredQLineEdit classes associate a
+QtCore.QTimer to a QtGui.QLineEdit in order to signal user
 modification only after an inactivity period.
 
-@author: Yann Cointepas
-@organization: U{NeuroSpin<http://www.neurospin.org>} and U{IFR 49<http://www.ifr49.org>}
-@license: U{CeCILL version 2<http://www.cecill.info/licences/Licence_CeCILL_V2-en.html>}
+author: Yann Cointepas
+organization: `NeuroSpin <http://www.neurospin.org>`_ and `IFR 49 http://www.ifr49.org>`_
+license: `CeCILL version 2 <http://www.cecill.info/licences/Licence_CeCILL_V2-en.html>`_
 '''
 __docformat__ = "epytext en"
 
@@ -48,10 +48,10 @@ from soma.qt_gui.qt_backend import QtCore, QtGui
 #-------------------------------------------------------------------------------
 class QLineEditModificationTimer( QtCore.QObject ):
   '''
-  A L{QLineEditModificationTimer} instance is accociated to a 
-  L{QLineEdit<QtGui.QLineEdit>} instance, it listen all user modification (Qt 
-  signal C{'textChanged( const QString & )'}) and emit a 
-  C{SIGNAL('userModification' )} when C{timerInterval} milliseconds passed
+  A QLineEditModificationTimer instance is accociated to a
+  QtGui.QLineEdit instance, it listens all user modification (Qt
+  signal 'textChanged( const QString & )') and emits a
+  signal 'userModification()' when timerInterval milliseconds passed
   since the last user modification.
   '''
   # Default timer interval in milliseconds
@@ -60,14 +60,16 @@ class QLineEditModificationTimer( QtCore.QObject ):
 
   def __init__( self, qLineEdit, timerInterval=None ):
     '''
-    @param qLineEdit: widget associated with this L{QLineEditModificationTimer}.
-    @type  qLineEdit: L{QLineEdit<QtGui.QLineEdit>} instance
-    @param timerInterval: minimum inactivity period before emitting
-      C{userModification} signal. Default value is
-      L{QLineEditModificationTimer.defaultTimerInterval}
-    @type  timerInterval: milliseconds
-    
-    @see: L{TimeredQLineEdit}
+    Parameters
+    ----------
+    qLineEdit: (QtGui.QLineEdit instance)
+        widget associated with this QLineEditModificationTimer.
+    timerInterval: (milliseconds)
+        minimum inactivity period before emitting
+        userModification signal. Default value is
+        QLineEditModificationTimer.defaultTimerInterval
+
+    see: TimeredQLineEdit
     '''
 
     QtCore.QObject.__init__( self )
