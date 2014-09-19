@@ -41,30 +41,41 @@ L{Undefined} is a constant that can be used as a special value different from an
 '''
 __docformat__ = "epytext en"
 
-from soma.singleton import Singleton
+try:
+    # If possible, use _Undefined from traits
+    from traits.trait_base import _Undefined
+    # Undefined is also defined for backward compatibility
+    undefined = Undefined = _Undefined()
+except ImportError:
+    undefined = None
+
+if undefined is None:
+    # _Undefined cannot be imported from traits, provides an implementation
+    
+    from soma.singleton import Singleton
 
 
-#-------------------------------------------------------------------------------
-class UndefinedClass( Singleton ):
-  '''
-  C{UndefinedClass} instance is used to represent an undefined attribute value
-  when C{None} cannot be used because it can be a valid value. Should only be
-  used for value checking.
-  
-  @see: L{Undefined}
-  '''
-  def __repr__( self ):
-    '''
-    @return: C{'<undefined>'}
-    '''
-    return '<undefined>'
+    #-------------------------------------------------------------------------------
+    class UndefinedClass( Singleton ):
+        '''
+        C{UndefinedClass} instance is used to represent an undefined attribute value
+        when C{None} cannot be used because it can be a valid value. Should only be
+        used for value checking.
+        
+        @see: L{Undefined}
+        '''
+        def __repr__( self ):
+            '''
+            @return: C{'<undefined>'}
+            '''
+            return '<undefined>'
 
-#: C{Undefined} contains the instance of UndefinedClass and can be used to check
-#: wether a value is undefined or not.
-#: 
-#: Example::
-#:    from soma.undefined import Undefined
-#:    
-#:    if object.value is Undefined:
-#:      # do something
-Undefined = UndefinedClass()
+    #: C{Undefined} contains the instance of UndefinedClass and can be used to check
+    #: wether a value is undefined or not.
+    #: 
+    #: Example::
+    #:    from soma.undefined import undefined
+    #:    
+    #:    if object.value is undefined:
+    #:      # do something
+    Undefined = undefined = UndefinedClass()
