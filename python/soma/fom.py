@@ -213,7 +213,11 @@ class DirectoriesCache(object):
 class FileOrganizationModelManager(object):
 
     '''
-    Manage the discovery and instanciation of available FileOrganizationModel (FOM). A FOM can be represented as a JSON file (or a series of JSON files in a directory). This class allows to identify these files contained in a predefined set of directories (see find_fom method) and to instanciate a FileOrganizationModel for each identified file (see get_fom method).
+    Manage the discovery and instanciation of available FileOrganizationModel
+    (FOM). A FOM can be represented as a JSON file (or a series of JSON files
+    in a directory). This class allows to identify these files contained in a
+    predefined set of directories (see find_fom method) and to instanciate a
+    FileOrganizationModel for each identified file (see get_fom method).
     '''
 
     def __init__(self, paths):
@@ -607,28 +611,6 @@ class FileOrganizationModels(object):
             pprint.pprint(getattr(self, i), out)
 
 
-class TwinFOM(FileOrganizationModels):
-
-    def __init__(self, input_fom, output_fom):
-        super(self, TwinFOM).__init__()
-        self.fom_names = [input_fom_name, output_fom_name]
-        self.attribute_definitions = {
-            "fom_name": {
-                "descr": "File Organization Model (FOM) in which a pattern is defined.",
-                "values": set(self.fom_names),
-            },
-            "fom_format": {
-                "descr": "Format of a file.",
-                "values": set(),
-            }
-        }
-        self.formats = {}
-        self.format_lists = {}
-        self.shared_patterns = {}
-        self.patterns = {}
-        self.rules = []
-
-
 class PathToAttributes(object):
 
     def __init__(self, foms, selection=None):
@@ -776,7 +758,7 @@ class PathToAttributes(object):
                                         log.debug(
                                             '-> ' + '/'.join(path + [name]) + ' ' + repr(yield_attributes))
                                     yield path + [name], st, yield_attributes
-                                    break
+
                                 break
                             else:
                                 if log:
