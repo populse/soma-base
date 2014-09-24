@@ -52,7 +52,7 @@ except ImportError:
   from traits.api import ReadOnly, Directory, ListStr, Instance
 
 from soma.singleton import Singleton
-from soma.controller import Controller, ControllerFactories
+from soma.controller import Controller
 
 #-------------------------------------------------------------------------------
 class Application( Singleton, Controller ):
@@ -144,13 +144,6 @@ class Application( Singleton, Controller ):
           init( self )
 
 
-  def get_controller( self, something ):
-    '''This method must be used to get a controller for any object.'''
-    if self._controller_factories is None:
-      self._controller_factories = ControllerFactories()
-    return self._controller_factories.get_controller( something )
-  
-  
   @staticmethod
   def load_plugin_module( plugin_module ):
     '''This method loads a plugin module. It imports the module without raising

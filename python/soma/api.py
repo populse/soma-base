@@ -71,4 +71,4 @@ Information
 
 from soma.singleton import Singleton
 from soma.application import Application
-from soma.controller import Controller, ControllerFactories
+from soma.controller import Controller
