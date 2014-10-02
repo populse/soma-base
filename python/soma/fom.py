@@ -38,7 +38,22 @@ def deep_update(update, original):
         elif value != update[key]:
             raise ValueError('In deep_update, for key %s, cannot merge %s and %s' % (repr(key), repr(update[key]), repr(value)))
 
-            
+
+def read_json(file_name):
+    ''' Read a json-like file using yaml or json.
+    In case of failure, issue a clearer message with filename, and when
+    appropriate a warning about yaml not being installed.
+    '''
+    try:
+        return json_reader.load(open(file_name, 'r'))
+    except ValueError, e:
+        if json_reader.__name__ != 'yaml':
+            extra_msg = ' Check your python installation, and perhaps un a "pip install PyYAML" or "easy_install PyYAML"'
+        else:
+            extra_msg = ''
+        raise ValueError('%s: %s. This may be due to yaml module not installed.%s' % (file_name, str(e), extra_msg))
+
+
 class DirectoryAsDict(object):
 
     def __new__(cls, directory, cache=None):
@@ -239,7 +254,7 @@ class FileOrganizationModelManager(object):
                     for ext in ('.json', '.yaml'):
                         main_file = os.path.join(full_path, i + ext)
                         if os.path.exists(main_file):
-                            d = json_reader.load(open(main_file))
+                            d = read_json(main_file)
                             name = d.get('fom_name')
                             if not name:
                                 raise ValueError(
@@ -247,10 +262,7 @@ class FileOrganizationModelManager(object):
                                     % main_file)
                             self._cache[name] = full_path
                 elif i.endswith('.json') or i.endswith('.yaml'):
-                    try:
-                        d = json_reader.load(open(full_path))
-                    except ValueError, e:
-                        raise ValueError('%s: %s' % (full_path, str(e)))
+                    d = read_json(full_path)
                     if d:
                         name = d.get('fom_name')
                         if not name:
@@ -272,16 +284,16 @@ class FileOrganizationModelManager(object):
         if self._cache is None:
             self.find_foms()
         return self._cache[fom]
-        
-    
+
+
     def read_definition(self, fom_name, done=None):
         jsons = OrderedDict()
         stack = [fom_name]
         while stack:
             fom_name = stack.pop(0)
             if fom_name not in jsons:
-                json = jsons[fom_name] = json_reader.load(open(self.file_name(fom_name), 'r'))
-                stack.extend(json.get('fom_import', []))        
+                json = jsons[fom_name] = read_json(self.file_name(fom_name))
+                stack.extend(json.get('fom_import', []))
         jsons = jsons.values()
         result = jsons.pop(0)
         for json in jsons:
@@ -292,7 +304,7 @@ class FileOrganizationModelManager(object):
                     result[n] = d
             r = json.get('rules',[])
             if r:
-                result.setdefault('rules',[]).extend(r) 
+                result.setdefault('rules',[]).extend(r)
         return result
 
 
@@ -338,7 +350,7 @@ class FileOrganizationModels(object):
 
     def import_file(self, file_or_dict, foms_manager=None):
         if not isinstance(file_or_dict, dict):
-            json_dict = json_reader.load(open(file_or_dict, 'r'))
+            json_dict = read_json(file_or_dict)
         else:
             json_dict = file_or_dict
 
@@ -441,7 +453,7 @@ class FileOrganizationModels(object):
                 process_patterns, new_patterns, {'fom_name': fom_name})
             self._parse_patterns(new_patterns, self.patterns)
 
-    
+
     def get_attributes_without_value(self):
         att_no_value = {}
         for att in self.shared_patterns:
