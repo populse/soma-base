@@ -23,8 +23,6 @@ SubModule: ``controller``: Traits-based controller objects
 Classes
 -------
 * :class:`soma.controller.controller.Controller`
-* :class:`soma.controller.controller.ControllerFactories`
-* :class:`soma.controller.controller.MetaController`
 
 API
 ---
