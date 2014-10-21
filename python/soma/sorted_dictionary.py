@@ -65,7 +65,11 @@ class SortedDictionary( UserDict, object ):
     #UserDict.__init__(self)
     self.sortedKeys = []
     self.data = {}
-    for key, value in args:
+    if len(args) == 1 and isinstance(args[0], list):
+      elements = args[0] # dict / OrderedDict compatibility
+    else:
+      elements = args
+    for key, value in elements:
       self[ key ] = value
       
   def keys( self ):
