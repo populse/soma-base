@@ -4,7 +4,6 @@ from __future__ import absolute_import
 import sys
 import os
 import stat
-import posix
 import time
 import re
 import pprint
@@ -169,7 +168,7 @@ class DirectoryAsDict(object):
             path_size += len(name)
             st, content = content
             if st:
-                st = posix.stat_result(st)
+                st = os.stat(st)
                 if stat.S_ISREG(st.st_mode):
                     files += 1
                     files_size += st.st_size
@@ -744,7 +743,9 @@ class PathToAttributes(object):
                             new_attributes.update(pattern_attributes)
 
                             rules = ext_rules.get(ext)
-                            if subpattern and not ext and (st is None or stat.S_ISDIR(posix.stat_result(st).st_mode)):
+                            if subpattern and not ext \
+                                    and (st is None \
+                                         or stat.S_ISDIR(os.stat(st).st_mode)):
                                 matched = branch_matched = True
                                 stop_parsing = single_match
                                 full_path = path + [name]
