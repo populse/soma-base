@@ -228,10 +228,11 @@ class FileOrganizationModelManager(object):
 
     '''
     Manage the discovery and instanciation of available FileOrganizationModel
-    (FOM). A FOM can be represented as a JSON file (or a series of JSON files
-    in a directory). This class allows to identify these files contained in a
-    predefined set of directories (see find_fom method) and to instanciate a
-    FileOrganizationModel for each identified file (see get_fom method).
+    (FOM). A FOM can be represented as a YAML/JSON file (or a series of
+    YAML/JSON files in a directory). This class allows to identify these files
+    contained in a predefined set of directories (see find_fom method) and to
+    instanciate a FileOrganizationModel for each identified file (see get_fom
+    method).
     '''
 
     def __init__(self, paths):
@@ -623,6 +624,10 @@ class FileOrganizationModels(object):
 
 
 class PathToAttributes(object):
+    '''
+    Utility class for file paths -> attributes set transformation.
+    Part of the FOM engine.
+    '''
 
     def __init__(self, foms, selection=None):
         self._attributes_regex = re.compile('<([^>]+)>')
@@ -809,6 +814,10 @@ class PathToAttributes(object):
 
 
 class AttributesToPaths(object):
+    '''
+    Utility class for attributes set -> file paths transformation.
+    Part of the FOM engine.
+    '''
 
     def __init__(self, foms, selection=None, directories={}, prefered_formats=set(), debug=None):
         self.foms = foms
