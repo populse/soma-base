@@ -375,7 +375,7 @@ class FileOrganizationModels(object):
                     attribute)
                 values = definition.get('values')
                 if existing_definition:
-                    existing_values = definition.get('values')
+                    existing_values = existing_definition.get('values')
                     if (existing_values is None) != bool(values is None):
                         raise ValueError(
                             'Incompatible values redefinition for attribute %s' % attribute)
