@@ -65,10 +65,9 @@ class Application( Singleton, Controller ):
   plugin_modules = ListStr(
     desc='List of Python module to load after application configuration' )
 
-  def __singleton_init__( self, name, version=None, *args, **kwargs ):
+  def __singleton_init__( self, name=None, version=None, *args, **kwargs ):
     '''Replaces __init__ in Singleton.'''
     super( Application, self ).__singleton_init__( *args, **kwargs )
-
     # Warning : Traits bug
     # Using the trait Directory() might instanciate a QApplication (seems to depend on the
     # traits release). If it is declared in the class, the QApplication is instanciated at
@@ -83,6 +82,8 @@ class Application( Singleton, Controller ):
       desc='Base directory where site specifc information can be find' ) )
     self._controller_factories = None
 
+    if name is None:
+        name = os.path.basename(sys.argv[0])
     self.name = name
     self.version = version
     self.loaded_plugin_modules = {}
