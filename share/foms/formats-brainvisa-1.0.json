@@ -11,6 +11,7 @@
     "DEF Label Translation" : "def",
     "Text Data Table": "dat",
     "CSV file": "csv",
+    "Text file": "txt",
     "Commissure coordinates" : "APC",
     "Matlab" : "mat",
     "Matlab bz2" : "mat.bz2",
