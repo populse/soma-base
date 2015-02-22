@@ -6,17 +6,9 @@ find_package( python REQUIRED )
 find_package( Epydoc )
 find_package( Dot )
 
-BRAINVISA_FIND_PACKAGE( brainvisa-share QUIET )
-if( BRAINVISA-SHARE_FOUND )
-  include( "${BRAINVISA-SHARE_USE_FILE}" )
-else()
-  message( "WARNING: project brainvisa-share has not been found. Some programs that require access to shared directories may fail to run." )
-endif()
-
 BRAINVISA_DEPENDENCY( DEV DEPENDS "${BRAINVISA_PACKAGE_NAME}" RUN "= ${${BRAINVISA_PACKAGE_NAME}_VERSION}" )
 BRAINVISA_DEPENDENCY( RUN DEPENDS python RUN ">= ${PYTHON_SHORT_VERSION}" )
 BRAINVISA_DEPENDENCY( DEV DEPENDS python DEV ">= 2.4;<< 3.0" )
-BRAINVISA_DEPENDENCY( RUN RECOMMENDS brainvisa-share RUN ">= ${${BRAINVISA_PACKAGE_NAME}_VERSION}" )
 
 configure_file( "${CMAKE_CURRENT_SOURCE_DIR}/config/config.py.in" "${CMAKE_BINARY_DIR}/python/soma/config.py" @ONLY )
 BRAINVISA_INSTALL( FILES "${CMAKE_BINARY_DIR}/python/soma/config.py"
