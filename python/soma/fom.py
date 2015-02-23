@@ -3,6 +3,7 @@ from __future__ import absolute_import
 
 import sys
 import os
+import os.path as osp
 import stat
 import time
 import re
@@ -10,18 +11,42 @@ import pprint
 import sqlite3
 import bz2
 import json
+
+try :
+  from collections import OrderedDict
+  isinstance_dict = lambda x: isinstance(x, dict)
+except :
+  # It is necessary to keep this for compatibility with python 2.6.*
+  from soma.sorted_dictionary import OrderedDict
+  isinstance_dict = lambda x: isinstance(x, (dict,OrderedDict))
+
 try:
-    import yaml as json_reader
+    import yaml
+    class json_reader:
+        '''
+        This class has a single static method load that loads an
+        JSON file with two features not provided by all JSON readers :
+        - JSON syntax is extended. For instance comments are allowed.
+        - The order of elements in dictionaries can be preserved by
+          using parameter object_pairs_hook=OrderedDict (as in Python
+          2.7 JSON reader).
+        '''
+        @staticmethod
+        def load(stream, object_pairs_hook=dict):
+            class OrderedLoader(yaml.Loader):
+                pass
+            def construct_mapping(loader, node):
+                loader.flatten_mapping(node)
+                return object_pairs_hook(loader.construct_pairs(node))
+            OrderedLoader.add_constructor(
+                yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG,
+                construct_mapping)
+            return yaml.load(stream, OrderedLoader)
 except ImportError:
     import json as json_reader
 
 
 from soma.path import split_path
-try :
-  from collections import OrderedDict
-except :
-  # It is necessary to keep this for compatibility with python 2.6.*
-  from soma.sorted_dictionary import SortedDictionary as OrderedDict
 
 
 def deep_update(update, original):
@@ -32,7 +57,7 @@ def deep_update(update, original):
     for key, value in original.iteritems():
         if not key in update:
             update[key] = value
-        elif isinstance(value, dict):
+        elif isinstance_dict(value):
             deep_update(update[key], value)
         elif value != update[key]:
             raise ValueError('In deep_update, for key %s, cannot merge %s and %s' % (repr(key), repr(update[key]), repr(value)))
@@ -44,7 +69,7 @@ def read_json(file_name):
     appropriate a warning about yaml not being installed.
     '''
     try:
-        return json_reader.load(open(file_name, 'r'))
+        return json_reader.load(open(file_name, 'r'), object_pairs_hook=OrderedDict)
     except ValueError, e:
         if json_reader.__name__ != 'yaml':
             extra_msg = ' Check your python installation, and perhaps un a "pip install PyYAML" or "easy_install PyYAML"'
@@ -56,7 +81,7 @@ def read_json(file_name):
 class DirectoryAsDict(object):
 
     def __new__(cls, directory, cache=None):
-        if os.path.isdir(directory):
+        if osp.isdir(directory):
             return super(DirectoryAsDict, cls).__new__(cls, directory, cache)
         else:
             return json.load(open(directory))
@@ -84,7 +109,7 @@ class DirectoryAsDict(object):
                 yield '', [None, None]
                 return
             for name in listdir:
-                full_path = os.path.join(self.directory, name)
+                full_path = osp.join(self.directory, name)
                 st_content = self.cache.get_directory(full_path)
                 if st_content is not None:
                     yield st_content
@@ -117,7 +142,7 @@ class DirectoryAsDict(object):
                                   files_size))
                 path_size += len(name)
                 count += 1
-                full_path = os.path.join(directory, name)
+                full_path = osp.join(directory, name)
                 st = os.lstat(full_path)
                 if stat.S_ISREG(st.st_mode):
                     files += 1
@@ -235,10 +260,13 @@ class FileOrganizationModelManager(object):
     method).
     '''
 
-    def __init__(self, paths):
+    def __init__(self, paths=None):
         '''
         Create a FOM manager that will use the given paths to find available FOMs.
         '''
+        if paths is None:
+            paths = [osp.join(osp.dirname(osp.dirname(osp.dirname(__file__))),
+                              'share','foms')]
         self.paths = paths
         self._cache = None
 
@@ -249,11 +277,11 @@ class FileOrganizationModelManager(object):
         self._cache = {}
         for path in self.paths:
             for i in os.listdir(path):
-                full_path = os.path.join(path, i)
-                if os.path.isdir(full_path):
+                full_path = osp.join(path, i)
+                if osp.isdir(full_path):
                     for ext in ('.json', '.yaml'):
-                        main_file = os.path.join(full_path, i + ext)
-                        if os.path.exists(main_file):
+                        main_file = osp.join(full_path, i + ext)
+                        if osp.exists(main_file):
                             d = read_json(main_file)
                             name = d.get('fom_name')
                             if not name:
@@ -349,7 +377,7 @@ class FileOrganizationModels(object):
             return pattern
 
     def import_file(self, file_or_dict, foms_manager=None):
-        if not isinstance(file_or_dict, dict):
+        if not isinstance_dict(file_or_dict):
             json_dict = read_json(file_or_dict)
         else:
             json_dict = file_or_dict
@@ -424,9 +452,9 @@ class FileOrganizationModels(object):
         self._parse_patterns(new_patterns, self.patterns)
 
         if processes:
-            process_patterns = {}
+            process_patterns = OrderedDict()
             for process, parameters in processes.iteritems():
-                process_dict = {}
+                process_dict = OrderedDict()
                 process_patterns[process] = process_dict
                 for parameter, rules in parameters.iteritems():
                     if isinstance(rules, basestring):
@@ -448,7 +476,7 @@ class FileOrganizationModels(object):
                         rule_attributes['fom_parameter'] = parameter
                         parameter_rules.append(
                             [pattern, formats, rule_attributes])
-            new_patterns = {}
+            new_patterns = OrderedDict()
             self._expand_json_patterns(
                 process_patterns, new_patterns, {'fom_name': fom_name})
             self._parse_patterns(new_patterns, self.patterns)
@@ -528,7 +556,7 @@ class FileOrganizationModels(object):
                 attributes[key_attribute] = key
                 self.attribute_definitions[key_attribute].setdefault(
                     'values', set()).add(key)
-            if isinstance(value, dict):
+            if isinstance_dict(value):
                 self._expand_json_patterns(
                     value, parent.setdefault(key, {}), attributes)
             else:
@@ -587,9 +615,9 @@ class FileOrganizationModels(object):
 
     def _parse_patterns(self, patterns, dest_patterns):
         for key, value in patterns.iteritems():
-            if isinstance(value, dict):
+            if isinstance_dict(value):
                 self._parse_patterns(
-                    value, dest_patterns.setdefault(key, {}))
+                    value, dest_patterns.setdefault(key, OrderedDict()))
             else:
                 pattern_rules = dest_patterns.setdefault(key, [])
                 for rule in value:
@@ -676,14 +704,14 @@ class PathToAttributes(object):
                             d = rule_attributes.copy()
                             d['fom_format'] = format
                             d.pop('fom_formats', None)
-                            parent.setdefault(''.join(regex) + '$', [{}, {}])[
+                            parent.setdefault(''.join(regex) + '$', [OrderedDict(), OrderedDict()])[
                                 0].setdefault(extension, []).append(d)
                     else:
-                        parent.setdefault(''.join(regex) + '$', [{}, {}])[
+                        parent.setdefault(''.join(regex) + '$', [OrderedDict(), OrderedDict()])[
                             0].setdefault('', []).append(rule_attributes)
                 else:
                     parent = parent.setdefault(
-                        ''.join(regex) + '$', [{}, {}])[1]
+                        ''.join(regex) + '$', [OrderedDict(), OrderedDict()])[1]
 
     def pprint(self, file=sys.stdout):
         self._pprint(file, self.hierarchical_patterns, 0)
@@ -709,6 +737,8 @@ class PathToAttributes(object):
             print >> file, '  ' * indent + '{}',
 
     def parse_directory(self, dirdict, single_match=False, all_unknown=False, log=None):
+        if isinstance(dirdict, basestring):
+            dirdict = DirectoryAsDict.paths_to_dict(dirdict)
         return self._parse_directory(dirdict, [([], self.hierarchical_patterns, {})], single_match, all_unknown, log)
 
     def _parse_directory(self, dirdict, parsing_list, single_match, all_unknown, log):
@@ -726,6 +756,7 @@ class PathToAttributes(object):
 
             matched_directories = []
             matched = False
+            sent = False
             recurse_parsing_list = []
             for path, hierarchical_patterns, pattern_attributes in parsing_list:
                 if log:
@@ -775,8 +806,8 @@ class PathToAttributes(object):
                                     if log:
                                         log.debug(
                                             '-> ' + '/'.join(path + [name]) + ' ' + repr(yield_attributes))
+                                    sent = True
                                     yield path + [name], st, yield_attributes
-
                                 break
                             else:
                                 if log:
@@ -797,10 +828,15 @@ class PathToAttributes(object):
             if not matched and all_unknown:
                 if log:
                     log.debug('-> ' + '/'.join(path + [name]) + ' None')
+                sent = True
                 yield path + [name], st, None
                 if content:
                     for i in self._parse_unknown_directory(content, path + [name], log):
                         yield i
+            if not sent and all_unknown:
+                if log:
+                    log.debug('-> ' + '/'.join(path + [name]) + ' None')
+                yield path + [name], st, None
 
     def _parse_unknown_directory(self, dirdict, path, log):
         for name, content in dirdict.iteritems():
@@ -971,8 +1007,8 @@ class AttributesToPaths(object):
         if fom_directory:
             directory = self.directories.get(fom_directory)
             if directory:
-                return (os.path.join(directory, *path.split('/')), rule_attributes)
-        return (os.path.join(*path.split('/')), rule_attributes)
+                return (osp.join(directory, *path.split('/')), rule_attributes)
+        return (osp.join(*path.split('/')), rule_attributes)
 
 
 def call_before_application_initialization(application):
@@ -984,7 +1020,7 @@ def call_before_application_initialization(application):
     application.add_trait('fom_path',
                           ListStr(descr='Path for finding file organization models'))
     if application.install_directory:
-        application.fom_path = [os.path.join(application.install_directory,
+        application.fom_path = [osp.join(application.install_directory,
                                              'share', 'foms')]
 
 
