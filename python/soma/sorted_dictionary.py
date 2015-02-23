@@ -234,5 +234,5 @@ class OrderedDict( SortedDictionary ):
   OrderedDict is fully compatible with Python 2.7 collections.OrderedDict.
   It is a SordedDictionary with a modified constructor API.
   '''
-  def __init__( self, args ):
+  def __init__( self, args=() ):
     super(OrderedDict, self).__init__(*args)
