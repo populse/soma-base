@@ -466,7 +466,6 @@ class FileOrganizationModels(object):
                             pattern, formats = rule
                             rule_attributes = {}
                         else:
-                            # print '!', rule, len( rule )
                             try:
                                 pattern, formats, rule_attributes = rule
                             except Exception, e:
@@ -558,7 +557,7 @@ class FileOrganizationModels(object):
                     'values', set()).add(key)
             if isinstance_dict(value):
                 self._expand_json_patterns(
-                    value, parent.setdefault(key, {}), attributes)
+                    value, parent.setdefault(key, OrderedDict()), attributes)
             else:
                 rules = []
                 parent[key] = rules
@@ -779,9 +778,11 @@ class PathToAttributes(object):
                             new_attributes.update(pattern_attributes)
 
                             rules = ext_rules.get(ext)
-                            if subpattern and not ext \
-                                    and (st is None \
-                                         or stat.S_ISDIR(os.stat(st).st_mode)):
+                            if (subpattern and 
+                                    not ext and
+                                    (st is None or 
+                                    stat.S_ISDIR(os.stat(st).st_mode)) and
+                                    content is not None):
                                 matched = branch_matched = True
                                 stop_parsing = single_match
                                 full_path = path + [name]
@@ -794,7 +795,7 @@ class PathToAttributes(object):
                                 if log:
                                     log.debug(
                                         'no directory matched for %s' % repr(name))
-                            if rules is not None:
+                            if rules is not None and ext:
                                 matched = branch_matched = True
                                 if log:
                                     log.debug('extension matched: ' + repr(ext))
@@ -991,7 +992,7 @@ class AttributesToPaths(object):
         result = []
         if self.rules:
             for attribute in self.all_attributes:
-                sql = 'SELECT DISTINCT %s FROM rules' % ('_' + attribute)
+                sql = 'SELECT DISTINCT "%s" FROM rules' % ('_' + attribute)
                 if selection:
                     sql += ' WHERE ' + \
                         ' AND '.join('_' + i + ' = ?' for i in selection)
