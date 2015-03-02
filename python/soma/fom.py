@@ -849,6 +849,13 @@ class PathToAttributes(object):
                 for i in self._parse_unknown_directory(content, path + [name], log):
                     yield i
 
+    def parse_path(self, path, single_match=False, log=None):
+        dirdict = DirectoryAsDict.paths_to_dict(path)
+        spath = split_path(path)
+        for p, s, a in self.parse_directory(dirdict, single_match=single_match, log=log):
+            if spath == p:
+                yield (p, s, a)
+    
 
 class AttributesToPaths(object):
     '''
