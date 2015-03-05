@@ -781,7 +781,7 @@ class PathToAttributes(object):
                             if (subpattern and 
                                     not ext and
                                     (st is None or 
-                                    stat.S_ISDIR(os.stat(st).st_mode)) and
+                                    stat.S_ISDIR(st[0])) and
                                     content is not None):
                                 matched = branch_matched = True
                                 stop_parsing = single_match
