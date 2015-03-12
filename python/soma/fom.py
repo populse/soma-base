@@ -878,6 +878,12 @@ class AttributesToPaths(object):
         if debug:
             debug.debug(sql)
         self._db.execute(sql)
+        columns = ['_%s' % i for i in self.all_attributes + ('fom_first', 'fom_prefered_format')]
+        sql = 'CREATE INDEX rules_index ON rules (%s)' % ','.join(columns)
+        self._db.execute(sql)
+        for i in columns:
+            sql = 'CREATE INDEX rules%s_index ON rules (%s)' % (i,i)
+            self._db.execute(sql)
         sql_insert = 'INSERT INTO rules VALUES ( %s )' % ','.join(
             '?' for i in xrange(len(self.all_attributes) + 3))
         self.rules = []
@@ -923,11 +929,13 @@ class AttributesToPaths(object):
         self._db.commit()
 
     def find_paths(self, attributes={}, debug=None):
+        if debug:
+            debug.debug('!find_path! %s' % repr(attributes))
         d = self.selection.copy()
         d.update(attributes)
         attributes = d
         select = []
-        select_attributes = []
+        values = []
         for attribute in self.all_attributes:
             value = attributes.get(attribute)
             if value is None:
@@ -941,17 +949,22 @@ class AttributesToPaths(object):
                     select.append('_fom_first = 1')
                 elif selected_format == 'fom_prefered':
                     select.append('_fom_prefered_format = 1')
+                elif isinstance(value,list):
+                    select.append('_' + attribute + " IN (%s)" % ','.join('?' for i in value))
+                    values.extend(value)
                 else:
                     select.append('_' + attribute + " = ?")
-                    select_attributes.append(attribute)
+                    values.append(value)
+            elif isinstance(value,list):
+                select.append('_' + attribute + " IN ( %s, '' )" % ','.join('?' for i in value))
+                values.extend(value)
             else:
                 select.append('_' + attribute + " IN ( ?, '' )")
-                select_attributes.append(attribute)
+                values.append(value)
         sql = 'SELECT _fom_rule, _fom_format FROM rules WHERE %s' % ' AND '.join(
             select)
-        values = [attributes[i] for i in select_attributes]
         if debug:
-            debug.debug('!sql! %s', sql.replace('?', '%s') % tuple(values))
+            debug.debug('!sql! %s' % (sql.replace('?', '%s') % tuple(repr(i) for i in values)))
         for rule_index, format in self._db.execute(sql, values):
             # bool_output = False
             rule, rule_attributes = self.rules[rule_index]
@@ -974,6 +987,8 @@ class AttributesToPaths(object):
                 r = self._join_directory(
                     rule % attributes + '.' + ext, rule_attributes)
                 if r:
+                    if debug:
+                        debug.debug('!-->! %s' % repr(r))
                     yield r
             else:
                 if fom_formats:
@@ -986,6 +1001,8 @@ class AttributesToPaths(object):
                         r = self._join_directory(
                             rule % attributes + '.' + ext, rule_attributes)
                         if r:
+                            if debug:
+                                debug.debug('!-->! %s' % repr(r))
                             yield r
                 else:
                     if debug:
@@ -993,6 +1010,8 @@ class AttributesToPaths(object):
                     r = self._join_directory(
                         rule % attributes, rule_attributes)
                     if r:
+                        if debug:
+                            debug.debug('!-->! %s' % repr(r))
                         yield r
 
     def find_discriminant_attributes(self, **selection):
