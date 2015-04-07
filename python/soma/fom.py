@@ -872,6 +872,10 @@ class AttributesToPaths(object):
         self._db.execute('PRAGMA synchronous = OFF;')
         self.all_attributes = tuple(
             i for i in self.foms.attribute_definitions if i != 'fom_formats')
+        self.default_values = dict(
+            (i, self.foms.attribute_definitions[i]['default_value']) for i in self.all_attributes if 'default_value' in self.foms.attribute_definitions[i])
+        self.non_discriminant_attributes = set(
+            i for i in self.all_attributes if not self.foms.attribute_definitions[i].get('discriminant', True))
         fom_format_index = self.all_attributes.index('fom_format')
         sql = 'CREATE TABLE rules ( %s, _fom_first, _fom_prefered_format, _fom_rule )' % ','.join(repr('_' + i)
                                                                                                   for i in self.all_attributes)
@@ -936,13 +940,23 @@ class AttributesToPaths(object):
         attributes = d
         select = []
         values = []
+        selection_attributes = {}
+        default_values = []
         for attribute in self.all_attributes:
             value = attributes.get(attribute)
             if value is None:
                 value = self.selection.get(attribute)
             if value is None:
-                select.append(
-                    '(_' + attribute + " != '' OR _" + attribute + ' IS NULL )')
+                default_value = self.default_values.get(attribute)
+                if default_value is not None:
+                    default_values.append((attribute,default_value))
+                    if attribute not in self.non_discriminant_attributes:
+                        select.append(
+                            '(_' + attribute + " IN ('','%s') OR _" % default_value + attribute + ' IS NULL )')
+                else:
+                    if attribute not in self.non_discriminant_attributes:
+                        select.append(
+                            '(_' + attribute + " != '' OR _" + attribute + ' IS NULL )')
             elif attribute == 'fom_format':
                 selected_format = attributes.get('fom_format')
                 if selected_format == 'fom_first':
@@ -956,19 +970,30 @@ class AttributesToPaths(object):
                     select.append('_' + attribute + " = ?")
                     values.append(value)
             elif isinstance(value,list):
-                select.append('_' + attribute + " IN ( %s, '' )" % ','.join('?' for i in value))
-                values.extend(value)
+                if attribute not in self.non_discriminant_attributes:
+                    select.append('_' + attribute + " IN ( %s, '' )" % ','.join('?' for i in value))
+                    values.extend(value)
             else:
-                select.append('_' + attribute + " IN ( ?, '' )")
-                values.append(value)
-        sql = 'SELECT _fom_rule, _fom_format FROM rules WHERE %s' % ' AND '.join(
-            select)
+                if attribute not in self.non_discriminant_attributes:
+                    select.append('_' + attribute + " IN ( ?, '' )")
+                    values.append(value)
+                    selection_attributes[attribute] = value
+        columns = ['_fom_rule', '_fom_format'] + ['_'+i[0] for i in default_values]
+        sql = 'SELECT %s FROM rules WHERE %s' % (','.join(columns),' AND '.join(
+            select))
         if debug:
             debug.debug('!sql! %s' % (sql.replace('?', '%s') % tuple(repr(i) for i in values)))
-        for rule_index, format in self._db.execute(sql, values):
+        for row in self._db.execute(sql, values):
+            rule_index, format = row[:2]
+            row = row[2:]
             # bool_output = False
             rule, rule_attributes = self.rules[rule_index]
             rule_attributes = rule_attributes.copy()
+            default_attributes = {}
+            for i in range(len(default_values)):
+                if not row[i]:
+                    rule_attributes[default_values[i][0]] = default_values[i][1]
+                    default_attributes[default_values[i][0]] = default_values[i][1]
             # rule_attributes = self.foms.rules[ rule_index ][ 1 ].copy()
             fom_formats = rule_attributes.pop('fom_formats', [])
 
@@ -981,11 +1006,17 @@ class AttributesToPaths(object):
             if format:
                 ext = self.foms.formats[format]
                 rule_attributes['fom_format'] = format
+                default_attributes.update(attributes)
+                try:
+                    path = rule % default_attributes + '.' + ext
+                except KeyError:
+                    continue
                 if debug:
                     debug.debug('!single format! %s: %s' % (
-                        format, rule % attributes + '.' + ext))
+                        format, path))
                 r = self._join_directory(
-                    rule % attributes + '.' + ext, rule_attributes)
+                    path, rule_attributes,
+                    selection_attributes)
                 if r:
                     if debug:
                         debug.debug('!-->! %s' % repr(r))
@@ -995,20 +1026,32 @@ class AttributesToPaths(object):
                     for f in fom_formats:
                         ext = self.foms.formats[f]
                         rule_attributes['fom_format'] = f
+                        default_attributes.update(attributes)
+                        try:
+                            path = rule % default_attributes + '.' + ext
+                        except KeyError:
+                            continue
                         if debug:
                             debug.debug('!format from fom_formats! %s: %s' %
-                                        (f, rule % attributes + '.' + ext))
+                                        (f, path))
                         r = self._join_directory(
-                            rule % attributes + '.' + ext, rule_attributes)
+                            path, rule_attributes,
+                            selection_attributes)
                         if r:
                             if debug:
                                 debug.debug('!-->! %s' % repr(r))
                             yield r
                 else:
+                    default_attributes.update(attributes)
+                    try:
+                        path = rule % default_attributes
+                    except KeyError:
+                        continue
                     if debug:
-                        debug.debug('!no format! %s' % rule % attributes)
+                        debug.debug('!no format! %s' % path)
                     r = self._join_directory(
-                        rule % attributes, rule_attributes)
+                        path, rule_attributes,
+                        selection_attributes)
                     if r:
                         if debug:
                             debug.debug('!-->! %s' % repr(r))
@@ -1029,13 +1072,15 @@ class AttributesToPaths(object):
                     result.append(attribute)
         return result
 
-    def _join_directory(self, path, rule_attributes):
+    def _join_directory(self, path, rule_attributes, selection_attributes):
+        attributes = selection_attributes.copy()
+        attributes.update(rule_attributes)
         fom_directory = rule_attributes.get('fom_directory')
         if fom_directory:
-            directory = self.directories.get(fom_directory)
+            directory = self.directories.get(fom_directory) 
             if directory:
-                return (osp.join(directory, *path.split('/')), rule_attributes)
-        return (osp.join(*path.split('/')), rule_attributes)
+                return (osp.join(directory, *path.split('/')), attributes)
+        return (osp.join(*path.split('/')), attributes)
 
 
 def call_before_application_initialization(application):
