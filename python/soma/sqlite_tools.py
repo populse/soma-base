@@ -118,7 +118,7 @@ class ThreadSafeSQLiteConnection( object ):
         self._instanceLock.release()
     return connection
     
-  def delete_connection( self ):
+  def delete_connection(self):
     '''
     Delete the connection previously created for the current thread with
     get_connection()
