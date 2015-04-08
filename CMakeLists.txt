@@ -10,15 +10,6 @@ BRAINVISA_DEPENDENCY( DEV DEPENDS "${BRAINVISA_PACKAGE_NAME}" RUN "= ${${BRAINVI
 BRAINVISA_DEPENDENCY( RUN DEPENDS python RUN ">= ${PYTHON_SHORT_VERSION}" )
 BRAINVISA_DEPENDENCY( DEV DEPENDS python DEV ">= 2.4;<< 3.0" )
 
-configure_file( "${CMAKE_CURRENT_SOURCE_DIR}/config/config.py.in" "${CMAKE_BINARY_DIR}/python/soma/config.py" @ONLY )
-BRAINVISA_INSTALL( FILES "${CMAKE_BINARY_DIR}/python/soma/config.py"
-                   DESTINATION "python/soma"
-                   COMPONENT ${PROJECT_NAME} )
-configure_file( "${CMAKE_CURRENT_SOURCE_DIR}/config/config.h.in" "${CMAKE_BINARY_DIR}/include/soma/config.h" @ONLY )
-BRAINVISA_INSTALL( FILES "${CMAKE_BINARY_DIR}/include/soma/config.h"
-                   DESTINATION "include/soma"
-                   COMPONENT ${PROJECT_NAME}-dev )
-
 set( SOMA-BASE_DEFINITIONS "-DUSE_SOMA_CONFIG" )
 
 BRAINVISA_COPY_PYTHON_DIRECTORY( "${CMAKE_CURRENT_SOURCE_DIR}/python"
@@ -47,4 +38,4 @@ BRAINVISA_CREATE_CMAKE_CONFIG_FILES()
 
 # tests
 enable_testing()
-add_test(soma-base-tests "${CMAKE_BINARY_DIR}/bin/bv_env" "${PYTHON_EXECUTABLE}" "${CMAKE_BINARY_DIR}/python/test/test_capsul.py")
+add_test(soma-base-tests "${CMAKE_BINARY_DIR}/bin/bv_env" "${PYTHON_EXECUTABLE}" "${CMAKE_BINARY_DIR}/python/test/test_soma_base.py")

@@ -1,2 +1,0 @@
-
-SHFJ_COPY_CURRENT_DIRECTORY(share/soma-${BrainVISA_VERSION})
