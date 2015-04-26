@@ -49,6 +49,7 @@ class FileSelectionWidget(QtGui.QWidget):
             self.lineedit.setText(self.fname)
 
 
-    def _on_lineedit(self, text):
+    def _on_lineedit(self):
+        text = self.lineedit.text()
         self.fname = text
         self.emit(QtCore.SIGNAL("editChanged(const QString & )"), text)
