@@ -14,10 +14,10 @@ import logging
 logger = logging.getLogger(__name__)
 
 # Trait import
-from traits.api import HasTraits, Event, CTrait
+from traits.api import HasTraits, Event, CTrait, Instance
 
 # Soma import
-from soma.sorted_dictionary import SortedDictionary
+from soma.sorted_dictionary import SortedDictionary, OrderedDict
 
 
 class ControllerMeta(HasTraits.__metaclass__):
@@ -232,3 +232,39 @@ class Controller(HasTraits):
         # Remove name from the '_user_traits' without error if it
         # is not present
         self._user_traits.pop(name, None)
+
+    def export_to_dict(self):
+        """ return the controller state to a OrderedDict, replacing controller
+        values in sub-trees to dicts also.
+        """
+        state_dict = OrderedDict()
+        for trait_name, trait in self.user_traits().iteritems():
+            value = getattr(self, trait_name)
+            if isinstance(value, Controller):
+                value = value.export_to_dict()
+            state_dict[trait_name] = value
+        return state_dict
+
+    def import_from_dict(self, state_dict):
+        """ Set Controller variables from a dictionary. When setting values on
+        Controller instances (in the Controller sub-tree), replace dictionaries
+        by Controller instances appropriately.
+
+        Parameters
+        ----------
+        state_dict: dict, sorted_dictionary or OrderedDict
+            dict containing the variables to set
+        """
+        for trait_name, value in state_dict.iteritems():
+            trait = self.trait(trait_name)
+            if trait is None:
+                raise KeyError(
+                    "item %s is not a trait in the Controller" % trait_name)
+            if isinstance(trait.trait_type, Instance) \
+                    and issubclass(trait.trait_type.klass, Controller):
+                controller = trait.trait_type.create_default_value(
+                    trait.trait_type.klass)
+                controller.import_from_dict(value)
+            else:
+                setattr(self, trait_name, value)
+
