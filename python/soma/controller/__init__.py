@@ -7,5 +7,5 @@
 # for details.
 ##########################################################################
 
-from controller import Controller
+from controller import Controller, ControllerTrait
 from trait_utils import trait_ids
