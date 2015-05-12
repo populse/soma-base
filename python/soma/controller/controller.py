@@ -14,7 +14,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 # Trait import
-from traits.api import HasTraits, Event, CTrait, Instance
+from traits.api import HasTraits, Event, CTrait, Instance, Undefined
 
 # Soma import
 from soma.sorted_dictionary import SortedDictionary, OrderedDict
@@ -233,15 +233,31 @@ class Controller(HasTraits):
         # is not present
         self._user_traits.pop(name, None)
 
-    def export_to_dict(self):
+    def export_to_dict(self, exclude_undefined=False,
+                       exclude_transient=False,
+                       exclude_none=False):
         """ return the controller state to a OrderedDict, replacing controller
         values in sub-trees to dicts also.
+
+        Parameters
+        ----------
+        exclude_undefined: bool (optional)
+            if set, do not export Undefined values
+        exclude_transient: bool (optional)
+            if set, do not export values whose trait is marked "transcient"
+        exclude_none: bool (optional)
+            if set, do not export None values
         """
         state_dict = OrderedDict()
         for trait_name, trait in self.user_traits().iteritems():
+            if exclude_transient and trait.transient:
+                continue
             value = getattr(self, trait_name)
             if isinstance(value, Controller):
                 value = value.export_to_dict()
+            elif (exclude_undefined and value is Undefined) \
+                    or (exclude_none and value is None):
+                continue
             state_dict[trait_name] = value
         return state_dict
 
@@ -267,4 +283,12 @@ class Controller(HasTraits):
                 controller.import_from_dict(value)
             else:
                 setattr(self, trait_name, value)
+
+    def copy(self, with_values=True):
+        copied = self.__class__()
+        for name, trait in self.user_traits().iteritems():
+            copied.add_trait(name, trait)
+            if with_values:
+                setattr(copied, name, getattr(self, name))
+        return copied
 
