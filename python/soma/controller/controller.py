@@ -297,8 +297,7 @@ class Controller(HasTraits):
 class ControllerTrait(TraitType):
     """ A specialized trait type for Controller values.
     """
-    def __init__(self, controller, open_keys=False, open_trait_type=None,
-                    **kwargs):
+    def __init__(self, controller, inner_trait=None, **kwargs):
         """ Build a Controller valued trait.
 
         Contrarily to Instance(Controller), it ensures better validation when
@@ -313,32 +312,38 @@ class ControllerTrait(TraitType):
         ----------
         controller: Controller instance (mandatory)
             default value for trait, and placeholder for allowed traits
-        open_keys: bool (optional)
-            if set, the controller behaves as a dictionary, with open keys:
-            items can be inserted: traits are added when new keys are found in
-            the value set. In such case the open_trait_type should also be
-            specified.
-        open_trait_type: Trait instance (optional)
-            if open_keys is set, this is the trait type used to instantiate new
+        inner_trait: Trait instance (optional)
+            if provided, the controller is assumed to be an "open key" type,
+            new keys/traits can be added on the fly like in a dictionary, and
+            this inner_trait is the trait type used to instantiate new
             traits when new keys are encountered while setting values.
         """
         super(ControllerTrait, self).__init__(
             None, **kwargs)
         self.controller = controller
         self.default_value = controller
-        self.open_keys = open_keys
-        self.open_trait_type = open_trait_type
+        self.inner_trait = inner_trait
+        self.handler = self
 
     def validate(self, object, name, value):
         if isinstance(value, Controller):
-            return super(ControllerTrait, self).validate(value)
+            sup_inst = super(ControllerTrait, self)
+            if hasattr(sup_inst, 'validate'):
+                return sup_inst.validate(value)
+            else:
+                return value
         if not hasattr(value, 'iteritems'):
             raise TraitError('trait must be a Controller')
         new_value = getattr(object, name).copy(with_values=False)
-        if self.open_keys:
+        if self.inner_traits:
             for key in value:
                 if not self.controller.trait(key):
-                    new_value.add_trait(key, self.open_trait_type)
+                    new_value.add_trait(key, self.inner_trait)
         new_value.import_from_dict(value)
         return new_value
+
+    def inner_traits(self):
+        if self.inner_trait:
+            return (self.inner_trait, )
+        return ()
 

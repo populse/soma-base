@@ -51,6 +51,7 @@ def trait_ids(trait):
             trait_description.extend(trait_ids(sub_c_trait))
         return trait_description
     else:
+        # FIXME may recurse indefinitely if the trait is recursive
         inner_id = '_'.join((trait_ids(i)[0]
                              for i in trait.handler.inner_traits()))
         if not inner_id:
