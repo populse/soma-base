@@ -34,18 +34,19 @@ def trait_ids(trait):
     main_id: list
         the string description (type) of the input trait
     """
-    main_id = trait.handler.__class__.__name__
+    handler = trait.handler or trait
+    main_id = handler.__class__.__name__
     #print main_id
     inner_ids = []
     if main_id == 'TraitCoerceType':
-        real_id = _type_to_trait_id.get(trait.handler.aType)
+        real_id = _type_to_trait_id.get(handler.aType)
         if real_id:
             main_id = real_id
     elif main_id == 'TraitCompound':
-        #print trait.handler, dir(trait.handler)
-        #print trait.handler.handlers
+        #print handler, dir(handler)
+        #print handler.handlers
         trait_description = []
-        for sub_trait in trait.handler.handlers:
+        for sub_trait in handler.handlers:
             sub_c_trait = CTrait(0)
             sub_c_trait.handler = sub_trait
             trait_description.extend(trait_ids(sub_c_trait))
@@ -53,9 +54,9 @@ def trait_ids(trait):
     else:
         # FIXME may recurse indefinitely if the trait is recursive
         inner_id = '_'.join((trait_ids(i)[0]
-                             for i in trait.handler.inner_traits()))
+                             for i in handler.inner_traits()))
         if not inner_id:
-            klass = getattr(trait.handler, 'klass', None)
+            klass = getattr(handler, 'klass', None)
             if klass is not None:
                 inner_ids = [i.__name__ for i in klass.__mro__]
             else:
