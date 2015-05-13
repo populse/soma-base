@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 # Trait import
 from traits.api import HasTraits, Event, CTrait, Instance, Undefined, \
-    TraitType, TraitError
+    TraitType, TraitError, Any
 
 # Soma import
 from soma.sorted_dictionary import SortedDictionary, OrderedDict
@@ -262,7 +262,7 @@ class Controller(HasTraits):
             state_dict[trait_name] = value
         return state_dict
 
-    def import_from_dict(self, state_dict):
+    def import_from_dict(self, state_dict, clear=False):
         """ Set Controller variables from a dictionary. When setting values on
         Controller instances (in the Controller sub-tree), replace dictionaries
         by Controller instances appropriately.
@@ -271,10 +271,17 @@ class Controller(HasTraits):
         ----------
         state_dict: dict, sorted_dictionary or OrderedDict
             dict containing the variables to set
+        clear: bool (optional, default: False)
+            if True, older values (in keys not listed in state_dict) will be
+            cleared, otherwise they are left in place.
         """
+        if clear:
+            for trait_name in self.user_traits():
+                if trait_name not in state_dict:
+                    delattr(self, trait_name)
         for trait_name, value in state_dict.iteritems():
             trait = self.trait(trait_name)
-            if trait is None:
+            if trait is None and not isinstance(self, OpenKeyController):
                 raise KeyError(
                     "item %s is not a trait in the Controller" % trait_name)
             if isinstance(trait.trait_type, Instance) \
@@ -286,12 +293,75 @@ class Controller(HasTraits):
                 setattr(self, trait_name, value)
 
     def copy(self, with_values=True):
+        """ Copy traits definitions to a new Controller object
+
+        Parameters
+        ----------
+        with_values: bool (optional, default: False)
+            if True, traits values will be copied, otherwise the defaut trait
+            value will be left in the copy.
+
+        Returns
+        -------
+        copied: Controller instance
+            the returned copy will have the same class as the copied object
+            (which may be a derived class from Controller). Traits definitions
+            will be copied. Traits values will only be copied if with_values is
+            True.
+        """
         copied = self.__class__()
         for name, trait in self.user_traits().iteritems():
             copied.add_trait(name, trait)
             if with_values:
                 setattr(copied, name, getattr(self, name))
         return copied
+
+
+class OpenKeyController(Controller):
+    """ A dictionary-like controller, with "open keys": items may be added
+    on the fly, traits are created upon assignation.
+
+    A value trait type should be specified to build the items.
+
+    Usage:
+
+    >>> dict_controller = OpenKeyController(value_trait=traits.Str())
+    >>> print dict_controller.user_traits().keys()
+    []
+    >>> dict_controller.my_item = 'bubulle'
+    >>> print dict_controller.user_traits().keys()
+    ['my_item']
+    >>> print dict_controller.export_to_dict()
+    {'my_item': 'bubulle'}
+    >>> del dict_controller.my_item
+    >>> print dict_controller.export_to_dict()
+    {}
+    """
+    _reserved_names = set(['trait_added'])
+
+    def __init__(self, value_trait=Any(), *args, **kwargs):
+        """ Build an OpenKeyController controller.
+
+        Parameters
+        ----------
+        value_trait: Trait instance (optional, default: Any())
+            trait type to be used when creating traits on the fly
+        """
+        super(OpenKeyController, self).__init__(*args, **kwargs)
+        super(OpenKeyController, self).__setattr__('_value_trait', value_trait)
+
+    def __setattr__(self, name, value):
+        if not name.startswith('_') and name not in self.__dict__ \
+                and not self.trait(name) \
+                and not name in OpenKeyController._reserved_names:
+            self.add_trait(name, self._value_trait)
+        super(OpenKeyController, self).__setattr__(name, value)
+
+    def __delattr__(self, name):
+        if self.trait(name):
+            self.remove_trait(name)
+        else:
+            super(OpenKeyController, self).__delattr__(name)
 
 
 class ControllerTrait(TraitType):
@@ -317,11 +387,15 @@ class ControllerTrait(TraitType):
             new keys/traits can be added on the fly like in a dictionary, and
             this inner_trait is the trait type used to instantiate new
             traits when new keys are encountered while setting values.
+            If inner_trait is not provided, we will look if the controller
+            instance is an OpenKeyController, and in such case, take its value
+            trait.
         """
-        super(ControllerTrait, self).__init__(
-            None, **kwargs)
+        super(ControllerTrait, self).__init__(None, **kwargs)
         self.controller = controller
         self.default_value = controller
+        if inner_trait is None and hasattr(controller, '_value_trait'):
+            inner_trait = controller._value_trait
         self.inner_trait = inner_trait
         self.handler = self
 
@@ -335,7 +409,10 @@ class ControllerTrait(TraitType):
         if not hasattr(value, 'iteritems'):
             raise TraitError('trait must be a Controller')
         new_value = getattr(object, name).copy(with_values=False)
-        if self.inner_traits:
+        if self.inner_trait:
+            for key in new_value.user_traits():
+                if key not in value:
+                    new_value.remove_trait(key)
             for key in value:
                 if not self.controller.trait(key):
                     new_value.add_trait(key, self.inner_trait)
