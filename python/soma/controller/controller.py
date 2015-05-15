@@ -50,8 +50,8 @@ class Controller(HasTraits):
     Attributes
     ----------
     `user_traits_changed` : Event
-        single event that can be send when several traits changes. This event
-        have to be triggered explicitely to take into account changes due to
+        single event that can be sent when several traits changes. This event
+        has to be triggered explicitely to take into account changes due to
         call(s) to add_trait or remove_trait.
 
     Methods
