@@ -7,8 +7,9 @@ import os
 from setuptools import setup, find_packages
 from datetime import datetime
 
+python_dir = os.path.join(os.path.dirname(__file__), "python")
 release_info = {}
-execfile(os.path.join("python", "soma", "info.py"), release_info)
+execfile(os.path.join(python_dir, "soma", "info.py"), release_info)
 
 setup(
     name=release_info["NAME"],
@@ -19,8 +20,8 @@ setup(
     author=release_info["AUTHOR"],
     author_email=release_info["AUTHOR_EMAIL"],
     version=release_info["VERSION"],
-    package_dir = {'': 'python'},
-    packages=find_packages('python'),
+    package_dir = {'': python_dir},
+    packages=find_packages(python_dir),
     platforms=release_info["PLATFORMS"],
     #scripts=["../../bin/bv_minf_2_XML", ]
 )
