@@ -1,15 +1,6 @@
-#! /usr/bin/env python
-##########################################################################
-# CASPER - Copyright (C) CEA, 2013
-# Distributed under the terms of the CeCILL-B license, as published by
-# the CEA-CNRS-INRIA. Refer to the LICENSE file or to
-# http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html
-# for details.
-##########################################################################
-
 version_major = 4
 version_minor = 5
-version_micro = 0
+version_micro = 3
 version_extra = ''
 _version_major = version_major
 _version_minor = version_minor
@@ -28,7 +19,7 @@ CLASSIFIERS = ["Development Status :: 1 - Planning",
                "Topic :: Scientific/Engineering",
                "Topic :: Utilities"]
 
-description = 'Soma-base'
+description = 'soma-base'
 
 long_description = """
 =========
