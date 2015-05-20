@@ -3,8 +3,6 @@ find_package( brainvisa-cmake REQUIRED )
 BRAINVISA_PROJECT()
 
 find_package( python REQUIRED )
-find_package( Epydoc )
-find_package( Dot )
 
 BRAINVISA_DEPENDENCY( DEV DEPENDS "${BRAINVISA_PACKAGE_NAME}" RUN "= ${${BRAINVISA_PACKAGE_NAME}_VERSION}" )
 BRAINVISA_DEPENDENCY( RUN DEPENDS python RUN ">= ${PYTHON_SHORT_VERSION}" )
