@@ -12,7 +12,7 @@ __version__ = "%s.%s.%s%s" % (version_major,
                               version_minor,
                               version_micro,
                               version_extra)
-CLASSIFIERS = ["Development Status :: 1 - Planning",
+CLASSIFIERS = ["Development Status :: 5 - Production/Stable",
                "Environment :: Console",
                "Operating System :: OS Independent",
                "Programming Language :: Python",
