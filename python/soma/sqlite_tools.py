@@ -58,6 +58,12 @@ class ThreadSafeSQLiteConnection( object ):
   _classLock = threading.RLock()
     
   def __init__( self, *args, **kwargs ):
+    '''
+    A ThreadSafeSQLiteConnection is created with the parameters that
+    would be used for a call to sqlite3.connect() in a single thread
+    system. These parameters are stored to allow to create a separate
+    SQLite connection for any thread with get_connection().
+    '''
     super( ThreadSafeSQLiteConnection, self ).__init__()
     self.__args = args
     self.__kwargs = kwargs
@@ -84,7 +90,15 @@ class ThreadSafeSQLiteConnection( object ):
           currentThread = threading.currentThread().getName()
           print >> sys.stderr, 'WARNING: internal error: an sqlite connection on', repr( sqliteFile ), 'is opened for thread', thread, 'but the corresponding ThreadSafeSQLiteConnection instance (number ' + str( self._id ) + ') is being deleted in thread', currentThread + '. Method currentThreadCleanup() should have been called from', thread, 'to supress this warning.'
   
-  def _getConnection( self ):
+  def get_connection(self):
+    '''
+    Returns a SQLite connection (i.e. the result of sqlite3.connect)
+    for the current thread. If it does not already exists, it is created
+    and stored for the current thread. In order to destroy this connection
+    it is necessary to call self.delete_connection() from the current
+    thread. If a ThreadSafeSQLiteConnection is destroyed in a thread,
+    all connections opened in other threads must have been deleted.
+    '''
     if self.__args is None:
       raise RuntimeError( 'Attempt to access to a closed ThreadSafeSQLiteConnection' )
     currentThread = threading.currentThread().getName()
@@ -103,9 +117,12 @@ class ThreadSafeSQLiteConnection( object ):
     finally:
         self._instanceLock.release()
     return connection
-  
-  
-  def currentThreadCleanup( self ):
+    
+  def delete_connection(self):
+    '''
+    Delete the connection previously created for the current thread with
+    get_connection()
+    '''
     currentThread = threading.currentThread().getName()
     self._instanceLock.acquire()
     try:
@@ -115,15 +132,24 @@ class ThreadSafeSQLiteConnection( object ):
     if connection is not None:
         connection.close()
   
-  
   def close( self ):
+    '''
+    After this call no more connection can be opened
+    '''
     if self.__args is not None:
       self.closeSqliteConnections()
       self.__args = None
       self.__kwargs = None
 
 
-  def closeSqliteConnections( self ):
+  def close_connections( self ):
+    '''
+    Mark the opened connection for all the threads as closed. 
+    Subsequent calls to get_connection() will have to
+    recreate the sqlite connection with sqlite3.connect().
+    This method does not delete the connection of the current
+    thread.
+    '''
     if self.__args is not None:
       self.currentThreadCleanup()
       currentThread = threading.currentThread().getName()
@@ -135,3 +161,7 @@ class ThreadSafeSQLiteConnection( object ):
       finally:
         self._instanceLock.release()
 
+  # For backward compatibility
+  _getConnection = get_connection
+  currentThreadCleanup = delete_connection
+  closeSqliteConnections = close_connections

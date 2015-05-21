@@ -65,7 +65,11 @@ class SortedDictionary( UserDict, object ):
     #UserDict.__init__(self)
     self.sortedKeys = []
     self.data = {}
-    for key, value in args:
+    if len(args) == 1 and isinstance(args[0], list):
+      elements = args[0] # dict / OrderedDict compatibility
+    else:
+      elements = args
+    for key, value in elements:
       self[ key ] = value
       
   def keys( self ):
@@ -223,3 +227,12 @@ class SortedDictionary( UserDict, object ):
   
   def __repr__( self ):
     return '{' + ', '.join( repr(k)+': '+repr(v) for k, v in self.iteritems() ) + '}'
+
+    
+class OrderedDict( SortedDictionary ):
+  '''
+  OrderedDict is fully compatible with Python 2.7 collections.OrderedDict.
+  It is a SordedDictionary with a modified constructor API.
+  '''
+  def __init__( self, args=() ):
+    super(OrderedDict, self).__init__(*args)

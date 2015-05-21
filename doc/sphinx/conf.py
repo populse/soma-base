@@ -13,22 +13,28 @@
 
 import sys, os
 import soma.config
+import soma
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #sys.path.append(os.path.abspath('.'))
+sys.path.insert(0,os.path.abspath('sphinxext'))
 
 # -- General configuration -----------------------------------------------------
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.intersphinx', 'sphinx.ext.todo', 'sphinx.ext.coverage', 'sphinx.ext.ifconfig', 'sphinx.ext.viewcode', 'sphinx.ext.extlinks']
-try:
-    import numpydoc
-    extensions.append('numpydoc')
-except:
-    pass # numpydoc is not here, don't use it
+extensions = ['sphinx.ext.autodoc',
+              'sphinx.ext.intersphinx',
+              'sphinx.ext.todo',
+              'sphinx.ext.coverage',
+              'sphinx.ext.ifconfig',
+              'sphinx.ext.viewcode',
+              'sphinx.ext.extlinks',
+              'sphinx.ext.inheritance_diagram',
+              'sphinx.ext.autosummary',
+              'numpy_ext.numpydoc']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -117,6 +123,8 @@ html_theme_options = {  }
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
 # html_logo = '../../../../axon/branches/' + version + '/share/icons/brainvisa.png'
+
+html_style = 'custom.css'
 
 # The name of an image file (within the static path) to use as favicon of the
 # docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
@@ -211,13 +219,13 @@ extlinks = {
     'anatomist '),
   'pyanatomist': ('../build-stable-release/share/doc/pyanatomist-' + version + '/sphinx/%s',
     'pyanatomist '),
-  'aimsdox': ('../build-stable-release/share/doc/aimsdata-4.1/doxygen/%s',
+  'aimsdox': ('../build-stable-release/share/doc/aimsdata-' + version + '/doxygen/%s',
     'aimsdox '),
-  'cartobdox' : ('../build-stable-release/share/doc/cartobase-4.1/doxygen/%s',
+  'cartobdox' : ('../build-stable-release/share/doc/cartobase-' + version + '/doxygen/%s',
   'cartobdox '),
-  'cartoddox' : ('../build-stable-release/share/doc/cartodata-4.1/doxygen/%s',
+  'cartoddox' : ('../build-stable-release/share/doc/cartodata-' + version + '/doxygen/%s',
   'cartoddox '),
-  'graphdox' : ('../build-stable-release/share/doc/graph-4.1/doxygen/%s',
+  'graphdox' : ('../build-stable-release/share/doc/graph-' + version + '/doxygen/%s',
   'graphdox '),
 }
 

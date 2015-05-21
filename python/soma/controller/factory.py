@@ -1,4 +1,11 @@
-# -*- coding: utf-8 -*-
+#! /usr/bin/env python
+##########################################################################
+# CAPSUL - Copyright (C) CEA, 2013
+# Distributed under the terms of the CeCILL-B license, as published by
+# the CEA-CNRS-INRIA. Refer to the LICENSE file or to
+# http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html
+# for details.
+##########################################################################
 
 '''Base classes for the management of association between Python objects and
 factories (i.e. a function that create something for an object) taking into
@@ -36,7 +43,7 @@ class Factories( object ):
   to create an associtation at the instance level.
   '''
   __metaclass__ = MetaFactories
-  _global_factories = None
+  _global_factories = {}
   
 
   def __init__( self ):
@@ -52,13 +59,13 @@ class Factories( object ):
     cls._global_factories[ klass ] = factory
   
   
-  def get_global_factory( self, key ):
+  def get_global_factory(self, klass):
     '''
     Retrieve the global factory associated to a class or an instance. Only
     direct association is used. In order to take into account class hierarchy,
     one must use get_factory method.
     '''
-    return self._global_factories.get( key )
+    return self._global_factories.get(klass)
   
   
   def register_factory( self, class_or_instance, factory ):
@@ -68,7 +75,7 @@ class Factories( object ):
     self._factories[ class_or_instance ] = factory
   
   
-  def get_factory( self, something ):
+  def get_factory( self, class_or_instance ):
     '''
     Retrieve the factory associated to an object.
     First look into the object instance and then in the object class hierarchy.
@@ -76,7 +83,7 @@ class Factories( object ):
     If there is none, self.get_global_factory is used.
     Returns None if no factory is found.
     '''
-    for key in ( something, ) + something.__class__.__mro__:
+    for key in ( class_or_instance, ) + class_or_instance.__class__.__mro__:
       factory = self._factories.get( key )
       if factory is not None:
         break

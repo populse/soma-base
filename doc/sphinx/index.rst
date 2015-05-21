@@ -45,12 +45,6 @@ SubModule: ``fom``
 :mod:`soma.fom`
 
 
-SubModule: ``functiontools``
-----------------------------
-
-:mod:`soma.functiontools`
-
-
 SubModule: ``gui``
 ------------------
 
@@ -93,6 +87,18 @@ SubModule: ``pyro``
 :mod:`soma.pyro`
 
 
+SubModule: ``qt4gui``
+---------------------
+
+:mod:`soma.qt4gui`
+
+
+SubModule: ``qt_gui``
+---------------------
+
+:mod:`soma.qt_gui`
+
+
 SubModule: ``singleton``
 ------------------------
 
@@ -133,6 +139,12 @@ SubModule: ``undefined``
 ------------------------
 
 :mod:`soma.undefined`
+
+
+SubModule: ``utils``
+--------------------
+
+:mod:`soma.utils`
 
 
 SubModule: ``uuid``

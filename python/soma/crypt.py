@@ -1,3 +1,8 @@
+'''
+Functions to manage private/public keys encryption.
+This module needs Crypto module.
+'''
+
 from Crypto.PublicKey import RSA
 from base64 import b64decode
 

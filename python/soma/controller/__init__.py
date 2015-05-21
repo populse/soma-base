@@ -7,5 +7,5 @@
 # for details.
 ##########################################################################
 
-from controller import Controller, ControllerFactories
+from controller import Controller, OpenKeyController, ControllerTrait
 from trait_utils import trait_ids

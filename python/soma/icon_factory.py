@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from soma.gui.qt_backend import QtGui, QtCore
+from soma.qt_gui.qt_backend import QtGui, QtCore
 
 
 imageExpand = QtGui.QPixmap()

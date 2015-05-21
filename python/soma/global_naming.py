@@ -8,6 +8,7 @@ from soma.singleton import Singleton
 
 class GlobalNaming( Singleton ):
   def __singleton_init__( self ):
+    super( GlobalNaming, self ).__singleton_init__()
     self._global_name_re = re.compile( r'(([A-Za-z][A-Za-z0-9_.]*)\.([A-Za-z0-9_]+))(\(\))?((\.)([A-Za-z][A-Za-z0-9_.]+))?' )
     self._names = WeakKeyDictionary()
 
@@ -56,8 +57,3 @@ def get_object( global_name ):
   
 def get_name( obj ):
   return GlobalNaming().get_name( obj )
-
-#if __name__ == '__main__':
-  #gn = GlobalNaming()
-  #for i in ( 'soma.stringtools.string_to_list', 'soma.sorted_dictionary.SortedDictionary', 'soma.sorted_dictionary.SortedDictionary()', 'soma.sorted_dictionary.SortedDictionary().get', 'soma.sorted_dictionary.SortedDictionary().get.im_func' ):
-    #print i, '->', gn.get_name( gn.get_object( i ) )

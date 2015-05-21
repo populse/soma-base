@@ -39,7 +39,7 @@
 '''
 
 from __future__ import absolute_import
-__docformat__ = "epytext en"
+__docformat__ = "restructuredtext en"
 
 
 import os, sys, platform, traceback
@@ -52,7 +52,7 @@ except ImportError:
   from traits.api import ReadOnly, Directory, ListStr, Instance
 
 from soma.singleton import Singleton
-from soma.controller import Controller, ControllerFactories
+from soma.controller import Controller
 
 #-------------------------------------------------------------------------------
 class Application( Singleton, Controller ):
@@ -65,10 +65,9 @@ class Application( Singleton, Controller ):
   plugin_modules = ListStr(
     desc='List of Python module to load after application configuration' )
 
-  def __singleton_init__( self, name, version=None, *args, **kwargs ):
+  def __singleton_init__( self, name=None, version=None, *args, **kwargs ):
     '''Replaces __init__ in Singleton.'''
-    super( Application, self ).__init__( *args, **kwargs )
-    
+    super( Application, self ).__singleton_init__( *args, **kwargs )
     # Warning : Traits bug
     # Using the trait Directory() might instanciate a QApplication (seems to depend on the
     # traits release). If it is declared in the class, the QApplication is instanciated at
@@ -82,11 +81,13 @@ class Application( Singleton, Controller ):
     self.add_trait( 'site_directory',  Directory( 
       desc='Base directory where site specifc information can be find' ) )
     self._controller_factories = None
-    
+
+    if name is None:
+        name = os.path.basename(sys.argv[0])
     self.name = name
     self.version = version
     self.loaded_plugin_modules = {}
-    
+
 
   def initialize( self ):
     '''This method must be called once to setup the application.'''
@@ -144,13 +145,6 @@ class Application( Singleton, Controller ):
           init( self )
 
 
-  def get_controller( self, something ):
-    '''This method must be used to get a controller for any object.'''
-    if self._controller_factories is None:
-      self._controller_factories = ControllerFactories()
-    return self._controller_factories.get_controller( something )
-  
-  
   @staticmethod
   def load_plugin_module( plugin_module ):
     '''This method loads a plugin module. It imports the module without raising
