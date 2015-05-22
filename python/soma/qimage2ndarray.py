@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """QImage <-> numpy.ndarray conversion module.
 
 *** ATTENTION: This code is outdated - I released a better extension
