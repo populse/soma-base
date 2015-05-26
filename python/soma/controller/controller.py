@@ -18,6 +18,7 @@ from traits.api import HasTraits, Event, CTrait, Instance, Undefined, \
 
 # Soma import
 from soma.sorted_dictionary import SortedDictionary, OrderedDict
+from soma.controller.trait_utils import _type_to_trait_id
 
 
 class ControllerMeta(HasTraits.__metaclass__):
@@ -161,6 +162,47 @@ class Controller(HasTraits):
 
         return trait
 
+    def _propagate_optional_parameter(self, trait, optional=None):
+        """
+        """
+        # Get the trait class name
+        handler = trait.handler or trait
+        main_id = handler.__class__.__name__
+        if main_id == "TraitCoerceType":
+            real_id = _type_to_trait_id.get(handler.aType)
+            if real_id:
+                main_id = real_id
+
+        # Debug message
+        logger.debug("Propagation optional parameter of trait with main id %s",
+                     main_id)
+
+        # Get the optional parameter and set the default value if necessary
+        if optional is not None:
+            trait.optional = optional
+        else:
+            optional = trait.optional
+            if optional is None:
+                optional = False
+                trait.optional = optional
+
+        # Either case
+        if main_id in ["Either", "TraitCompound"]:
+
+            # Debug message
+            logger.debug("A coumpound trait has been found %s", repr(
+                handler.handlers))
+
+            # Update each trait compound optional parameter
+            for sub_trait in handler.handlers:
+                self._propagate_optional_parameter(sub_trait(), optional)
+
+        # Default case
+        else:
+            # FIXME may recurse indefinitely if the trait is recursive
+            for inner_trait in handler.inner_traits():
+                self._propagate_optional_parameter(inner_trait, optional)
+
     ####################################################################
     # Public methods
     ####################################################################
@@ -214,6 +256,9 @@ class Controller(HasTraits):
             trait_instance.defaultvalue = trait_instance.default
             self.get(name)
             self._user_traits[name] = trait_instance
+
+        # Update/set the optional trait parameter
+        self._propagate_optional_parameter(trait_instance)
 
     def remove_trait(self, name):
         """ Remove a trait from its name.
