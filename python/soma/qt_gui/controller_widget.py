@@ -8,6 +8,7 @@
 
 # System import
 import logging
+import os
 
 # Define the logger
 logger = logging.getLogger(__name__)
@@ -151,6 +152,9 @@ class ControllerWidget(QtGui.QWidget):
         """
         # Inheritance
         super(ControllerWidget, self).__init__(parent)
+
+        QtCore.QResource.registerResource(os.path.join(os.path.dirname(
+            os.path.dirname(__file__)), 'resources', 'widgets_icons.rcc'))
 
         # Class parameters
         self.controller = controller
