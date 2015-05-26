@@ -291,7 +291,7 @@ def trait_ids(trait):
     Parameters
     ----------
     trait: trait instance (mandatory)
-        a trait instance.
+        a trait instance
 
     Returns
     -------
@@ -299,18 +299,19 @@ def trait_ids(trait):
         the string description (type) of the input trait.
     """
     # Get the trait class name
-    # Use the convertion table to normalize the trait id
-    main_id = trait.handler.__class__.__name__
+    handler = trait.handler or trait
+    main_id = handler.__class__.__name__
     if main_id == "TraitCoerceType":
-        real_id = _type_to_trait_id.get(trait.handler.aType)
+        real_id = _type_to_trait_id.get(handler.aType)
         if real_id:
             main_id = real_id
 
+    # Use the convertion table to normalize the trait id
     if main_id in _trait_cvt_table:
         main_id = _trait_cvt_table[main_id]
 
     # Debug message
-    logger.debug("Clone trait with main id %s", main_id)
+    logger.debug("Trait with main id %s", main_id)
 
     # Search for inner traits
     inner_ids = []
@@ -320,21 +321,25 @@ def trait_ids(trait):
 
         # Debug message
         logger.debug("A coumpound trait has been found %s", repr(
-            trait.handler.handlers))
+            handler.handlers))
 
         # Build each trait compound description
         trait_description = []
-        for sub_trait in trait.handler.handlers:
+        for sub_trait in handler.handlers:
             trait_description.extend(trait_ids(sub_trait()))
-
         return trait_description
 
     # Default case
     else:
-        inner_id = "_".join((trait_ids(inner_trait)[0]
-                             for inner_trait in trait.inner_traits))
+        # FIXME may recurse indefinitely if the trait is recursive
+        inner_id = '_'.join((trait_ids(i)[0]
+                             for i in handler.inner_traits()))
         if not inner_id:
-            inner_ids = []
+            klass = getattr(handler, 'klass', None)
+            if klass is not None:
+                inner_ids = [i.__name__ for i in klass.__mro__]
+            else:
+                inner_ids = []
         else:
             inner_ids = [inner_id]
 
