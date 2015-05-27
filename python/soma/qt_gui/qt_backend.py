@@ -90,20 +90,30 @@ def get_qt_backend():
     return qt_backend
 
 
-def set_qt_backend(backend=None):
+def set_qt_backend(backend=None, pyqt_api=1):
     '''set the Qt backend.
 
     If a different backend has already setup or loaded, a warning is issued.
-    If no backend is specified, try to guess which one is already loaded, or
-    default to PySide.
+    If no backend is specified, try to guess which one is already loaded.
+
+    If no backend is loaded yet, try to behave like IPython does.
+    See: https://ipython.org/ipython-doc/dev/interactive/reference.html#pyqt-and-pyside
+
+    More precisely this means:
+    * If QT_API environement variable is not set, use PyQt4, with PyQt API v1
+    * if QT_API is set to "pyqt", use PyQt4, with PyQt API v2
+    * if QT_API is set to "pyside", use PySide
 
     Moreover if using PyQt4, QtCore is patched to duplicate QtCore.pyqtSignal
-    and QtCore.pyqtSlot as QtCore.Signal and QtCore.Slot.
+    and QtCore.pyqtSlot as QtCore.Signal and QtCore.Slot. This is meant to ease
+    code portability between both worlds.
 
     Parameters
     ----------
     backend: str (default: None)
         name of the backend to use
+    pyqt_api: int (default: 1)
+        PyQt API version: 1 or 2, only useful for PyQt4
 
     Examples
     --------
@@ -114,9 +124,21 @@ def set_qt_backend(backend=None):
     '''
     global qt_backend
     get_qt_backend()
+    SIP_API = 1
     if backend is None:
         if qt_backend is None:
-            backend = 'PySide'
+            # try to get from the environment variable QT_API, complying to
+            # ETS 4
+            # see https://ipython.org/ipython-doc/dev/interactive/reference.html#pyqt-and-pyside
+            qt_api = os.getenv('QT_API')
+            if qt_api == 'pyqt':
+                backend = 'PyQt4'
+                SIP_API = 2
+            elif qt_api == 'pyside':
+                backend = 'PySide'
+            else:
+                backend = 'PyQt4'
+                SIP_API = 1
         else:
             backend = qt_backend
     if qt_backend is not None and qt_backend != backend:
@@ -124,17 +146,17 @@ def set_qt_backend(backend=None):
             'be set, and %s is now requested' % (qt_backend, backend))
     if backend == 'PyQt4': # and sys.modules.get('PyQt4') is None:
         import sip
-        SIP_API = 2
-        sip_classes = ['QString', 'QVariant', 'QDate', 'QDateTime',
-            'QTextStream', 'QTime', 'QUrl']
-        global _sip_api_set
-        for sip_class in sip_classes:
-            try:
-                sip.setapi(sip_class, SIP_API)
-            except ValueError, e:
-                if not _sip_api_set:
-                    logging.warning(e.message)
-        _sip_api_set = True
+        if SIP_API == 2:
+            sip_classes = ['QString', 'QVariant', 'QDate', 'QDateTime',
+                'QTextStream', 'QTime', 'QUrl']
+            global _sip_api_set
+            for sip_class in sip_classes:
+                try:
+                    sip.setapi(sip_class, SIP_API)
+                except ValueError, e:
+                    if not _sip_api_set:
+                        logging.warning(e.message)
+            _sip_api_set = True
     qt_module = __import__(backend)
     __import__(backend + '.QtCore')
     __import__(backend + '.QtGui')
