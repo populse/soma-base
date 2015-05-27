@@ -280,8 +280,10 @@ class Controller(HasTraits):
 
     def export_to_dict(self, exclude_undefined=False,
                        exclude_transient=False,
-                       exclude_none=False):
-        """ return the controller state to a OrderedDict, replacing controller
+                       exclude_none=False,
+                       exclude_empty=False,
+                       dict_class=OrderedDict):
+        """ return the controller state to a dictionary, replacing controller
         values in sub-trees to dicts also.
 
         Parameters
@@ -292,8 +294,13 @@ class Controller(HasTraits):
             if set, do not export values whose trait is marked "transcient"
         exclude_none: bool (optional)
             if set, do not export None values
+        exclude_empty: bool (optional)
+            if set, do not export empty lists/dicts values
+        dict_class: class type (optional, default: soma.sorted_dictionary.OrderedDict)
+            use this type of mapping type to represent controllers. It should
+            follow the mapping protocol API.
         """
-        state_dict = OrderedDict()
+        state_dict = dict_class()
         for trait_name, trait in self.user_traits().iteritems():
             if exclude_transient and trait.transient:
                 continue
@@ -302,6 +309,8 @@ class Controller(HasTraits):
                 value = value.export_to_dict()
             elif (exclude_undefined and value is Undefined) \
                     or (exclude_none and value is None):
+                continue
+            if exclude_empty and (value == [] or value == {}):
                 continue
             state_dict[trait_name] = value
         return state_dict
