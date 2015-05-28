@@ -867,7 +867,7 @@ class AttributesToPaths(object):
         self.foms = foms
         self.selection = selection or {}
         self.directories = directories
-        self._db = sqlite3.connect(':memory:')
+        self._db = sqlite3.connect(':memory:', check_same_thread=False)
         self._db.execute('PRAGMA journal_mode = OFF;')
         self._db.execute('PRAGMA synchronous = OFF;')
         self.all_attributes = tuple(
