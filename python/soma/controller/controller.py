@@ -208,7 +208,7 @@ class Controller(HasTraits):
     ####################################################################
 
     def user_traits(self):
-        """ Methood to access the user parameters.
+        """ Method to access the user parameters.
 
         Returns
         -------
