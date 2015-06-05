@@ -124,7 +124,6 @@ def set_qt_backend(backend=None, pyqt_api=1):
     '''
     global qt_backend
     get_qt_backend()
-    SIP_API = 1
     if backend is None:
         if qt_backend is None:
             # try to get from the environment variable QT_API, complying to
@@ -133,12 +132,12 @@ def set_qt_backend(backend=None, pyqt_api=1):
             qt_api = os.getenv('QT_API')
             if qt_api == 'pyqt':
                 backend = 'PyQt4'
-                SIP_API = 2
+                pyqt_api = 2
             elif qt_api == 'pyside':
                 backend = 'PySide'
             else:
                 backend = 'PyQt4'
-                SIP_API = 1
+                pyqt_api = 1
         else:
             backend = qt_backend
     if qt_backend is not None and qt_backend != backend:
@@ -146,13 +145,13 @@ def set_qt_backend(backend=None, pyqt_api=1):
             'be set, and %s is now requested' % (qt_backend, backend))
     if backend == 'PyQt4': # and sys.modules.get('PyQt4') is None:
         import sip
-        if SIP_API == 2:
+        if pyqt_api == 2:
             sip_classes = ['QString', 'QVariant', 'QDate', 'QDateTime',
                 'QTextStream', 'QTime', 'QUrl']
             global _sip_api_set
             for sip_class in sip_classes:
                 try:
-                    sip.setapi(sip_class, SIP_API)
+                    sip.setapi(sip_class, pyqt_api)
                 except ValueError, e:
                     if not _sip_api_set:
                         logging.warning(e.message)
