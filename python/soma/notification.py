@@ -777,15 +777,15 @@ class ObservableSortedDictionary( SortedDictionary ):
     self.onChangeNotifier.add(listener)
   
   def __setitem__( self, key, value ):
-    insertion=not self.data.has_key(key)
+    insertion = not self.has_key(key)
     super(ObservableSortedDictionary, self).__setitem__(key, value)
     if insertion:
-      self.onChangeNotifier.notify(self.INSERT_ACTION, [value], len(self.data) -1)
+      self.onChangeNotifier.notify(self.INSERT_ACTION, [value], len(self) -1)
     else:
       self.onChangeNotifier.notify(self.MODIFY_ACTION, [value], self.sortedKeys.index(key))
 
   def __delitem__( self, key ):
-    index=self.sortedKeys.index(key)
+    index = self.sortedKeys.index(key)
     super(ObservableSortedDictionary, self).__delitem__(key)
     self.onChangeNotifier.notify(self.REMOVE_ACTION, [], index)
 

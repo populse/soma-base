@@ -42,10 +42,10 @@ order.
 '''
 __docformat__ = "epytext en"
 
-from UserDict import UserDict
 from soma.undefined import Undefined
+import copy
 
-class SortedDictionary( UserDict, object ):
+class SortedDictionary( dict ):
   '''
   Sorted dictionary behave like a dictionary but keep the item insertion
   order.
@@ -62,9 +62,7 @@ class SortedDictionary( UserDict, object ):
     Initialize the dictionary with a list of ( key, value ) pairs.
     '''
     super(SortedDictionary, self).__init__()
-    #UserDict.__init__(self)
     self.sortedKeys = []
-    self.data = {}
     if len(args) == 1 and isinstance(args[0], list):
       elements = args[0] # dict / OrderedDict compatibility
     else:
@@ -94,12 +92,12 @@ class SortedDictionary( UserDict, object ):
     return [x for x in self.itervalues()]
 
   def __setitem__( self, key, value ):
-    if not self.data.has_key( key ):
+    if not self.has_key( key ):
       self.sortedKeys.append( key )
-    self.data[ key ] = value
+    super(SortedDictionary, self).__setitem__(key, value)
 
   def __delitem__( self, key ):
-    del self.data[ key ]
+    super(SortedDictionary, self).__delitem__(key)
     self.sortedKeys.remove( key )
 
   def __getstate__( self ):
@@ -135,7 +133,7 @@ class SortedDictionary( UserDict, object ):
       try:
         yield ( k, self[ k ] )
       except KeyError:
-        print '!SortedDictionary error!', self.data.keys(), self.sortedKeys
+        print '!SortedDictionary error!', self.keys(), self.sortedKeys
         raise
 
         
@@ -148,10 +146,10 @@ class SortedDictionary( UserDict, object ):
     @param key: key to insert
     @param value: value associated to C{key}
     '''
-    if self.data.has_key( key ):
+    if self.has_key( key ):
       raise KeyError( key )
     self.sortedKeys.insert( index, key )
-    self.data[ key ] = value
+    super(SortedDictionary, self).__setitem__(key, value)
 
   def index(self, key):
    """
@@ -168,7 +166,7 @@ class SortedDictionary( UserDict, object ):
     Remove all items from dictionary
     '''
     del self.sortedKeys[:]
-    self.data.clear()
+    super(SortedDictionary, self).clear()
 
 
   def sort(self, func=None):
@@ -187,9 +185,8 @@ class SortedDictionary( UserDict, object ):
     if data[key1]>data[key2] return 1
     if data[key1]==data[key2] return 0
     """
-    e1=self.data[key1]
-    e2=self.data[key2]
-    print "comp", e1, e2
+    e1=self[key1]
+    e2=self[key2]
     if e1 < e2:
       return -1
     elif e1 > e2:
@@ -207,9 +204,9 @@ class SortedDictionary( UserDict, object ):
 
   def pop( self, key, default=Undefined ):
     if default is Undefined:
-      result = self.data.pop(key)
+      result = super(SortedDictionary, self).pop(key)
     else:
-      result = self.data.pop(key,Undefined)
+      result = super(SortedDictionary, self).pop(key,Undefined)
       if result is Undefined:
         return default
     self.sortedKeys.remove( key )
@@ -217,7 +214,7 @@ class SortedDictionary( UserDict, object ):
 
 
   def popitem( self ):
-    result = self.data.popitem()
+    result = super(SortedDictionary, self).popitem()
     try:
       self.sortedKeys.remove( result[0] )
     except ValueError:
@@ -227,6 +224,15 @@ class SortedDictionary( UserDict, object ):
   
   def __repr__( self ):
     return '{' + ', '.join( repr(k)+': '+repr(v) for k, v in self.iteritems() ) + '}'
+
+  def update(self, dict_obj):
+    for k, v in dict_obj.iteritems():
+      self[k] = v
+
+  def copy(self):
+    copied = self.__class__()
+    copied.update(self)
+    return copied
 
     
 class OrderedDict( SortedDictionary ):
