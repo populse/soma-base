@@ -1,10 +1,10 @@
-##########################################################################
+#
 # SOMA - Copyright (C) CEA, 2015
 # Distributed under the terms of the CeCILL-B license, as published by
 # the CEA-CNRS-INRIA. Refer to the LICENSE file or to
 # http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html
 # for details.
-##########################################################################
+#
 
 # System import
 import logging
@@ -19,6 +19,7 @@ from .Str import StrControlWidget
 
 
 class FloatControlWidget(StrControlWidget):
+
     """ Control to enter a float.
     """
 
@@ -66,7 +67,7 @@ class FloatControlWidget(StrControlWidget):
             control_palette.setColor(
                 control_instance.backgroundRole(), QtCore.Qt.yellow)
             is_valid = True
-            
+
         # If the control value is empty, the control is not valid and the
         # backgound color of the control is red
         else:
@@ -139,5 +140,4 @@ class FloatControlWidget(StrControlWidget):
         # Set the trait value to the float control
         control_instance.setText(unicode(new_controller_value))
         logger.debug("'FloatControlWidget' has been updated with value "
-                      "'{0}'.".format(new_controller_value))
-
+                     "'{0}'.".format(new_controller_value))

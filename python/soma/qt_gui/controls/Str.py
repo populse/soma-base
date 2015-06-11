@@ -1,10 +1,10 @@
-##########################################################################
+#
 # SOMA - Copyright (C) CEA, 2015
 # Distributed under the terms of the CeCILL-B license, as published by
 # the CEA-CNRS-INRIA. Refer to the LICENSE file or to
 # http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html
 # for details.
-##########################################################################
+#
 
 # System import
 import logging
@@ -20,6 +20,7 @@ from soma.qt_gui.timered_widgets import TimeredQLineEdit
 
 
 class StrControlWidget(object):
+
     """ Control to enter a string.
     """
 
@@ -61,7 +62,7 @@ class StrControlWidget(object):
             control_palette.setColor(
                 control_instance.backgroundRole(), QtCore.Qt.yellow)
             is_valid = True
-            
+
         # If the control value is empty, the control is not valid and the
         # backgound color of the control is red
         else:
@@ -143,7 +144,7 @@ class StrControlWidget(object):
         widget.connected = False
 
         # Add a parameter to tell us if the widget is optional
-        widget.optional = trait.optional 
+        widget.optional = trait.optional
 
         # Create the label associated with the string widget
         control_label = trait.label
@@ -219,7 +220,7 @@ class StrControlWidget(object):
         # Set the trait value to the string control
         control_instance.setText(unicode(new_controller_value))
         logger.debug("'StrControlWidget' has been updated with value "
-                      "'{0}'.".format(new_controller_value))
+                     "'{0}'.".format(new_controller_value))
 
     @classmethod
     def connect(cls, controller_widget, control_name, control_instance):
@@ -309,4 +310,3 @@ class StrControlWidget(object):
 
             # Update the control connection status
             control_instance.connected = False
-

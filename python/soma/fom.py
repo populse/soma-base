@@ -12,17 +12,19 @@ import sqlite3
 import bz2
 import json
 
-try :
-  from collections import OrderedDict
-  isinstance_dict = lambda x: isinstance(x, dict)
-except :
-  # It is necessary to keep this for compatibility with python 2.6.*
-  from soma.sorted_dictionary import OrderedDict
-  isinstance_dict = lambda x: isinstance(x, (dict,OrderedDict))
+try:
+    from collections import OrderedDict
+    isinstance_dict = lambda x: isinstance(x, dict)
+except:
+    # It is necessary to keep this for compatibility with python 2.6.*
+    from soma.sorted_dictionary import OrderedDict
+    isinstance_dict = lambda x: isinstance(x, (dict, OrderedDict))
 
 try:
     import yaml
+
     class json_reader:
+
         '''
         This class has a single static method load that loads an
         JSON file with two features not provided by all JSON readers :
@@ -35,6 +37,7 @@ try:
         def load(stream, object_pairs_hook=dict):
             class OrderedLoader(yaml.Loader):
                 pass
+
             def construct_mapping(loader, node):
                 loader.flatten_mapping(node)
                 return object_pairs_hook(loader.construct_pairs(node))
@@ -60,7 +63,8 @@ def deep_update(update, original):
         elif isinstance_dict(value):
             deep_update(update[key], value)
         elif value != update[key]:
-            raise ValueError('In deep_update, for key %s, cannot merge %s and %s' % (repr(key), repr(update[key]), repr(value)))
+            raise ValueError('In deep_update, for key %s, cannot merge %s and %s' %
+                             (repr(key), repr(update[key]), repr(value)))
 
 
 def read_json(file_name):
@@ -75,7 +79,8 @@ def read_json(file_name):
             extra_msg = ' Check your python installation, and perhaps un a "pip install PyYAML" or "easy_install PyYAML"'
         else:
             extra_msg = ''
-        raise ValueError('%s: %s. This may be due to yaml module not installed.%s' % (file_name, str(e), extra_msg))
+        raise ValueError('%s: %s. This may be due to yaml module not installed.%s' %
+                         (file_name, str(e), extra_msg))
 
 
 class DirectoryAsDict(object):
@@ -266,7 +271,7 @@ class FileOrganizationModelManager(object):
         '''
         if paths is None:
             paths = [osp.join(osp.dirname(osp.dirname(osp.dirname(__file__))),
-                              'share','foms')]
+                              'share', 'foms')]
         self.paths = paths
         self._cache = None
 
@@ -313,7 +318,6 @@ class FileOrganizationModelManager(object):
             self.find_foms()
         return self._cache[fom]
 
-
     def read_definition(self, fom_name, done=None):
         jsons = OrderedDict()
         stack = [fom_name]
@@ -325,14 +329,14 @@ class FileOrganizationModelManager(object):
         jsons = jsons.values()
         result = jsons.pop(0)
         for json in jsons:
-            for n in ('attribute_definitions','formats', 'format_lists', 'shared_patterns', 'patterns', 'processes'):
+            for n in ('attribute_definitions', 'formats', 'format_lists', 'shared_patterns', 'patterns', 'processes'):
                 d = json.get(n)
                 if d:
-                    deep_update(d, result.get(n,{}))
+                    deep_update(d, result.get(n, {}))
                     result[n] = d
-            r = json.get('rules',[])
+            r = json.get('rules', [])
             if r:
-                result.setdefault('rules',[]).extend(r)
+                result.setdefault('rules', []).extend(r)
         return result
 
 
@@ -479,7 +483,6 @@ class FileOrganizationModels(object):
             self._expand_json_patterns(
                 process_patterns, new_patterns, {'fom_name': fom_name})
             self._parse_patterns(new_patterns, self.patterns)
-
 
     def get_attributes_without_value(self):
         att_no_value = {}
@@ -651,6 +654,7 @@ class FileOrganizationModels(object):
 
 
 class PathToAttributes(object):
+
     '''
     Utility class for file paths -> attributes set transformation.
     Part of the FOM engine.
@@ -745,13 +749,14 @@ class PathToAttributes(object):
             st, content = content
             # Split extention on left most dot
             l = name.split('.')
-            possible_extension_split = [('.'.join(l[:i]),'.'.join(l[i:])) for i in range(1,len(l)+1)]
-            #split = name.split('.', 1)
-            #name_no_ext = split[0]
-            #if len(split) == 2:
-                #ext = split[1]
-            #else:
-                #ext = ''
+            possible_extension_split = [('.'.join(l[:i]), '.'.join(l[i:]))
+                                        for i in range(1, len(l) + 1)]
+            # split = name.split('.', 1)
+            # name_no_ext = split[0]
+            # if len(split) == 2:
+                # ext = split[1]
+            # else:
+                # ext = ''
 
             matched_directories = []
             matched = False
@@ -778,10 +783,10 @@ class PathToAttributes(object):
                             new_attributes.update(pattern_attributes)
 
                             rules = ext_rules.get(ext)
-                            if (subpattern and 
+                            if (subpattern and
                                     not ext and
-                                    (st is None or 
-                                    stat.S_ISDIR(st[0])) and
+                                    (st is None or
+                                     stat.S_ISDIR(st[0])) and
                                     content is not None):
                                 matched = branch_matched = True
                                 stop_parsing = single_match
@@ -798,7 +803,8 @@ class PathToAttributes(object):
                             if rules is not None and ext:
                                 matched = branch_matched = True
                                 if log:
-                                    log.debug('extension matched: ' + repr(ext))
+                                    log.debug(
+                                        'extension matched: ' + repr(ext))
                                 for rule_attributes in rules:
                                     yield_attributes = new_attributes.copy()
                                     yield_attributes.update(rule_attributes)
@@ -855,9 +861,10 @@ class PathToAttributes(object):
         for p, s, a in self.parse_directory(dirdict, single_match=single_match, log=log):
             if spath == p:
                 yield (p, s, a)
-    
+
 
 class AttributesToPaths(object):
+
     '''
     Utility class for attributes set -> file paths transformation.
     Part of the FOM engine.
@@ -882,11 +889,12 @@ class AttributesToPaths(object):
         if debug:
             debug.debug(sql)
         self._db.execute(sql)
-        columns = ['_%s' % i for i in self.all_attributes + ('fom_first', 'fom_prefered_format')]
+        columns = ['_%s' %
+                   i for i in self.all_attributes + ('fom_first', 'fom_prefered_format')]
         sql = 'CREATE INDEX rules_index ON rules (%s)' % ','.join(columns)
         self._db.execute(sql)
         for i in columns:
-            sql = 'CREATE INDEX rules%s_index ON rules (%s)' % (i,i)
+            sql = 'CREATE INDEX rules%s_index ON rules (%s)' % (i, i)
             self._db.execute(sql)
         sql_insert = 'INSERT INTO rules VALUES ( %s )' % ','.join(
             '?' for i in xrange(len(self.all_attributes) + 3))
@@ -949,7 +957,7 @@ class AttributesToPaths(object):
             if value is None:
                 default_value = self.default_values.get(attribute)
                 if default_value is not None:
-                    default_values.append((attribute,default_value))
+                    default_values.append((attribute, default_value))
                     if attribute not in self.non_discriminant_attributes:
                         select.append(
                             '(_' + attribute + " IN ('','%s') OR _" % default_value + attribute + ' IS NULL )')
@@ -963,26 +971,30 @@ class AttributesToPaths(object):
                     select.append('_fom_first = 1')
                 elif selected_format == 'fom_prefered':
                     select.append('_fom_prefered_format = 1')
-                elif isinstance(value,list):
-                    select.append('_' + attribute + " IN (%s)" % ','.join('?' for i in value))
+                elif isinstance(value, list):
+                    select.append('_' + attribute + " IN (%s)" %
+                                  ','.join('?' for i in value))
                     values.extend(value)
                 else:
                     select.append('_' + attribute + " = ?")
                     values.append(value)
-            elif isinstance(value,list):
+            elif isinstance(value, list):
                 if attribute not in self.non_discriminant_attributes:
-                    select.append('_' + attribute + " IN ( %s, '' )" % ','.join('?' for i in value))
+                    select.append('_' + attribute + " IN ( %s, '' )" %
+                                  ','.join('?' for i in value))
                     values.extend(value)
             else:
                 if attribute not in self.non_discriminant_attributes:
                     select.append('_' + attribute + " IN ( ?, '' )")
                     values.append(value)
                     selection_attributes[attribute] = value
-        columns = ['_fom_rule', '_fom_format'] + ['_'+i[0] for i in default_values]
-        sql = 'SELECT %s FROM rules WHERE %s' % (','.join(columns),' AND '.join(
+        columns = ['_fom_rule', '_fom_format'] + ['_' + i[0]
+                                                  for i in default_values]
+        sql = 'SELECT %s FROM rules WHERE %s' % (','.join(columns), ' AND '.join(
             select))
         if debug:
-            debug.debug('!sql! %s' % (sql.replace('?', '%s') % tuple(repr(i) for i in values)))
+            debug.debug('!sql! %s' %
+                        (sql.replace('?', '%s') % tuple(repr(i) for i in values)))
         for row in self._db.execute(sql, values):
             rule_index, format = row[:2]
             row = row[2:]
@@ -992,8 +1004,10 @@ class AttributesToPaths(object):
             default_attributes = {}
             for i in range(len(default_values)):
                 if not row[i]:
-                    rule_attributes[default_values[i][0]] = default_values[i][1]
-                    default_attributes[default_values[i][0]] = default_values[i][1]
+                    rule_attributes[
+                        default_values[i][0]] = default_values[i][1]
+                    default_attributes[
+                        default_values[i][0]] = default_values[i][1]
             # rule_attributes = self.foms.rules[ rule_index ][ 1 ].copy()
             fom_formats = rule_attributes.pop('fom_formats', [])
 
@@ -1077,7 +1091,7 @@ class AttributesToPaths(object):
         attributes.update(rule_attributes)
         fom_directory = rule_attributes.get('fom_directory')
         if fom_directory:
-            directory = self.directories.get(fom_directory) 
+            directory = self.directories.get(fom_directory)
             if directory:
                 return (osp.join(directory, *path.split('/')), attributes)
         return (osp.join(*path.split('/')), attributes)
@@ -1093,7 +1107,7 @@ def call_before_application_initialization(application):
                           ListStr(descr='Path for finding file organization models'))
     if application.install_directory:
         application.fom_path = [osp.join(application.install_directory,
-                                             'share', 'foms')]
+                                         'share', 'foms')]
 
 
 def call_after_application_initialization(application):

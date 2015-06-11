@@ -1,10 +1,10 @@
-##########################################################################
+#
 # SOMA - Copyright (C) CEA, 2015
 # Distributed under the terms of the CeCILL-B license, as published by
 # the CEA-CNRS-INRIA. Refer to the LICENSE file or to
 # http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html
 # for details.
-##########################################################################
+#
 
 # System import
 import logging
@@ -19,6 +19,7 @@ from soma.utils.functiontools import SomaPartial
 
 
 class BoolControlWidget(object):
+
     """ Control to set or unset an option.
     """
 
@@ -180,7 +181,7 @@ class BoolControlWidget(object):
         # Set the trait value to the bool control
         control_instance.setChecked(new_controller_value)
         logger.debug("'BoolControlWidget' has been updated with value "
-                      "'{0}'.".format(new_controller_value))
+                     "'{0}'.".format(new_controller_value))
 
     @classmethod
     def connect(cls, controller_widget, control_name, control_instance):
