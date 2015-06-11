@@ -35,10 +35,11 @@ This module enables to make a function to be executed in qt thread (main thread)
 It is useful when you want to call qt functions from another thread.
 It enables to do thread safe calls because all tasks sent are executed in the same thread (qt main thread).
 
-@author: Dominique Geffroy
-@organization: U{NeuroSpin<http://www.neurospin.org>} and U{IFR 49<http://www.ifr49.org>}
-@license: U{CeCILL version 2<http://www.cecill.info/licences/Licence_CeCILL_V2-en.html>}
+* author: Dominique Geffroy
+* organization: `NeuroSpin <http://www.neurospin.org>`_
+* license: `CeCILL B <http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html>`_
 """
+__docformat__ = "restructuredtext en"
 
 import sys
 import threading

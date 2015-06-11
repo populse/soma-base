@@ -37,11 +37,11 @@ QLineEditModificationTimer and TimeredQLineEdit classes associate a
 QtCore.QTimer to a QtGui.QLineEdit in order to signal user
 modification only after an inactivity period.
 
-author: Yann Cointepas
-organization: `NeuroSpin <http://www.neurospin.org>`_ and `IFR 49 http://www.ifr49.org>`_
-license: `CeCILL version 2 <http://www.cecill.info/licences/Licence_CeCILL_V2-en.html>`_
+* author: Yann Cointepas
+* organization: `NeuroSpin <http://www.neurospin.org>`_
+* license: `CeCILL B <http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html>`_
 '''
-__docformat__ = "epytext en"
+__docformat__ = "restructuredtext en"
 
 from soma.qt_gui.qt_backend import QtCore, QtGui
 

@@ -55,6 +55,7 @@ Main classes
 ------------
 - :class:`Application <soma.application.Application>`: an Application instance 
   contains all information that is shared across all modules of an application.
+- :class:`Controller <soma.controller.controller.Controller>`
 
 Advanced classes
 ----------------
@@ -65,7 +66,7 @@ Information
 -----------
 - Yann Cointepas
 - NeuroSpin (http://www.neurospin.org) and IFR 49 (http://www.ifr49.org)
-- License: CeCILL version 2 (http://www.cecill.info/licences/Licence_CeCILL_V2-en.html)
+- License: CeCILL B (http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html)
 '''
 
 

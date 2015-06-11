@@ -37,12 +37,11 @@ A minf tree is used to convert Python objects into a structure that can be writt
 
 A minf tree is always accessed via an iterator on its content. This content is composed of atoms and special structure objects. Atoms are any Python objects that can be directly stored in the minf file format (without need for reducing or expanding these objects). Other objects are reduced in a structure starting with a L{StartStructure} instance and terminated by an L{EndStructure} instance. Between the L{StartStructure}/L{EndStructure} pair, there can be any atoms and/or special structure objects. 
 
-@author: Yann Cointepas
-@organization: U{NeuroSpin<http://www.neurospin.org>} and U{IFR 49<http://www.ifr49.org>}
-@license: U{CeCILL version 2<http://www.cecill.info/licences/Licence_CeCILL_V2-en.html>}
+* author: Yann Cointepas
+* organization: `NeuroSpin <http://www.neurospin.org>`_
+* license: `CeCILL B <http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html>`_
 '''
-
-__docformat__ = "epytext en"
+__docformat__ = "restructuredtext en"
 
 import types
 import sys

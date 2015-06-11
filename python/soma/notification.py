@@ -37,12 +37,11 @@ This module provides a notification system that can be used to register
 callbacks (I{i.e} Python callables) that will all be called by a single
 L{notify<Notifier.notify>} call.
 
-@author: Yann Cointepas
-@author: Dominique Geffroy
-@organization: U{NeuroSpin<http://www.neurospin.org>} and U{IFR 49<http://www.ifr49.org>}
-@license: U{CeCILL version 2<http://www.cecill.info/licences/Licence_CeCILL_V2-en.html>}
+* author: Yann Cointepas, Dominique Geffroy
+* organization: `NeuroSpin <http://www.neurospin.org>`_
+* license: `CeCILL B <http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html>`_
 '''
-__docformat__ = "epytext en"
+__docformat__ = "restructuredtext en"
 
 
 # Compatibility with older Python versions

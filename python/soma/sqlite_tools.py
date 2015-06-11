@@ -35,12 +35,12 @@
 '''
 This module contains functions and classes related to sqlite databases.
 
-@author: Yann Cointepas
-@organization: U{NeuroSpin<http://www.neurospin.org>} and U{IFR 49<http://www.ifr49.org>}
-@license: U{CeCILL version 2<http://www.cecill.info/licences/Licence_CeCILL_V2-en.html>}
+* author: Yann Cointepas
+* organization: `NeuroSpin <http://www.neurospin.org>`_
+* license: `CeCILL B <http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html>`_
 '''
 from __future__ import absolute_import
-__docformat__ = "epytext en"
+__docformat__ = "restructuredtext en"
 
 
 import sys

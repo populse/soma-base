@@ -40,13 +40,13 @@ minf files but also to customize the way Python objects are read an written.
 
 There are several submodules in this package but main functions and classes
 can be imported from C{soma.minf.api}:
-  - for reading minf files: L{iterateMinf}, L{readMinf}
-  - for writing minf files: L{createMinfWriter}, L{writeMinf}
-  - for customizing minf files: L{createReducerAndExpander}, L{registerClass}, L{registerClassAs}
+  - for reading minf files: :func:`iterateMinf`, :func:`readMinf`
+  - for writing minf files: :func:`createMinfWriter`, :func:`writeMinf`
+  - for customizing minf files: :func:`createReducerAndExpander`, :func:`registerClass`, :func:`registerClassAs`
 
-@author: Yann Cointepas
-@organization: U{NeuroSpin<http://www.neurospin.org>} and U{IFR 49<http://www.ifr49.org>}
-@license: U{CeCILL version 2<http://www.cecill.info/licences/Licence_CeCILL_V2-en.html>}
+* author: Yann Cointepas
+* organization: `NeuroSpin <http://www.neurospin.org>`_
+* license: `CeCILL B <http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html>`_
 '''
 __docformat__ = "restructuredtext en"
 
@@ -70,32 +70,41 @@ defaultReducer = MinfReducer.defaultReducer
 #------------------------------------------------------------------------------
 def minfFormat( source ):
   '''
-  Return a pair C{( format, reduction )} identifying the minf format. If
-  C{source} is not a minf file, C{( None, None )} is returned. Otherwise,
-  C{format} is a string representing the format of the minf file: C{'XML'} or
-  C{'python'}. C{reduction} is the name of the reducer used to write the minf
-  file or C{None} if format is C{'python'}.
+  Return a pair (format, reduction) identifying the minf format. If
+  source is not a minf file, (None, None) is returned. Otherwise,
+  format is a string representing the format of the minf file: 'XML' or
+  'python'. reduction is the name of the reducer used to write the minf
+  file or None if format is 'python'.
 
-  Example::
+  Example:
+
+  ::
+
     from soma.minf.api import minfFormat
-    format, reduction = minfFormat( '/home/me/test.minf' )
+    format, reduction = minfFormat('/home/me/test.minf')
 
-  If C{source} is a L{BufferAndFile} instance, this call behave as if nothing
+  If source is a :class:`BufferAndFile` instance, this call behave as if nothing
   has been read from the file. This can be useful if you have an opened file
   that cannot be seeked backward:
 
-  Example::
+  Example:
+
+  ::
+
     from soma.bufferandfile import BufferAndFile
     from soma.minf.api import minfFormat, readMinf
 
-    bf = BufferAndFile( stream_file_object )
-    format, reduction = minfFormat( bf )
+    bf = BufferAndFile(stream_file_object)
+    format, reduction = minfFormat(bf)
     if format is not None:
-      minfContent = readMinf( bf )
+      minfContent = readMinf(bf)
 
 
-  @param source: Input file name or file object. If it is a file name, it is
-    opened with C{open( source )}.
+  Parameters
+  ----------
+  source: string
+    Input file name or file object. If it is a file name, it is
+    opened with open(source).
   '''
   if not hasattr( source, 'readline' ):
     source = BufferAndFile( open( source ) )
@@ -154,13 +163,19 @@ def iterateMinf( source, targets=None, stop_on_error=True, exceptions=[] ):
   '''
   Returns an iterator over all objects stored in a minf file.
 
-  Example::
+  Example:
+
+  ::
+
     from soma.minf.api import iterateMinf
 
-    for item in iterateMinf( 'test.minf' ):
-      print repr( item )
+    for item in iterateMinf('test.minf'):
+      print repr(item)
 
-  @param source: Input file name or file object. If it is a file name, it is
+  Parameters
+  ----------
+  source: string
+    Input file name or file object. If it is a file name, it is
     opened with C{open( source )}.
   '''
   if targets is not None:
@@ -229,8 +244,9 @@ def iterateMinf( source, targets=None, stop_on_error=True, exceptions=[] ):
 def readMinf( source, targets=None, stop_on_error=True, exceptions=[] ):
   '''
   Entirerly reads a minf file and returns its content in a tuple.
-  Equivalent to C{tuple( iterateMinf( source ) )}.
-  @see: L{iterateMinf}
+  Equivalent to tuple(iterateMinf(source)).
+
+  see: :func`iterateMinf`
   '''
   return tuple( iterateMinf( source, targets=targets, stop_on_error=stop_on_error, exceptions=exceptions ) )
 
@@ -239,17 +255,23 @@ def readMinf( source, targets=None, stop_on_error=True, exceptions=[] ):
 def createMinfWriter( destFile, format='XML', reducer='minf_2.0' ):
   '''
   Create a writer for storing objects in destFile.
-  Example::
+  Example:
+
+  ::
+
     from soma.minf.api import createMinfWriter
     writer = createMinfWriter( '/tmp/test.minf' )
     writer.write( 'A string' )
     writer.write( { 'A dict key': [ 'A list', 'with two elements' ] } )
     writer.close()
-  @param format: name of the format to write.
-  @type  format: string
-  @param reducer: name of the reducer to use (see L{soma.minf.tree} for
+
+  Parameters
+  ----------
+  format: string
+    name of the format to write.
+  reducer: string
+    name of the reducer to use (see L{soma.minf.tree} for
     more information about reducers).
-  @type  reducer: string
   '''
   return MinfWriter.createWriter( destFile, format, reducer )
 
@@ -257,14 +279,19 @@ def createMinfWriter( destFile, format='XML', reducer='minf_2.0' ):
 #------------------------------------------------------------------------------
 def writeMinf( destFile, args, format='XML', reducer=None ):
   '''
-  Creates a minf writer with L{createMinfWriter} and write the content
-  of C{args} in it.
+  Creates a minf writer with :func:`createMinfWriter` and write the content
+  of args in it.
 
-  @param destFile: see L{createMinfWriter}
-  @param args: series of values to write
-  @type  args: sequence or iterator
-  @param format: see L{createMinfWriter}
-  @param reducer: see L{createMinfWriter}
+  Parameters
+  ----------
+  destFile:
+    see :func:`createMinfWriter`
+  args: sequence or iterator
+    series of values to write
+  format:
+    see :func:`createMinfWriter`
+  reducer:
+    see :func:`createMinfWriter`
   '''
   it = iter( args )
   try:
@@ -276,7 +303,7 @@ def writeMinf( destFile, args, format='XML', reducer=None ):
       reducer = MinfReducer.defaultReducer( firstItem )
       if reducer is None:
         reducer = 'minf_2.0'
-      
+
   writer = createMinfWriter( destFile, format, reducer )
   if firstItem is not Undefined:
     writer.write( firstItem )

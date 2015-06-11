@@ -51,11 +51,11 @@ either asynchonously (the requesting thread continues to run without waiting
 for the call to be done) or synchronously (the requesting thread is stopped
 until the call is done and the result available).
 
-@author: Yann Cointepas
-@organization: U{NeuroSpin<http://www.neurospin.org>} and U{IFR 49<http://www.ifr49.org>}
-@license: U{CeCILL version 2<http://www.cecill.info/licences/Licence_CeCILL_V2-en.html>}
+* author: Yann Cointepas
+* organization: `NeuroSpin <http://www.neurospin.org>`_
+* license: `CeCILL B <http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html>`_
 '''
-__docformat__ = "epytext en"
+__docformat__ = "restructuredtext en"
 
 import threading, time
 

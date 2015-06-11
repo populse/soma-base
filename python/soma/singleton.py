@@ -38,7 +38,7 @@ Singleton pattern.
 - author: Yann Cointepas
 - organization: `NeuroSpin <http://www.neurospin.org>`_ and 
   `IFR 49 <http://www.ifr49.org>`_
-- license: `CeCILL version 2 <http://www.cecill.info/licences/Licence_CeCILL_V2-en.html>`_
+- license: `CeCILL B <http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html>`_
 '''
 from __future__ import absolute_import
 __docformat__ = 'restructuredtext en'

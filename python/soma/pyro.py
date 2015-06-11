@@ -33,13 +33,13 @@
 # knowledge of the CeCILL-B license and that you accept its terms.
 
 '''
-This module provides the class L{ThreadSafeProxy}.
+This module provides the class ThreadSafeProxy.
 
-@author: Yann Cointepas
-@organization: U{NeuroSpin<http://www.neurospin.org>} and U{IFR 49<http://www.ifr49.org>}
-@license: U{CeCILL version 2<http://www.cecill.info/licences/Licence_CeCILL_V2-en.html>}
+* author: Yann Cointepas
+* organization: `NeuroSpin <http://www.neurospin.org>`_
+* license: `CeCILL B <http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html>`_
 '''
-__docformat__ = "epytext en"
+__docformat__ = "restructuredtext en"
 
 import inspect, threading
 import Pyro.core
