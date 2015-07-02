@@ -45,6 +45,7 @@ import os
 import platform
 import fnmatch
 import hashlib
+import re
 
 
 def split_path(path):
@@ -100,6 +101,45 @@ def relative_path(path, referenceDirectory):
     if len(plist) == 0:
         return ''
     return os.path.join(*plist)
+
+
+query_string_re = re.compile( '\?([^\?\&]+\=[^\&]*)(\&[^\?\&]+\=[^\&]*)*$' )
+
+def split_query_string( path ):
+  '''
+  Split a path and its query string.
+  
+  Example
+  =======
+  A path containing a query string is :
+  /dir1/file1?param1=val1&param2=val2&paramN=valN
+  
+  split_query_string( '/dir1/file1?param1=val1&param2=val2&paramN=valN' ) would
+  return ( '/dir1/file1', '?param1=val1&param2=val2&paramN=valN' )
+  
+  '''
+  m = query_string_re.search( path )
+  if m is not None:
+    return (path[0:m.start()], path[m.start():] )
+    
+  else:
+    return (path, '')
+
+
+def remove_query_string( path ):
+  '''
+  Remove the query string from a path.
+  
+  Example
+  =======
+  A path containing a query string is :
+  /dir1/file1?param1=val1&param2=val2&paramN=valN
+  
+  remove_query_string( '/dir1/file1?param1=val1&param2=val2&paramN=valN' ) would
+  return '/dir1/file1'
+  
+  '''
+  return query_string_re.sub( '', path )
 
 
 def no_symlink(path):
