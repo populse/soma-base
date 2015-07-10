@@ -348,7 +348,12 @@ def init_matplotlib_backend():
     Moreover, the appropriate FigureCanvas type is set in the current module,
     and returned by this function.
     '''
-    import matplotlib
+    try:
+        import matplotlib
+    except ImportError:
+        # if matplotlib cannot be found, don't do anything.
+        return
+
     mpl_ver = [int(x) for x in matplotlib.__version__.split('.')[:2]]
     guiBackend = 'Qt4Agg'
     if 'matplotlib.backends' not in sys.modules:
