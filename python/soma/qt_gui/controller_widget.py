@@ -1,10 +1,10 @@
-##########################################################################
+#
 # SOMA - Copyright (C) CEA, 2015
 # Distributed under the terms of the CeCILL-B license, as published by
 # the CEA-CNRS-INRIA. Refer to the LICENSE file or to
 # http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html
 # for details.
-##########################################################################
+#
 
 # System import
 import logging
@@ -27,6 +27,7 @@ except AttributeError:
 
 
 class ScrollControllerWidget(QtGui.QScrollArea):
+
     """ Class that create a widget to set the controller parameters.
 
     The widget is placed in a scroll area when large sets of parameters have
@@ -85,6 +86,7 @@ class ScrollControllerWidget(QtGui.QScrollArea):
 
 
 class DeletableLineEdit(QtGui.QWidget):
+
     """ Close button + line editor, used for modifiable key labels
     """
     userModification = QtCore.Signal()
@@ -115,6 +117,7 @@ class DeletableLineEdit(QtGui.QWidget):
 
 
 class ControllerWidget(QtGui.QWidget):
+
     """ Class that create a widget to set the controller parameters.
     """
 
@@ -206,9 +209,9 @@ class ControllerWidget(QtGui.QWidget):
         else:
             self.update_controller_widget()
 
-    ###########################################################################
+    #
     # Public members
-    ###########################################################################
+    #
 
     def is_valid(self):
         """ Check that all edited fields are correct.
@@ -414,9 +417,9 @@ class ControllerWidget(QtGui.QWidget):
         # Update the widget geometry
         self.updateGeometry()
 
-    ###########################################################################
+    #
     # Private members
-    ###########################################################################
+    #
 
     def _check(self):
         """ Check that all edited fields are correct.
@@ -447,12 +450,12 @@ class ControllerWidget(QtGui.QWidget):
             slected_traits = dict(
                 (trait_name, trait)
                 for trait_name, trait in all_traits.iteritems()
-                if trait.output ==  False)
+                if trait.output == False)
         elif self.select_controls == "outputs":
             slected_traits = dict(
                 (trait_name, trait)
                 for trait_name, trait in all_traits.iteritems()
-                if trait.output ==  True)
+                if trait.output == True)
         else:
             raise Exception(
                 "Unrecognized 'select_controls' option '{0}'. Valid "
@@ -544,9 +547,9 @@ class ControllerWidget(QtGui.QWidget):
                 # others
                 if nb_of_labels > 2:
                     logger.error("To many labels associated with control "
-                                  "'{0}': {1}. Only consider the two first "
-                                  "labels and skip the others".format(
-                                      trait_name, control_label))
+                                 "'{0}': {1}. Only consider the two first "
+                                 "labels and skip the others".format(
+                                     trait_name, control_label))
 
                 # Append each label in different columns
                 if not self.hide_labels:
@@ -633,7 +636,7 @@ class ControllerWidget(QtGui.QWidget):
                 self.main_controller_def
             main_control_class.update_controller(
                 controller_widget, control_name, frame)
-        #self.update_controller()
+        # self.update_controller()
 
     def _delete_key(self, key):
         """ Dict / open controller key deletion callback
@@ -647,13 +650,11 @@ class ControllerWidget(QtGui.QWidget):
                 self.main_controller_def
             main_control_class.update_controller(
                 controller_widget, control_name, frame)
-        #self.update_controller()
+        # self.update_controller()
 
-
-    ###########################################################################
+    #
     # Class Methods
-    ###########################################################################
-
+    #
     @classmethod
     def get_control_class(cls, trait):
         """ Find the control associated with the input trait.

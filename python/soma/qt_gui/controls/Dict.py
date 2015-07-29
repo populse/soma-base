@@ -1,10 +1,10 @@
-##########################################################################
+#
 # SOMA - Copyright (C) CEA, 2015
 # Distributed under the terms of the CeCILL-B license, as published by
 # the CEA-CNRS-INRIA. Refer to the LICENSE file or to
 # http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html
 # for details.
-##########################################################################
+#
 
 # System import
 import os
@@ -32,19 +32,22 @@ except AttributeError:
 QtCore.QResource.registerResource(os.path.join(os.path.dirname(
     os.path.dirname(__file__)), 'resources', 'widgets_icons.rcc'))
 
+
 class DictController(Controller):
+
     """ Dummy dict controller to simplify the creation of a dict widget
     """
     pass
 
 
 class DictControlWidget(object):
+
     """ Control to enter a dict of items.
     """
 
-    ###########################################################################
+    #
     # Public members
-    ###########################################################################
+    #
 
     @staticmethod
     def is_valid(control_instance, *args, **kwargs):
@@ -168,8 +171,9 @@ class DictControlWidget(object):
                        QtGui.QIcon.Normal, QtGui.QIcon.Off)
         add_button.setIcon(icon)
         icon = QtGui.QIcon()
-        icon.addPixmap(QtGui.QPixmap(_fromUtf8(":/soma_widgets_icons/nav_down")),
-                       QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon.addPixmap(
+            QtGui.QPixmap(_fromUtf8(":/soma_widgets_icons/nav_down")),
+            QtGui.QIcon.Normal, QtGui.QIcon.Off)
         resize_button.setIcon(icon)
 
         # Create a new controller that contains length 'control_value' inner
@@ -335,9 +339,9 @@ class DictControlWidget(object):
 
         else:
             logger.error("oups")
-            #print cls, controller_widget, control_name, control_instance
-            #print control_instance.controller
-            #print control_instance.controller.user_traits()
+            # print cls, controller_widget, control_name, control_instance
+            # print control_instance.controller
+            # print control_instance.controller.user_traits()
 
     @classmethod
     def connect(cls, controller_widget, control_name, control_instance):
@@ -376,8 +380,8 @@ class DictControlWidget(object):
                 control_instance.controller.on_trait_change(
                     dict_controller_hook, trait_name)
                 logger.debug("Item '{0}' of a 'DictControlWidget', add "
-                              "a callback on inner controller trait "
-                              "'{0}'.".format(control_name, trait_name))
+                             "a callback on inner controller trait "
+                             "'{0}'.".format(control_name, trait_name))
 
             # Update the dict controller widget.
             # Hook: function that will be called to update the specific widget
@@ -469,9 +473,9 @@ class DictControlWidget(object):
             # Update the dict control connection status
             control_instance.connected = False
 
-    ###########################################################################
+    #
     # Callbacks
-    ###########################################################################
+    #
 
     @staticmethod
     def add_dict_item(controller_widget, control_name, control_instance):
@@ -510,7 +514,7 @@ class DictControlWidget(object):
         control_instance.controller_widget.update_controls()
 
         logger.debug("Add 'DictControlWidget' '{0}' new trait "
-                      "callback.".format(trait_name))
+                     "callback.".format(trait_name))
 
     @staticmethod
     def expand_or_collapse(control_instance, resize_button):

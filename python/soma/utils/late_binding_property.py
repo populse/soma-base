@@ -1,10 +1,11 @@
-##########################################################################
+#
 # SOMA - Copyright (C) CEA, 2015
 # Distributed under the terms of the CeCILL-B license, as published by
 # the CEA-CNRS-INRIA. Refer to the LICENSE file or to
 # http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html
 # for details.
-##########################################################################
+#
+
 
 def update_meta(self, other):
     self.__name__ = other.__name__
@@ -12,26 +13,28 @@ def update_meta(self, other):
     self.__dict__.update(other.__dict__)
     return self
 
+
 class LateBindingProperty(property):
+
     """ Late-binding property, allow easier usage of properties with derived
         classes.
-        
+
         Regular properties require to redefine the property in derived classes,
         while LateBindingProperty does not :
-        
+
         >>> class C(object):
-        ... 
+        ...
         ...     def getx(self):
         ...         print 'C.getx'
         ...         return self._x
-        ... 
+        ...
         ...     def setx(self, x):
         ...         print 'C.setx'
         ...         self._x = x
-        ... 
+        ...
         ...     x = LateBindingProperty(getx, setx)
         >>> class D(C):
-        ... 
+        ...
         ...     def setx(self, x):
         ...         print 'D.setx'
         ...         super(D, self).setx(x)
@@ -48,7 +51,7 @@ class LateBindingProperty(property):
         >>> d.x
         C.getx
         1
-        
+
         Source : http://code.activestate.com/recipes/408713/#c1
     """
 

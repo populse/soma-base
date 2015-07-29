@@ -1,10 +1,10 @@
-##########################################################################
+#
 # SOMA - Copyright (C) CEA, 2015
 # Distributed under the terms of the CeCILL-B license, as published by
 # the CEA-CNRS-INRIA. Refer to the LICENSE file or to
 # http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html
 # for details.
-##########################################################################
+#
 
 # System import
 import os
@@ -30,19 +30,22 @@ except AttributeError:
 QtCore.QResource.registerResource(os.path.join(os.path.dirname(
     os.path.dirname(__file__)), 'resources', 'widgets_icons.rcc'))
 
+
 class ListController(Controller):
+
     """ Dummy list controller to simplify the creation of a list widget
     """
     pass
 
 
 class ListControlWidget(object):
+
     """ Control to enter a list of items.
     """
 
-    ###########################################################################
+    #
     # Public members
-    ###########################################################################
+    #
 
     @staticmethod
     def is_valid(control_instance, *args, **kwargs):
@@ -100,7 +103,7 @@ class ListControlWidget(object):
 
     @staticmethod
     def add_callback(callback, control_instance):
-        """ Method to add a callback to the control instance when the list 
+        """ Method to add a callback to the control instance when the list
         trait is modified
 
         Parameters
@@ -175,8 +178,9 @@ class ListControlWidget(object):
                        QtGui.QIcon.Normal, QtGui.QIcon.Off)
         delete_button.setIcon(icon)
         icon = QtGui.QIcon()
-        icon.addPixmap(QtGui.QPixmap(_fromUtf8(":/soma_widgets_icons/nav_down")),
-                       QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon.addPixmap(
+            QtGui.QPixmap(_fromUtf8(":/soma_widgets_icons/nav_down")),
+            QtGui.QIcon.Normal, QtGui.QIcon.Off)
         resize_button.setIcon(icon)
 
         # Create a new controller that contains length 'control_value' inner
@@ -348,9 +352,9 @@ class ListControlWidget(object):
 
         else:
             logger.error("oups")
-            #print cls, controller_widget, control_name, control_instance
-            #print control_instance.controller
-            #print control_instance.controller.user_traits()
+            # print cls, controller_widget, control_name, control_instance
+            # print control_instance.controller
+            # print control_instance.controller.user_traits()
 
     @classmethod
     def connect(cls, controller_widget, control_name, control_instance):
@@ -389,8 +393,8 @@ class ListControlWidget(object):
                 control_instance.controller.on_trait_change(
                     list_controller_hook, trait_name)
                 logger.debug("Item '{0}' of a 'ListControlWidget', add "
-                              "a callback on inner controller trait "
-                              "'{0}'.".format(control_name, trait_name))
+                             "a callback on inner controller trait "
+                             "'{0}'.".format(control_name, trait_name))
 
             # Update the list controller widget.
             # Hook: function that will be called to update the specific widget
@@ -482,9 +486,9 @@ class ListControlWidget(object):
             # Update the list control connection status
             control_instance.connected = False
 
-    ###########################################################################
+    #
     # Callbacks
-    ###########################################################################
+    #
 
     @staticmethod
     def add_list_item(controller_widget, control_name, control_instance):
@@ -516,9 +520,9 @@ class ListControlWidget(object):
 
         # Update the list controller
         control_instance._controller_connections[0]()
-        #control_instance.controller_widget.update_controller_widget()
+        # control_instance.controller_widget.update_controller_widget()
         logger.debug("Add 'ListControlWidget' '{0}' new trait "
-                      "callback.".format(trait_name))
+                     "callback.".format(trait_name))
 
     @staticmethod
     def delete_one_row(control_instance, index_to_remove):
@@ -659,7 +663,7 @@ class ListControlWidget(object):
             # Update the list controller
             control_instance._controller_connections[0]()
             logger.debug("Remove 'ListControlWidget' '{0}' controller and "
-                          "trait item.".format(trait_name))
+                         "trait item.".format(trait_name))
 
         control_instance.controller_widget._grid_layout.update()
 
@@ -680,15 +684,16 @@ class ListControlWidget(object):
         # Hide the control
         if control_instance.isVisible():
             control_instance.hide()
-            icon.addPixmap(QtGui.QPixmap(_fromUtf8(":/soma_widgets_icons/nav_right")),
-                           QtGui.QIcon.Normal, QtGui.QIcon.Off)
+            icon.addPixmap(
+                QtGui.QPixmap(_fromUtf8(":/soma_widgets_icons/nav_right")),
+                QtGui.QIcon.Normal, QtGui.QIcon.Off)
 
         # Show the control
         else:
             control_instance.show()
-            icon.addPixmap(QtGui.QPixmap(_fromUtf8(":/soma_widgets_icons/nav_down")),
-                           QtGui.QIcon.Normal, QtGui.QIcon.Off)
+            icon.addPixmap(
+                QtGui.QPixmap(_fromUtf8(":/soma_widgets_icons/nav_down")),
+                QtGui.QIcon.Normal, QtGui.QIcon.Off)
 
         # Set the new button icon
         resize_button.setIcon(icon)
-

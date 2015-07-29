@@ -1,10 +1,10 @@
-##########################################################################
+#
 # SOMA - Copyright (C) CEA, 2015
 # Distributed under the terms of the CeCILL-B license, as published by
 # the CEA-CNRS-INRIA. Refer to the LICENSE file or to
 # http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html
 # for details.
-##########################################################################
+#
 
 # System import
 import os
@@ -19,6 +19,7 @@ from File import FileControlWidget
 
 
 class DirectoryControlWidget(FileControlWidget):
+
     """ Control to enter a directory.
     """
 
@@ -60,7 +61,7 @@ class DirectoryControlWidget(FileControlWidget):
             control_palette.setColor(
                 control_instance.path.backgroundRole(), QtCore.Qt.yellow)
             is_valid = True
-            
+
         # If the control value is empty, the control is not valid and the
         # backgound color of the control is red
         else:
@@ -72,9 +73,9 @@ class DirectoryControlWidget(FileControlWidget):
 
         return is_valid
 
-    ###########################################################################
+    #
     # Callbacks
-    ###########################################################################
+    #
 
     @staticmethod
     def onBrowseClicked(control_instance):
@@ -100,4 +101,3 @@ class DirectoryControlWidget(FileControlWidget):
 
         # Set the selected directory to the path sub control
         control_instance.path.setText(unicode(folder))
-

@@ -1,10 +1,10 @@
-##########################################################################
+#
 # SOMA - Copyright (C) CEA, 2015
 # Distributed under the terms of the CeCILL-B license, as published by
 # the CEA-CNRS-INRIA. Refer to the LICENSE file or to
 # http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html
 # for details.
-##########################################################################
+#
 
 # System import
 import logging
@@ -30,12 +30,13 @@ logger = logging.getLogger(__name__)
 
 
 class ControllerControlWidget(object):
+
     """ Control to enter an instance of controller.
     """
 
-    ###########################################################################
+    #
     # Public members
-    ###########################################################################
+    #
 
     @staticmethod
     def is_valid(control_instance, *args, **kwargs):
@@ -89,7 +90,7 @@ class ControllerControlWidget(object):
 
     @staticmethod
     def add_callback(callback, control_instance):
-        """ Method to add a callback to the control instance when the controller 
+        """ Method to add a callback to the control instance when the controller
         trait is modified
 
         Parameters
@@ -324,9 +325,9 @@ class ControllerControlWidget(object):
         # Set the new button icon
         resize_button.setIcon(icon)
 
-    ###########################################################################
+    #
     # Callbacks
-    ###########################################################################
+    #
 
     @staticmethod
     def add_item(controller_widget, control_name, control_instance):
@@ -360,5 +361,4 @@ class ControllerControlWidget(object):
         control_instance.controller_widget.update_controller()
 
         logger.debug("Add 'ControllerControlWidget' '{0}' new trait "
-                      "callback.".format(trait_name))
-
+                     "callback.".format(trait_name))
