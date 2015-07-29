@@ -17,14 +17,23 @@ def _init_default_brainvisa_share():
     try:
         import brainvisa_share.config
         bv_share_dir = brainvisa_share.config.share
+        has_config = True
     except ImportError:
         bv_share_dir = "brainvisa-share"
+        has_config = False
+
+    if bv_share_dir and os.path.exists(bv_share_dir):
+        return bv_share_dir
 
     share = os.getenv('BRAINVISA_SHARE')
     if not share or not os.path.exists(share):
-        share = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname( \
-            brainvisa_share.config.__file__))), 'share',
-            brainvisa_share.config.share)
-    return share
+        if has_config:
+            share = os.path.join(os.path.dirname(os.path.dirname( \
+                os.path.dirname( \
+                    brainvisa_share.config.__file__))), 'share',
+                    brainvisa_share.config.share)
+        else:
+            return bv_share_dir  # will not work, but cannot do better.
+        return share
 
 BRAINVISA_SHARE = _init_default_brainvisa_share()
