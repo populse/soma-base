@@ -355,7 +355,7 @@ class FileControlWidget(object):
             current_control_value = unicode(control_instance.path.text())
 
         # Create a dialogue to select a file
-        fname, _ = QtGui.QFileDialog.getOpenFileName(
+        fname = QtGui.QFileDialog.getOpenFileName(
             control_instance, "Open file", current_control_value)
 
         # Set the selected file path to the path sub control
