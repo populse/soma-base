@@ -296,12 +296,12 @@ def getOpenFileName(parent=None, caption='', directory='', filter='',
             kwargs['selectedFilter'] = selectedFilter
         if options:
             kwargs['options'] = QtGui.QFileDialog.Options(options)
-        return get_qt_module().QtGui.QFileDialog.getOpenFileName(parent,
-                                                                 caption, directory, filter, **kwargs)
+        return get_qt_module().QtGui.QFileDialog.getOpenFileName(
+            parent, caption, directory, filter, **kwargs)
     else:
-        return get_qt_module().QtGui.QFileDialog.getOpenFileName(parent,
-                                                                 caption, directory, filter, selectedFilter,
-                                                                 QtGui.QFileDialog.Options(options))[0]
+        return get_qt_module().QtGui.QFileDialog.getOpenFileName(
+            parent, caption, directory, filter, selectedFilter,
+            QtGui.QFileDialog.Options(options))[0]
 
 
 def getSaveFileName(parent=None, caption='', directory='', filter='',
