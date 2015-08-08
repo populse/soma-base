@@ -16,6 +16,7 @@ logger = logging.getLogger(__name__)
 
 # Soma import
 from soma.qt_gui.qt_backend import QtGui, QtCore
+from soma.qt_gui import qt_backend
 from soma.utils.functiontools import SomaPartial
 from soma.qt_gui.timered_widgets import TimeredQLineEdit
 
@@ -160,6 +161,7 @@ class FileControlWidget(object):
 
         # Add a parameter to tell us if the widget is optional
         widget.optional = trait.optional
+        widget.output = trait.output
 
         # Set a callback on the browse button
         control_class = parent.get_control_class(trait)
@@ -354,9 +356,13 @@ class FileControlWidget(object):
         if FileControlWidget.is_valid(control_instance):
             current_control_value = unicode(control_instance.path.text())
 
-        # Create a dialogue to select a file
-        fname = QtGui.QFileDialog.getOpenFileName(
-            control_instance, "Open file", current_control_value)
+        # Create a dialog to select a file
+        if control_instance.output:
+            fname = qt_backend.getSaveFileName(
+                control_instance, "Output file", current_control_value)
+        else:
+            fname = qt_backend.getOpenFileName(
+                control_instance, "Open file", current_control_value)
 
         # Set the selected file path to the path sub control
         control_instance.path.setText(unicode(fname))

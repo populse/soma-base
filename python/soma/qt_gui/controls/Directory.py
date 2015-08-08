@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 
 # Soma import
 from soma.qt_gui.qt_backend import QtGui, QtCore
+from soma.qt_gui import qt_backend
 from File import FileControlWidget
 
 
@@ -96,7 +97,7 @@ class DirectoryControlWidget(FileControlWidget):
             current_control_value = unicode(control_instance.path.text())
 
         # Create a dialogue to select a directory
-        folder = QtGui.QFileDialog.getExistingDirectory(
+        folder = qt_backend.getExistingDirectory(
             control_instance, "Open directory", current_control_value)
 
         # Set the selected directory to the path sub control
