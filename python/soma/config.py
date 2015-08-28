@@ -26,6 +26,10 @@ def _init_default_brainvisa_share():
         return bv_share_dir
 
     share = os.getenv('BRAINVISA_SHARE')
+    if share:
+        # share is the base share/ directory: we must find the brainvisa-share
+        # directory in it.
+        share = os.path.join(share, bv_share_dir)
     if not share or not os.path.exists(share):
         if has_config:
             share = os.path.join(os.path.dirname(os.path.dirname( \
@@ -34,6 +38,6 @@ def _init_default_brainvisa_share():
                     brainvisa_share.config.share)
         else:
             return bv_share_dir  # will not work, but cannot do better.
-        return share
+    return share
 
 BRAINVISA_SHARE = _init_default_brainvisa_share()
