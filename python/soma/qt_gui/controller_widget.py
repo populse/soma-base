@@ -66,6 +66,8 @@ class ScrollControllerWidget(QtGui.QScrollArea):
 
         # Allow the application to resize the scroll area items
         self.setWidgetResizable(True)
+        self.setSizePolicy(QtGui.QSizePolicy.Preferred,
+                           QtGui.QSizePolicy.Preferred)
 
         # Display a surounding box
         self.setFrameShape(QtGui.QFrame.StyledPanel)
@@ -73,6 +75,8 @@ class ScrollControllerWidget(QtGui.QScrollArea):
         # Create the controller widget
         self.controller_widget = ControllerWidget(
             controller, parent, name, live, hide_labels, select_controls)
+        self.controller_widget.setSizePolicy(QtGui.QSizePolicy.Expanding,
+                                             QtGui.QSizePolicy.Preferred)
 
         # Enable / disabled the controller widget
         self.controller_widget.setEnabled(not disable_controller_widget)
