@@ -1019,10 +1019,12 @@ class AttributesToPaths(object):
                             repr((rule, fom_formats, rule_attributes)))
             if format:
                 ext = self.foms.formats[format]
+                if ext != '':
+                    ext = '.' + ext
                 rule_attributes['fom_format'] = format
                 default_attributes.update(attributes)
                 try:
-                    path = rule % default_attributes + '.' + ext
+                    path = rule % default_attributes + ext
                 except KeyError:
                     continue
                 if debug:
@@ -1039,10 +1041,12 @@ class AttributesToPaths(object):
                 if fom_formats:
                     for f in fom_formats:
                         ext = self.foms.formats[f]
+                        if ext != '':
+                            ext = '.' + ext
                         rule_attributes['fom_format'] = f
                         default_attributes.update(attributes)
                         try:
-                            path = rule % default_attributes + '.' + ext
+                            path = rule % default_attributes + ext
                         except KeyError:
                             continue
                         if debug:
@@ -1103,8 +1107,9 @@ def call_before_application_initialization(application):
     except ImportError:
         from enthought.traits.api import ListStr
 
-    application.add_trait('fom_path',
-                          ListStr(descr='Path for finding file organization models'))
+    application.add_trait(
+        'fom_path',
+        ListStr(descr='Path for finding file organization models'))
     if application.install_directory:
         application.fom_path = [osp.join(application.install_directory,
                                          'share', 'foms')]
