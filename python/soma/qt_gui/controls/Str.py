@@ -9,6 +9,7 @@
 # System import
 import logging
 from functools import partial
+import traits.api as traits
 
 # Define the logger
 logger = logging.getLogger(__name__)
@@ -161,7 +162,7 @@ class StrControlWidget(object):
 
     @staticmethod
     def update_controller(controller_widget, control_name, control_instance,
-                          *args, **kwargs):
+                          reset_invalid_value, *args, **kwargs):
         """ Update one element of the controller.
 
         At the end the controller trait value with the name 'control_name'
@@ -184,6 +185,9 @@ class StrControlWidget(object):
 
             # Get the control value
             new_trait_value = unicode(control_instance.text())
+            if new_trait_value == "":
+                # WARNING: an empty string is always considered Undefined, here
+                new_trait_value = traits.Undefined
 
             # Set the control value to the controller associated trait
             setattr(controller_widget.controller, control_name,
@@ -192,6 +196,14 @@ class StrControlWidget(object):
                 "'FloatControlWidget' associated controller trait '{0}' has "
                 "been updated with value '{1}'.".format(
                     control_name, new_trait_value))
+        elif reset_invalid_value:
+            # invalid, reset GUI to older value
+            old_trait_value = getattr(controller_widget.controller,
+                                      control_name)
+            if old_trait_value is traits.Undefined:
+                control_instance.setText("")
+            else:
+                control_instance.setText(unicode(old_trait_value))
 
     @staticmethod
     def update_controller_widget(controller_widget, control_name,
@@ -215,10 +227,13 @@ class StrControlWidget(object):
         """
         # Get the trait value
         new_controller_value = getattr(
-            controller_widget.controller, control_name, "")
+            controller_widget.controller, control_name, traits.Undefined)
 
         # Set the trait value to the string control
-        control_instance.setText(unicode(new_controller_value))
+        if new_controller_value is traits.Undefined:
+            control_instance.setText("")
+        else:
+            control_instance.setText(unicode(new_controller_value))
         logger.debug("'StrControlWidget' has been updated with value "
                      "'{0}'.".format(new_controller_value))
 
@@ -247,11 +262,16 @@ class StrControlWidget(object):
             # Hook: function that will be called to update a specific
             # controller trait when a 'userModification' qt signal is emited
             widget_hook = partial(cls.update_controller, controller_widget,
-                                  control_name, control_instance)
+                                  control_name, control_instance, False)
 
             # When a qt 'userModification' signal is emited, update the
             # 'control_name' controller trait value
             control_instance.userModification.connect(widget_hook)
+
+            widget_hook2 = partial(cls.update_controller, controller_widget,
+                                   control_name, control_instance, True)
+
+            control_instance.editingFinished.connect(widget_hook2)
 
             # Update the control.
             # Hook: function that will be called to update the control value
@@ -267,7 +287,7 @@ class StrControlWidget(object):
 
             # Store the trait - control connection we just build
             control_instance._controller_connections = (
-                widget_hook, controller_hook)
+                widget_hook, widget_hook2, controller_hook)
             logger.debug("Add 'String' connection: {0}.".format(
                 control_instance._controller_connections))
 
@@ -294,7 +314,7 @@ class StrControlWidget(object):
         if control_instance.connected:
 
             # Get the stored widget and controller hooks
-            (widget_hook,
+            (widget_hook, widget_hook2,
              controller_hook) = control_instance._controller_connections
 
             # Remove the controller hook from the 'control_name' trait
@@ -304,6 +324,7 @@ class StrControlWidget(object):
             # Remove the widget hook associated with the qt 'userModification'
             # signal
             control_instance.userModification.disconnect(widget_hook)
+            control_instance.editingFinished.disconnect(widget_hook2)
 
             # Delete the trait - control connection we just remove
             del control_instance._controller_connections
