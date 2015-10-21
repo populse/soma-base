@@ -10,6 +10,7 @@
 import logging
 import os
 from functools import partial
+import traits.api as traits
 
 # Define the logger
 logger = logging.getLogger(__name__)
@@ -53,14 +54,15 @@ class FileControlWidget(object):
         # If the control value contains a file, the control is valid and the
         # backgound color of the control is white
         is_valid = False
-        if os.path.isfile(control_value):
+        if os.path.isfile(control_value) \
+                or (control_instance.output and control_value != ""):
             control_palette.setColor(
                 control_instance.path.backgroundRole(), QtCore.Qt.white)
             is_valid = True
 
         # If the control value is optional, the control is valid and the
         # backgound color of the control is yellow
-        elif control_instance.optional is True:
+        elif control_instance.optional is True and control_value == "":
             control_palette.setColor(
                 control_instance.path.backgroundRole(), QtCore.Qt.yellow)
             is_valid = True
@@ -69,7 +71,7 @@ class FileControlWidget(object):
         # backgound color of the control is red
         else:
             control_palette.setColor(
-                control_instance.backgroundRole(), QtCore.Qt.red)
+                control_instance.path.backgroundRole(), QtCore.Qt.red)
 
         # Set the new palette to the control instance
         control_instance.path.setPalette(control_palette)
@@ -183,7 +185,7 @@ class FileControlWidget(object):
 
     @staticmethod
     def update_controller(controller_widget, control_name, control_instance,
-                          *args, **kwargs):
+                          reset_invalid_value, *args, **kwargs):
         """ Update one element of the controller.
 
         At the end the controller trait value with the name 'control_name'
@@ -215,6 +217,11 @@ class FileControlWidget(object):
                 "'FileControlWidget' associated controller trait '{0}' has "
                 "been updated with value '{1}'.".format(
                     control_name, new_trait_value))
+        elif reset_invalid_value:
+            # invalid, reset GUI to older value
+            old_trait_value = getattr(controller_widget.controller,
+                                      control_name)
+            control_instance.path.setText(old_trait_value)
 
     @staticmethod
     def update_controller_widget(controller_widget, control_name,
@@ -270,11 +277,16 @@ class FileControlWidget(object):
             # Hook: function that will be called to update a specific
             # controller trait when a 'userModification' qt signal is emited
             widget_hook = partial(cls.update_controller, controller_widget,
-                                  control_name, control_instance)
+                                  control_name, control_instance, False)
 
             # When a qt 'userModification' signal is emited, update the
             # 'control_name' controller trait value
             control_instance.path.userModification.connect(widget_hook)
+
+            widget_hook2 = partial(cls.update_controller, controller_widget,
+                                   control_name, control_instance, True)
+
+            control_instance.path.editingFinished.connect(widget_hook2)
 
             # Update the control.
             # Hook: function that will be called to update the control value
@@ -290,7 +302,7 @@ class FileControlWidget(object):
 
             # Store the trait - control connection we just build
             control_instance._controller_connections = (
-                widget_hook, controller_hook)
+                widget_hook, widget_hook2, controller_hook)
             logger.debug("Add 'File' connection: {0}.".format(
                 control_instance._controller_connections))
 
@@ -317,7 +329,7 @@ class FileControlWidget(object):
         if control_instance.connected:
 
             # Get the stored widget and controller hooks
-            (widget_hook,
+            (widget_hook, widget_hook2,
              controller_hook) = control_instance._controller_connections
 
             # Remove the controller hook from the 'control_name' trait
@@ -327,6 +339,7 @@ class FileControlWidget(object):
             # Remove the widget hook associated with the qt 'userModification'
             # signal
             control_instance.path.userModification.disconnect(widget_hook)
+            control_instance.path.editingFinished.disconnect(widget_hook2)
 
             # Delete the trait - control connection we just remove
             del control_instance._controller_connections

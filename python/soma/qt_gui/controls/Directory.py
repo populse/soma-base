@@ -51,14 +51,15 @@ class DirectoryControlWidget(FileControlWidget):
         # If the control value contains a file, the control is valid and the
         # backgound color of the control is white
         is_valid = False
-        if os.path.isdir(control_value):
+        if os.path.isdir(control_value) \
+                or (control_instance.output and control_value != ""):
             control_palette.setColor(
                 control_instance.path.backgroundRole(), QtCore.Qt.white)
             is_valid = True
 
         # If the control value is optional, the control is valid and the
         # backgound color of the control is yellow
-        elif control_instance.optional is True:
+        elif control_instance.optional is True and control_value == "":
             control_palette.setColor(
                 control_instance.path.backgroundRole(), QtCore.Qt.yellow)
             is_valid = True
@@ -67,7 +68,7 @@ class DirectoryControlWidget(FileControlWidget):
         # backgound color of the control is red
         else:
             control_palette.setColor(
-                control_instance.backgroundRole(), QtCore.Qt.red)
+                control_instance.path.backgroundRole(), QtCore.Qt.red)
 
         # Set the new palette to the control instance
         control_instance.path.setPalette(control_palette)
