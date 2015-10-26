@@ -15,12 +15,12 @@ def is_archive(filename):
             return True
         except:
             pass
-    ext = os.path.splitext(filename)[1]
-    if ext == '.zip' or ext == '.gz' or \
-       ext == '.tar' or ext == '.bz2' or \
-       ext == '.tgz':
+    if os.path.splitext(filename)[1] in get_archive_extensions():
         return True
     return False
+
+def get_archive_extensions():
+    return ['.zip', '.gz', '.tar', '.bz2', '.tgz']
 
 def unpack(input_filename, extract_dir):
     """
