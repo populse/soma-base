@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import tarfile
 import zipfile
-import shutil
 import os
 
 def is_archive(filename):
