@@ -31,15 +31,15 @@ def unpack(input_filename, extract_dir):
     else:
         untar(input_filename, extract_dir)
 
-def pack(output_filename, source_dir):
+def pack(output_filename, sources):
     """
     Packs the source_dir directory in the output_filename archive.
     """
     ext = os.path.splitext(output_filename)[1][1:]
     if ext == 'zip':
-        pack_zip(output_filename, source_dir)
+        pack_zip(output_filename, sources)
     elif ext == 'gz' or ext == 'tgz' or ext == 'bz2' or ext == 'tar':
-        pack_tar(output_filename, source_dir, ext)
+        pack_tar(output_filename, sources, ext)
     
 def untar(input_filename, extract_dir):
     """
@@ -62,7 +62,7 @@ def unzip(input_filename, extract_dir):
     zip_ds.extractall(path=extract_dir)
     zip_ds.close()
 
-def pack_tar(output_filename, source_dir, type='gz'):
+def pack_tar(output_filename, sources, type='gz'):
     """
     Creates a tar archive in output_filename from the source_dir directory.
     """
@@ -71,18 +71,29 @@ def pack_tar(output_filename, source_dir, type='gz'):
     elif type == 'tar':
         type = ''
     tar_ds = tarfile.open(output_filename, 'w:' + type)
-    tar_ds.add(source_dir, arcname=os.path.basename(source_dir))
+    if not isinstance(sources, (list, tuple)) and \
+       isinstance(sources, str):
+        sources = [sources]
+    for source in sources:
+        tar_ds.add(source, arcname=os.path.basename(source))
     tar_ds.close()
 
-def pack_zip(output_filename, source_dir):
+def pack_zip(output_filename, sources):
     """
     Creates a zip archive in output_filename from the source_dir directory.
     """
     previous_dir = os.getcwd()
-    os.chdir(os.path.dirname(source_dir))
+    if not isinstance(sources, (list, tuple)) and \
+       isinstance(sources, str):
+        sources = [sources]
     zip_ds = zipfile.ZipFile(output_filename, 'w', zipfile.ZIP_DEFLATED)
-    for root, dirs, files in os.walk(os.path.basename(source_dir)):
-        for file in files:
-            zip_ds.write(os.path.join(root, file))
+    for source in sources:
+        os.chdir(os.path.dirname(source))
+        if os.path.isdir(source):
+            for root, dirs, files in os.walk(os.path.basename(source)):
+                for file in files:
+                    zip_ds.write(os.path.join(root, file))
+        else:
+            zip_ds.write(os.path.basename(source))
     zip_ds.close()
     os.chdir(previous_dir)
