@@ -465,7 +465,7 @@ class ControllerTrait(TraitType):
             else:
                 return value
         if not hasattr(value, 'iteritems'):
-            raise TraitError('trait must be a Controller')
+            raise TraitError('trait must be a Controller or a mapping type')
         new_value = getattr(object, name).copy(with_values=False)
         if self.inner_trait:
             for key in new_value.user_traits():
