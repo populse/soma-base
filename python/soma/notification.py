@@ -911,6 +911,9 @@ class EditableTree(ObservableAttributes, ObservableSortedDictionary):
         s += ")"
         return s
 
+    def __hash__(self):
+        return ObservableAttributes.__hash__(self)
+
     def add(self, item):
         """
         Add an item in the tree. If this item's id is already present in the tree as a key, add the item's content in the corresponding key.
@@ -1097,7 +1100,7 @@ class EditableTree(ObservableAttributes, ObservableSortedDictionary):
     class Branch(Item, ObservableSortedDictionary):
 
         """ A Branch is an item that can contain other items.
-        It inherits from L{Item} and from L{ObservableSortedDictionary}, so it can have children items.
+        It inherits from Item and from ObservableSortedDictionary, so it can have children items.
         """
         defaultName = "new"
 
@@ -1132,6 +1135,9 @@ class EditableTree(ObservableAttributes, ObservableSortedDictionary):
                 s += str(i) + " "
             s += ")"
             return s
+
+        def __hash__(self):
+            return EditableTree.Item.__hash__(self)
 
         def isLeaf(self):
             return False
