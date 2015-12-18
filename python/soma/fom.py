@@ -9,8 +9,11 @@ import time
 import re
 import pprint
 import sqlite3
-import bz2
 import json
+try:
+    import bz2
+except ImportError:
+    bz2 = None
 
 try:
     from collections import OrderedDict
@@ -243,14 +246,25 @@ class DirectoriesCache(object):
         return self.directories.get(directory)
 
     def save(self, path):
-        f = bz2.BZ2File(path, 'w')
+        if bz2:
+            f = bz2.BZ2File(path, 'w')
+        else:
+            f = open(path, 'w')
         json.dump(self.directories, f)
 
     @classmethod
     def load(cls, path):
         result = cls()
-        f = bz2.BZ2File(path, 'r')
-        result.directories = json.load(f)
+        if bz2:
+            try:
+                f = bz2.BZ2File(path, 'r')
+                result.directories = json.load(f)
+            except IOError:
+                f = open(path, 'r')
+                result.directories = json.load(f)
+        else:
+            f = open(path, 'r')
+            result.directories = json.load(f)
         return result
 
 
