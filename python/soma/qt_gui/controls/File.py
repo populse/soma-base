@@ -372,10 +372,12 @@ class FileControlWidget(object):
         # Create a dialog to select a file
         if control_instance.output:
             fname = qt_backend.getSaveFileName(
-                control_instance, "Output file", current_control_value)
+                control_instance, "Output file", current_control_value, "",
+                None, QtGui.QFileDialog.DontUseNativeDialog)
         else:
             fname = qt_backend.getOpenFileName(
-                control_instance, "Open file", current_control_value)
+                control_instance, "Open file", current_control_value, "", None,
+                QtGui.QFileDialog.DontUseNativeDialog)
 
         # Set the selected file path to the path sub control
         control_instance.path.setText(unicode(fname))

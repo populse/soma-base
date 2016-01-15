@@ -99,7 +99,9 @@ class DirectoryControlWidget(FileControlWidget):
 
         # Create a dialogue to select a directory
         folder = qt_backend.getExistingDirectory(
-            control_instance, "Open directory", current_control_value)
+            control_instance, "Open directory", current_control_value,
+            QtGui.QFileDialog.ShowDirsOnly
+                | QtGui.QFileDialog.DontUseNativeDialog)
 
         # Set the selected directory to the path sub control
         control_instance.path.setText(unicode(folder))
