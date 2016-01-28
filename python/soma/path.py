@@ -105,7 +105,7 @@ def relative_path(path, referenceDirectory):
 
 query_string_re = re.compile( '\?([^\?\&]+\=[^\&]*)(\&[^\?\&]+\=[^\&]*)*$' )
 
-def split_query_string( path ):
+def split_query_string(path):
   '''
   Split a path and its query string.
   
@@ -118,7 +118,7 @@ def split_query_string( path ):
   return ( '/dir1/file1', '?param1=val1&param2=val2&paramN=valN' )
   
   '''
-  m = query_string_re.search( path )
+  m = query_string_re.search(path)
   if m is not None:
     return (path[0:m.start()], path[m.start():] )
     
@@ -126,7 +126,7 @@ def split_query_string( path ):
     return (path, '')
 
 
-def remove_query_string( path ):
+def remove_query_string(path):
   '''
   Remove the query string from a path.
   
@@ -141,6 +141,160 @@ def remove_query_string( path ):
   '''
   return query_string_re.sub( '', path )
 
+class QueryStringParamUpdateMode:
+    REPLACE = 0
+    APPEND = 1
+    
+def update_query_string(
+    path, 
+    params, 
+    params_update_mode = QueryStringParamUpdateMode.REPLACE
+):
+  '''
+  Update the query string parameters in a path.
+
+  :param string path:
+        The path to update parameters within.
+
+  :param dict params:
+        A dictionnary that contains keys and parameters to set in the query 
+        string
+
+  :param (dict|string|list|int) params_update_mode:
+        The default value is QueryStringParamUpdateMode.REPLACE that lead to
+        replace value in the query string path by the one given in the params
+        dictionary.
+        It is possible to change the default behaviour giving the value 
+        QueryStringParamUpdateMode.APPEND. This will lead to always append
+        values of the params dictionary to values of the query string path.
+        The default behaviour can also be changed by specifying a parameter name
+        as string, in this case only values for that parameter name will be 
+        appended. It can also contains a list or a tuple of parameter names for
+        which values will be appended.
+        Finally, this parameter can be a dictionary that specifies which 
+        parameter has to be appended or replaced. The dictionary contains 
+        parameter names in its keys and QueryStringParamUpdateMode in values.
+        
+  :returns:
+        The path updated with given parameters
+        
+  Example
+  =======
+  A path containing a query string is:
+  /dir1/file1?param1=val1&param2=val2&paramN=valN
+  
+  the params dictionary contains:
+  {'param1':'newval1', param2=newval2', param3':'newval3'}
+  
+  update_query_string('/dir1/file1?param1=val1&param2=val2&paramN=valN',
+                      {'param1':'newval1', 'param2':'newval2', 'param3':'newval3'})
+  would return:
+  '/dir1/file1?param1=newval1&param2=newval2&paramN=valN&param3=newval3'
+  
+  
+  update_query_string('/dir1/file1?param1=val1&param2=val2&paramN=valN',
+                      {'param1':'newval1', 'param2':'newval2', 'param3':'newval3'},
+                      QueryStringParamUpdateMode.APPEND)
+  would return:
+  '/dir1/file1?param1=val1&param1=newval1&param2=val2&param2=newval2&paramN=valN&param3=newval3'
+
+
+  update_query_string('/dir1/file1?param1=val1&param2=val2&paramN=valN',
+                      {'param1':'newval1', 'param2':'newval2', 'param3':'newval3'},
+                      'param2')
+  would return:
+  '/dir1/file1?param1=newval1&param2=val2&param2=newval2&paramN=valN&param3=newval3'
+
+
+  update_query_string('/dir1/file1?param1=val1&param2=val2&paramN=valN',
+                      {'param1':'newval1', 'param2':'newval2', 'param3':'newval3'},
+                      ('param1', 'param2'))
+  would return:
+  '/dir1/file1?param1=val1&param1=newval1&param2=val2&param2=newval2&paramN=valN&param3=newval3'
+
+  
+  update_query_string('/dir1/file1?param1=val1&param2=val2&paramN=valN',
+                      {'param1':'newval1', 'param2':'newval2', 'param3':'newval3'},
+                      {'param1': QueryStringParamUpdateMode.APPEND, 
+                       'param2': QueryStringParamUpdateMode.REPLACE})
+  would return:
+  '/dir1/file1?param1=val1&param1=newval1&param2=val2&param2=newval2&paramN=valN&param3=newval3'  
+  '''
+  import urlparse
+  import urllib
+  import types
+  
+  # Convert params_update_mode to a dictionary that contains the update mode
+  # for each parameter
+  if type(params_update_mode) in (types.ListType, types.TupleType):
+    # Update mode is specified using a list of parameter names 
+    default_update_mode = QueryStringParamUpdateMode.REPLACE
+    params_update = params_update_mode
+    params_update_mode = dict()
+    
+    for p in params_update:
+      if (type(p) in (types.ListType, types.TupleType)):
+        if (len(p) > 1):
+          params_update_mode[p[0]] = p[1]
+        elif(len(p) > 0):
+          params_update_mode[p[0]] = QueryStringParamUpdateMode.APPEND
+      else:
+        params_update_mode[p] = QueryStringParamUpdateMode.APPEND
+        
+  elif type(params_update_mode) in (types.StringType, types.UnicodeType):
+    # A parameter name was given directly
+    default_update_mode = QueryStringParamUpdateMode.REPLACE
+    params_update_mode = dict(((params_update_mode, 
+                                QueryStringParamUpdateMode.APPEND),))
+    
+  elif params_update_mode in (QueryStringParamUpdateMode.APPEND, 
+                              QueryStringParamUpdateMode.REPLACE):
+    # Update mode was specified for all parameters
+    default_update_mode = params_update_mode
+    params_update_mode = dict()
+      
+  elif type(params_update_mode) is types.DictionaryType:
+    default_update_mode = QueryStringParamUpdateMode.REPLACE
+
+  else:
+    raise RuntimeError('params_update_mode is not specified correctly. '
+                       'It must be either a dictionary that contains parameter '
+                       'names and the corresponding QueryStringParamUpdateMode, '
+                       'either a list that contains parameter names, either'
+                       'QueryStringParamUpdateMode.')
+     
+  url_parsed = urlparse.urlparse(path)
+  url_params = urlparse.parse_qs(url_parsed.query)
+
+  # Update parameters dictionary
+  for p, v in params.iteritems():
+    update_mode = params_update_mode.get(
+      p,
+      default_update_mode
+    )
+    
+    if update_mode == QueryStringParamUpdateMode.REPLACE:
+      url_params[p] = v
+      
+    elif update_mode == QueryStringParamUpdateMode.APPEND:
+      if type(v) in (types.ListType, types.TupleType):
+        if type(v) is types.TupleType:
+          url_params[p] += list(v)
+        else:
+          url_params[p] += v
+          
+      else:
+        url_params.setdefault(p, list()).append(v)
+        
+    else:
+      raise RuntimeError('params_update_mode is not specified correctly. %s is '
+                         'not a valid value for parameter %s. Valid values are '
+                         'either QueryStringParamUpdateMode.APPEND, either'
+                         'QueryStringParamUpdateMode.REPLACE.' % (v, p))
+  url_new = list(url_parsed)
+  url_new[4] = urllib.urlencode(url_params, doseq=True)
+  
+  return urlparse.urlunparse(url_new)
 
 def no_symlink(path):
     '''
