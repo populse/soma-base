@@ -1,10 +1,10 @@
-##########################################################################
+#
 # Soma-base - Copyright (C) CEA, 2013
 # Distributed under the terms of the CeCILL-B license, as published by
 # the CEA-CNRS-INRIA. Refer to the LICENSE file or to
 # http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html
 # for details.
-##########################################################################
+#
 
 '''Compatibility module for PyQt and PySide. Currently supports PyQt4 and
 PySide, not PyQt5.
@@ -55,6 +55,7 @@ qt_backend = None
 
 
 class QtImporter(object):
+
     def find_module(self, fullname, path=None):
         modsplit = fullname.split('.')
         modpath = '.'.join(modsplit[:-1])
@@ -90,20 +91,30 @@ def get_qt_backend():
     return qt_backend
 
 
-def set_qt_backend(backend=None):
+def set_qt_backend(backend=None, pyqt_api=1):
     '''set the Qt backend.
 
     If a different backend has already setup or loaded, a warning is issued.
-    If no backend is specified, try to guess which one is already loaded, or
-    default to PySide.
+    If no backend is specified, try to guess which one is already loaded.
+
+    If no backend is loaded yet, try to behave like IPython does.
+    See: https://ipython.org/ipython-doc/dev/interactive/reference.html#pyqt-and-pyside
+
+    More precisely this means:
+    * If QT_API environement variable is not set, use PyQt4, with PyQt API v1
+    * if QT_API is set to "pyqt", use PyQt4, with PyQt API v2
+    * if QT_API is set to "pyside", use PySide
 
     Moreover if using PyQt4, QtCore is patched to duplicate QtCore.pyqtSignal
-    and QtCore.pyqtSlot as QtCore.Signal and QtCore.Slot.
+    and QtCore.pyqtSlot as QtCore.Signal and QtCore.Slot. This is meant to ease
+    code portability between both worlds.
 
     Parameters
     ----------
     backend: str (default: None)
         name of the backend to use
+    pyqt_api: int (default: 1)
+        PyQt API version: 1 or 2, only useful for PyQt4
 
     Examples
     --------
@@ -116,25 +127,37 @@ def set_qt_backend(backend=None):
     get_qt_backend()
     if backend is None:
         if qt_backend is None:
-            backend = 'PySide'
+            # try to get from the environment variable QT_API, complying to
+            # ETS 4
+            # see
+            # https://ipython.org/ipython-doc/dev/interactive/reference.html#pyqt-and-pyside
+            qt_api = os.getenv('QT_API')
+            if qt_api == 'pyqt':
+                backend = 'PyQt4'
+                pyqt_api = 2
+            elif qt_api == 'pyside':
+                backend = 'PySide'
+            else:
+                backend = 'PyQt4'
+                pyqt_api = 1
         else:
             backend = qt_backend
     if qt_backend is not None and qt_backend != backend:
-        logging.warn('set_qt_backend: a different backend, %s, has already ' \
-            'be set, and %s is now requested' % (qt_backend, backend))
-    if backend == 'PyQt4': # and sys.modules.get('PyQt4') is None:
+        logging.warn('set_qt_backend: a different backend, %s, has already '
+                     'be set, and %s is now requested' % (qt_backend, backend))
+    if backend == 'PyQt4':  # and sys.modules.get('PyQt4') is None:
         import sip
-        SIP_API = 2
-        sip_classes = ['QString', 'QVariant', 'QDate', 'QDateTime',
-            'QTextStream', 'QTime', 'QUrl']
-        global _sip_api_set
-        for sip_class in sip_classes:
-            try:
-                sip.setapi(sip_class, SIP_API)
-            except ValueError, e:
-                if not _sip_api_set:
-                    logging.warning(e.message)
-        _sip_api_set = True
+        if pyqt_api == 2:
+            sip_classes = ['QString', 'QVariant', 'QDate', 'QDateTime',
+                           'QTextStream', 'QTime', 'QUrl']
+            global _sip_api_set
+            for sip_class in sip_classes:
+                try:
+                    sip.setapi(sip_class, pyqt_api)
+                except ValueError, e:
+                    if not _sip_api_set:
+                        logging.warning(e.message)
+            _sip_api_set = True
     qt_module = __import__(backend)
     __import__(backend + '.QtCore')
     __import__(backend + '.QtGui')
@@ -156,7 +179,7 @@ def import_qt_submodule(submodule):
 
     >>> from soma.qt_gui.qt_backend import <submodule>
 
-    The main differences is that it forces loading the module from the 
+    The main differences is that it forces loading the module from the
     appropriate backend, whereas the import statement will reuse the already
     loaded one. Moreover it returns the module.
 
@@ -199,21 +222,22 @@ def import_qt_submodule(submodule):
 
 def _iconset(self, prop):
     return QtGui.QIcon(os.path.join(self._basedirectory,
-        prop.text).replace("\\", "\\\\"))
+                                    prop.text).replace("\\", "\\\\"))
+
 
 def _pixmap(self, prop):
     return QtGui.QPixmap(os.path.join(self._basedirectory,
-        prop.text).replace("\\", "\\\\"))
+                                      prop.text).replace("\\", "\\\\"))
 
 
 def loadUi(ui_file, *args, **kwargs):
     '''Load a .ui file and returns the widget instance.
 
-    This function is a replacement of PyQt4.uic.loadUi. The only difference is 
-    that relative icon or pixmap file names that are stored in the *.ui file 
+    This function is a replacement of PyQt4.uic.loadUi. The only difference is
+    that relative icon or pixmap file names that are stored in the *.ui file
     are considered to be relative to the directory containing the ui file. With
-    PyQt4.uic.loadUi, relative file names are considered relative to the 
-    current working directory therefore if this directory is not the one 
+    PyQt4.uic.loadUi, relative file names are considered relative to the
+    current working directory therefore if this directory is not the one
     containing the ui file, icons cannot be loaded.
     '''
     if get_qt_backend() == 'PyQt4':
@@ -225,26 +249,28 @@ def loadUi(ui_file, *args, **kwargs):
         else:
             # needed import and def
             from PyQt4.uic.Loader import loader
-            if not hasattr(globals(), 'partial') :
+            if not hasattr(globals(), 'partial'):
                 from soma.functiontools import partial
+
             def _iconset(self, prop):
-                return QtGui.QIcon( os.path.join( self._basedirectory, prop.text ).replace("\\", "\\\\") )
+                return QtGui.QIcon(os.path.join(self._basedirectory, prop.text).replace("\\", "\\\\"))
+
             def _pixmap(self, prop):
-                return QtGui.QPixmap(os.path.join( self._basedirectory, prop.text ).replace("\\", "\\\\"))
+                return QtGui.QPixmap(os.path.join(self._basedirectory, prop.text).replace("\\", "\\\\"))
             uiLoader = loader.DynamicUILoader()
             uiLoader.wprops._basedirectory = os.path.dirname(
-                os.path.abspath(ui_file)) 
+                os.path.abspath(ui_file))
             uiLoader.wprops._iconset = partial(_iconset, uiLoader.wprops)
             uiLoader.wprops._pixmap = partial(_pixmap, uiLoader.wprops)
             return uiLoader.loadUi(ui_file, *args, **kwargs)
     else:
         from PySide.QtUiTools import QUiLoader
-        return QUiLoader().load(ui_file) #, *args, **kwargs )
+        return QUiLoader().load(ui_file)  # , *args, **kwargs )
 
 
 def loadUiType(uifile, from_imports=False):
     '''PyQt4 / PySide abstraction to uic.loadUiType.
-    Not implemented for PySide, actually, because PySide does not have this 
+    Not implemented for PySide, actually, because PySide does not have this
     feature.
     '''
     if get_qt_backend() == 'PyQt4':
@@ -253,12 +279,12 @@ def loadUiType(uifile, from_imports=False):
         return uic.loadUiType(uifile)
     else:
         raise NotImplementedError('loadUiType does not work with PySide')
-        #ui = loadUi(uifile)
-        #return ui.__class__, QtGui.QWidget # FIXME
+        # ui = loadUi(uifile)
+        # return ui.__class__, QtGui.QWidget # FIXME
 
 
 def getOpenFileName(parent=None, caption='', directory='', filter='',
-        selectedFilter=None, options=0):
+                    selectedFilter=None, options=0):
     '''PyQt4 / PySide compatible call to QFileDialog.getOpenFileName'''
     if get_qt_backend() == 'PyQt4':
         kwargs = {}
@@ -270,16 +296,16 @@ def getOpenFileName(parent=None, caption='', directory='', filter='',
             kwargs['selectedFilter'] = selectedFilter
         if options:
             kwargs['options'] = QtGui.QFileDialog.Options(options)
-        return get_qt_module().QtGui.QFileDialog.getOpenFileName(parent,
-            caption, directory, filter, **kwargs )
+        return get_qt_module().QtGui.QFileDialog.getOpenFileName(
+            parent, caption, directory, filter, **kwargs)
     else:
-        return get_qt_module().QtGui.QFileDialog.getOpenFileName(parent,
-            caption, directory, filter, selectedFilter,
+        return get_qt_module().QtGui.QFileDialog.getOpenFileName(
+            parent, caption, directory, filter, selectedFilter,
             QtGui.QFileDialog.Options(options))[0]
 
 
 def getSaveFileName(parent=None, caption='', directory='', filter='',
-        selectedFilter=None, options=0):
+                    selectedFilter=None, options=0):
     '''PyQt4 / PySide compatible call to QFileDialog.getSaveFileName'''
     if get_qt_backend() == 'PyQt4':
         kwargs = {}
@@ -292,10 +318,10 @@ def getSaveFileName(parent=None, caption='', directory='', filter='',
         if options:
             kwargs['options'] = QtGui.QFileDialog.Options(options)
         return get_qt_module().QtGui.QFileDialog.getSaveFileName(parent,
-            caption, directory, filter, **kwargs)
+                                                                 caption, directory, filter, **kwargs)
     else:
         return get_qt_module().QtGui.QFileDialog.getSaveFileName(parent,
-            caption, directory, filter, selectedFilter, options)[0]
+                                                                 caption, directory, filter, selectedFilter, options)[0]
 
 
 def getExistingDirectory(parent=None, caption='', directory='', options=None):
@@ -305,7 +331,7 @@ def getExistingDirectory(parent=None, caption='', directory='', options=None):
         if options is not None:
             kwargs['options'] = QtGui.QFileDialog.Options(options)
         return get_qt_module().QtGui.QFileDialog.getExistingDirectory(parent,
-            caption, directory, **kwargs )
+                                                                      caption, directory, **kwargs)
     else:
         if options is not None:
             return get_qt_module().QtGui.QFileDialog.getExistingDirectory(
@@ -322,13 +348,18 @@ def init_matplotlib_backend():
     Moreover, the appropriate FigureCanvas type is set in the current module,
     and returned by this function.
     '''
-    import matplotlib
+    try:
+        import matplotlib
+    except ImportError:
+        # if matplotlib cannot be found, don't do anything.
+        return
+
     mpl_ver = [int(x) for x in matplotlib.__version__.split('.')[:2]]
     guiBackend = 'Qt4Agg'
     if 'matplotlib.backends' not in sys.modules:
         matplotlib.use(guiBackend)
     elif matplotlib.get_backend() != guiBackend:
-        raise RuntimeError( 
+        raise RuntimeError(
             'Mismatch between Qt version and matplotlib backend: '
             'matplotlib uses ' + matplotlib.get_backend() + ' but '
             + guiBackend + ' is required.')
@@ -336,18 +367,17 @@ def init_matplotlib_backend():
         if 'backend.qt4' in matplotlib.rcParams.keys():
             matplotlib.rcParams['backend.qt4'] = 'PySide'
         else:
-            raise RuntimeError("Could not use Matplotlib, the backend using " \
-                "PySide is missing.")
+            raise RuntimeError("Could not use Matplotlib, the backend using "
+                               "PySide is missing.")
     else:
         if 'backend.qt4' in matplotlib.rcParams.keys():
             matplotlib.rcParams['backend.qt4'] = 'PyQt4'
         else:
             # older versions of matplotlib used only PyQt4.
-            if mpl_ver >= [1,1]:
-                raise RuntimeError("Could not use Matplotlib, the backend " \
-                    "using PyQt4 is missing.")
+            if mpl_ver >= [1, 1]:
+                raise RuntimeError("Could not use Matplotlib, the backend "
+                                   "using PyQt4 is missing.")
     from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg \
         as FigureCanvas
     sys.modules[__name__].FigureCanvas = FigureCanvas
     return FigureCanvas
-

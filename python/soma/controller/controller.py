@@ -1,10 +1,10 @@
-##########################################################################
+#
 # SOMA - Copyright (C) CEA, 2015
 # Distributed under the terms of the CeCILL-B license, as published by
 # the CEA-CNRS-INRIA. Refer to the LICENSE file or to
 # http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html
 # for details.
-##########################################################################
+#
 
 # System import
 import logging
@@ -22,6 +22,7 @@ from soma.controller.trait_utils import _type_to_trait_id
 
 
 class ControllerMeta(HasTraits.__metaclass__):
+
     """ This metaclass allows for automatic registration of factories.
     """
     def __new__(mcs, name, bases, dictionary):
@@ -42,6 +43,7 @@ class ControllerMeta(HasTraits.__metaclass__):
 
 
 class Controller(HasTraits):
+
     """ A Controller contains some traits: attributes typing and observer
     (callback) pattern.
 
@@ -125,9 +127,9 @@ class Controller(HasTraits):
                     logger.debug("Add instance parameter '{0}'.".format(name))
                     self._user_traits[name] = class_traits[name]
 
-    ####################################################################
+    #
     # Private methods
-    ####################################################################
+    #
 
     def _clone_trait(self, clone, metadata=None):
         """ Creates a clone of a specific trait (ie. the same trait
@@ -203,12 +205,12 @@ class Controller(HasTraits):
             for inner_trait in handler.inner_traits():
                 self._propagate_optional_parameter(inner_trait, optional)
 
-    ####################################################################
+    #
     # Public methods
-    ####################################################################
+    #
 
     def user_traits(self):
-        """ Methood to access the user parameters.
+        """ Method to access the user parameters.
 
         Returns
         -------
@@ -280,8 +282,10 @@ class Controller(HasTraits):
 
     def export_to_dict(self, exclude_undefined=False,
                        exclude_transient=False,
-                       exclude_none=False):
-        """ return the controller state to a OrderedDict, replacing controller
+                       exclude_none=False,
+                       exclude_empty=False,
+                       dict_class=OrderedDict):
+        """ return the controller state to a dictionary, replacing controller
         values in sub-trees to dicts also.
 
         Parameters
@@ -292,8 +296,13 @@ class Controller(HasTraits):
             if set, do not export values whose trait is marked "transcient"
         exclude_none: bool (optional)
             if set, do not export None values
+        exclude_empty: bool (optional)
+            if set, do not export empty lists/dicts values
+        dict_class: class type (optional, default: soma.sorted_dictionary.OrderedDict)
+            use this type of mapping type to represent controllers. It should
+            follow the mapping protocol API.
         """
-        state_dict = OrderedDict()
+        state_dict = dict_class()
         for trait_name, trait in self.user_traits().iteritems():
             if exclude_transient and trait.transient:
                 continue
@@ -302,6 +311,8 @@ class Controller(HasTraits):
                 value = value.export_to_dict()
             elif (exclude_undefined and value is Undefined) \
                     or (exclude_none and value is None):
+                continue
+            if exclude_empty and (value == [] or value == {}):
                 continue
             state_dict[trait_name] = value
         return state_dict
@@ -362,6 +373,7 @@ class Controller(HasTraits):
 
 
 class OpenKeyController(Controller):
+
     """ A dictionary-like controller, with "open keys": items may be added
     on the fly, traits are created upon assignation.
 
@@ -409,8 +421,10 @@ class OpenKeyController(Controller):
 
 
 class ControllerTrait(TraitType):
+
     """ A specialized trait type for Controller values.
     """
+
     def __init__(self, controller, inner_trait=None, **kwargs):
         """ Build a Controller valued trait.
 
@@ -451,7 +465,7 @@ class ControllerTrait(TraitType):
             else:
                 return value
         if not hasattr(value, 'iteritems'):
-            raise TraitError('trait must be a Controller')
+            raise TraitError('trait must be a Controller or a mapping type')
         new_value = getattr(object, name).copy(with_values=False)
         if self.inner_trait:
             for key in new_value.user_traits():
@@ -467,4 +481,3 @@ class ControllerTrait(TraitType):
         if self.inner_trait:
             return (self.inner_trait, )
         return ()
-

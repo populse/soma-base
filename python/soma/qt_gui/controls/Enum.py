@@ -1,10 +1,10 @@
-##########################################################################
+#
 # SOMA - Copyright (C) CEA, 2015
 # Distributed under the terms of the CeCILL-B license, as published by
 # the CEA-CNRS-INRIA. Refer to the LICENSE file or to
 # http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html
 # for details.
-##########################################################################
+#
 
 # System import
 import logging
@@ -19,6 +19,7 @@ from soma.utils.functiontools import SomaPartial
 
 
 class EnumControlWidget(object):
+
     """ Control to select a value from a list.
     """
 
@@ -108,7 +109,7 @@ class EnumControlWidget(object):
         widget._choices = trait.handler.values
 
         # Add a parameter to tell us if the widget is optional
-        widget.optional = trait.optional 
+        widget.optional = trait.optional
 
         # Set the enum list items to the widget
         for item in widget._choices:
@@ -195,7 +196,7 @@ class EnumControlWidget(object):
             control_instance.setCurrentIndex(
                 control_instance._choices.index(new_controller_value))
         logger.debug("'EnumControlWidget' has been updated with value "
-                      "'{0}'.".format(new_controller_value))
+                     "'{0}'.".format(new_controller_value))
 
     @classmethod
     def connect(cls, controller_widget, control_name, control_instance):
@@ -273,4 +274,3 @@ class EnumControlWidget(object):
 
         # Delete the trait - control connection we just remove
         del control_instance._controller_connections
-

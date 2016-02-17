@@ -1,10 +1,10 @@
-##########################################################################
+#
 # SOMA - Copyright (C) CEA, 2015
 # Distributed under the terms of the CeCILL-B license, as published by
 # the CEA-CNRS-INRIA. Refer to the LICENSE file or to
 # http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html
 # for details.
-##########################################################################
+#
 
 # System import
 import os
@@ -15,10 +15,12 @@ logger = logging.getLogger(__name__)
 
 # Soma import
 from soma.qt_gui.qt_backend import QtGui, QtCore
+from soma.qt_gui import qt_backend
 from File import FileControlWidget
 
 
 class DirectoryControlWidget(FileControlWidget):
+
     """ Control to enter a directory.
     """
 
@@ -49,32 +51,33 @@ class DirectoryControlWidget(FileControlWidget):
         # If the control value contains a file, the control is valid and the
         # backgound color of the control is white
         is_valid = False
-        if os.path.isdir(control_value):
+        if os.path.isdir(control_value) \
+                or (control_instance.output and control_value != ""):
             control_palette.setColor(
                 control_instance.path.backgroundRole(), QtCore.Qt.white)
             is_valid = True
 
         # If the control value is optional, the control is valid and the
         # backgound color of the control is yellow
-        elif control_instance.optional is True:
+        elif control_instance.optional is True and control_value == "":
             control_palette.setColor(
                 control_instance.path.backgroundRole(), QtCore.Qt.yellow)
             is_valid = True
-            
+
         # If the control value is empty, the control is not valid and the
         # backgound color of the control is red
         else:
             control_palette.setColor(
-                control_instance.backgroundRole(), QtCore.Qt.red)
+                control_instance.path.backgroundRole(), QtCore.Qt.red)
 
         # Set the new palette to the control instance
         control_instance.path.setPalette(control_palette)
 
         return is_valid
 
-    ###########################################################################
+    #
     # Callbacks
-    ###########################################################################
+    #
 
     @staticmethod
     def onBrowseClicked(control_instance):
@@ -95,9 +98,10 @@ class DirectoryControlWidget(FileControlWidget):
             current_control_value = unicode(control_instance.path.text())
 
         # Create a dialogue to select a directory
-        folder = QtGui.QFileDialog.getExistingDirectory(
-            control_instance, "Open directory", current_control_value)
+        folder = qt_backend.getExistingDirectory(
+            control_instance, "Open directory", current_control_value,
+            QtGui.QFileDialog.ShowDirsOnly
+                | QtGui.QFileDialog.DontUseNativeDialog)
 
         # Set the selected directory to the path sub control
         control_instance.path.setText(unicode(folder))
-

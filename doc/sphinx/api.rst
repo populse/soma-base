@@ -165,7 +165,7 @@ SubModule: ``qt4gui``
 .. automodule:: soma.qt4gui.timered_widgets
     :members:
 
- 
+
 SubModule: ``qt_gui``
 =====================
 

@@ -1,14 +1,15 @@
-##########################################################################
+#
 # SOMA - Copyright (C) CEA, 2015
 # Distributed under the terms of the CeCILL-B license, as published by
 # the CEA-CNRS-INRIA. Refer to the LICENSE file or to
 # http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html
 # for details.
-##########################################################################
+#
 
 # System import
 import logging
 import re
+import traits.api as traits
 
 # Define the logger
 logger = logging.getLogger(__name__)
@@ -19,6 +20,7 @@ from .Str import StrControlWidget
 
 
 class FloatControlWidget(StrControlWidget):
+
     """ Control to enter a float.
     """
 
@@ -62,11 +64,11 @@ class FloatControlWidget(StrControlWidget):
 
         # If the control value is optional, the control is valid and the
         # backgound color of the control is yellow
-        elif control_instance.optional is True:
+        elif control_instance.optional is True and control_value == "":
             control_palette.setColor(
                 control_instance.backgroundRole(), QtCore.Qt.yellow)
             is_valid = True
-            
+
         # If the control value is empty, the control is not valid and the
         # backgound color of the control is red
         else:
@@ -80,7 +82,7 @@ class FloatControlWidget(StrControlWidget):
 
     @staticmethod
     def update_controller(controller_widget, control_name, control_instance,
-                          *args, **kwarg):
+                          reset_invalid_value, *args, **kwarg):
         """ Update one element of the controller.
 
         At the end the controller trait value with the name 'control_name'
@@ -102,7 +104,10 @@ class FloatControlWidget(StrControlWidget):
         if FloatControlWidget.is_valid(control_instance):
 
             # Get the control value
-            new_trait_value = float(control_instance.text())
+            if control_instance.text() == "":
+                new_trait_value = traits.Undefined
+            else:
+                new_trait_value = float(control_instance.text())
 
             # Set the control value to the controller associated trait
             setattr(controller_widget.controller, control_name,
@@ -111,6 +116,14 @@ class FloatControlWidget(StrControlWidget):
                 "'FloatControlWidget' associated controller trait '{0}' has "
                 "been updated with value '{1}'.".format(
                     control_name, new_trait_value))
+        elif reset_invalid_value:
+            # invalid, reset GUI to older value
+            old_trait_value = getattr(controller_widget.controller,
+                                      control_name)
+            if old_trait_value is traits.Undefined:
+                control_instance.setText("")
+            else:
+                control_instance.setText(unicode(old_trait_value))
 
     @staticmethod
     def update_controller_widget(controller_widget, control_name,
@@ -134,10 +147,12 @@ class FloatControlWidget(StrControlWidget):
         """
         # Get the trait value
         new_controller_value = getattr(
-            controller_widget.controller, control_name, 0.0)
+            controller_widget.controller, control_name, traits.Undefined)
 
         # Set the trait value to the float control
-        control_instance.setText(unicode(new_controller_value))
+        if new_controller_value is traits.Undefined:
+            control_instance.setText("")
+        else:
+            control_instance.setText(unicode(new_controller_value))
         logger.debug("'FloatControlWidget' has been updated with value "
-                      "'{0}'.".format(new_controller_value))
-
+                     "'{0}'.".format(new_controller_value))

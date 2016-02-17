@@ -1,26 +1,29 @@
-##########################################################################
+#
 # SOMA - Copyright (C) CEA, 201
 # Distributed under the terms of the CeCILL-B license, as published by
 # the CEA-CNRS-INRIA. Refer to the LICENSE file or to
 # http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html
 # for details.
-##########################################################################
+#
 
 # System import
 import logging
 import os
 from functools import partial
+import traits.api as traits
 
 # Define the logger
 logger = logging.getLogger(__name__)
 
 # Soma import
 from soma.qt_gui.qt_backend import QtGui, QtCore
+from soma.qt_gui import qt_backend
 from soma.utils.functiontools import SomaPartial
 from soma.qt_gui.timered_widgets import TimeredQLineEdit
 
 
 class FileControlWidget(object):
+
     """ Control to enter a file.
     """
 
@@ -51,23 +54,24 @@ class FileControlWidget(object):
         # If the control value contains a file, the control is valid and the
         # backgound color of the control is white
         is_valid = False
-        if os.path.isfile(control_value):
+        if os.path.isfile(control_value) \
+                or (control_instance.output and control_value != ""):
             control_palette.setColor(
                 control_instance.path.backgroundRole(), QtCore.Qt.white)
             is_valid = True
 
         # If the control value is optional, the control is valid and the
         # backgound color of the control is yellow
-        elif control_instance.optional is True:
+        elif control_instance.optional is True and control_value == "":
             control_palette.setColor(
                 control_instance.path.backgroundRole(), QtCore.Qt.yellow)
             is_valid = True
-            
+
         # If the control value is empty, the control is not valid and the
         # backgound color of the control is red
         else:
             control_palette.setColor(
-                control_instance.backgroundRole(), QtCore.Qt.red)
+                control_instance.path.backgroundRole(), QtCore.Qt.red)
 
         # Set the new palette to the control instance
         control_instance.path.setPalette(control_palette)
@@ -159,6 +163,7 @@ class FileControlWidget(object):
 
         # Add a parameter to tell us if the widget is optional
         widget.optional = trait.optional
+        widget.output = trait.output
 
         # Set a callback on the browse button
         control_class = parent.get_control_class(trait)
@@ -180,7 +185,7 @@ class FileControlWidget(object):
 
     @staticmethod
     def update_controller(controller_widget, control_name, control_instance,
-                          *args, **kwargs):
+                          reset_invalid_value, *args, **kwargs):
         """ Update one element of the controller.
 
         At the end the controller trait value with the name 'control_name'
@@ -212,6 +217,11 @@ class FileControlWidget(object):
                 "'FileControlWidget' associated controller trait '{0}' has "
                 "been updated with value '{1}'.".format(
                     control_name, new_trait_value))
+        elif reset_invalid_value:
+            # invalid, reset GUI to older value
+            old_trait_value = getattr(controller_widget.controller,
+                                      control_name)
+            control_instance.path.setText(old_trait_value)
 
     @staticmethod
     def update_controller_widget(controller_widget, control_name,
@@ -240,7 +250,7 @@ class FileControlWidget(object):
         # Set the trait value to the string control
         control_instance.path.setText(unicode(new_controller_value))
         logger.debug("'FileControlWidget' has been updated with value "
-                      "'{0}'.".format(new_controller_value))
+                     "'{0}'.".format(new_controller_value))
 
     @classmethod
     def connect(cls, controller_widget, control_name, control_instance):
@@ -267,11 +277,16 @@ class FileControlWidget(object):
             # Hook: function that will be called to update a specific
             # controller trait when a 'userModification' qt signal is emited
             widget_hook = partial(cls.update_controller, controller_widget,
-                                  control_name, control_instance)
+                                  control_name, control_instance, False)
 
             # When a qt 'userModification' signal is emited, update the
             # 'control_name' controller trait value
             control_instance.path.userModification.connect(widget_hook)
+
+            widget_hook2 = partial(cls.update_controller, controller_widget,
+                                   control_name, control_instance, True)
+
+            control_instance.path.editingFinished.connect(widget_hook2)
 
             # Update the control.
             # Hook: function that will be called to update the control value
@@ -287,7 +302,7 @@ class FileControlWidget(object):
 
             # Store the trait - control connection we just build
             control_instance._controller_connections = (
-                widget_hook, controller_hook)
+                widget_hook, widget_hook2, controller_hook)
             logger.debug("Add 'File' connection: {0}.".format(
                 control_instance._controller_connections))
 
@@ -314,7 +329,7 @@ class FileControlWidget(object):
         if control_instance.connected:
 
             # Get the stored widget and controller hooks
-            (widget_hook,
+            (widget_hook, widget_hook2,
              controller_hook) = control_instance._controller_connections
 
             # Remove the controller hook from the 'control_name' trait
@@ -324,6 +339,7 @@ class FileControlWidget(object):
             # Remove the widget hook associated with the qt 'userModification'
             # signal
             control_instance.path.userModification.disconnect(widget_hook)
+            control_instance.path.editingFinished.disconnect(widget_hook2)
 
             # Delete the trait - control connection we just remove
             del control_instance._controller_connections
@@ -331,9 +347,9 @@ class FileControlWidget(object):
             # Update the control connection status
             control_instance.connected = False
 
-    ###########################################################################
+    #
     # Callbacks
-    ###########################################################################
+    #
 
     @staticmethod
     def onBrowseClicked(control_instance):
@@ -353,10 +369,15 @@ class FileControlWidget(object):
         if FileControlWidget.is_valid(control_instance):
             current_control_value = unicode(control_instance.path.text())
 
-        # Create a dialogue to select a file
-        fname, _ = QtGui.QFileDialog.getOpenFileName(
-            control_instance, "Open file", current_control_value)
+        # Create a dialog to select a file
+        if control_instance.output:
+            fname = qt_backend.getSaveFileName(
+                control_instance, "Output file", current_control_value, "",
+                None, QtGui.QFileDialog.DontUseNativeDialog)
+        else:
+            fname = qt_backend.getOpenFileName(
+                control_instance, "Open file", current_control_value, "", None,
+                QtGui.QFileDialog.DontUseNativeDialog)
 
         # Set the selected file path to the path sub control
         control_instance.path.setText(unicode(fname))
-
