@@ -141,7 +141,11 @@ def minfFormat(source):
 
 #------------------------------------------------------------------------------
 def _setTarget(target, source):
-    from soma.signature.api import HasSignature
+    try:
+        from soma.signature.api import HasSignature
+    except ImportError:
+        class HasSignature(object):
+            pass
     if isinstance(source, dict):
         if isinstance(target, dict):
             target.update(source)
