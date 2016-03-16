@@ -48,7 +48,13 @@ import sys
 from soma.translation import translate as _
 from soma.undefined import Undefined
 from soma.minf.error import MinfError
-from soma.signature.api import HasSignature, Sequence
+try:
+    from soma.signature.api import HasSignature, Sequence
+except ImportError:
+    class HasSignature(object):
+        pass
+    class Sequence(object):
+        pass
 
 #: Type name of a minf structure.
 #: @see: L{StartStructure}
@@ -271,7 +277,9 @@ class MinfReducer(object):
         it.next()
         for key, sigItem in it:
             value = getattr(o, key, Undefined)
-            if value is not Undefined and value != sigItem.defaultValue:
+            if value is not Undefined \
+                    and (value != sigItem.defaultValue
+                         or getattr(sigItem, 'writeIfDefault', False)):
                 yield (key, value)
     hasSignatureNonDefaultValues = staticmethod(hasSignatureNonDefaultValues)
 
