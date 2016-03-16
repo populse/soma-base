@@ -92,7 +92,7 @@ class QtImporter(object):
                                                       plugin_globals,
                                                       plugin_locals)
                 
-                if os.path.splitext(os.path.basename( filename ))[0] == 'kde4':
+                if os.path.splitext(os.path.basename(filename.name))[0] == 'kde4':
                     # Replaces kde4 getFilter function
                     if ('getFilter_orig' not in plugin_locals):
                         plugin_locals['getFilter_orig'] = plugin_locals['getFilter']
