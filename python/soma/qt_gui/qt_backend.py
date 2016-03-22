@@ -77,7 +77,7 @@ class QtImporter(object):
         #                                   brainvisa process raises segfault
         # ref: https://bioproj.extra.cea.fr/redmine/issues/13432
         if module_name == 'uic' and qt_backend == 'PyQt4':
-            def _safe_load_plugin(filename, plugin_globals, plugin_locals):
+            def _safe_load_plugin(plugin, plugin_globals, plugin_locals):
                 def _safe_getFilter():
                     import sys, DLFCN
                     res = plugin_locals['getFilter_orig']()
@@ -88,11 +88,18 @@ class QtImporter(object):
                 import os
                 __import__('.'.join(['PyQt4', 'uic', 'objcreator']))
                 uic = sys.modules['.'.join([qt_backend, module_name])]
-                res = uic.objcreator.load_plugin_orig(filename,
+                res = uic.objcreator.load_plugin_orig(plugin,
                                                       plugin_globals,
                                                       plugin_locals)
                 
-                if os.path.splitext(os.path.basename(filename.name))[0] == 'kde4':
+                # It seems that this function is sometimes called with a first
+                # argument of type File, sometimes of type str. Both cases
+                # should be handled by this switch.
+                if hasattr(plugin, "name"):
+                    filename = plugin.name
+                else:
+                    filename = plugin
+                if os.path.splitext(os.path.basename(filename))[0] == 'kde4':
                     # Replaces kde4 getFilter function
                     if ('getFilter_orig' not in plugin_locals):
                         plugin_locals['getFilter_orig'] = plugin_locals['getFilter']
