@@ -48,11 +48,13 @@ can be imported from C{soma.minf.api}:
 * organization: `NeuroSpin <http://www.neurospin.org>`_
 * license: `CeCILL B <http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html>`_
 '''
+from __future__ import print_function
+
 __docformat__ = "restructuredtext en"
 
-
 import gzip
-
+import six
+import sys
 
 from soma.translation import translate as _
 from soma.minf.error import MinfError
@@ -65,6 +67,9 @@ from soma.minf.tree import createReducerAndExpander, registerClass, \
     listStructure, dictStructure
 from soma.undefined import Undefined
 defaultReducer = MinfReducer.defaultReducer
+
+if sys.version_info[0] >= 3:
+    unicode = str
 
 
 #------------------------------------------------------------------------------
@@ -151,7 +156,7 @@ def _setTarget(target, source):
             target.update(source)
             return True
         elif isinstance(target, HasSignature):
-            for k, v in source.iteritems():
+            for k, v in six.iteritems(source):
                 attrTarget = getattr(target, k, Undefined)
                 if attrTarget is Undefined:
                     setattr(target, k, v)
@@ -174,7 +179,7 @@ def iterateMinf(source, targets=None, stop_on_error=True, exceptions=[]):
       from soma.minf.api import iterateMinf
 
       for item in iterateMinf('test.minf'):
-        print repr(item)
+        print(repr(item))
 
     Parameters
     ----------
@@ -193,6 +198,13 @@ def iterateMinf(source, targets=None, stop_on_error=True, exceptions=[]):
     # Check first non white character to see if the minf file is XML or not
     start = source.read(5)
     source.unread(start)
+    if sys.version_info[0] >= 3:
+        def next(it):
+            return it.__next__()
+    else:
+        def next(it):
+            return it.next()
+
     if start == 'attri':
         try:
             import numpy
@@ -200,8 +212,8 @@ def iterateMinf(source, targets=None, stop_on_error=True, exceptions=[]):
         except:
             d = {'nan': None}
         try:
-            exec source.read().replace("\r\n", "\n") in d
-        except Exception, e:
+            six.exec_(source.read().replace("\r\n", "\n"), d)
+        except Exception as e:
             x = source
             if hasattr(source, '_BufferAndFile__file'):
                 x = source._BufferAndFile__file
@@ -209,11 +221,11 @@ def iterateMinf(source, targets=None, stop_on_error=True, exceptions=[]):
             msg = x + e.message
             # e.message = msg
             # e.args = ( x + e.args[0], ) + e.args[1:]
-            print x
+            print(x)
             raise
         minf = d['attributes']
         if targets is not None:
-            result = targets.next()
+            result = next(targets)
             _setTarget(result, minf)
             yield result
         else:
@@ -229,7 +241,7 @@ def iterateMinf(source, targets=None, stop_on_error=True, exceptions=[]):
 
     r = MinfReader.createReader('XML')
     iterator = r.nodeIterator(source)
-    minfNode = iterator.next()
+    minfNode = next(iterator)
     expander = createMinfExpander(minfNode.attributes['reduction'])
     count = 0
     for nodeItem in iterator:
@@ -239,7 +251,7 @@ def iterateMinf(source, targets=None, stop_on_error=True, exceptions=[]):
         target = None
         if targets is not None:
             try:
-                target = targets.next()
+                target = next(targets)
             except StopIteration:
                 targets = None
         yield expander.expand(iterator, nodeItem, target=target, stop_on_error=stop_on_error, exceptions=exceptions)
@@ -300,8 +312,14 @@ def writeMinf(destFile, args, format='XML', reducer=None):
       see :func:`createMinfWriter`
     '''
     it = iter(args)
+    if sys.version_info[0] <= 2:
+        def next(it):
+            return it.next()
+    else:
+        def next(it):
+            return it.__next__()
     try:
-        firstItem = it.next()
+        firstItem = next(it)
     except StopIteration:
         firstItem = Undefined
     if reducer is None:
@@ -333,7 +351,8 @@ minf_2_0_reducer = MinfReducer('minf_2.0')
 minf_2_0_reducer.registerAtomType(None.__class__)
 minf_2_0_reducer.registerAtomType(bool)
 minf_2_0_reducer.registerAtomType(int)
-minf_2_0_reducer.registerAtomType(long)
+if sys.version_info[0] <= 2:
+    minf_2_0_reducer.registerAtomType(long)
 minf_2_0_reducer.registerAtomType(float)
 minf_2_0_reducer.registerAtomType(str)
 minf_2_0_reducer.registerAtomType(unicode)

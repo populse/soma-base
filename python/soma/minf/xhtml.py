@@ -43,7 +43,11 @@ can be saved in minf files.
 __docformat__ = "restructuredtext en"
 
 import types
-from cStringIO import StringIO
+try:
+    from cStringIO import StringIO
+except ImportError:
+    # python3
+    from io import StringIO
 
 from soma.translation import translate as _
 from soma.minf.api import readMinf

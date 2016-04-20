@@ -45,6 +45,7 @@ __docformat__ = "restructuredtext en"
 
 import types
 import sys
+import six
 from soma.translation import translate as _
 from soma.undefined import Undefined
 from soma.minf.error import MinfError
@@ -120,7 +121,7 @@ class StartStructure(object):
         else:
             l = []
         l += [unicode(i) + '="' + unicode(j) +
-              '"' for i, j in self.attributes.iteritems()]
+              '"' for i, j in six.iteritems(self.attributes)]
         return '<' + self.type + ' ' + ', '.join(l) + '>'
 
 
@@ -204,7 +205,7 @@ class MinfReducer(object):
                 for minfNode in reducer.reduce(item):
                     yield minfNode
             if kwargs:
-                for key, value in kwargs.iteritems():
+                for key, value in six.iteritems(kwargs):
                     for minfNode in reducer.reduce(key):
                         yield minfNode
                     for minfNode in reducer.reduce(value):
@@ -219,7 +220,7 @@ class MinfReducer(object):
         self._allReducers[name] = self
 
     def getTypeReducer(self, classOrName):
-        if not isinstance(classOrName, (str, unicode)):
+        if not isinstance(classOrName, six.string_types):
             className = classOrName.__module__ + '.' + classOrName.__name__
         else:
             className = classOrName
@@ -264,7 +265,7 @@ class MinfReducer(object):
             yield StartStructure(dictStructure)
         except TypeError:
             yield StartStructure(dictStructure)
-        for key, value in dict.iteritems():
+        for key, value in six.iteritems(dict):
             for minfNode in reducer.reduce(key):
                 yield minfNode
             for minfNode in reducer.reduce(value):
@@ -273,8 +274,11 @@ class MinfReducer(object):
     dictReducer = staticmethod(dictReducer)
 
     def hasSignatureNonDefaultValues(o):
-        it = o.signature.iteritems()
-        it.next()
+        it = six.iteritems(o.signature)
+        if sys.version_info[0] >= 3:
+            next(it)
+        else:
+            it.next()
         for key, sigItem in it:
             value = getattr(o, key, Undefined)
             if value is not Undefined \
@@ -317,7 +321,7 @@ class MinfReducer(object):
 
         @returns: string or None
         '''
-        if isinstance(value, type) or type(value) is types.ClassType:
+        if isinstance(value, type) or (sys.version_info[0] <= 2 and type(value) is types.ClassType):
             # value is a class
             cls = value
         else:
@@ -374,7 +378,7 @@ class MinfExpander(object):
                             args.append(value)
                         else:
                             kwargs[str(key)] = value
-                    except Exception, e:
+                    except Exception as e:
                         if stop_on_error:
                             raise e
                         else:
@@ -401,9 +405,13 @@ class MinfExpander(object):
                                 {'struct': structureName, 'minf': self.name})
         return expander
 
-    def expand(self, minfNodeIterator, minfNode=Undefined, target=None, targetType=Undefined, stop_on_error=True, exceptions=[]):
+    def expand(self, minfNodeIterator, minfNode=Undefined, target=None,
+               targetType=Undefined, stop_on_error=True, exceptions=[]):
         if minfNode is Undefined:
-            minfNode = minfNodeIterator.next()
+            if sys.version_info[0] >= 3:
+                minfNode = next(minfNodeIterator)
+            else:
+                minfNode = minfNodeIterator.next()
         if isinstance(minfNode, StartStructure):
             identifier = minfNode.identifier
             typeExpander = self.getTypeExpander(minfNode.type)
@@ -411,7 +419,7 @@ class MinfExpander(object):
                 result = typeExpander(
                     self, minfNode, minfNodeIterator, target=target,
                     targetType=targetType, stop_on_error=stop_on_error, exceptions=exceptions)
-            except Exception, e:
+            except Exception as e:
                 if stop_on_error:
                     raise e
                 else:
@@ -428,7 +436,15 @@ class MinfExpander(object):
         else:
             return minfNode
 
-    def sequenceExpander(expander, minfNode, minfNodeIterator, target, targetType, stop_on_error=True, exceptions=[]):
+    def sequenceExpander(expander, minfNode, minfNodeIterator, target,
+                         targetType, stop_on_error=True, exceptions=[]):
+        if sys.version_info[0] >= 3:
+            def next(it):
+                return it.__next__()
+        else:
+            def next(it):
+                return it.next()
+
         if target is None:
             result = []
         else:
@@ -449,7 +465,7 @@ class MinfExpander(object):
                 target = None
                 if itTarget is not None:
                     try:
-                        target = itTarget.next()
+                        target = next(itTarget)
                     except StopIteration:
                         itTarget = None
                 if target is not None:
@@ -459,7 +475,7 @@ class MinfExpander(object):
                     try:
                         result.append(
                             expander.expand(minfNodeIterator, minfNode, stop_on_error=stop_on_error, exceptions=exceptions))
-                    except Exception, e:
+                    except Exception as e:
                         if stop_on_error:
                             raise e
                         else:
@@ -500,7 +516,7 @@ class MinfExpander(object):
                             value = expander.expand(
                                 minfNodeIterator, stop_on_error=stop_on_error, exceptions=exceptions)
                         setattr(result, key, value)
-                    except Exception, e:
+                    except Exception as e:
                         if stop_on_error:
                             raise e
                         else:
@@ -511,7 +527,7 @@ class MinfExpander(object):
                         value = expander.expand(
                             minfNodeIterator, stop_on_error=stop_on_error, exceptions=exceptions)
                         result[key] = value
-                    except Exception, e:
+                    except Exception as e:
                         if stop_on_error:
                             raise e
                         else:
