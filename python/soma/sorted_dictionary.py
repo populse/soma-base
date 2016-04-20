@@ -44,6 +44,8 @@ In addition OrderedDict is provided here, either as the standard
 collections.OrderedDict class if python version >= 2.7, or based on
 SortedDictionary if python version < 2.7.
 '''
+from __future__ import print_function
+
 __docformat__ = "restructuredtext en"
 
 import sys
@@ -151,7 +153,7 @@ class SortedDictionary(dict):
             try:
                 yield (k, self[k])
             except KeyError:
-                print '!SortedDictionary error!', self.keys(), self.sortedKeys
+                print('!SortedDictionary error!', self.keys(), self.sortedKeys)
                 raise
 
     def insert(self, index, key, value):

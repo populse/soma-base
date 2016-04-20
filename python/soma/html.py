@@ -41,7 +41,11 @@ Utility functions for HTML format.
 '''
 __docformat__ = "restructuredtext en"
 
-import htmlentitydefs
+try:
+    import htmlentitydefs
+except ImportError:
+    # python3
+    import html.entities as htmlentitydefs
 
 #------------------------------------------------------------------------------
 #: mapping of charaters to be escaped for HTML

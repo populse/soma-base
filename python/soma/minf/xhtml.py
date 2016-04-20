@@ -43,7 +43,13 @@ can be saved in minf files.
 __docformat__ = "restructuredtext en"
 
 import types
-from cStringIO import StringIO
+try:
+    from cStringIO import StringIO
+except ImportError:
+    # python3
+    from io import StringIO
+
+import six
 
 from soma.translation import translate as _
 from soma.minf.api import readMinf
@@ -99,7 +105,7 @@ class XHTML:
                 if item.attributes:
                     result += ' ' + ' '.join(
                         [unicode(a) + '="' + unicode(v) + '"'
-                         for a, v in item.attributes.iteritems()])
+                         for a, v in six.iteritems(item.attributes)])
                 if item.content:
                     result += '>' + item._contentXML( item.content ) + '</' + \
                               str(item.tag) + '>'

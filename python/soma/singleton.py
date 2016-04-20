@@ -65,7 +65,7 @@ class Singleton(object):
 
       o1 = MyClass()
       o2 = MyClass()
-      print o1 is o2
+      print(o1 is o2)
 
     '''
     def __new__(cls, *args, **kwargs):
