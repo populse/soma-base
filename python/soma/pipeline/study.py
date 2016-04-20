@@ -89,7 +89,6 @@ class Study(Controller):
         # else:
             # self.compteur_run_process[process_name]=1
     def save_run(self, attributes, process):
-        print 'save run'
         # Create date directory
         date = datetime.datetime.now()
         date_directory = str(date.day) + '_' + str(

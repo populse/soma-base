@@ -49,6 +49,8 @@ except ImportError:
     # python3
     from io import StringIO
 
+import six
+
 from soma.translation import translate as _
 from soma.minf.api import readMinf
 from soma.minf.xml_tags import minfTag, expanderAttribute, xhtmlTag
@@ -103,7 +105,7 @@ class XHTML:
                 if item.attributes:
                     result += ' ' + ' '.join(
                         [unicode(a) + '="' + unicode(v) + '"'
-                         for a, v in item.attributes.iteritems()])
+                         for a, v in six.iteritems(item.attributes)])
                 if item.content:
                     result += '>' + item._contentXML( item.content ) + '</' + \
                               str(item.tag) + '>'
