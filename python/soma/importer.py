@@ -44,6 +44,7 @@ __docformat__ = "restructuredtext en"
 import sys
 import imp
 import types
+import six
 
 from soma.functiontools import partial
 from soma.singleton import Singleton
@@ -196,7 +197,7 @@ class GenericHandlers:
             # Changes child objects module, recursively and avoiding loops
             stack = []
             done = []
-            for (childName, childObject) in locals.iteritems():
+            for (childName, childObject) in six.iteritems(locals):
                 if not childName.startswith("__") \
                     and hasattr( childObject, '__module__' ) \
                         and childObject.__module__ == referedModule.__name__:

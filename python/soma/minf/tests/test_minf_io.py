@@ -36,8 +36,6 @@ class TestMinfIO(unittest.TestCase):
         minf_file = os.path.join(self.directory, 'minf_py_file.minf')
         open(minf_file, 'w').write('attributes = ' + repr(d) + '\n')
         dd = minf.readMinf(minf_file)
-        print('d:', d)
-        print('dd:', dd)
         self.assertEqual(d, dd[0])
 
 
