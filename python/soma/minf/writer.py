@@ -54,7 +54,10 @@ class RegisterMinfWriterClass(type):
     register all classes derived from L{MinfWriter}.
     '''
     def __init__(cls, name, bases, dict):
-        if cls.name is not None:
+        # why test hasattr(cls, name) ?
+        # on Ubuntu 12.04 the six.with_metaclass() function may trigger this
+        # constructor on a "NewBase" type which doesn't have the name attribute
+        if hasattr(cls, name) and cls.name is not None:
             MinfWriter._allWriterClasses[cls.name] = cls
 
 

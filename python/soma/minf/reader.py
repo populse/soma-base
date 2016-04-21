@@ -56,7 +56,10 @@ class RegisterMinfReaderClass(type):
     register all classes derived from L{MinfReader}.
     '''
     def __init__(cls, name, bases, dict):
-        if cls.name is not None:
+        # why test hasattr(cls, name) ?
+        # on Ubuntu 12.04 the six.with_metaclass() function may trigger this
+        # constructor on a "NewBase" type which doesn't have the name attribute
+        if hasattr(cls, name) and cls.name is not None:
             MinfReader._allReaderClasses[cls.name] = cls
 
 
