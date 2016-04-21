@@ -49,6 +49,7 @@ from __future__ import print_function
 __docformat__ = "restructuredtext en"
 
 import sys
+import six
 from soma.undefined import Undefined
 
 
@@ -100,7 +101,10 @@ class SortedDictionary(dict):
         list
             sorted list of (key, value) pairs
         '''
-        return [x for x in self.iteritems()]
+        if sys.version_info[0] >= 3:
+            return self.iteritems()
+        else:
+            return [x for x in self.iteritems()]
 
     def values(self):
         '''
@@ -112,7 +116,7 @@ class SortedDictionary(dict):
         return [x for x in self.itervalues()]
 
     def __setitem__(self, key, value):
-        if not self.has_key(key):
+        if key not in self:
             self.sortedKeys.append(key)
         super(SortedDictionary, self).__setitem__(key, value)
 
@@ -248,7 +252,7 @@ class SortedDictionary(dict):
                                for k, v in self.iteritems()) + '}'
 
     def update(self, dict_obj):
-        for k, v in dict_obj.iteritems():
+        for k, v in six.iteritems(dict_obj):
             self[k] = v
 
     def copy(self):

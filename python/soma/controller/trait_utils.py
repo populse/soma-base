@@ -12,12 +12,16 @@ import types
 from textwrap import wrap
 import re
 import logging
+import six
 
 # Define the logger
 logger = logging.getLogger(__name__)
 
 # Trait import
 import traits.api as traits
+
+if sys.version_info[0] >= 3:
+    unicode = str
 
 
 # Global parameters
@@ -272,7 +276,7 @@ def eval_trait(expression):
 
     # Evaluate the expression in the defined namespace
     def f():
-        exec expression in namespace
+        six.exec_(expression, namespace)
     try:
         f()
     except:

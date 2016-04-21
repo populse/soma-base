@@ -46,6 +46,7 @@ import platform
 import fnmatch
 import hashlib
 import re
+import six
 
 
 def split_path(path):
@@ -267,7 +268,7 @@ def update_query_string(
   url_params = urlparse.parse_qs(url_parsed.query)
 
   # Update parameters dictionary
-  for p, v in params.iteritems():
+  for p, v in six.iteritems(params):
     update_mode = params_update_mode.get(
       p,
       default_update_mode

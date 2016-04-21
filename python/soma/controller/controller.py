@@ -8,6 +8,7 @@
 
 # System import
 import logging
+import six
 
 # Define the logger
 logger = logging.getLogger(__name__)
@@ -21,7 +22,7 @@ from soma.sorted_dictionary import SortedDictionary, OrderedDict
 from soma.controller.trait_utils import _type_to_trait_id
 
 
-class ControllerMeta(HasTraits.__metaclass__):
+class ControllerMeta(HasTraits.__class__):
 
     """ This metaclass allows for automatic registration of factories.
     """
@@ -42,7 +43,7 @@ class ControllerMeta(HasTraits.__metaclass__):
         return super(ControllerMeta, mcs).__new__(mcs, name, bases, dictionary)
 
 
-class Controller(HasTraits):
+class Controller(six.with_metaclass(ControllerMeta, HasTraits)):
 
     """ A Controller contains some traits: attributes typing and observer
     (callback) pattern.
@@ -64,8 +65,6 @@ class Controller(HasTraits):
     remove_trait
     _clone_trait
     """
-    # Meta class used to defined factories
-    __metaclass__ = ControllerMeta
 
     # This event is necessary because there is no event when a trait is
     # removed with remove_trait and because it is sometimes better to send
@@ -104,7 +103,7 @@ class Controller(HasTraits):
         if class_traits:
             sorted_names = sorted(
                 (getattr(trait, "order", ""), name)
-                for name, trait in class_traits.iteritems()
+                for name, trait in six.iteritems(class_traits)
                 if self.is_user_trait(trait))
             sorted_names = [sorted_name[1] for sorted_name in sorted_names]
 
@@ -303,7 +302,7 @@ class Controller(HasTraits):
             follow the mapping protocol API.
         """
         state_dict = dict_class()
-        for trait_name, trait in self.user_traits().iteritems():
+        for trait_name, trait in six.iteritems(self.user_traits()):
             if exclude_transient and trait.transient:
                 continue
             value = getattr(self, trait_name)
@@ -334,7 +333,7 @@ class Controller(HasTraits):
             for trait_name in self.user_traits():
                 if trait_name not in state_dict:
                     delattr(self, trait_name)
-        for trait_name, value in state_dict.iteritems():
+        for trait_name, value in six.iteritems(state_dict):
             trait = self.trait(trait_name)
             if trait is None and not isinstance(self, OpenKeyController):
                 raise KeyError(
@@ -365,7 +364,7 @@ class Controller(HasTraits):
             True.
         """
         copied = self.__class__()
-        for name, trait in self.user_traits().iteritems():
+        for name, trait in six.iteritems(self.user_traits()):
             copied.add_trait(name, trait)
             if with_values:
                 setattr(copied, name, getattr(self, name))

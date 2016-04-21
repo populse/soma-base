@@ -48,6 +48,7 @@ __docformat__ = "restructuredtext en"
 import __builtin__
 if not hasattr(__builtin__, 'set'):
     from sets import Set as set
+import six
 
 from soma.translation import translate as _
 from soma.functiontools import checkParameterCount, numberOfParameterRange
@@ -408,7 +409,7 @@ class ObservableAttributes(object):
         if not checkedObjects == None:
             checkedObjects.add(self)
 
-        for name, notifier in self._onAttributeChange.iteritems():
+        for name, notifier in six.iteritems(self._onAttributeChange):
             notifier.delayNotification(ignoreDoubles)
         self._onAnyAttributeChange.delayNotification(ignoreDoubles)
 
@@ -444,7 +445,7 @@ class ObservableAttributes(object):
         if not checkedObjects == None:
             checkedObjects.add(self)
 
-        for name, notifier in self._onAttributeChange.iteritems():
+        for name, notifier in six.iteritems(self._onAttributeChange):
             notifier.restartNotification()
         self._onAnyAttributeChange.restartNotification()
         # Recursively restart notification
