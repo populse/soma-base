@@ -71,7 +71,9 @@ class QtImporter(object):
         qt_backend = get_qt_backend()
         module_name = name.split('.')[-1]
         __import__('.'.join([qt_backend, module_name]))
-        return sys.modules['.'.join([qt_backend, module_name])]
+        module = sys.modules['.'.join([qt_backend, module_name])]
+        sys.modules[name] = module
+        return module
 
 # tune the import statement to get Qt submodules in this one
 sys.meta_path.append(QtImporter())
