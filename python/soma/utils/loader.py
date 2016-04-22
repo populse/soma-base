@@ -47,7 +47,7 @@ def load_objects(module_name, object_name=None, allowed_instances=None):
         try:
             insert_tool(tools, getattr(module, object_name),
                         allowed_instances)
-        except ImportError, e:
+        except ImportError as e:
             raise Exception("Could not import {0}: {1}".format(object_name,
                                                                e))
     else:
@@ -57,7 +57,7 @@ def load_objects(module_name, object_name=None, allowed_instances=None):
             try:
                 insert_tool(tools, getattr(module, tool_name),
                             allowed_instances)
-            except ImportError, e:
+            except ImportError as e:
                 raise Exception("Could not import {0}: {1}".format(
                                 tool_name, e))
 

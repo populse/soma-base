@@ -42,7 +42,11 @@ Utility classes and functions for Python callable.
 __docformat__ = "restructuredtext en"
 
 import inspect
-from itertools import izip
+try:
+    from itertools import izip
+except ImportError:
+    # python3
+    izip = zip
 
 
 #-------------------------------------------------------------------------
@@ -99,6 +103,10 @@ class SomaPartial(object):
         result = Empty()
         result.co_argcount = numberOfParameterRange(self)[0]
         return result
+
+    @property
+    def __code__(self):
+        return self.func_code
 
 try:
     from functools import partial
