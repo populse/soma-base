@@ -154,7 +154,7 @@ def set_qt_backend(backend=None, pyqt_api=1):
             for sip_class in sip_classes:
                 try:
                     sip.setapi(sip_class, pyqt_api)
-                except ValueError, e:
+                except ValueError as e:
                     if not _sip_api_set:
                         logging.warning(e.message)
             _sip_api_set = True
