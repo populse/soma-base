@@ -118,7 +118,10 @@ class QtImporter(object):
                     = uic.objcreator.load_plugin
                 uic.objcreator.load_plugin = _safe_load_plugin
             
-        return sys.modules['.'.join([qt_backend, module_name])]
+        module = sys.modules['.'.join([qt_backend, module_name])]
+        sys.modules[name] = module
+        return module
+
 
 # tune the import statement to get Qt submodules in this one
 sys.meta_path.append(QtImporter())
