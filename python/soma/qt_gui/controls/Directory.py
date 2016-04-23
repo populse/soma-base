@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 # Soma import
 from soma.qt_gui.qt_backend import QtGui, QtCore
 from soma.qt_gui import qt_backend
-from File import FileControlWidget
+from .File import FileControlWidget
 
 
 class DirectoryControlWidget(FileControlWidget):
