@@ -131,7 +131,7 @@ def is_trait_value_defined(value):
 
     # Check if the trait value is not valid
     if (value is None or value is traits.Undefined or
-       (type(value) in six.string_types and value == "")):
+       (isinstance(value, six.string_types) and value == "")):
 
         is_valid = False
 
