@@ -463,7 +463,7 @@ class ControllerTrait(TraitType):
                 return sup_inst.validate(value)
             else:
                 return value
-        if not hasattr(value, 'iteritems'):
+        if not hasattr(value, 'items'):
             raise TraitError('trait must be a Controller or a mapping type')
         new_value = getattr(object, name).copy(with_values=False)
         if self.inner_trait:
