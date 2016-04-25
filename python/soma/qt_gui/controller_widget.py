@@ -9,6 +9,7 @@
 # System import
 import logging
 import os
+import six
 
 # Define the logger
 logger = logging.getLogger(__name__)
@@ -230,7 +231,7 @@ class ControllerWidget(QtGui.QWidget):
         valid = True
 
         # Go through all the controller widget controls
-        for control_name, control in self._controls.iteritems():
+        for control_name, control in six.iteritems(self._controls):
 
             # Unpack the control item
             trait, control_class, control_instance, control_label = control
@@ -251,7 +252,7 @@ class ControllerWidget(QtGui.QWidget):
         widget user defined parameters.
         """
         # Go through all the controller widget controls
-        for control_name, control in self._controls.iteritems():
+        for control_name, control in six.iteritems(self._controls):
 
             # Unpack the control item
             trait, control_class, control_instance, control_label = control
@@ -267,7 +268,7 @@ class ControllerWidget(QtGui.QWidget):
         the controller traits values.
         """
         # Go through all the controller widget controls
-        for control_name, control in self._controls.iteritems():
+        for control_name, control in six.iteritems(self._controls):
 
             # Unpack the control item
             trait, control_class, control_instance, control_label = control
@@ -287,7 +288,7 @@ class ControllerWidget(QtGui.QWidget):
         if not self.connected:
 
             # Go through all the controller widget controls
-            for control_name, control in self._controls.iteritems():
+            for control_name, control in six.iteritems(self._controls):
 
                 # Unpack the control item
                 trait, control_class, control_instance, control_label = control
@@ -313,7 +314,7 @@ class ControllerWidget(QtGui.QWidget):
             return
         keys_connect = {}
         # Go through all the controller widget controls
-        for control_name, control in self._controls.iteritems():
+        for control_name, control in six.iteritems(self._controls):
             hook1 = partial(self._key_modified, control_name)
             hook2 = partial(self._delete_key, control_name)
             control = self._controls[control_name]
@@ -337,7 +338,7 @@ class ControllerWidget(QtGui.QWidget):
                 self.update_controls, "user_traits_changed", remove=True)
 
             # Go through all the controller widget controls
-            for control_name, control in self._controls.iteritems():
+            for control_name, control in six.iteritems(self._controls):
 
                 # Unpack the control item
                 trait, control_class, control_instance, control_label = control
@@ -349,7 +350,7 @@ class ControllerWidget(QtGui.QWidget):
             self.connected = False
 
     def disconnect_keys(self):
-        for control_name, connections in self._keys_connections.iteritems():
+        for control_name, connections in six.iteritems(self._keys_connections):
             label_widget, hook1, hook2 = connections
             label_widget.userModification.disconnect(hook1)
             label_widget.buttonPressed.disconnect(hook2)
@@ -372,7 +373,7 @@ class ControllerWidget(QtGui.QWidget):
 
         # Go through all the controller widget controls
         to_remove_controls = []
-        for control_name, control in self._controls.iteritems():
+        for control_name, control in six.iteritems(self._controls):
 
             # Message
             logger.debug(
@@ -431,7 +432,7 @@ class ControllerWidget(QtGui.QWidget):
         At the end the controls with wrong values will be colored in red.
         """
         # Go through all the controller widget controls
-        for control_name, control in self._controls.iteritems():
+        for control_name, control in six.iteritems(self._controls):
 
             # Unpack the control item
             trait, control_class, control_instance, control_label = control
@@ -449,16 +450,16 @@ class ControllerWidget(QtGui.QWidget):
         # Select only the controller traits of interest
         all_traits = self.controller.user_traits()
         if self.select_controls is None:
-            slected_traits = all_traits
+            selected_traits = all_traits
         elif self.select_controls == "inputs":
-            slected_traits = dict(
+            selected_traits = dict(
                 (trait_name, trait)
-                for trait_name, trait in all_traits.iteritems()
+                for trait_name, trait in six.iteritems(all_traits)
                 if trait.output == False)
         elif self.select_controls == "outputs":
-            slected_traits = dict(
+            selected_traits = dict(
                 (trait_name, trait)
-                for trait_name, trait in all_traits.iteritems()
+                for trait_name, trait in six.iteritems(all_traits)
                 if trait.output == True)
         else:
             raise Exception(
@@ -466,7 +467,7 @@ class ControllerWidget(QtGui.QWidget):
                 "options are 'inputs' or 'outputs'.".format(self.select_controls))
 
         # Go through all the controller user traits
-        for trait_name, trait in slected_traits.iteritems():
+        for trait_name, trait in six.iteritems(selected_traits):
 
             # Create the widget
             self.create_control(trait_name, trait)

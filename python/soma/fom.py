@@ -79,7 +79,7 @@ def read_json(file_name):
     '''
     try:
         return json_reader.load(open(file_name, 'r'), object_pairs_hook=OrderedDict)
-    except ValueError, e:
+    except ValueError as e:
         if json_reader.__name__ != 'yaml':
             extra_msg = ' Check your python installation, and perhaps un a "pip install PyYAML" or "easy_install PyYAML"'
         else:
@@ -488,7 +488,7 @@ class FileOrganizationModels(object):
                         else:
                             try:
                                 pattern, formats, rule_attributes = rule
-                            except Exception, e:
+                            except Exception as e:
                                 print('error in FOM: %s, process: %s, param: '
                                     '%s, rule:'
                                     % (fom_name, process, parameter), rule)
