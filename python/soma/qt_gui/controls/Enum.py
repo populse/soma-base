@@ -9,6 +9,7 @@
 # System import
 import logging
 from functools import partial
+import sys
 
 # Define the logger
 logger = logging.getLogger(__name__)
@@ -16,6 +17,9 @@ logger = logging.getLogger(__name__)
 # Soma import
 from soma.qt_gui.qt_backend import QtGui, QtCore
 from soma.utils.functiontools import SomaPartial
+
+if sys.version_info[0] >= 3:
+    unicode = str
 
 
 class EnumControlWidget(object):
