@@ -10,6 +10,7 @@
 import logging
 import sys
 import os
+import six
 
 # Soma import
 from soma.qt_gui.qt_backend import QtGui, QtCore
@@ -61,7 +62,8 @@ class ControllerControlWidget(object):
 
         # Go through all the controller widget controls
         controller_widget = control_instance.controller_widget
-        for control_name, control in controller_widget._controls.iteritems():
+        for control_name, control \
+                in six.iteritems(controller_widget._controls):
 
             # Unpack the control item
             trait, control_class, control_instance, control_label = control
