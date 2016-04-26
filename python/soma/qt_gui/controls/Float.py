@@ -9,6 +9,7 @@
 # System import
 import logging
 import re
+import sys
 import traits.api as traits
 
 # Define the logger
@@ -17,6 +18,9 @@ logger = logging.getLogger(__name__)
 # Soma import
 from soma.qt_gui.qt_backend import QtCore
 from .Str import StrControlWidget
+
+if sys.version_info[0] >= 3:
+    unicode = str
 
 
 class FloatControlWidget(StrControlWidget):
