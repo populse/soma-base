@@ -10,6 +10,7 @@
 import os
 import logging
 from functools import partial
+import six
 
 # Define the logger
 logger = logging.getLogger(__name__)
@@ -74,7 +75,8 @@ class ListControlWidget(object):
 
         # Go through all the controller widget controls
         controller_widget = control_instance.controller_widget
-        for control_name, control in controller_widget._controls.iteritems():
+        for control_name, control \
+                in six.iteritems(controller_widget._controls):
 
             # Unpack the control item
             trait, control_class, control_instance, control_label = control
@@ -417,7 +419,7 @@ class ListControlWidget(object):
             # Connect also all list items
             inner_controls = control_instance.controller_widget._controls
             for (inner_control_name,
-                 inner_control) in inner_controls.iteritems():
+                 inner_control) in six.iteritems(inner_controls):
 
                 # Unpack the control item
                 inner_control_instance = inner_control[2]
@@ -472,7 +474,7 @@ class ListControlWidget(object):
             # Disconnect also all list items
             inner_controls = control_instance.controller_widget._controls
             for (inner_control_name,
-                 inner_control) in inner_controls.iteritems():
+                 inner_control) in six.iteritems(inner_controls):
 
                 # Unpack the control item
                 inner_control_instance = inner_control[2]
