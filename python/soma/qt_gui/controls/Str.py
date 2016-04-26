@@ -10,6 +10,7 @@
 import logging
 from functools import partial
 import traits.api as traits
+import sys
 
 # Define the logger
 logger = logging.getLogger(__name__)
@@ -18,6 +19,9 @@ logger = logging.getLogger(__name__)
 from soma.qt_gui.qt_backend import QtGui, QtCore
 from soma.utils.functiontools import SomaPartial
 from soma.qt_gui.timered_widgets import TimeredQLineEdit
+
+if sys.version_info >= 3:
+    unicode = str
 
 
 class StrControlWidget(object):
