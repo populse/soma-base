@@ -53,8 +53,16 @@ try:
 except ImportError:
     import json as json_reader
 
-
 from soma.path import split_path
+
+if sys.version_info[0] >= 3:
+    basestring = str
+    xrange = range
+    def items_list(d):
+        return list(d.items())
+else:
+    def items_list(d):
+        return d.items()
 
 
 def deep_update(update, original):
@@ -444,7 +452,7 @@ class FileOrganizationModels(object):
         self.format_lists.update(json_dict.get('format_lists', {}))
         self.shared_patterns.update(json_dict.get('shared_patterns', {}))
         if self.shared_patterns:
-            stack = self.shared_patterns.items()
+            stack = items_list(self.shared_patterns)
             while stack:
                 name, pattern = stack.pop()
                 if isinstance(pattern, list):
