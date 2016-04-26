@@ -20,7 +20,7 @@ from soma.qt_gui.qt_backend import QtGui, QtCore
 from soma.utils.functiontools import SomaPartial
 from soma.qt_gui.timered_widgets import TimeredQLineEdit
 
-if sys.version_info >= 3:
+if sys.version_info[0] >= 3:
     unicode = str
 
 
