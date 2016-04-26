@@ -5,7 +5,10 @@ from setuptools import setup, find_packages
 
 python_dir = os.path.join(os.path.dirname(__file__), "python")
 release_info = {}
-execfile(os.path.join(python_dir, "soma", "info.py"), release_info)
+
+with open(os.path.join(python_dir, "soma", "info.py")) as f:
+    code = f.read()
+    exec(code, release_info)
 
 setup(
     name=release_info["NAME"],
