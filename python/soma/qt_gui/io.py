@@ -33,6 +33,8 @@
 """
 Utils for socket communication
 """
+from __future__ import print_function
+
 import threading
 import socket
 import Queue
@@ -202,7 +204,7 @@ class Socket(QObject):
         Processes a message received on the socket.
         This method only print the message. To do some specific treatment, subclass Socket and redefine this method.
         """
-        print "message received :", msg, excep
+        print("message received :", msg, excep)
 
     def send(self, msg):
         """

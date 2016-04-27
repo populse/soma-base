@@ -40,6 +40,7 @@ This module contains functions and classes related to sqlite databases.
 * license: `CeCILL B <http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html>`_
 '''
 from __future__ import absolute_import
+from __future__ import print_function
 __docformat__ = "restructuredtext en"
 
 
@@ -91,8 +92,13 @@ class ThreadSafeSQLiteConnection(object):
                 connection, connectionClosed = self.connections[thread]
                 if connection is not None:
                     currentThread = threading.currentThread().getName()
-                    print >> sys.stderr, 'WARNING: internal error: an sqlite connection on', repr(sqliteFile), 'is opened for thread', thread, 'but the corresponding ThreadSafeSQLiteConnection instance (number ' + str(
-                        self._id) + ') is being deleted in thread', currentThread + '. Method currentThreadCleanup() should have been called from', thread, 'to supress this warning.'
+                    print('WARNING: internal error: an sqlite connection on',
+                          repr(sqliteFile), 'is opened for thread', thread,
+                          'but the corresponding ThreadSafeSQLiteConnection instance (number '
+                          + str(self._id)
+                          + ') is being deleted in thread', currentThread
+                          + '. Method currentThreadCleanup() should have been called from',
+                          thread, 'to supress this warning.', file=sys.stderr)
 
     def get_connection(self):
         '''
@@ -107,12 +113,12 @@ class ThreadSafeSQLiteConnection(object):
             raise RuntimeError(
                 'Attempt to access to a closed ThreadSafeSQLiteConnection')
         currentThread = threading.currentThread().getName()
-        # print '!ThreadSafeSQLiteConnection:' + currentThread + '!
+        # print('!ThreadSafeSQLiteConnection:' + currentThread + '!')
         # _getConnection( id =', self._id, ')', self.__args
         self._instanceLock.acquire()
         try:
             # currentThreadConnections = self.connections.setdefault( currentThread, {} )
-            # print '!ThreadSafeSQLiteConnection:' + currentThread + '!
+            # print('!ThreadSafeSQLiteConnection:' + currentThread + '!')
             # currentThreadConnections =', currentThreadConnections
             connection, connectionClosed = self.connections.get(
                 currentThread, (None, True))
@@ -120,8 +126,8 @@ class ThreadSafeSQLiteConnection(object):
                 if connection is not None:
                     connection.close()
                 connection = sqlite3.connect(*self.__args, **self.__kwargs)
-                # print '!ThreadSafeSQLiteConnection:' + currentThread + '!
-                # opened', connection
+                # print('!ThreadSafeSQLiteConnection:' + currentThread + '!'
+                # opened', connection)
                 self.connections[currentThread] = (connection, False)
         finally:
             self._instanceLock.release()

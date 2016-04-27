@@ -1,13 +1,18 @@
 """Extract reference documentation from the NumPy source tree.
 
 """
+from __future__ import print_function
 
 import inspect
 import textwrap
 import re
 import pydoc
-from StringIO import StringIO
+try:
+    from StringIO import StringIO
+except ImportError:
+    from io import StringIO
 from warnings import warn
+import six
 
 
 class Reader(object):
@@ -377,7 +382,7 @@ class NumpyDocString(object):
         idx = self['index']
         out = []
         out += ['.. index:: %s' % idx.get('default', '')]
-        for section, references in idx.iteritems():
+        for section, references in six.iteritems(idx):
             if section == 'default':
                 continue
             out += ['   :%s: %s' % (section, ', '.join(references))]
@@ -459,7 +464,7 @@ class FunctionDoc(NumpyDocString):
 
         if self._role:
             if not roles.has_key(self._role):
-                print "Warning: invalid role %s" % self._role
+                print("Warning: invalid role %s" % self._role)
             out += '.. %s:: %s\n    \n\n' % (roles.get(self._role, ''),
                                              func_name)
 
