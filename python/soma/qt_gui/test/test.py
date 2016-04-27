@@ -7,6 +7,8 @@
 # for details.
 #
 
+from __future__ import print_function
+
 # System import
 import sys
 import logging
@@ -80,12 +82,12 @@ if __name__ == "__main__":
     widget2.show()
 
     # Check if the controller widget is valid before edition
-    print "Controller widget valid before edition: ",
-    print widget1.controller_widget.is_valid()
+    print("Controller widget valid before edition: ", end=' ')
+    print(widget1.controller_widget.is_valid())
 
     # Start the qt loop
     app.exec_()
 
     # Check if the controller widget is valid after edition
-    print "Controller widget valid after edition: ",
-    print widget1.controller_widget.is_valid()
+    print("Controller widget valid after edition: ", end=' ')
+    print(widget1.controller_widget.is_valid())

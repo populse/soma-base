@@ -39,6 +39,8 @@ It enables to do thread safe calls because all tasks sent are executed in the sa
 * organization: `NeuroSpin <http://www.neurospin.org>`_
 * license: `CeCILL B <http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html>`_
 """
+from __future__ import print_function
+
 __docformat__ = "restructuredtext en"
 
 import sys
@@ -101,7 +103,7 @@ class QtThreadCall(singleton.Singleton, QObject):
                 self.mainThread = thread
                 break
         if not mainthreadfound:
-            print 'Warning: main thread not found'
+            print('Warning: main thread not found')
             self.mainThread = threading.currentThread()
 
     def _postEvent(self):
@@ -210,7 +212,7 @@ class QtThreadCall(singleton.Singleton, QObject):
         self.lock.acquire()
         try:
             actions = self.actions
-            # print "actions to do", self.actions
+            # print("actions to do", self.actions)
             self.actions = []
         finally:
             self.lock.release()

@@ -4,6 +4,7 @@ import os
 import collections
 import datetime
 import glob
+import six
 from soma.sorted_dictionary import SortedDictionary
 from soma.controller import Controller
 try:
@@ -121,7 +122,7 @@ class Study(Controller):
         run['output'] = collections.OrderedDict()
         # dicti_sorted=SortedDictionary(*[(key,a[key]) for key in a])
 
-        for name, trait in process.user_traits().iteritems():
+        for name, trait in six.iteritems(process.user_traits()):
             if trait.is_trait_type(File) is False:
                 run['parameters'][name] = getattr(process, name)
             elif trait.output is False:

@@ -11,6 +11,7 @@ import os
 import logging
 from functools import partial
 from traits.api import Instance
+import six
 
 # Define the logger
 logger = logging.getLogger(__name__)
@@ -72,7 +73,8 @@ class DictControlWidget(object):
 
         # Go through all the controller widget controls
         controller_widget = control_instance.controller_widget
-        for control_name, control in controller_widget._controls.iteritems():
+        for control_name, control \
+                in six.iteritems(controller_widget._controls):
 
             # Unpack the control item
             trait, control_class, control_instance, control_label = control
@@ -179,7 +181,7 @@ class DictControlWidget(object):
         # Create a new controller that contains length 'control_value' inner
         # trait elements
         controller = DictController()
-        for name, inner_control_values in control_value.iteritems():
+        for name, inner_control_values in six.iteritems(control_value):
             controller.add_trait(str(name), inner_trait)
             setattr(controller, str(name), inner_control_values)
 
@@ -318,7 +320,7 @@ class DictControlWidget(object):
                     user_traits_changed = True
 
             # Update the controller associated with the current control
-            for trait_name, value in trait_value.iteritems():
+            for trait_name, value in six.iteritems(trait_value):
                 setattr(control_instance.controller, trait_name, value)
 
             # Connect the inner dict controller
@@ -404,7 +406,7 @@ class DictControlWidget(object):
             # Connect also all dict items
             inner_controls = control_instance.controller_widget._controls
             for (inner_control_name,
-                 inner_control) in inner_controls.iteritems():
+                 inner_control) in six.iteritems(inner_controls):
 
                 # Unpack the control item
                 inner_control_instance = inner_control[2]
@@ -459,7 +461,7 @@ class DictControlWidget(object):
             # Disconnect also all dict items
             inner_controls = control_instance.controller_widget._controls
             for (inner_control_name,
-                 inner_control) in inner_controls.iteritems():
+                 inner_control) in six.iteritems(inner_controls):
 
                 # Unpack the control item
                 inner_control_instance = inner_control[2]
