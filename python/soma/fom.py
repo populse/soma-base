@@ -350,7 +350,7 @@ class FileOrganizationModelManager(object):
             if fom_name not in jsons:
                 json = jsons[fom_name] = read_json(self.file_name(fom_name))
                 stack.extend(json.get('fom_import', []))
-        jsons = jsons.values()
+        jsons = list(jsons.values())
         result = jsons.pop(0)
         for json in jsons:
             for n in ('attribute_definitions', 'formats', 'format_lists', 'shared_patterns', 'patterns', 'processes'):
@@ -1111,7 +1111,8 @@ class AttributesToPaths(object):
                 if selection:
                     sql += ' WHERE ' + \
                         ' AND '.join('_' + i + ' = ?' for i in selection)
-                    values = list(self._db.execute(sql, selection.values()))
+                    values = list(self._db.execute(sql,
+                                                   list(selection.values())))
                 else:
                     values = list(self._db.execute(sql))
                 if values and (len(values) > 1 or ('',) in values):
