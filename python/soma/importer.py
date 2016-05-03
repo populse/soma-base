@@ -66,13 +66,15 @@ class ExtendedImporter(Singleton):
         Parameters
         ----------
         moduleName: string
-            name of the module to import into.
+            name of the module to import into (destination, not where to find
+            it).
         globals: dict
             globals dictionary of the module to import into.
         locals: dict
             locals dictionary of the module to import into.
         importedModuleName: string
-            name of the imported module.
+            name of the imported module. Normally relative to the current
+            calling module package.
         namespacesList: list
             a list of rules concerned namespaces for the imported module.
         handlersList: list
@@ -84,22 +86,17 @@ class ExtendedImporter(Singleton):
 
         if not moduleName:
             moduleName = locals['__name__']
-        else:
-            moduleName = locals['__name__'] + '.' + moduleName
+        elif moduleName.startswith('.'):
+            moduleName = locals['__name__'] + moduleName
 
-        #if moduleName:
-            #full_imported_module_name = '.'.join([moduleName,
-                                                  #importedModuleName])
-        #else:
-            #full_imported_module_name = importedModuleName
-        full_imported_module_name = importedModuleName
+        package = locals['__package__']
 
         # Import the module
         # Note : Pyro overloads __import__ method and usual keyword 'level' of
         # __builtin__.__import__ is not supported
-        package = sys.modules.get(moduleName)
-        importedModule = importlib.import_module('.' + importedModuleName, moduleName)
-        sys.modules[full_imported_module_name] = importedModule
+        importedModule = importlib.import_module('.' + importedModuleName,
+                                                 package)
+        sys.modules[importedModuleName.split('.')[-1]] = importedModule
 
         # Add the extended module to the list if not already exists
         if moduleName not in self.extendedModules:
