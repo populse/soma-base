@@ -37,7 +37,12 @@ from __future__ import print_function
 
 import threading
 import socket
-import Queue
+try:
+    # python 3
+    import queue
+except ImportError:
+    # python 2
+    import Queue as queue
 import errno
 import time
 import sys
@@ -88,7 +93,7 @@ class Socket(QObject):
         @type port: int
         @param port: port that the socket server listens
         """
-        apply(QObject.__init__, (self, ))
+        super(Socket, self).__init__()
         self.dest = host
         self.port = port
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -143,7 +148,7 @@ class Socket(QObject):
             # reading thread
             self.readthread = threading.Thread(target=self.readForever)
             self.readthread.setDaemon(True)  # don't block when exiting program
-            self._messages = Queue.Queue(500)
+            self._messages = queue.Queue(500)
             self.socket.setblocking(0)
             self.initialized = 1
             self.readthread.start()
@@ -165,7 +170,7 @@ class Socket(QObject):
         msg = None
         try:
             msg = self.getMessage()
-        except Exception, e:
+        except Exception as e:
             excep = e
         self.processMessage(msg, excep)
 
@@ -183,7 +188,7 @@ class Socket(QObject):
             try:
                 try:
                     msg = self._messages.get(True, timeout)
-                except Queue.Empty, e:
+                except queue.Empty as e:
                     raise IOError(
                         errno.ETIMEDOUT,  'socket communication timed out')
             finally:
@@ -191,8 +196,8 @@ class Socket(QObject):
         else:
             try:
                 msg = self.readMessage(timeout)
-            except IOError, e:
-                if e[0] == errno.EPIPE:
+            except IOError as e:
+                if e.errno == errno.EPIPE:
                     # The socket has been closed
                     # Return to avoid infinite loop
                     self.close()
@@ -221,13 +226,16 @@ class Socket(QObject):
         self.writeLock.acquire()
         # sendall() only appeared in python 2.1.12
         # self.socket.sendall( msg )
+        if hasattr(msg, 'encode'):
+            # encode to bytes (python3)
+            msg = msg.encode()
         n = 0
         try:
             while n < msglen:
                 try:
                     n += self.socket.send(msg[n:])
-                except socket.error, e:
-                    if e[0] == errno.EWOULDBLOCK:
+                except socket.error as e:
+                    if e.errno == errno.EWOULDBLOCK:
                         time.sleep(0.02)
                     else:
                         close = True
@@ -252,8 +260,8 @@ class Socket(QObject):
                     self.lock.release()
                 if self.notifyenabled:
                     self.messageHandler()
-            except IOError, e:
-                if e[0] != errno.ETIMEDOUT:
+            except IOError as e:
+                if e.errno != errno.ETIMEDOUT:
                     self.close()
                     # raise
             if not self.initialized:
@@ -267,23 +275,23 @@ class Socket(QObject):
         @type timeout: int
         @param timeout: max time to wait before reading the message.
         """
-        msg = ''
-        char = ''
+        msg = b''
+        char = b''
         waitedTime = 0
         # Receive the message atomically
-        while char != '\n':
-            if char != '':
+        while char != b'\n':
+            if char != b'':
                 msg += char
             try:
                 char = self.socket.recv(1)
                 waitedTime = 0
-                if char == '\0' or char == '':
+                if char == b'\0' or char == b'':
                     e = IOError(
                         errno.EPIPE, 'socket communication interrupted')
                     raise e
-            except socket.error, e:
-                if e[0] == errno.EWOULDBLOCK:
-                    char = ''
+            except socket.error as e:
+                if e.errno == errno.EWOULDBLOCK:
+                    char = b''
                     time.sleep(0.02)
                     waitedTime += 0.02
                     if waitedTime >= timeout:
@@ -292,7 +300,10 @@ class Socket(QObject):
                 else:
                     raise IOError(
                         errno.EPIPE, 'socket communication interrupted')
-        return msg
+        if sys.version_info[0] >= 3:
+            return msg.decode()
+        else:
+            return msg
 
     def readMessage(self, timeout=30):
         """

@@ -45,6 +45,7 @@ __docformat__ = "restructuredtext en"
 
 import sys
 import threading
+import six
 from soma.qt_gui.qt_backend.QtCore import QObject, QTimer, QEvent, SIGNAL, QCoreApplication
 from soma import singleton
 
@@ -131,9 +132,9 @@ class QtThreadCall(singleton.Singleton, QObject):
         """
         if self.isInMainThread():
             if kwargs is None or len(kwargs) == 0:
-                apply(function, args)
+                function(*args)
             else:
-                apply(function, args, kwargs)
+                function(*args, **kwargs)
         else:
             self.lock.acquire()
             try:
@@ -153,8 +154,8 @@ class QtThreadCall(singleton.Singleton, QObject):
         """
         if self.isInMainThread():
             if kwargs is None or len(kwargs) == 0:
-                return apply(function, args)
-            return apply(function, args, kwargs)
+                return function(*args)
+            return function(*args, **kwargs)
         else:
             semaphore = threading.Semaphore(0)
             self.lock.acquire()
@@ -170,8 +171,7 @@ class QtThreadCall(singleton.Singleton, QObject):
             result = semaphore._mainThreadActionResult
             exception = semaphore._mainThreadActionException
             if exception is not None:
-                e, v, t = exception
-                raise e, v, t
+                six.reraise(*exception)
             return result
 
     def _callAndWakeUp(self, semaphore, function, args, kwargs):
@@ -219,9 +219,9 @@ class QtThreadCall(singleton.Singleton, QObject):
         for (function, args, kwargs) in actions:
             try:
                 if kwargs is None or len(kwargs) == 0:
-                    apply(function, args)
+                    function(*args)
                 else:
-                    apply(function, args, kwargs)
+                    function(*args, **kwargs)
             except:
                 # Should call a customizable function here
                 raise
