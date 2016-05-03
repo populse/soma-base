@@ -44,10 +44,6 @@ L{notify<Notifier.notify>} call.
 __docformat__ = "restructuredtext en"
 
 
-# Compatibility with older Python versions
-import __builtin__
-if not hasattr(__builtin__, 'set'):
-    from sets import Set as set
 import six
 import sys
 
@@ -56,7 +52,7 @@ from soma.functiontools import checkParameterCount, numberOfParameterRange
 from soma.undefined import Undefined
 from soma.sorted_dictionary import SortedDictionary
 
-if sys.version_info >= 3:
+if sys.version_info[0] >= 3:
     def items_list(d):
         return list(d.items())
 else:
