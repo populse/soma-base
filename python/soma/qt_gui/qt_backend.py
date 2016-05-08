@@ -135,9 +135,13 @@ def get_qt_backend():
         if pyside is not None:
             qt_backend = 'PySide'
         else:
-            pyqt = sys.modules.get('PyQt4')
+            pyqt = sys.modules.get('PyQt5')
             if pyqt is not None:
-                qt_backend = 'PyQt4'
+                qt_backend = 'PyQt5'
+            else:
+                pyqt = sys.modules.get('PyQt4')
+                if pyqt is not None:
+                    qt_backend = 'PyQt4'
     return qt_backend
 
 
@@ -212,7 +216,7 @@ def set_qt_backend(backend=None, pyqt_api=1):
     __import__(backend + '.QtCore')
     __import__(backend + '.QtGui')
     qt_backend = backend
-    if backend == 'PyQt4':
+    if backend in('PyQt4', 'PyQt5'):
         qt_module.QtCore.Signal = qt_module.QtCore.pyqtSignal
         qt_module.QtCore.Slot = qt_module.QtCore.pyqtSlot
 
@@ -323,6 +327,9 @@ def loadUiType(uifile, from_imports=False):
     Not implemented for PySide, actually, because PySide does not have this
     feature.
     '''
+    if get_qt_backend() == 'PyQt5':
+        from PyQt5 import uic
+        return uic.loadUiType(uifile, from_imports=from_imports)
     if get_qt_backend() == 'PyQt4':
         # the parameter from_imports doesn't exist in our version of PyQt
         from PyQt4 import uic
@@ -336,7 +343,7 @@ def loadUiType(uifile, from_imports=False):
 def getOpenFileName(parent=None, caption='', directory='', filter='',
                     selectedFilter=None, options=0):
     '''PyQt4 / PySide compatible call to QFileDialog.getOpenFileName'''
-    if get_qt_backend() == 'PyQt4':
+    if get_qt_backend() in('PyQt4', 'PyQt5'):
         kwargs = {}
         # kwargs are used because passing None or '' as selectedFilter
         # does not work, at least in PyQt 4.10
@@ -357,7 +364,7 @@ def getOpenFileName(parent=None, caption='', directory='', filter='',
 def getSaveFileName(parent=None, caption='', directory='', filter='',
                     selectedFilter=None, options=0):
     '''PyQt4 / PySide compatible call to QFileDialog.getSaveFileName'''
-    if get_qt_backend() == 'PyQt4':
+    if get_qt_backend() in ('PyQt4', 'PyQt5'):
         kwargs = {}
         # kwargs are used because passing None or '' as selectedFilter
         # does not work, at least in PyQt 4.10
@@ -376,12 +383,12 @@ def getSaveFileName(parent=None, caption='', directory='', filter='',
 
 def getExistingDirectory(parent=None, caption='', directory='', options=None):
     '''PyQt4 / PySide compatible call to QFileDialog.getExistingDirectory'''
-    if get_qt_backend() == 'PyQt4':
+    if get_qt_backend() in ('PyQt4', 'PyQt5'):
         kwargs = {}
         if options is not None:
             kwargs['options'] = QtGui.QFileDialog.Options(options)
-        return get_qt_module().QtGui.QFileDialog.getExistingDirectory(parent,
-                                                                      caption, directory, **kwargs)
+        return get_qt_module().QtGui.QFileDialog.getExistingDirectory(
+            parent, caption, directory, **kwargs)
     else:
         if options is not None:
             return get_qt_module().QtGui.QFileDialog.getExistingDirectory(
@@ -405,7 +412,13 @@ def init_matplotlib_backend():
         return
 
     mpl_ver = [int(x) for x in matplotlib.__version__.split('.')[:2]]
-    guiBackend = 'Qt4Agg'
+    qt_backend = get_qt_backend()
+    if qt_backend == 'PyQt5':
+        guiBackend = 'Qt5Agg'
+        mpl_backend_mod = 'matplotlib.backends.backend_qt5agg'
+    else:
+        guiBackend = 'Qt4Agg'
+        mpl_backend_mod = 'matplotlib.backends.backend_qt4agg'
     if 'matplotlib.backends' not in sys.modules:
         matplotlib.use(guiBackend)
     elif matplotlib.get_backend() != guiBackend:
@@ -413,21 +426,27 @@ def init_matplotlib_backend():
             'Mismatch between Qt version and matplotlib backend: '
             'matplotlib uses ' + matplotlib.get_backend() + ' but '
             + guiBackend + ' is required.')
-    if get_qt_backend() == 'PySide':
+    if qt_backend == 'PySide':
         if 'backend.qt4' in matplotlib.rcParams.keys():
             matplotlib.rcParams['backend.qt4'] = 'PySide'
         else:
             raise RuntimeError("Could not use Matplotlib, the backend using "
                                "PySide is missing.")
     else:
-        if 'backend.qt4' in matplotlib.rcParams.keys():
-            matplotlib.rcParams['backend.qt4'] = 'PyQt4'
+        if qt_backend == 'PyQt5':
+            rc_key = 'backend.qt5'
+        else:
+            rc_key = 'backend.qt4'
+        if rc_key in matplotlib.rcParams.keys():
+            matplotlib.rcParams[rc_key] = qt_backend
         else:
             # older versions of matplotlib used only PyQt4.
             if mpl_ver >= [1, 1]:
                 raise RuntimeError("Could not use Matplotlib, the backend "
                                    "using PyQt4 is missing.")
-    from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg \
-        as FigureCanvas
+    __import__(mpl_backend_mod)
+    backend_mod = sys.modules[mpl_backend_mod]
+    FigureCanvasQTAgg = backend_mod.FigureCanvasQTAgg
+    FigureCanvas = backend_mod.FigureCanvas
     sys.modules[__name__].FigureCanvas = FigureCanvas
     return FigureCanvas

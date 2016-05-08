@@ -12,4 +12,3 @@ else()
   message( "WARNING: project brainvisa-share has not been found. Some programs that require access to shared directories may fail to run." )
 endif()
 
-include( "${QT_USE_FILE}" )
