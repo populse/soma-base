@@ -46,7 +46,7 @@ __docformat__ = "restructuredtext en"
 import sys
 import threading
 import six
-from soma.qt_gui.qt_backend.QtCore import QObject, QTimer, QEvent, SIGNAL, QCoreApplication
+from soma.qt_gui.qt_backend.QtCore import QObject, QTimer, QEvent, QCoreApplication
 from soma import singleton
 
 

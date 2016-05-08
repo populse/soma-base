@@ -47,7 +47,7 @@ import errno
 import time
 import sys
 
-from soma.qt_gui.qt_backend.QtCore import QObject, QSocketNotifier, SIGNAL
+from soma.qt_gui.qt_backend.QtCore import QObject, QSocketNotifier
 
 
 class Socket(QObject):
@@ -156,8 +156,7 @@ class Socket(QObject):
             # QSocketNotifier that signals that data is enable for reading
             self.socketnotifier = QSocketNotifier(
                 self.socket.fileno(), QSocketNotifier.Read)  # , self )
-            self.connect(self.socketnotifier, SIGNAL(
-                "activated(int)"), self.messageHandler)
+            self.socketnotifier.activated.connect(self.messageHandler)
             self.socketnotifier.setEnabled(True)
             self.initialized = 1
 
