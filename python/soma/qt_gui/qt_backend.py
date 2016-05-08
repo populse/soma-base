@@ -52,6 +52,7 @@ __path__ = [os.path.dirname(__file__)]
 _sip_api_set = False
 
 qt_backend = None
+make_compatible_qt5 = False
 
 
 class QtImporter(object):
@@ -64,15 +65,35 @@ class QtImporter(object):
             return None
         set_qt_backend()
         qt_module = get_qt_module()
+        if make_compatible_qt5 and module_name == 'QtWidgets' \
+                and get_qt_backend() in ('PyQt4', 'PySide'):
+            module_name = 'QtGui'
         found = imp.find_module(module_name, qt_module.__path__)
         return self
 
     def load_module(self, name):
         qt_backend = get_qt_backend()
         module_name = name.split('.')[-1]
-        __import__('.'.join([qt_backend, module_name]))
-        module = sys.modules['.'.join([qt_backend, module_name])]
+        if make_compatible_qt5 and module_name == 'QtWidgets':
+            imp_module_name = 'QtGui'
+        else:
+            imp_module_name = module_name
+        __import__('.'.join([qt_backend, imp_module_name]))
+        module = sys.modules['.'.join([qt_backend, imp_module_name])]
         sys.modules[name] = module
+        if make_compatible_qt5 and imp_module_name == 'QtGui':
+            if qt_backend in ('PyQt4', 'PySide'):
+                sys.modules['.'.join([qt_backend, 'QtWidgets'])] = module
+            elif qt_backend == 'PyQt5':
+                __import__('.'.join([qt_backend, 'QtWidgets']))
+                qtwidgets = sys.modules['.'.join([qt_backend, 'QtWidgets'])]
+                # copy contents of QtWidgets into QtGui module
+                for key in qtwidgets.__dict__:
+                    if not key.startswith('__') and key not in module.__dict__:
+                        setattr(module, key, getattr(qtwidgets, key))
+                if module_name == 'QtWidgets':
+                    module = qtwidgets
+
         return module
 
 # tune the import statement to get Qt submodules in this one
@@ -97,7 +118,7 @@ def get_qt_backend():
     return qt_backend
 
 
-def set_qt_backend(backend=None, pyqt_api=1):
+def set_qt_backend(backend=None, pyqt_api=1, compatible_qt5=None):
     '''set the Qt backend.
 
     If a different backend has already setup or loaded, a warning is issued.
@@ -115,12 +136,26 @@ def set_qt_backend(backend=None, pyqt_api=1):
     and QtCore.pyqtSlot as QtCore.Signal and QtCore.Slot. This is meant to ease
     code portability between both worlds.
 
+    if compatible_qt5 is set to True, modules QtGui and QtWidgets will be
+    exposed and completed to contain the same content, with both Qt4 and Qt5.
+
     Parameters
     ----------
     backend: str (default: None)
         name of the backend to use
     pyqt_api: int (default: 1)
         PyQt API version: 1 or 2, only useful for PyQt4
+    compatible_qt5: bool (default: None)
+        expose QtGui and QtWidgets with the same content.
+        If None (default), do not change the current setting.
+        If True, in Qt5, when QtGui or QtWidgets is loaded, the other module
+        (QtWidgets or QtGui) is also loaded, and the QtGui module is modified
+        to contain also the contents of QtWidgets, so as to have more or less
+        the same elements as in Qt4. It is a bit dirty and crappy but allows
+        the same code to work with both versions of Qt.
+        In Qt4, when QtGui is loaded, the module is also registered as
+        QtWidgets, so QtGui and QtWidgets are the same module. Loading
+        QtWidgets will also bring QtGui.
 
     Examples
     --------
@@ -130,6 +165,11 @@ def set_qt_backend(backend=None, pyqt_api=1):
         <module 'PySide.QtCore' from '/usr/lib/python2.7/dist-packages/PySide/QtCore.so'>
     '''
     global qt_backend
+    global make_compatible_qt5
+    qt5_compat_changed = False
+    if compatible_qt5 is not None:
+        make_compatible_qt5 = compatible_qt5
+        qt5_compat_changed = True
     get_qt_backend()
     if backend is None:
         if qt_backend is None:
@@ -166,11 +206,40 @@ def set_qt_backend(backend=None, pyqt_api=1):
             _sip_api_set = True
     qt_module = __import__(backend)
     __import__(backend + '.QtCore')
-    __import__(backend + '.QtGui')
+    #__import__(backend + '.QtGui')
     qt_backend = backend
     if backend in('PyQt4', 'PyQt5'):
         qt_module.QtCore.Signal = qt_module.QtCore.pyqtSignal
         qt_module.QtCore.Slot = qt_module.QtCore.pyqtSlot
+    if make_compatible_qt5 and qt5_compat_changed:
+        ensure_compatible_qt5()
+
+
+def ensure_compatible_qt5():
+    if not make_compatible_qt5:
+        return
+    qt_backend = get_qt_backend()
+    if qt_backend == 'PyQt5':
+        qtgui = None
+        qtwidgets = None
+        if 'PyQt5.QtGui' in sys.modules:
+            qtgui = sys.modules['PyQt5.QtGui']
+        if 'PyQt5.QtWidgets' in sys.modules:
+            qtwidgets = sys.modules['PyQt5.QtWidgets']
+        if qtgui and qtwidgets is None:
+            from . import QtWidgets
+            qtwidgets = sys.modules['PyQt5.QtWidgets']
+        elif qtwidgets and qtgui is None:
+            from . import QtGui
+            qtgui = sys.modules['PyQt5.QtGui']
+        elif qtgui and qtwidgets:
+            # copy QtWidgets contents into QtGui
+            for key in qtwidgets.__dict__:
+                if not key.startswith('__') and key not in qtgui.__dict__:
+                    setattr(qtgui, key, getattr(qtwidgets, key))
+    else:
+        if '%s.QtGui' % qt_backend in sys.modules:
+            from . import QtWidgets
 
 
 def get_qt_module():
@@ -401,4 +470,4 @@ def init_matplotlib_backend():
     FigureCanvasQTAgg = backend_mod.FigureCanvasQTAgg
     FigureCanvas = backend_mod.FigureCanvas
     sys.modules[__name__].FigureCanvas = FigureCanvas
-    return FigureCanvas
+    return mpl_backend_mod
