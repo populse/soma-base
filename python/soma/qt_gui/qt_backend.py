@@ -6,8 +6,8 @@
 # for details.
 #
 
-'''Compatibility module for PyQt and PySide. Currently supports PyQt4 and
-PySide, not PyQt5.
+'''Compatibility module for PyQt and PySide. Currently supports PyQt4,
+PySide, and PyQt5.
 This modules handles differences between PyQt and PySide APIs and behaviours,
 and offers a few functions to make it easier to build neutral GUI code, which
 can run using either backend.

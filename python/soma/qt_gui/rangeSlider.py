@@ -256,6 +256,7 @@ class QRangeSlider(QtGui.QWidget, Ui_Form):
         * maxValueChanged (int)
         * minValueChanged (int)
         * startValueChanged (int)
+        * rangeChanged (int, int)
 
     Customizing QRangeSlider
 
@@ -296,6 +297,13 @@ class QRangeSlider(QtGui.QWidget, Ui_Form):
     _SPLIT_START = 1
     _SPLIT_END = 2
 
+    startValueChanged = QtCore.Signal(int)
+    endValueChanged = QtCore.Signal(int)
+    maxValueChanged = QtCore.Signal(int)
+    minValueChanged = QtCore.Signal(int)
+    startValueChanged = QtCore.Signal(int)
+    rangeChanged = QtCore.Signal(int, int)
+
     def __init__(self, parent=None):
         """
         Create a new QRangeSlider instance.
@@ -308,8 +316,7 @@ class QRangeSlider(QtGui.QWidget, Ui_Form):
         self.setupUi(self)
         self.setMouseTracking(False)
 
-        self.connect(self._splitter, QtCore.SIGNAL(
-            "splitterMoved (int,int)"), self._handleMoveSplitter)
+        self._splitter.splitterMoved.connect(self._handleMoveSplitter)
 
         # head layout
         self._head_layout = QtGui.QHBoxLayout()
@@ -357,13 +364,13 @@ class QRangeSlider(QtGui.QWidget, Ui_Form):
         """sets minimum value"""
         assert type(value) is int
         setattr(self, '__min', value)
-        self.emit(QtCore.SIGNAL("minValueChanged (int)"), value)
+        self.minValueChanged.emit(value)
 
     def setMax(self, value):
         """sets maximum value"""
         assert type(value) is int
         setattr(self, '__max', value)
-        self.emit(QtCore.SIGNAL("maxValueChanged (int)"), value)
+        self.maxValueChanged.emit(value)
 
     def start(self):
         """:return: range slider start value"""
@@ -376,7 +383,7 @@ class QRangeSlider(QtGui.QWidget, Ui_Form):
     def _setStart(self, value):
         """stores the start value only"""
         setattr(self, '__start', value)
-        self.emit(QtCore.SIGNAL("startValueChanged (int)"), value)
+        self.startValueChanged.emit(value)
 
     def setStart(self, value):
         """sets the range slider start value"""
@@ -388,7 +395,7 @@ class QRangeSlider(QtGui.QWidget, Ui_Form):
     def _setEnd(self, value):
         """stores the end value only"""
         setattr(self, '__end', value)
-        self.emit(QtCore.SIGNAL("endValueChanged (int)"), value)
+        self.endValueChanged.emit(value)
 
     def setEnd(self, value):
         """set the range slider end value"""
@@ -414,7 +421,7 @@ class QRangeSlider(QtGui.QWidget, Ui_Form):
         """set the start and end values"""
         self.setStart(start)
         self.setEnd(end)
-        self.emit(QtCore.SIGNAL("rangeChanged (int, int)"), start, end)
+        self.rangeChanged.emit(start, end)
 
     def keyPressEvent(self, event):
         """overrides key press event to move range left and right"""
