@@ -147,11 +147,10 @@ class QLineEditModificationTimer(QtCore.QObject):
 class TimeredQLineEdit(QtGui.QLineEdit):
 
     '''
-    Create a L{QLineEdit<QtGui.QLineEdit>} instance that has an private attribute
-    containing a L{QLineEditModificationTimer} associated to C{self}. Whenever
-    the internal L{QLineEditModificationTimer} emits a C{SIGNAL(
-    'userModification' )} signal, this signal is also emited by the
-    L{TimeredQLineEdit} instance.
+    Create a QLineEdit instance that has an private attribute
+    containing a QLineEditModificationTimer associated to self. Whenever
+    the internal QLineEditModificationTimer emits a userModification
+    signal, this signal is also emited by the TimeredQLineEdit instance.
     '''
 
     userModification = QtCore.Signal()

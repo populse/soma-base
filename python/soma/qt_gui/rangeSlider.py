@@ -256,6 +256,7 @@ class QRangeSlider(QtGui.QWidget, Ui_Form):
         * maxValueChanged (int)
         * minValueChanged (int)
         * startValueChanged (int)
+        * rangeChanged (int, int)
 
     Customizing QRangeSlider
 
@@ -301,6 +302,7 @@ class QRangeSlider(QtGui.QWidget, Ui_Form):
     maxValueChanged = QtCore.Signal(int)
     minValueChanged = QtCore.Signal(int)
     startValueChanged = QtCore.Signal(int)
+    rangeChanged = QtCore.Signal(int, int)
 
     def __init__(self, parent=None):
         """
@@ -314,8 +316,7 @@ class QRangeSlider(QtGui.QWidget, Ui_Form):
         self.setupUi(self)
         self.setMouseTracking(False)
 
-        self.connect(self._splitter, QtCore.SIGNAL(
-            "splitterMoved (int,int)"), self._handleMoveSplitter)
+        self._splitter.splitterMoved.connect(self._handleMoveSplitter)
 
         # head layout
         self._head_layout = QtGui.QHBoxLayout()
@@ -420,7 +421,7 @@ class QRangeSlider(QtGui.QWidget, Ui_Form):
         """set the start and end values"""
         self.setStart(start)
         self.setEnd(end)
-        self.emit(QtCore.SIGNAL("rangeChanged (int, int)"), start, end)
+        self.rangeChanged.emit(start, end)
 
     def keyPressEvent(self, event):
         """overrides key press event to move range left and right"""
