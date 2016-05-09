@@ -467,7 +467,6 @@ def init_matplotlib_backend():
                                    "using PyQt4 is missing.")
     __import__(mpl_backend_mod)
     backend_mod = sys.modules[mpl_backend_mod]
-    FigureCanvasQTAgg = backend_mod.FigureCanvasQTAgg
-    FigureCanvas = backend_mod.FigureCanvas
+    FigureCanvas = backend_mod.FigureCanvasQTAgg
     sys.modules[__name__].FigureCanvas = FigureCanvas
     return mpl_backend_mod
