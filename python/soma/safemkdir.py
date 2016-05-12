@@ -41,7 +41,7 @@ def mkdir(dirname, mode=0777):
     '''
     try:
         os.mkdir(dirname, mode)
-    except OSError, e:
+    except OSError as e:
         if e.errno != errno.EEXIST:
             raise  # real error
         # ignore EEXIST, job has already been done
@@ -55,7 +55,7 @@ def makedirs(dirname, mode=0777):
         try:
             os.makedirs(dirname, mode)
             ok = True
-        except OSError, e:
+        except OSError as e:
             if e.errno != errno.EEXIST:
                 raise  # real error
             # ignore EEXIST, job has already at least partially been done
