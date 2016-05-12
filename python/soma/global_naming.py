@@ -27,7 +27,7 @@ class GlobalNaming(Singleton):
         module = __import__(module, fromlist=[name], level=0)
         try:
             value = getattr(module, name)
-        except AttributeError, e:
+        except AttributeError as e:
             raise ImportError(str(e))
         if args is not None:
             value = value(*args)
