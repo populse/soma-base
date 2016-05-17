@@ -44,7 +44,10 @@ __docformat__ = "epytext en"
 import struct
 import random
 import binascii
-import types
+import sys
+
+if sys.version_info[0] >= 3:
+    basestring = str
 
 #-------------------------------------------------------------------------
 
@@ -102,7 +105,7 @@ class Uuid(object):
     def __eq__(self, other):
         if isinstance(other, Uuid):
             return self.__uuid == other.__uuid
-        elif isinstance(other, types.StringTypes):  # assume string-like object (str or unicode)
+        elif isinstance(other, basestring):  # assume string-like object (str or unicode)
             return self.__uuid == Uuid(other).__uuid
         else:
             return False
@@ -110,7 +113,7 @@ class Uuid(object):
     def __ne__(self, other):
         if isinstance(other, Uuid):
             return self.__uuid != other.__uuid
-        elif isinstance(other, types.StringTypes):  # assume string-like object (str or unicode)
+        elif isinstance(other, basestring):  # assume string-like object (str or unicode)
             return self.__uuid != Uuid(other).__uuid
         else:
             return True

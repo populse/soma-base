@@ -173,7 +173,7 @@ class SortedDictionary(dict):
         key: key to insert
             value associated to key
         '''
-        if self.has_key(key):
+        if key in self:
             raise KeyError(key)
         self.sortedKeys.insert(index, key)
         super(SortedDictionary, self).__setitem__(key, value)

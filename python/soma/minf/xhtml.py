@@ -50,12 +50,17 @@ except ImportError:
     from io import StringIO
 
 import six
+import sys
 
 from soma.translation import translate as _
 from soma.minf.api import readMinf
 from soma.minf.xml_tags import minfTag, expanderAttribute, xhtmlTag
 from soma.html import lesserHtmlEscape
 from xml.sax.saxutils import quoteattr as xml_quoteattr
+
+if sys.version_info[0] >= 3:
+    basestring = str
+    unicode = str
 
 #------------------------------------------------------------------------------
 
@@ -153,7 +158,7 @@ class XHTML:
         @param item: value to convert in XML.
         @type  item: XHTML instance or unicode containing XML
         '''
-        if isinstance(item, types.StringTypes):
+        if isinstance(item, basestring):
             return item
         elif isinstance(item, XHTML):
             return item._itemXML(item)
@@ -169,7 +174,7 @@ class XHTML:
         @param item: value to convert in HTML.
         @type  item: XHTML instance or unicode containing HTML
         '''
-        if isinstance(item, types.StringTypes):
+        if isinstance(item, basestring):
             return item
         elif isinstance(item, XHTML):
             return item._contentXML(item.content)

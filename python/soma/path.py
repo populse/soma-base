@@ -47,6 +47,10 @@ import fnmatch
 import hashlib
 import re
 import six
+import sys
+
+if sys.version_info[0] >= 3:
+    basestring = str
 
 
 def split_path(path):

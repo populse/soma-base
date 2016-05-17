@@ -53,6 +53,7 @@ from soma.undefined import Undefined
 from soma.sorted_dictionary import SortedDictionary
 
 if sys.version_info[0] >= 3:
+    xrange = range
     def items_list(d):
         return list(d.items())
 else:
@@ -799,7 +800,7 @@ class ObservableSortedDictionary(SortedDictionary):
         self.onChangeNotifier.add(listener)
 
     def __setitem__(self, key, value):
-        insertion = not self.has_key(key)
+        insertion = key not in self
         super(ObservableSortedDictionary, self).__setitem__(key, value)
         if insertion:
             self.onChangeNotifier.notify(
@@ -925,7 +926,7 @@ class EditableTree(ObservableAttributes, ObservableSortedDictionary):
         recursive method
         """
         key = item.id
-        if self.has_key(key):
+        if key in self:
             if not item.isLeaf():  # if the item is a leaf and is already in the tree, nothing to do
                 for v in item.values():  # item is also a dictionary and contains several elements, add each value in the tree item
                     self[key].add(v)
@@ -1153,7 +1154,7 @@ class EditableTree(ObservableAttributes, ObservableSortedDictionary):
             recursive method
             """
             key = item.id
-            if self.has_key(key):
+            if key in self:
                 if not self[key].isLeaf():  # if the item is a leaf and is already in the tree, nothing to do
                     for v in item.values():  # item is also a dictionary and contains several elements, add each value in the tree item
                         self[key].add(v)
