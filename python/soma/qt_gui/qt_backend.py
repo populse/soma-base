@@ -128,15 +128,14 @@ class QtImporter(object):
             
         sys.modules[name] = module
         if make_compatible_qt5 and imp_module_name == 'QtGui':
+            from . import QtCore
             if qt_backend in ('PyQt4', 'PySide'):
                 sys.modules['.'.join([qt_backend, 'QtWidgets'])] = module
+                patch_qt4_modules(QtCore, module)
             elif qt_backend == 'PyQt5':
                 __import__('.'.join([qt_backend, 'QtWidgets']))
                 qtwidgets = sys.modules['.'.join([qt_backend, 'QtWidgets'])]
-                # copy contents of QtWidgets into QtGui module
-                for key in qtwidgets.__dict__:
-                    if not key.startswith('__') and key not in module.__dict__:
-                        setattr(module, key, getattr(qtwidgets, key))
+                patch_qt5_modules(QtCore, module, qtwidgets)
                 if module_name == 'QtWidgets':
                     module = qtwidgets
 
@@ -262,6 +261,21 @@ def set_qt_backend(backend=None, pyqt_api=1, compatible_qt5=None):
         ensure_compatible_qt5()
 
 
+def patch_qt5_modules(QtCore, QtGui, QtWidgets):
+    # copy QtWidgets contents into QtGui
+    for key in QtWidgets.__dict__:
+        if not key.startswith('__') and key not in QtGui.__dict__:
+            setattr(QtGui, key, getattr(QtWidgets, key))
+    # more hacks
+    QtGui.QSortFilterProxyModel = QtCore.QSortFilterProxyModel
+    QtGui.QItemSelectionModel = QtCore.QItemSelectionModel
+
+
+def patch_qt4_modules(QtCore, QtGui):
+    QtCore.QSortFilterProxyModel = QtGui.QSortFilterProxyModel
+    QtCore.QItemSelectionModel = QtGui.QItemSelectionModel
+
+
 def ensure_compatible_qt5():
     if not make_compatible_qt5:
         return
@@ -280,13 +294,13 @@ def ensure_compatible_qt5():
             from . import QtGui
             qtgui = sys.modules['PyQt5.QtGui']
         elif qtgui and qtwidgets:
-            # copy QtWidgets contents into QtGui
-            for key in qtwidgets.__dict__:
-                if not key.startswith('__') and key not in qtgui.__dict__:
-                    setattr(qtgui, key, getattr(qtwidgets, key))
+            from . import QtCore
+            patch_qt5_modules(QtCore, qtgui, qtwidgets)
     else:
         if '%s.QtGui' % qt_backend in sys.modules:
             from . import QtWidgets
+        from . import QtGui
+        patch_qt4_modules(QtCore, QtGui)
 
 
 def get_qt_module():

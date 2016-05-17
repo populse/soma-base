@@ -2,6 +2,10 @@
 import json
 import os
 import collections
+import sys
+
+if sys.version_info[0] >= 3:
+    unicode = str
 
 
 class StudyData():
@@ -45,7 +49,7 @@ class StudyData():
     """Get number of run process and iterate"""
 
     def inc_nb_run_process(self, process_name):
-        if self.compteur_run_process.has_key(process_name):
+        if process_name in self.compteur_run_proces:
             valeur = self.compteur_run_process[process_name]
             self.compteur_run_process[process_name] = valeur + 1
         else:

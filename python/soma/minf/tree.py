@@ -57,6 +57,10 @@ except ImportError:
     class Sequence(object):
         pass
 
+if sys.version_info[0] >= 3:
+    xrange = range
+    unicode = str
+
 #: Type name of a minf structure.
 #: @see: L{StartStructure}
 minfStructure = 'minf'
