@@ -14,7 +14,7 @@ except ImportError:
     from enthought.traits.api import HasTraits, Str, Enum, Directory, File
 from soma.application import Application
 
-if sys.version_info >= 3:
+if sys.version_info[0] >= 3:
     unicode = str
 
 

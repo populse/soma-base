@@ -19,7 +19,7 @@ from soma.qt_gui.qt_backend import QtGui, QtCore
 from soma.qt_gui import qt_backend
 from .File import FileControlWidget
 
-if sys.version_info >= 3:
+if sys.version_info[0] >= 3:
     unicode = str
 
 
