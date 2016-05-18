@@ -207,11 +207,12 @@ def set_qt_backend(backend=None, pyqt_api=1, compatible_qt5=None):
     __import__(backend + '.QtCore')
     #__import__(backend + '.QtGui')
     qt_backend = backend
-    if backend in('PyQt4', 'PyQt5'):
-        qt_module.QtCore.Signal = qt_module.QtCore.pyqtSignal
-        qt_module.QtCore.Slot = qt_module.QtCore.pyqtSlot
     if make_compatible_qt5 and qt5_compat_changed:
         ensure_compatible_qt5()
+    else:
+        if backend in('PyQt4', 'PyQt5'):
+            qt_module.QtCore.Signal = qt_module.QtCore.pyqtSignal
+            qt_module.QtCore.Slot = qt_module.QtCore.pyqtSlot
 
 
 def patch_qt5_modules(QtCore, QtGui, QtWidgets):
@@ -252,8 +253,11 @@ def ensure_compatible_qt5():
     else:
         if '%s.QtGui' % qt_backend in sys.modules:
             from . import QtWidgets
-        from . import QtGui
+        from . import QtCore, QtGui
         patch_qt4_modules(QtCore, QtGui)
+    if qt_backend in('PyQt4', 'PyQt5'):
+        QtCore.Signal = QtCore.pyqtSignal
+        QtCore.Slot = QtCore.pyqtSlot
 
 
 def get_qt_module():
