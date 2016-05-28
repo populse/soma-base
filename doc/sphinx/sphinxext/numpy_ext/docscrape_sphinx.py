@@ -4,9 +4,9 @@ import textwrap
 import pydoc
 import sphinx
 import six
-from docscrape import NumpyDocString
-from docscrape import FunctionDoc
-from docscrape import ClassDoc
+from .docscrape import NumpyDocString
+from .docscrape import FunctionDoc
+from .docscrape import ClassDoc
 
 
 class SphinxDocString(NumpyDocString):
