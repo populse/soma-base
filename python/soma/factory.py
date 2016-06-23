@@ -109,12 +109,19 @@ class ClassFactory(object):
         factory_id. Once created with the first call of this method, it
         is stored in self.instances and simply returned in subsequent
         calls.
+
+        If get_class is True, return the class instead of an instance
         '''
         instance = self.instances.get((class_type, factory_id))
         if instance is None:
             cls = self.find_class(class_type, factory_id)
             if cls is not None:
-                instance = cls()
+                if cls.__init__.__code__.co_argcount != 1:
+                    # The class constructor takes arguments: we cannot
+                    # instantiate it: register the class itself
+                    instance = cls
+                else:
+                    instance = cls()
                 self.instances[(class_type, factory_id)] = instance
             else:
                 raise ValueError('Cannot find a class for class type "%s" '
