@@ -99,9 +99,9 @@ class ClassFactory(object):
                 if cls is not None:
                     return cls
         raise ValueError('Unknown class type: %s' % class_type)
-            
-        
-        
+
+
+
     def get(self, class_type, factory_id):
         '''
         Returns an instance of the class identified by class_type and
@@ -116,7 +116,8 @@ class ClassFactory(object):
         if instance is None:
             cls = self.find_class(class_type, factory_id)
             if cls is not None:
-                if cls.__init__.__code__.co_argcount != 1:
+                if hasattr(cls.__init__, '__code__') \
+                        and cls.__init__.__code__.co_argcount != 1:
                     # The class constructor takes arguments: we cannot
                     # instantiate it: register the class itself
                     instance = cls
