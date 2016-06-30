@@ -395,7 +395,7 @@ class DictControlWidget(object):
             # When the 'control_name' controller trait value is modified,
             # update the corresponding control
             controller_widget.controller.on_trait_change(
-                controller_hook, control_name)
+                controller_hook, control_name, dispatch='ui')
 
             # Update the dict connection status
             control_instance._controller_connections = (

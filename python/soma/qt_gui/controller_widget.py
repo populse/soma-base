@@ -19,6 +19,7 @@ from soma.qt_gui.qt_backend import QtGui, QtCore
 from soma.controller import trait_ids
 from soma.qt_gui.timered_widgets import TimeredQLineEdit
 from soma.functiontools import partial
+from traitsui.qt4 import toolkit
 
 # Qt import
 try:
@@ -300,8 +301,8 @@ class ControllerWidget(QtGui.QWidget):
 
             # Add an event connected with the 'user_traits_changed' controller
             # signal: update the controls
-            self.controller.on_trait_change(self.update_controls,
-                                            "user_traits_changed")
+            self.controller.on_trait_change(
+                self.update_controls, "user_traits_changed", dispatch='ui')
 
             # Update the controller widget values
             self.update_controller_widget()

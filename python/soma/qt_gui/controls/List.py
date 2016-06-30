@@ -393,7 +393,7 @@ class ListControlWidget(object):
 
                 # And add the callback on each user trait
                 control_instance.controller.on_trait_change(
-                    list_controller_hook, trait_name)
+                    list_controller_hook, trait_name, dispatch='ui')
                 logger.debug("Item '{0}' of a 'ListControlWidget', add "
                              "a callback on inner controller trait "
                              "'{0}'.".format(control_name, trait_name))
@@ -408,7 +408,7 @@ class ListControlWidget(object):
             # When the 'control_name' controller trait value is modified,
             # update the corresponding control
             controller_widget.controller.on_trait_change(
-                controller_hook, control_name)
+                controller_hook, control_name, dispatch='ui')
 
             # Update the list connection status
             control_instance._controller_connections = (
