@@ -15,22 +15,20 @@ import six
 logger = logging.getLogger(__name__)
 
 # Soma import
+from soma.qt_gui import qt_backend
 from soma.qt_gui.qt_backend import QtGui, QtCore
 from soma.controller import trait_ids
 from soma.qt_gui.timered_widgets import TimeredQLineEdit
 from soma.functiontools import partial
-try:
-    from traitsui.qt4 import toolkit
-except ImportError:
-    # The notification in Qt thread (dispatch="ui") will not work.
-    logger.warning("traitsui.qt4 module is not available: notification in the "
-                   "Qt GUI thread will not work.")
 
 # Qt import
 try:
     _fromUtf8 = QtCore.QString.fromUtf8
 except AttributeError:
     _fromUtf8 = lambda s: s
+
+# setup notification in Qt GUI thread
+qt_backend.init_traitsui_handler()
 
 
 class ScrollControllerWidget(QtGui.QScrollArea):
