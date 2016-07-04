@@ -19,7 +19,12 @@ from soma.qt_gui.qt_backend import QtGui, QtCore
 from soma.controller import trait_ids
 from soma.qt_gui.timered_widgets import TimeredQLineEdit
 from soma.functiontools import partial
-from traitsui.qt4 import toolkit
+try:
+    from traitsui.qt4 import toolkit
+except ImportError:
+    # The notification in Qt thread (dispatch="ui") will not work.
+    logger.warning("traitsui.qt4 module is not available: notification in the "
+                   "Qt GUI thread will not work.")
 
 # Qt import
 try:
