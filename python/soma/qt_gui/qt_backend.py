@@ -488,3 +488,86 @@ def init_matplotlib_backend():
     FigureCanvas = backend_mod.FigureCanvasQTAgg
     sys.modules[__name__].FigureCanvas = FigureCanvas
     return mpl_backend_mod
+
+
+def init_traitsui_handler():
+    try:
+        from traitsui.qt4 import toolkit
+    except ImportError:
+        # copy of the code from traitsui.qt4.toolkit
+
+        from traits.trait_notifiers import set_ui_handler
+
+        #-------------------------------------------------------------------------------
+        #  Handles UI notification handler requests that occur on a thread other than
+        #  the UI thread:
+        #-------------------------------------------------------------------------------
+        _QT_TRAITS_EVENT = QtCore.QEvent.Type(QtCore.QEvent.registerEventType())
+
+        class _CallAfter(QtCore.QObject):
+            """ This class dispatches a handler so that it executes in the main GUI
+                thread (similar to the wx function).
+            """
+
+            # The list of pending calls.
+            _calls = []
+
+            # The mutex around the list of pending calls.
+            _calls_mutex = QtCore.QMutex()
+
+            def __init__(self, handler, *args, **kwds):
+                """ Initialise the call.
+                """
+                QtCore.QObject.__init__(self)
+
+                # Save the details of the call.
+                self._handler = handler
+                self._args = args
+                self._kwds = kwds
+
+                # Add this to the list.
+                self._calls_mutex.lock()
+                self._calls.append(self)
+                self._calls_mutex.unlock()
+
+                # Move to the main GUI thread.
+                self.moveToThread(QtGui.QApplication.instance().thread())
+
+                # Post an event to be dispatched on the main GUI thread. Note that
+                # we do not call QTimer.singleShot, which would be simpler, because
+                # that only works on QThreads. We want regular Python threads to work.
+                event = QtCore.QEvent(_QT_TRAITS_EVENT)
+                QtGui.QApplication.instance().postEvent(self, event)
+
+            def event(self, event):
+                """ QObject event handler.
+                """
+                if event.type() == _QT_TRAITS_EVENT:
+                    # Invoke the handler
+                    self._handler(*self._args, **self._kwds)
+
+                    # We cannot remove from self._calls here. QObjects don't like being
+                    # garbage collected during event handlers (there are tracebacks,
+                    # plus maybe a memory leak, I think).
+                    QtCore.QTimer.singleShot(0, self._finished)
+
+                    return True
+                else:
+                    return QtCore.QObject.event(self, event)
+
+            def _finished(self):
+                """ Remove the call from the list, so it can be garbage collected.
+                """
+                self._calls_mutex.lock()
+                del self._calls[self._calls.index(self)]
+                self._calls_mutex.unlock()
+
+        def ui_handler ( handler, *args, **kwds ):
+            """ Handles UI notification handler requests that occur on a thread other
+                than the UI thread.
+            """
+            _CallAfter(handler, *args, **kwds)
+
+        # Tell the traits notification handlers to use this UI handler
+        set_ui_handler( ui_handler )
+
