@@ -611,7 +611,7 @@ class ControllerWidget(QtGui.QWidget):
         lay2.addStretch(1)
         icon = QtGui.QIcon()
         icon.addPixmap(
-            QtGui.QPixmap(_fromUtf8(":/soma_widgets_icons/nav_right")),
+            QtGui.QPixmap(_fromUtf8(":/soma_widgets_icons/nav_down")),
             QtGui.QIcon.Normal, QtGui.QIcon.Off)
         group_widget.fold_button = QtGui.QPushButton(icon, '')
         group_widget.fold_button.setFixedSize(30, 20)
@@ -637,7 +637,7 @@ class ControllerWidget(QtGui.QWidget):
         if not show:
             icon = QtGui.QIcon()
             icon.addPixmap(
-                QtGui.QPixmap(_fromUtf8(":/soma_widgets_icons/nav_down")),
+                QtGui.QPixmap(_fromUtf8(":/soma_widgets_icons/nav_right")),
                 QtGui.QIcon.Normal, QtGui.QIcon.Off)
             group_widget.fold_button.setIcon(icon)
 
@@ -652,11 +652,11 @@ class ControllerWidget(QtGui.QWidget):
         icon = QtGui.QIcon()
         if checked:
             icon.addPixmap(
-                QtGui.QPixmap(_fromUtf8(":/soma_widgets_icons/nav_right")),
+                QtGui.QPixmap(_fromUtf8(":/soma_widgets_icons/nav_down")),
                 QtGui.QIcon.Normal, QtGui.QIcon.Off)
         else:
             icon.addPixmap(
-                QtGui.QPixmap(_fromUtf8(":/soma_widgets_icons/nav_down")),
+                QtGui.QPixmap(_fromUtf8(":/soma_widgets_icons/nav_right")),
                 QtGui.QIcon.Normal, QtGui.QIcon.Off)
         group_widget.fold_button.setIcon(icon)
 
