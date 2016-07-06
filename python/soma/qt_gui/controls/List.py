@@ -75,11 +75,14 @@ class ListControlWidget(object):
 
         # Go through all the controller widget controls
         controller_widget = control_instance.controller_widget
-        for control_name, control \
+        for control_name, control_groups \
                 in six.iteritems(controller_widget._controls):
 
+            if not control_groups:
+                continue
             # Unpack the control item
-            trait, control_class, control_instance, control_label = control
+            trait, control_class, control_instance, control_label \
+                = control_groups.values()[0]
 
             # Call the current control specific check method
             valid = control_class.is_valid(control_instance)
@@ -419,16 +422,18 @@ class ListControlWidget(object):
             # Connect also all list items
             inner_controls = control_instance.controller_widget._controls
             for (inner_control_name,
-                 inner_control) in six.iteritems(inner_controls):
+                 inner_control_groups) in six.iteritems(inner_controls):
+                for group, inner_control \
+                        in six.iteritems(inner_control_groups):
 
-                # Unpack the control item
-                inner_control_instance = inner_control[2]
-                inner_control_class = inner_control[1]
+                    # Unpack the control item
+                    inner_control_instance = inner_control[2]
+                    inner_control_class = inner_control[1]
 
-                # Call the inner control connect method
-                inner_control_class.connect(
-                    control_instance.controller_widget, inner_control_name,
-                    inner_control_instance)
+                    # Call the inner control connect method
+                    inner_control_class.connect(
+                        control_instance.controller_widget, inner_control_name,
+                        inner_control_instance)
 
             # Update the list control connection status
             control_instance.connected = True
@@ -474,16 +479,18 @@ class ListControlWidget(object):
             # Disconnect also all list items
             inner_controls = control_instance.controller_widget._controls
             for (inner_control_name,
-                 inner_control) in six.iteritems(inner_controls):
+                 inner_control_groups) in six.iteritems(inner_controls):
+                for group, inner_control \
+                        in six.iteritems(inner_control_groups):
 
-                # Unpack the control item
-                inner_control_instance = inner_control[2]
-                inner_control_class = inner_control[1]
+                    # Unpack the control item
+                    inner_control_instance = inner_control[2]
+                    inner_control_class = inner_control[1]
 
-                # Call the inner control disconnect method
-                inner_control_class.disconnect(
-                    control_instance.controller_widget, inner_control_name,
-                    inner_control_instance)
+                    # Call the inner control disconnect method
+                    inner_control_class.disconnect(
+                        control_instance.controller_widget, inner_control_name,
+                        inner_control_instance)
 
             # Update the list control connection status
             control_instance.connected = False
@@ -653,14 +660,16 @@ class ListControlWidget(object):
             control_instance.controller.remove_trait(trait_name)
 
             # Get, unpack and delete the control item
-            control = control_instance.controller_widget._controls[trait_name]
-            (inner_trait, inner_control_class, inner_control_instance,
-             inner_control_label) = control
-            del(control_instance.controller_widget._controls[trait_name])
+            control_groups \
+                = control_instance.controller_widget._controls[trait_name]
+            for group, control in six.iteritems(control_groups):
+                (inner_trait, inner_control_class, inner_control_instance,
+                inner_control_label) = control
+                del(control_instance.controller_widget._controls[trait_name])
 
-            # Disconnect the removed control
-            inner_control_class.disconnect(
-                controller_widget, trait_name, inner_control_instance)
+                # Disconnect the removed control
+                inner_control_class.disconnect(
+                    controller_widget, trait_name, inner_control_instance)
 
             # Update the list controller
             control_instance._controller_connections[0]()

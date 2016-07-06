@@ -73,11 +73,14 @@ class DictControlWidget(object):
 
         # Go through all the controller widget controls
         controller_widget = control_instance.controller_widget
-        for control_name, control \
+        for control_name, control_groups \
                 in six.iteritems(controller_widget._controls):
 
+            if not control_groups:
+                continue
             # Unpack the control item
-            trait, control_class, control_instance, control_label = control
+            trait, control_class, control_instance, control_label \
+                = control_groups.values()[0]
 
             # Call the current control specific check method
             valid = control_class.is_valid(control_instance)
@@ -406,16 +409,18 @@ class DictControlWidget(object):
             # Connect also all dict items
             inner_controls = control_instance.controller_widget._controls
             for (inner_control_name,
-                 inner_control) in six.iteritems(inner_controls):
+                 inner_control_groups) in six.iteritems(inner_controls):
+                for group, inner_control \
+                        in six.iteritems(inner_control_groups):
 
-                # Unpack the control item
-                inner_control_instance = inner_control[2]
-                inner_control_class = inner_control[1]
+                    # Unpack the control item
+                    inner_control_instance = inner_control[2]
+                    inner_control_class = inner_control[1]
 
-                # Call the inner control connect method
-                inner_control_class.connect(
-                    control_instance.controller_widget, inner_control_name,
-                    inner_control_instance)
+                    # Call the inner control connect method
+                    inner_control_class.connect(
+                        control_instance.controller_widget, inner_control_name,
+                        inner_control_instance)
 
             # Update the dict control connection status
             control_instance.connected = True
@@ -461,16 +466,18 @@ class DictControlWidget(object):
             # Disconnect also all dict items
             inner_controls = control_instance.controller_widget._controls
             for (inner_control_name,
-                 inner_control) in six.iteritems(inner_controls):
+                 inner_control_groups) in six.iteritems(inner_controls):
+                for group, inner_control \
+                        in six.iteritems(inner_control_groups):
 
-                # Unpack the control item
-                inner_control_instance = inner_control[2]
-                inner_control_class = inner_control[1]
+                    # Unpack the control item
+                    inner_control_instance = inner_control[2]
+                    inner_control_class = inner_control[1]
 
-                # Call the inner control disconnect method
-                inner_control_class.disconnect(
-                    control_instance.controller_widget, inner_control_name,
-                    inner_control_instance)
+                    # Call the inner control disconnect method
+                    inner_control_class.disconnect(
+                        control_instance.controller_widget, inner_control_name,
+                        inner_control_instance)
 
             # Update the dict control connection status
             control_instance.connected = False
