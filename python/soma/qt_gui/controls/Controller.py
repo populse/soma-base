@@ -62,11 +62,14 @@ class ControllerControlWidget(object):
 
         # Go through all the controller widget controls
         controller_widget = control_instance.controller_widget
-        for control_name, control \
+        for control_name, control_groups \
                 in six.iteritems(controller_widget._controls):
 
+            if not control_groups:
+                continue
             # Unpack the control item
-            trait, control_class, control_instance, control_label = control
+            trait, control_class, control_instance, control_label \
+                = control_groups.values()[0]
 
             # Call the current control specific check method
             valid = control_class.is_valid(control_instance)

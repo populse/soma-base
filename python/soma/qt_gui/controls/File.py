@@ -208,7 +208,10 @@ class FileControlWidget(object):
             synchronize with the controller
         """
         # Update the controller only if the control is valid
-        control_class = controller_widget._controls[control_name][1]
+        control_groups = controller_widget._controls[control_name]
+        if not control_groups:
+            return
+        control_class = control_groups.values()[0][1]
         if control_class.is_valid(control_instance):
 
             # Get the control value
