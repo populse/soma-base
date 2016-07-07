@@ -143,6 +143,8 @@ class ControllerControlWidget(object):
         tool_widget = QtGui.QWidget(parent)
         layout = QtGui.QHBoxLayout()
         layout.addStretch(1)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(2)
         tool_widget.setLayout(layout)
         # Create the tool buttons
         resize_button = QtGui.QToolButton()
@@ -153,6 +155,7 @@ class ControllerControlWidget(object):
             _fromUtf8(":/soma_widgets_icons/nav_down")),
             QtGui.QIcon.Normal, QtGui.QIcon.Off)
         resize_button.setIcon(icon)
+        resize_button.setFixedSize(30, 22)
 
         editable_labels = False
         if trait.handler.inner_traits():
@@ -168,6 +171,8 @@ class ControllerControlWidget(object):
                 QtGui.QPixmap(_fromUtf8(":/soma_widgets_icons/add")),
                 QtGui.QIcon.Normal, QtGui.QIcon.Off)
             add_button.setIcon(icon)
+            add_button.setFixedSize(30, 22)
+            delete_button.setFixedSize(30, 22)
             # Add list item callback
             add_hook = partial(
                 ControllerControlWidget.add_item, parent, control_name, frame)
