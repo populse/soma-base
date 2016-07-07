@@ -541,7 +541,8 @@ class ListControlWidget(object):
             trait_name, control_instance.inner_trait)
 
         # Update the list controller
-        control_instance._controller_connections[0]()
+        if hasattr(control_instance, '_controller_connections'):
+            control_instance._controller_connections[0]()
         # control_instance.controller_widget.update_controller_widget()
         logger.debug("Add 'ListControlWidget' '{0}' new trait "
                      "callback.".format(trait_name))
@@ -685,7 +686,8 @@ class ListControlWidget(object):
                     controller_widget, trait_name, inner_control_instance)
 
             # Update the list controller
-            control_instance._controller_connections[0]()
+            if hasattr(control_instance, '_controller_connections'):
+                control_instance._controller_connections[0]()
             logger.debug("Remove 'ListControlWidget' '{0}' controller and "
                          "trait item.".format(trait_name))
 
