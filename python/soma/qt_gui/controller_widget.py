@@ -78,11 +78,11 @@ class ScrollControllerWidget(QtGui.QScrollArea):
 
         # Display a surounding box
         self.setFrameShape(QtGui.QFrame.StyledPanel)
-        self.setStyleSheet('padding: 2px;')
 
         # Create the controller widget
         self.controller_widget = ControllerWidget(
             controller, parent, name, live, hide_labels, select_controls)
+        self.controller_widget.layout().setContentsMargins(2, 2, 2, 2)
         self.controller_widget.setSizePolicy(QtGui.QSizePolicy.Expanding,
                                              QtGui.QSizePolicy.Preferred)
 
@@ -563,10 +563,13 @@ class ControllerWidget(QtGui.QWidget):
                                                        layout, group)
                 control_instances.append(control_instance)
                 if control_label:
-                    if isinstance(control_label, tuple):
-                        control_labels += list(control_label)
-                    else:
-                        control_labels.append(control_label)
+                    if not isinstance(control_label, tuple):
+                        control_label = [control_label]
+                    control_labels += list(control_label)
+                    if isinstance(control_label[0], QtGui.QLabel):
+                        control_label[0].setTextInteractionFlags(
+                            QtCore.Qt.TextSelectableByKeyboard |
+                            QtCore.Qt.TextSelectableByMouse)
 
         # Otherwise, the control associated with the current trait name is
         # already inserted in the grid layout, just unpack the values

@@ -12,6 +12,7 @@ from .Float import FloatControlWidget
 from .Int import IntControlWidget
 from .Enum import EnumControlWidget
 from .List import ListControlWidget
+from .List_offscreen import OffscreenListControlWidget
 from .Bool import BoolControlWidget
 from .File import FileControlWidget
 from .Directory import DirectoryControlWidget
