@@ -326,6 +326,10 @@ class OffscreenListControlWidget(object):
             controller_widget, control_instance.trait_name, value,
             control_instance.trait, control_instance.label_class)
 
+        ListControlWidget.connect(controller_widget,
+                                  control_instance.trait_name,
+                                  control_widget)
+
         hlayout.addWidget(control_label[0])
         hlayout.addWidget(control_label[1])
         layout.addWidget(control_widget)
