@@ -159,6 +159,7 @@ class FileControlWidget(object):
         widget.path = path
         # Create a browse button
         button = QtGui.QPushButton("...", widget)
+        button.setStyleSheet('padding: 0px 10px 0px 10px; margin: 0px;')
         layout.addWidget(button)
         widget.browse = button
 

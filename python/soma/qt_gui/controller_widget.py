@@ -78,6 +78,7 @@ class ScrollControllerWidget(QtGui.QScrollArea):
 
         # Display a surounding box
         self.setFrameShape(QtGui.QFrame.StyledPanel)
+        self.setStyleSheet('padding: 2px;')
 
         # Create the controller widget
         self.controller_widget = ControllerWidget(
@@ -196,7 +197,7 @@ class ControllerWidget(QtGui.QWidget):
         self._grid_layout = QtGui.QGridLayout()
         self._grid_layout.setAlignment(QtCore.Qt.AlignTop)
         self._grid_layout.setSpacing(3)
-        self._grid_layout.setContentsMargins(5, 5, 5, 5)
+        self._grid_layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(self._grid_layout)
 
         self._groups = OrderedDict()

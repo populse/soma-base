@@ -180,6 +180,8 @@ class DictControlWidget(object):
             QtGui.QPixmap(_fromUtf8(":/soma_widgets_icons/nav_down")),
             QtGui.QIcon.Normal, QtGui.QIcon.Off)
         resize_button.setIcon(icon)
+        resize_button.setFixedSize(30, 22)
+        add_button.setFixedSize(30, 22)
 
         # Create a new controller that contains length 'control_value' inner
         # trait elements

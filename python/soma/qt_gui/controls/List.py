@@ -158,13 +158,16 @@ class ListControlWidget(object):
 
         # Create the list widget: a frame
         frame = QtGui.QFrame(parent=parent)
-        frame.setFrameShape(QtGui.QFrame.StyledPanel)
+        #frame.setFrameShape(QtGui.QFrame.StyledPanel)
+        frame.setFrameShape(QtGui.QFrame.NoFrame)
 
         # Create tools to interact with the list widget: expand or collapse -
         # add a list item - remove a list item
         tool_widget = QtGui.QWidget(parent)
         layout = QtGui.QHBoxLayout()
         layout.addStretch(1)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(2)
         tool_widget.setLayout(layout)
         # Create the tool buttons
         resize_button = QtGui.QToolButton()
@@ -187,6 +190,9 @@ class ListControlWidget(object):
             QtGui.QPixmap(_fromUtf8(":/soma_widgets_icons/nav_down")),
             QtGui.QIcon.Normal, QtGui.QIcon.Off)
         resize_button.setIcon(icon)
+        resize_button.setFixedSize(30, 22)
+        add_button.setFixedSize(30, 22)
+        delete_button.setFixedSize(30, 22)
 
         # Create a new controller that contains length 'control_value' inner
         # trait elements
@@ -198,6 +204,7 @@ class ListControlWidget(object):
         # Create the associated controller widget
         controller_widget = ControllerWidget(controller, parent=frame,
                                              live=True)
+        controller_widget.setStyleSheet('padding: 0px;')
 
         # Store some parameters in the list widget
         frame.inner_trait = inner_trait
@@ -208,6 +215,8 @@ class ListControlWidget(object):
 
         # Add the list controller widget to the list widget
         frame.setLayout(controller_widget.layout())
+        frame.layout().setContentsMargins(0, 0, 0, 0)
+        frame.setStyleSheet('padding: 0px;')
 
         # Set some callback on the list control tools
         # Resize callback
