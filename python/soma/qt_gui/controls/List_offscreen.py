@@ -355,3 +355,7 @@ class OffscreenListControlWidget(object):
                     control_instance.trait_name,
                     new_trait_value)
 
+        ListControlWidget.disconnect(controller_widget,
+                                     control_instance.trait_name,
+                                     control_widget)
+
