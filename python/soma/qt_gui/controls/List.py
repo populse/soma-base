@@ -153,7 +153,8 @@ class ListControlWidget(object):
         if len(trait.handler.inner_traits()) != 1:
             raise Exception(
                 "Expect only one inner trait in List control. Trait '{0}' "
-                "inner trait is '{1}'.".format(control_name, trait.handler.inner_traits()))
+                "inner trait is '{1}'.".format(control_name,
+                                               trait.handler.inner_traits()))
         inner_trait = trait.handler.inner_traits()[0]
 
         # Create the list widget: a frame
@@ -204,7 +205,9 @@ class ListControlWidget(object):
         # Create the associated controller widget
         controller_widget = ControllerWidget(controller, parent=frame,
                                              live=True)
-        controller_widget.setStyleSheet('padding: 0px;')
+        controller_widget.setObjectName('inner_controller')
+        controller_widget.setStyleSheet(
+            'ControllerWidget#inner_controller { padding: 0px; }')
 
         # Store some parameters in the list widget
         frame.inner_trait = inner_trait
@@ -216,7 +219,8 @@ class ListControlWidget(object):
         # Add the list controller widget to the list widget
         frame.setLayout(controller_widget.layout())
         frame.layout().setContentsMargins(0, 0, 0, 0)
-        frame.setStyleSheet('padding: 0px;')
+        frame.setObjectName('inner_frame')
+        frame.setStyleSheet('QFrame#inner_frame { padding: 0px; }')
 
         # Set some callback on the list control tools
         # Resize callback
