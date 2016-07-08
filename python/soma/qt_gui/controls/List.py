@@ -198,6 +198,9 @@ class ListControlWidget(object):
         # Create a new controller that contains length 'control_value' inner
         # trait elements
         controller = ListController()
+        if inner_trait.groups:
+            del inner_trait.groups
+
         for cnt, inner_control_values in enumerate(control_value):
             controller.add_trait(str(cnt), inner_trait)
             setattr(controller, str(cnt), inner_control_values)
