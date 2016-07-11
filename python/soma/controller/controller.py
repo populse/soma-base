@@ -370,6 +370,29 @@ class Controller(six.with_metaclass(ControllerMeta, HasTraits)):
                 setattr(copied, name, getattr(self, name))
         return copied
 
+    def reorder_traits(self, traits_list):
+        """ Reorder traits in the controller according to a new ordered list.
+
+        If the new list does not contain all user traits, the remaining ones
+        will be appended at the end.
+
+        Parameters
+        ----------
+        traits_list: list
+            New list of trait names. This list order will be kept.
+        """
+        former_traits = set(self._user_traits.sortedKeys)
+        for t in traits_list:
+            if t not in former_traits:
+                raise ValueError("parameter %s is not is Controller traits."
+                                 % t)
+        new_traits = list(traits_list)
+        done = set(new_traits)
+        for t in self._user_traits.sortedKeys:
+            if t not in done:
+                new_traits.append(t)
+        self._user_traits.sortedKeys = new_traits
+
 
 class OpenKeyController(Controller):
 
