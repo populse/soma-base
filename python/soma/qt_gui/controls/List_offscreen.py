@@ -136,49 +136,28 @@ class OffscreenListControlWidget(object):
         layout = QtGui.QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         frame.setLayout(layout)
-        item = QtGui.QLabel('&lt;list of %s&gt;'
-                            % str(inner_trait.trait_type.__class__.__name__))
-        item.setTextInteractionFlags(QtCore.Qt.TextSelectableByKeyboard |
-                                     QtCore.Qt.TextSelectableByMouse)
-        item.setFrameStyle(QtGui.QFrame.StyledPanel | QtGui.QFrame.Sunken)
-        layout.addWidget(item)
-        layout.addWidget(QtGui.QLabel('...'))
+        #item = QtGui.QLabel('&lt;list of %s&gt;'
+                            #% str(inner_trait.trait_type.__class__.__name__))
+        #item.setTextInteractionFlags(QtCore.Qt.TextSelectableByKeyboard |
+                                     #QtCore.Qt.TextSelectableByMouse)
+        #item.setFrameStyle(QtGui.QFrame.StyledPanel | QtGui.QFrame.Sunken)
+        #layout.addWidget(item)
 
         # Create tools to interact with the list widget: expand or collapse -
         # add a list item - remove a list item
         tool_widget = QtGui.QWidget(parent)
-        layout.addStretch(1)
         layout.addWidget(tool_widget)
 
         layout = QtGui.QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(2)
         tool_widget.setLayout(layout)
-        # Create the tool buttons
-        edit_button = QtGui.QToolButton()
-        add_button = QtGui.QToolButton()
-        delete_button = QtGui.QToolButton()
-        layout.addWidget(edit_button)
-        # Set the tool icons
-        icon = QtGui.QIcon()
-        icon.addPixmap(QtGui.QPixmap(_fromUtf8(":/soma_widgets_icons/add")),
-            QtGui.QIcon.Normal, QtGui.QIcon.Off)
-        edit_button.setIcon(icon)
-        edit_button.setFixedSize(30, 22)
-
         # Store some parameters in the list widget
         frame.inner_trait = inner_trait
         frame.trait = trait
         frame.connected = False
         frame.control_value = control_value
         frame.trait_name = control_name
-
-        # Set some callback on the list control tools
-        # Resize callback
-        edit_hook = partial(
-            OffscreenListControlWidget.edit_elements, parent, frame,
-            edit_button)
-        edit_button.clicked.connect(edit_hook)
 
         # Create the label associated with the list widget
         control_label = trait.label
@@ -192,7 +171,74 @@ class OffscreenListControlWidget(object):
             label = None
         frame.label_class = label_class
 
+        # view the model
+        items = OffscreenListControlWidget.partial_view_widget(
+            parent, frame, control_value)
+        layout.addWidget(items)
+        layout.addWidget(QtGui.QLabel('...'))
+        frame.control_widget = items
+        frame.controller = items.control_widget.controller
+        frame.controller_widget = items.control_widget.controller_widget
+
+        # Create the tool buttons
+        edit_button = QtGui.QToolButton()
+        layout.addWidget(edit_button)
+        # Set the tool icons
+        icon = QtGui.QIcon()
+        icon.addPixmap(QtGui.QPixmap(_fromUtf8(":/soma_widgets_icons/add")),
+            QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        edit_button.setIcon(icon)
+        edit_button.setFixedSize(30, 22)
+
+        layout.addStretch(1)
+
+        # Set some callback on the list control tools
+        # Resize callback
+        edit_hook = partial(
+            OffscreenListControlWidget.edit_elements, parent, frame,
+            edit_button)
+        edit_button.clicked.connect(edit_hook)
+
         return (frame, label)
+
+    @staticmethod
+    def partial_view_widget(controller_widget, parent_frame, control_value):
+        widget = QtGui.QTableWidget()
+        widget.horizontalHeader().hide()
+        widget.verticalHeader().hide()
+
+        control_widget, control_label = ListControlWidget.create_widget(
+            controller_widget, parent_frame.trait_name, control_value,
+            parent_frame.trait, parent_frame.label_class)
+
+        control_label[0].deleteLater()
+        control_label[1].deleteLater()
+        del control_label
+
+        n = len(control_value)
+        widget.setRowCount(1)
+        widget.setColumnCount(n)
+        clayout = control_widget.layout()
+        maxheight = 0
+        for i in range(n):
+            litem = clayout.itemAtPosition(i + 1, 1)
+            if litem is not None:
+                item = litem.widget()
+                widget.setCellWidget(0, i, item)
+                maxheight = max(maxheight, item.height())
+
+        height = maxheight + 5 \
+            + widget.findChildren(QtGui.QScrollBar)[-1].height()
+        #print('height:', height)
+        #print('maxheight:', maxheight, widget.findChildren(QtGui.QScrollBar)[-1].height())
+        #widget.setSizePolicy(QtGui.QSizePolicy.Preferred,
+                             #QtGui.QSizePolicy.Maximum)
+        #widget.resize(widget.sizeHint().width(), height - 20)
+
+        widget.control_widget = control_widget
+        control_widget.hide()
+
+        return widget
 
     @staticmethod
     def update_controller(controller_widget, control_name, control_instance,
@@ -259,12 +305,11 @@ class OffscreenListControlWidget(object):
         # Check if the control is connected
         if not control_instance.connected:
 
-            # Update the list item when one of his associated controller trait
-            # changed.
-            # Hook: function that will be called to update the controller
-            # associated with a list widget when a list widget inner controller
-            # trait is modified.
-
+            ListControlWidget.connect(
+                #control_instance.control_widget.control_widget,
+                controller_widget,
+                control_instance.trait_name,
+                control_instance)
             # Update the list control connection status
             control_instance.connected = True
 
@@ -289,9 +334,15 @@ class OffscreenListControlWidget(object):
         # Check if the control is connected
         if control_instance.connected:
 
-            # Get the stored widget and controller hooks
-            (list_controller_hook,
-             controller_hook) = control_instance._controller_connections
+            ListControlWidget.disconnect(
+                #control_instance.control_widget.control_widget,
+                controller_widget,
+                control_instance.trait_name,
+                control_instance)
+
+            ## Get the stored widget and controller hooks
+            #(list_controller_hook,
+             #controller_hook) = control_instance._controller_connections
 
             # Update the list control connection status
             control_instance.connected = False
