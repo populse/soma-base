@@ -219,21 +219,16 @@ class OffscreenListControlWidget(object):
         widget.setRowCount(1)
         widget.setColumnCount(n)
         clayout = control_widget.layout()
-        maxheight = 0
         for i in range(n):
             litem = clayout.itemAtPosition(i + 1, 1)
             if litem is not None:
                 item = litem.widget()
                 widget.setCellWidget(0, i, item)
-                maxheight = max(maxheight, item.height())
 
-        height = maxheight + 5 \
-            + widget.findChildren(QtGui.QScrollBar)[-1].height()
-        #print('height:', height)
-        #print('maxheight:', maxheight, widget.findChildren(QtGui.QScrollBar)[-1].height())
-        #widget.setSizePolicy(QtGui.QSizePolicy.Preferred,
-                             #QtGui.QSizePolicy.Maximum)
-        #widget.resize(widget.sizeHint().width(), height - 20)
+        widget.resizeRowToContents(0)
+        scroll_height = widget.findChildren(QtGui.QScrollBar)[-1].height()
+        height = widget.rowHeight(0) + scroll_height
+        widget.setFixedHeight(height)
 
         widget.control_widget = control_widget
         control_widget.hide()
