@@ -285,6 +285,26 @@ class ListControlWidget(object):
             "been updated with value '{1}'.".format(
                 control_name, new_trait_value))
 
+    @staticmethod
+    def validate_all_values(controller_widget, control_instance):
+        '''Performs recursively update_controller() on list elements to
+        make the Controller instance values match values in widgets.
+        '''
+        for k, groups in six.iteritems(controller_widget._controls):
+            for g, ctrl in six.iteritems(groups):
+                ctrl[1].update_controller(controller_widget, k,
+                                          control_instance,
+                                          reset_invalid_value=True)
+                if ctrl[1] is ListControlWidget:
+                    frame = ctrl[2]
+                    sub_cw = frame.controller_widget
+                    for sub_k, sub_groups in six.iteritems(sub_cw._controls):
+                        for sub_g, sub_ctrl in six.iteritems(sub_groups):
+                            sub_ctrl[1].update_controller(
+                                sub_cw, sub_k, sub_ctrl[2],
+                                reset_invalid_value=True)
+
+
     @classmethod
     def update_controller_widget(cls, controller_widget, control_name,
                                  control_instance):
@@ -546,6 +566,7 @@ class ListControlWidget(object):
         # Update the list controller
         if hasattr(control_instance, '_controller_connections'):
             control_instance._controller_connections[0]()
+
         # control_instance.controller_widget.update_controller_widget()
         logger.debug("Add 'ListControlWidget' '{0}' new trait "
                      "callback.".format(trait_name))
