@@ -17,10 +17,11 @@ logger = logging.getLogger(__name__)
 
 # Soma import
 from soma.qt_gui.qt_backend import QtGui, QtCore
-from soma.utils.functiontools import SomaPartial
+from soma.utils.functiontools import SomaPartial, partial
 from soma.controller import trait_ids
 from soma.controller import Controller
-from soma.qt_gui.controller_widget import ControllerWidget
+from soma.qt_gui.controller_widget import ControllerWidget, \
+    ScrollControllerWidget
 
 from .List import ListControlWidget, ListController
 
@@ -42,6 +43,8 @@ class OffscreenListControlWidget(object):
     #
     # Public members
     #
+
+    max_columns = 5
 
     @staticmethod
     def is_valid(control_instance, *args, **kwargs):
@@ -175,7 +178,7 @@ class OffscreenListControlWidget(object):
         items = OffscreenListControlWidget.partial_view_widget(
             parent, frame, control_value)
         layout.addWidget(items)
-        layout.addWidget(QtGui.QLabel('...'))
+        #layout.addWidget(QtGui.QLabel('...'))
         frame.control_widget = items
         frame.controller = items.control_widget.controller
         frame.controller_widget = items.control_widget.controller_widget
@@ -190,7 +193,7 @@ class OffscreenListControlWidget(object):
         edit_button.setIcon(icon)
         edit_button.setFixedSize(30, 22)
 
-        layout.addStretch(1)
+        #layout.addStretch(1)
 
         # Set some callback on the list control tools
         # Resize callback
@@ -203,9 +206,10 @@ class OffscreenListControlWidget(object):
 
     @staticmethod
     def partial_view_widget(controller_widget, parent_frame, control_value):
-        widget = QtGui.QTableWidget()
+        widget = OneLineQTableWidget()
         widget.horizontalHeader().hide()
         widget.verticalHeader().hide()
+        widget.max_columns = OffscreenListControlWidget.max_columns
 
         control_widget, control_label = ListControlWidget.create_widget(
             controller_widget, parent_frame.trait_name, control_value,
@@ -216,18 +220,39 @@ class OffscreenListControlWidget(object):
         del control_label
 
         n = len(control_value)
-        widget.setRowCount(1)
-        widget.setColumnCount(n)
+        max_columns = widget.max_columns
+        if max_columns > 0:
+            m = min(max_columns, n)
+            if n > max_columns:
+                widget.setColumnCount(m + 1)
+            else:
+                widget.setColumnCount(n)
+        else:
+            m = n
+            widget.setColumnCount(n)
         clayout = control_widget.layout()
-        for i in range(n):
+        widget.setRowCount(1)
+        for i in range(m):
             litem = clayout.itemAtPosition(i + 1, 1)
             if litem is not None:
                 item = litem.widget()
                 widget.setCellWidget(0, i, item)
+            widget.horizontalHeader().setResizeMode(
+                i, QtGui.QHeaderView.Stretch)
+        if n > m:
+            widget.setCellWidget(0, max_columns, QtGui.QLabel('...'))
+            widget.horizontalHeader().setResizeMode(
+                max_columns, QtGui.QHeaderView.Fixed)
 
         widget.resizeRowToContents(0)
-        scroll_height = widget.findChildren(QtGui.QScrollBar)[-1].height()
-        height = widget.rowHeight(0) + scroll_height
+        #scroll_height = widget.findChildren(QtGui.QScrollBar)[-1].height()
+        height = widget.rowHeight(0) \
+            + sum(widget.getContentsMargins()[1:4:2]) # + scroll_height
+        widget.setSizePolicy(QtGui.QSizePolicy.Expanding,
+                             QtGui.QSizePolicy.Minimum)
+        #widget.viewport().setSizePolicy(QtGui.QSizePolicy.MinimumExpanding,
+                                        #QtGui.QSizePolicy.Fixed)
+        #widget.viewport().setFixedHeight(widget.rowHeight(0))
         widget.setFixedHeight(height)
 
         widget.control_widget = control_widget
@@ -255,7 +280,8 @@ class OffscreenListControlWidget(object):
             the instance of the controller widget control we want to
             synchronize with the controller
         """
-        return
+        ListControlWidget.update_controller(controller_widget, control_name,
+                                            control_instance, *args, **kwarg)
 
     @classmethod
     def update_controller_widget(cls, controller_widget, control_name,
@@ -277,7 +303,62 @@ class OffscreenListControlWidget(object):
             the instance of the controller widget control we want to
             synchronize with the controller
         """
-        return
+        if control_name in controller_widget.controller.user_traits():
+
+            # Get the list widget current connection status
+            was_connected = control_instance.connected
+
+            # Disconnect the list controller and the inner list controller
+            cls.disconnect(controller_widget, control_name, control_instance)
+            control_instance.controller_widget.disconnect()
+
+            widget = control_instance.control_widget
+            clayout = widget.control_widget.layout()
+            owned_widgets = set()
+            parent = widget
+            for i in range(widget.columnCount()):
+                w = widget.cellWidget(0, i)
+                if w is not None:
+                    parent = w.parentWidget()
+                    owned_widgets.add(w)
+            ListControlWidget.update_controller_widget(
+                controller_widget, control_name, widget.control_widget)
+            keys = list(control_instance.controller.user_traits().keys())
+            n = len(control_instance.controller.user_traits())
+            max_columns = widget.max_columns
+            if max_columns > 0:
+                m = min(max_columns, n)
+                if n > max_columns:
+                    widget.setColumnCount(m + 1)
+                else:
+                    widget.setColumnCount(n)
+            else:
+                m = n
+                widget.setColumnCount(n)
+            for i in range(m):
+                items = widget.control_widget.controller_widget._controls[
+                    str(i)]
+                item = items[None][2]
+                if item not in owned_widgets:
+                    widget.setCellWidget(0, i, item)
+                widget.horizontalHeader().setResizeMode(
+                    i, QtGui.QHeaderView.Stretch)
+            if n > m:
+                label = QtGui.QLabel('...')
+                width = label.sizeHint().width()
+                widget.setCellWidget(0, max_columns, QtGui.QLabel('...'))
+                widget.horizontalHeader().setResizeMode(
+                    max_columns, QtGui.QHeaderView.Fixed)
+                widget.horizontalHeader().resizeSection(max_columns, width)
+
+            widget.resizeRowToContents(0)
+            height = widget.rowHeight(0) \
+                + sum(widget.getContentsMargins()[1:4:2])
+            widget.setFixedHeight(height)
+
+            # Restore the previous list controller connection status
+            if was_connected:
+                cls.connect(controller_widget, control_name, control_instance)
 
     @classmethod
     def connect(cls, controller_widget, control_name, control_instance):
@@ -300,11 +381,43 @@ class OffscreenListControlWidget(object):
         # Check if the control is connected
         if not control_instance.connected:
 
-            ListControlWidget.connect(
-                #control_instance.control_widget.control_widget,
-                controller_widget,
-                control_instance.trait_name,
+            # Update the list item when one of his associated controller trait
+            # changed.
+            # Hook: function that will be called to update the controller
+            # associated with a list widget when a list widget inner controller
+            # trait is modified.
+            list_controller_hook = SomaPartial(
+                cls.update_controller, controller_widget, control_name,
                 control_instance)
+
+            # Go through all list widget inner controller user traits
+            for trait_name in control_instance.controller.user_traits():
+
+                # And add the callback on each user trait
+                control_instance.controller.on_trait_change(
+                    list_controller_hook, trait_name, dispatch='ui')
+                logger.debug("Item '{0}' of a 'ListControlWidget', add "
+                             "a callback on inner controller trait "
+                             "'{0}'.".format(control_name, trait_name))
+
+            # Update the list controller widget.
+            # Hook: function that will be called to update the specific widget
+            # when a trait event is detected on the list controller.
+            controller_hook = SomaPartial(
+                cls.update_controller_widget, controller_widget, control_name,
+                control_instance)
+
+            # When the 'control_name' controller trait value is modified,
+            # update the corresponding control
+            controller_widget.controller.on_trait_change(
+                controller_hook, control_name, dispatch='ui')
+
+            # Update the list connection status
+            control_instance._controller_connections = (
+                list_controller_hook, controller_hook)
+            logger.debug("Add 'List' connection: {0}.".format(
+                control_instance._controller_connections))
+
             # Update the list control connection status
             control_instance.connected = True
 
@@ -329,15 +442,38 @@ class OffscreenListControlWidget(object):
         # Check if the control is connected
         if control_instance.connected:
 
-            ListControlWidget.disconnect(
-                #control_instance.control_widget.control_widget,
-                controller_widget,
-                control_instance.trait_name,
-                control_instance)
+            # Get the stored widget and controller hooks
+            (list_controller_hook,
+             controller_hook) = control_instance._controller_connections
 
-            ## Get the stored widget and controller hooks
-            #(list_controller_hook,
-             #controller_hook) = control_instance._controller_connections
+            # Remove the controller hook from the 'control_name' trait
+            controller_widget.controller.on_trait_change(
+                controller_hook, control_name, remove=True)
+
+            # Remove the list controller hook associated with the controller
+            # traits
+            for trait_name in control_instance.controller.user_traits():
+                control_instance.controller.on_trait_change(
+                    list_controller_hook, trait_name, remove=True)
+
+            # Delete the trait - control connection we just remove
+            del control_instance._controller_connections
+
+            # Disconnect also all list items
+            inner_controls = control_instance.controller_widget._controls
+            for (inner_control_name,
+                 inner_control_groups) in six.iteritems(inner_controls):
+                for group, inner_control \
+                        in six.iteritems(inner_control_groups):
+
+                    # Unpack the control item
+                    inner_control_instance = inner_control[2]
+                    inner_control_class = inner_control[1]
+
+                    # Call the inner control disconnect method
+                    inner_control_class.disconnect(
+                        control_instance.controller_widget, inner_control_name,
+                        inner_control_instance)
 
             # Update the list control connection status
             control_instance.connected = False
@@ -362,23 +498,26 @@ class OffscreenListControlWidget(object):
         widget.setModal(True)
         layout = QtGui.QVBoxLayout()
         widget.setLayout(layout)
-        hlayout = QtGui.QHBoxLayout()
-        layout.addLayout(hlayout)
+        #hlayout = QtGui.QHBoxLayout()
+        #layout.addLayout(hlayout)
+
+        old_class = ControllerWidget._defined_controls['List']
+        ControllerWidget._defined_controls['List'] = ListControlWidget
+
+        temp_controller = Controller()
+        temp_controller.add_trait(
+            control_instance.trait_name,
+            controller_widget.controller.trait(control_instance.trait_name))
 
         value = getattr(controller_widget.controller,
                         control_instance.trait_name)
 
-        control_widget, control_label = ListControlWidget.create_widget(
-            controller_widget, control_instance.trait_name, value,
-            control_instance.trait, control_instance.label_class)
+        setattr(temp_controller, control_instance.trait_name, value)
+        temp_controller_widget = ScrollControllerWidget(
+            temp_controller, live=True)
 
-        ListControlWidget.connect(controller_widget,
-                                  control_instance.trait_name,
-                                  control_widget)
-
-        hlayout.addWidget(control_label[0])
-        hlayout.addWidget(control_label[1])
-        layout.addWidget(control_widget)
+        layout.addWidget(temp_controller_widget)
+        ControllerWidget._defined_controls['List'] = old_class
 
         hlayout2 = QtGui.QHBoxLayout()
         layout.addLayout(hlayout2)
@@ -393,15 +532,34 @@ class OffscreenListControlWidget(object):
 
         if widget.exec_():
 
-            new_trait_value = [
-                getattr(control_widget.controller, str(i))
-                for i in range(len(control_widget.controller.user_traits()))]
+            ctrl = temp_controller_widget.controller_widget._controls.get(
+                control_instance.trait_name)[None]
+            ListControlWidget.validate_all_values(
+                temp_controller_widget.controller_widget, ctrl[2])
+            new_trait_value = getattr(temp_controller,
+                                      control_instance.trait_name)
 
             setattr(controller_widget.controller,
                     control_instance.trait_name,
                     new_trait_value)
 
-        ListControlWidget.disconnect(controller_widget,
-                                     control_instance.trait_name,
-                                     control_widget)
+        del temp_controller_widget
+
+    #@staticmethod
+    #def item_changed(control_widget, item):
+        #print('item_changed:', controller_widget, item)
+
+
+class OneLineQTableWidget(QtGui.QTableWidget):
+    '''QTableWidget witon one line, with fixed row height. Resizes to add the
+    horizontal scrollbar at the bottom when it becomes visible without changing
+    the visible row height.
+    '''
+    def resizeEvent(self, event):
+        scrollbar = self.horizontalScrollBar().isVisible()
+        mheight = self.rowHeight(0) \
+            + sum(self.getContentsMargins()[1:4:2])
+        if self.height() != mheight:
+            self.setFixedHeight(mheight)
+        super(OneLineQTableWidget, self).resizeEvent(event)
 
