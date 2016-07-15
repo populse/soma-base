@@ -23,6 +23,14 @@ from soma.controller import trait_ids
 from soma.controller import Controller
 from soma.qt_gui.controller_widget import ControllerWidget
 import traits.api as traits
+import json
+import csv
+import sys
+
+if sys.version_info[0] >= 3:
+    from io import StringIO
+else:
+    from cStringIO import StringIO
 
 # Qt import
 try:
@@ -771,51 +779,17 @@ class ListControlWidget(object):
 
     @staticmethod
     def enter_list(controller_widget, control_name, control_instance):
-        widget = QtGui.QDialog(controller_widget)
-        widget.setModal(True)
-        layout = QtGui.QVBoxLayout()
-        widget.setLayout(layout)
-        textedit = QtGui.QTextEdit()
-        layout.addWidget(textedit)
-        hlayout2 = QtGui.QHBoxLayout()
-        layout.addLayout(hlayout2)
-
-        hlayout2.addWidget(QtGui.QLabel('Format:'))
-        format_c = QtGui.QComboBox()
-        hlayout2.addWidget(format_c)
-        hlayout2.addWidget(QtGui.QLabel('Separator:'))
-        sep_c = QtGui.QComboBox()
-        hlayout2.addWidget(sep_c)
-
-        format_c.addItem('JSON')
-        format_c.addItem('CSV')
-
-        sep_c.addItem(',')
-        sep_c.addItem(';')
-        sep_c.addItem(' ')
-
-        hlayout2.addStretch(1)
-        ok = QtGui.QPushButton('OK')
-        cancel = QtGui.QPushButton('Cancel')
-        hlayout2.addWidget(ok)
-        hlayout2.addWidget(cancel)
-
-        ok.pressed.connect(widget.accept)
-        cancel.pressed.connect(widget.reject)
-
-        parent_controller = controller_widget.controller
-        value = getattr(parent_controller, control_name)
-        text = '[' + ', '.join([repr(x) for x in value]) + ']'
-        textedit.setText(text)
+        widget = ListValuesEditor(controller_widget, controller_widget,
+                                  control_name)
 
         if widget.exec_():
+            parent_controller = controller_widget.controller
             elem_trait = parent_controller.trait(control_name).inner_traits[0]
             value = ListControlWidget.parse_list(
-                textedit.toPlainText(), format_c.currentText(),
-                sep_c.currentText(), elem_trait)
+                widget.textedit.toPlainText(), widget.format_c.currentText(),
+                widget.separator_c.currentText(), elem_trait)
             if value is not None:
                 setattr(parent_controller, control_name, value)
-
 
     @staticmethod
     def parse_list(text, format, separator, elem_trait):
@@ -828,7 +802,6 @@ class ListControlWidget(object):
         for format in formats:
             if format == 'JSON':
                 try:
-                    import json
                     parsed = json.loads(text)
                     print('parsed json:', parsed)
                     return parsed
@@ -836,7 +809,6 @@ class ListControlWidget(object):
                     pass
             elif format == 'CSV':
                 try:
-                    import csv
                     reader = csv.reader(
                         text.split('\n'), delimiter=str(separator),
                         quotechar='"', quoting=csv.QUOTE_MINIMAL,
@@ -878,7 +850,6 @@ class ListControlWidget(object):
 
     @staticmethod
     def select_files(controller_widget, control_name, control_instance):
-        print('control_instance:', control_instance)
         parent_controller = controller_widget.controller
         elem_trait = parent_controller.trait(control_name).inner_traits[0]
         fnames = None
@@ -929,4 +900,99 @@ class ListControlWidget(object):
         value = parent_controller.trait(control_name).default
         setattr(parent_controller, control_name, value)
 
+
+class ListValuesEditor(QtGui.QDialog):
+
+    def __init__(self, parent, controller_widget, control_name):
+
+        super(ListValuesEditor, self).__init__(parent)
+
+        self.controller_widget = controller_widget
+        self.control_name = control_name
+        self.format = 'JSON'
+        self.separator = ','
+        self.modified = False
+
+        layout = QtGui.QVBoxLayout()
+        self.setLayout(layout)
+        textedit = QtGui.QTextEdit()
+        layout.addWidget(textedit)
+        hlayout2 = QtGui.QHBoxLayout()
+        layout.addLayout(hlayout2)
+
+        hlayout2.addWidget(QtGui.QLabel('Format:'))
+        format_c = QtGui.QComboBox()
+        hlayout2.addWidget(format_c)
+        hlayout2.addWidget(QtGui.QLabel('Separator:'))
+        sep_c = QtGui.QComboBox()
+        hlayout2.addWidget(sep_c)
+
+        format_c.addItem('JSON')
+        format_c.addItem('CSV')
+
+        sep_c.addItem(',')
+        sep_c.addItem(';')
+        sep_c.addItem(' ')
+
+        hlayout2.addStretch(1)
+        ok = QtGui.QPushButton('OK')
+        cancel = QtGui.QPushButton('Cancel')
+        hlayout2.addWidget(ok)
+        hlayout2.addWidget(cancel)
+
+        ok.pressed.connect(self.accept)
+        cancel.pressed.connect(self.reject)
+
+        parent_controller = controller_widget.controller
+        value = getattr(parent_controller, control_name)
+
+        text = json.dumps(value)
+        textedit.setText(text)
+
+        self.textedit = textedit
+        self.format_c = format_c
+        self.separator_c = sep_c
+        self.internal_change = False
+
+        textedit.textChanged.connect(self.set_modified)
+        format_c.currentIndexChanged.connect(self.format_changed)
+        sep_c.currentIndexChanged.connect(self.separator_changed)
+
+    def set_modified(self):
+        if self.internal_change:
+            self.internal_change = False
+            return
+        self.modified = True
+        self.textedit.textChanged.disconnect(self.set_modified)
+
+    def format_changed(self, index):
+        self.format = self.format_c.itemText(index)
+        self.internal_change = True
+        if self.modified:
+            return
+        self.textedit.setText(self.text_repr())
+
+    def text_repr(self):
+        parent_controller = self.controller_widget.controller
+        value = getattr(parent_controller, self.control_name)
+        if self.format == 'JSON':
+            text = json.dumps(value)
+        elif self.format == 'CSV':
+            text_io = StringIO()
+            writer = csv.writer(
+                text_io, delimiter=str(self.separator),
+                quotechar='"', quoting=csv.QUOTE_MINIMAL,
+                skipinitialspace=True)
+            writer.writerow(value)
+            text = text_io.getvalue()
+        else:
+            raise ValueError('unsupported format %s' % self.format)
+        return text
+
+    def separator_changed(self, index):
+        self.separator = self.separator_c.itemText(index)
+        self.internal_change = True
+        if self.modified:
+            return
+        self.textedit.setText(self.text_repr())
 
