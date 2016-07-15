@@ -16,11 +16,13 @@ import six
 logger = logging.getLogger(__name__)
 
 # Soma import
+from soma.qt_gui import qt_backend
 from soma.qt_gui.qt_backend import QtGui, QtCore
 from soma.utils.functiontools import SomaPartial
 from soma.controller import trait_ids
 from soma.controller import Controller
 from soma.qt_gui.controller_widget import ControllerWidget
+import traits.api as traits
 
 # Qt import
 try:
@@ -192,8 +194,26 @@ class ListControlWidget(object):
             QtGui.QIcon.Normal, QtGui.QIcon.Off)
         resize_button.setIcon(icon)
         resize_button.setFixedSize(30, 22)
-        add_button.setFixedSize(30, 22)
-        delete_button.setFixedSize(30, 22)
+        add_button.setFixedSize(40, 22)
+        delete_button.setFixedSize(40, 22)
+
+        menu = QtGui.QMenu()
+        menu.addAction('Enter list', partial(ListControlWidget.enter_list,
+                                             parent, control_name, frame))
+        menu.addAction('Load list', partial(ListControlWidget.load_list,
+                                            parent, control_name, frame))
+        if isinstance(trait.trait_type, traits.File):
+            menu.addAction('Select files',
+                           partial(ListControlWidget.select_files, parent,
+                                   control_name, frame))
+        add_button.setMenu(menu)
+
+        menu = QtGui.QMenu()
+        menu.addAction('Clear all', partial(ListControlWidget.clear_all,
+                                            parent, control_name, frame,
+                                            trait.trait_type.minlen))
+        delete_button.setMenu(menu)
+
 
         # Create a new controller that contains length 'control_value' inner
         # trait elements
@@ -747,3 +767,123 @@ class ListControlWidget(object):
 
         # Set the new button icon
         resize_button.setIcon(icon)
+
+    @staticmethod
+    def enter_list(controller_widget, control_name, control_instance):
+        widget = QtGui.QDialog(controller_widget)
+        widget.setModal(True)
+        layout = QtGui.QVBoxLayout()
+        widget.setLayout(layout)
+        textedit = QtGui.QTextEdit()
+        layout.addWidget(textedit)
+        hlayout2 = QtGui.QHBoxLayout()
+        layout.addLayout(hlayout2)
+
+        hlayout2.addWidget(QtGui.QLabel('Format:'))
+        format_c = QtGui.QComboBox()
+        hlayout2.addWidget(format_c)
+        hlayout2.addWidget(QtGui.QLabel('Separator:'))
+        sep_c = QtGui.QComboBox()
+        hlayout2.addWidget(sep_c)
+
+        format_c.addItem('JSON')
+        format_c.addItem('CSV')
+
+        sep_c.addItem(',')
+        sep_c.addItem(';')
+        sep_c.addItem(' ')
+
+        hlayout2.addStretch(1)
+        ok = QtGui.QPushButton('OK')
+        cancel = QtGui.QPushButton('Cancel')
+        hlayout2.addWidget(ok)
+        hlayout2.addWidget(cancel)
+
+        ok.pressed.connect(widget.accept)
+        cancel.pressed.connect(widget.reject)
+
+        parent_controller = controller_widget.controller
+        value = getattr(parent_controller, control_name)
+        text = '[' + ', '.join([repr(x) for x in value]) + ']'
+        textedit.setText(text)
+
+        if widget.exec_():
+            elem_trait = parent_controller.trait(control_name).inner_traits[0]
+            value = ListControlWidget.parse_list(
+                textedit.toPlainText(), format_c.currentText(),
+                sep_c.currentText(), elem_trait)
+            if value is not None:
+                setattr(parent_controller, control_name, value)
+
+
+    @staticmethod
+    def parse_list(text, format, separator, elem_trait):
+        if format == 'JSON':
+            formats = [format, 'CSV']
+        elif format == 'CSV':
+            formats = [format, 'JSON']
+        else:
+            formats = ['JSON', 'CSV']
+        for format in formats:
+            if format == 'JSON':
+                try:
+                    import json
+                    parsed = json.loads(text)
+                    print('parsed json:', parsed)
+                    return parsed
+                except:
+                    pass
+            elif format == 'CSV':
+                try:
+                    import csv
+                    reader = csv.reader(
+                        text.split('\n'), delimiter=str(separator),
+                        quotechar='"', quoting=csv.QUOTE_MINIMAL,
+                        skipinitialspace=True)
+                    ctrait = traits.TraitCastType(
+                        type(elem_trait.default))
+                    c = traits.HasTraits()
+                    c.add_trait('x', ctrait)
+                    parsed = []
+                    for x in reader:
+                        if isinstance(x, list):
+                            for y in x:
+                                c.x = y
+                                parsed.append(c.x)
+                        else:
+                            c.x = x
+                            parsed.append(c.x)
+                    return parsed
+                except:
+                    pass
+
+
+    @staticmethod
+    def load_list(controller_widget, control_name, control_instance):
+        fname = qt_backend.getOpenFileName(
+            control_instance, "Open file", "", "", None,
+            QtGui.QFileDialog.DontUseNativeDialog)
+        if fname:
+            parent_controller = controller_widget.controller
+            elem_trait = parent_controller.trait(control_name).inner_traits[0]
+            text = open(fname).read()
+            if fname.endswith('.csv'):
+                format = 'CSV'
+            else:
+                format = 'JSON'
+            value = ListControlWidget.parse_list(text, format, ',', elem_trait)
+            if value is not None:
+                setattr(parent_controller, control_name, value)
+
+    @staticmethod
+    def select_files(controller_widget, control_name, control_instance):
+        pass
+
+    @staticmethod
+    def clear_all(controller_widget, control_name, control_instance, minlen):
+        controller = control_instance.controller
+        parent_controller = controller_widget.controller
+        value = parent_controller.trait(control_name).default
+        setattr(parent_controller, control_name, value)
+
+
