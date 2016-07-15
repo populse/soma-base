@@ -202,7 +202,8 @@ class ListControlWidget(object):
                                              parent, control_name, frame))
         menu.addAction('Load list', partial(ListControlWidget.load_list,
                                             parent, control_name, frame))
-        if isinstance(trait.trait_type, traits.File):
+        if isinstance(inner_trait.trait_type, traits.File) \
+                or isinstance(inner_trait.trait_type, traits.Directory):
             menu.addAction('Select files',
                            partial(ListControlWidget.select_files, parent,
                                    control_name, frame))
@@ -877,7 +878,49 @@ class ListControlWidget(object):
 
     @staticmethod
     def select_files(controller_widget, control_name, control_instance):
-        pass
+        print('control_instance:', control_instance)
+        parent_controller = controller_widget.controller
+        elem_trait = parent_controller.trait(control_name).inner_traits[0]
+        fnames = None
+        current_dir = os.path.join(os.getcwd(), os.pardir)
+        if isinstance(elem_trait.trait_type, traits.Directory):
+
+            # Create a dialog to select a directory
+            fdialog = QtGui.QFileDialog(
+                control_instance, "Open directories",
+                current_dir)
+            fdialog.setOptions(QtGui.QFileDialog.ShowDirsOnly |
+                               QtGui.QFileDialog.DontUseNativeDialog)
+            fdialog.setFileMode(QtGui.QFileDialog.Directory)
+            fdialog.setModal(True)
+            if fdialog.exec_():
+                fnames = fdialog.selectedFiles()
+        else:
+            if elem_trait.output:
+                fdialog = QtGui.QFileDialog(
+                    control_instance, "Output files",
+                    current_dir)
+                fdialog.setOptions(QtGui.QFileDialog.DontUseNativeDialog)
+                fdialog.setFileMode(QtGui.QFileDialog.AnyFile)
+                fdialog.setModal(True)
+                if fdialog.exec_():
+                    fnames = fdialog.selectedFiles()
+            else:
+                fdialog = QtGui.QFileDialog(
+                    control_instance, "Open files",
+                    current_dir)
+                fdialog.setOptions(QtGui.QFileDialog.DontUseNativeDialog)
+                fdialog.setFileMode(QtGui.QFileDialog.ExistingFiles)
+                fdialog.setModal(True)
+                if fdialog.exec_():
+                    fnames = fdialog.selectedFiles()
+
+        # Set the selected files to the path sub control
+        if fnames is not None:
+            old_value = getattr(parent_controller, control_name)
+            new_value = old_value + fnames
+            setattr(parent_controller, control_name, new_value)
+
 
     @staticmethod
     def clear_all(controller_widget, control_name, control_instance, minlen):
