@@ -133,7 +133,7 @@ class ListControlWidget(object):
 
     @staticmethod
     def create_widget(parent, control_name, control_value, trait,
-                      label_class=None):
+                      label_class=None, max_items=0):
         """ Method to create the list widget.
 
         Parameters
@@ -150,6 +150,8 @@ class ListControlWidget(object):
             the label widget will be an instance of this class. Its constructor
             will be called using 2 arguments: the label string and the parent
             widget.
+        max_items: int (optional)
+            display at most this number of items. Defaults to 0: no limit.
 
         Returns
         -------
@@ -223,15 +225,21 @@ class ListControlWidget(object):
                                             trait.trait_type.minlen))
         delete_button.setMenu(menu)
 
-
         # Create a new controller that contains length 'control_value' inner
         # trait elements
         controller = ListController()
+
         if inner_trait.groups:
             del inner_trait.groups
 
-        for cnt, inner_control_values in enumerate(control_value):
+        n = max_items
+        if n == 0:
+            n = len(control_value)
+
+        for cnt, inner_control_values in enumerate(control_value[:n]):
             controller.add_trait(str(cnt), inner_trait)
+            #if inner_trait.groups:
+                #del trait(str(cnt)).groups
             setattr(controller, str(cnt), inner_control_values)
 
         # Create the associated controller widget
@@ -247,6 +255,7 @@ class ListControlWidget(object):
         frame.controller = controller
         frame.controller_widget = controller_widget
         frame.connected = False
+        frame.max_items = max_items
 
         # Add the list controller widget to the list widget
         frame.setLayout(controller_widget.layout())
@@ -305,6 +314,14 @@ class ListControlWidget(object):
         new_trait_value = [
             getattr(control_instance.controller, str(i))
             for i in range(len(control_instance.controller.user_traits()))]
+
+        #if not hasattr(control_instance, 'max_items'):
+            #print('no max_items in:', control_instance)
+        #else:
+        if control_instance.max_items != 0 \
+                and len(new_trait_value) == control_instance.max_items:
+            old_value = getattr(controller_widget.controller, control_name)
+            new_trait_value += old_value[control_instance.max_items:]
 
         # Update the 'control_name' parent controller value
         setattr(controller_widget.controller, control_name,
@@ -388,7 +405,9 @@ class ListControlWidget(object):
 
             # Special case: some new traits have been added to the top
             # controller
-            elif len(trait_value) > len_widget:
+            elif len(trait_value) > len_widget \
+                    and (control_instance.max_items == 0
+                         or len_widget < control_instance.max_items):
 
                 # Need to add to the inner list controller some traits
                 # with type 'inner_trait'
@@ -401,7 +420,11 @@ class ListControlWidget(object):
                 user_traits_changed = True
 
             # Update the controller associated with the current control
-            for i in range(len(trait_value)):
+            n = len(trait_value)
+            if control_instance.max_items != 0 \
+                    and control_instance.max_items < n:
+                n = control_instance.max_items
+            for i in range(n):
                 setattr(control_instance.controller, str(i), trait_value[i])
 
             # Connect the inner list controller
@@ -582,6 +605,10 @@ class ListControlWidget(object):
         # Get the number of traits associated with the current list control
         # controller
         nb_of_traits = len(control_instance.controller.user_traits())
+        if control_instance.max_items != 0 \
+                and nb_of_traits >= control_instance.max_items:
+            # don't display more.
+            return
         trait_name = str(nb_of_traits)
 
         # Add the new trait to the inner list controller

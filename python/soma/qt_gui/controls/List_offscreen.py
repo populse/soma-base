@@ -44,7 +44,7 @@ class OffscreenListControlWidget(object):
     # Public members
     #
 
-    max_columns = 5
+    max_items = 5
 
     @staticmethod
     def is_valid(control_instance, *args, **kwargs):
@@ -209,21 +209,22 @@ class OffscreenListControlWidget(object):
         widget = OneLineQTableWidget()
         widget.horizontalHeader().hide()
         widget.verticalHeader().hide()
-        widget.max_columns = OffscreenListControlWidget.max_columns
+        widget.max_items = OffscreenListControlWidget.max_items
 
         control_widget, control_label = ListControlWidget.create_widget(
             controller_widget, parent_frame.trait_name, control_value,
-            parent_frame.trait, parent_frame.label_class)
+            parent_frame.trait, parent_frame.label_class,
+            max_items=widget.max_items)
 
         control_label[0].deleteLater()
         control_label[1].deleteLater()
         del control_label
 
         n = len(control_value)
-        max_columns = widget.max_columns
-        if max_columns > 0:
-            m = min(max_columns, n)
-            if n > max_columns:
+        max_items = widget.max_items
+        if max_items > 0:
+            m = min(max_items, n)
+            if n > max_items:
                 widget.setColumnCount(m + 1)
             else:
                 widget.setColumnCount(n)
@@ -240,9 +241,9 @@ class OffscreenListControlWidget(object):
             widget.horizontalHeader().setResizeMode(
                 i, QtGui.QHeaderView.Stretch)
         if n > m:
-            widget.setCellWidget(0, max_columns, QtGui.QLabel('...'))
+            widget.setCellWidget(0, max_items, QtGui.QLabel('...'))
             widget.horizontalHeader().setResizeMode(
-                max_columns, QtGui.QHeaderView.Fixed)
+                max_items, QtGui.QHeaderView.Fixed)
 
         widget.resizeRowToContents(0)
         #scroll_height = widget.findChildren(QtGui.QScrollBar)[-1].height()
@@ -280,8 +281,9 @@ class OffscreenListControlWidget(object):
             the instance of the controller widget control we want to
             synchronize with the controller
         """
-        ListControlWidget.update_controller(controller_widget, control_name,
-                                            control_instance, *args, **kwarg)
+        ListControlWidget.update_controller(
+            controller_widget, control_name,
+            control_instance.control_widget.control_widget, *args, **kwarg)
 
     @classmethod
     def update_controller_widget(cls, controller_widget, control_name,
@@ -324,11 +326,13 @@ class OffscreenListControlWidget(object):
             ListControlWidget.update_controller_widget(
                 controller_widget, control_name, widget.control_widget)
             keys = list(control_instance.controller.user_traits().keys())
-            n = len(control_instance.controller.user_traits())
-            max_columns = widget.max_columns
-            if max_columns > 0:
-                m = min(max_columns, n)
-                if n > max_columns:
+            #n = len(control_instance.controller.user_traits())
+            parent_value = getattr(controller_widget.controller, control_name)
+            n = len(parent_value)
+            max_items = widget.max_items
+            if max_items > 0:
+                m = min(max_items, n)
+                if n > max_items:
                     widget.setColumnCount(m + 1)
                 else:
                     widget.setColumnCount(n)
@@ -346,10 +350,10 @@ class OffscreenListControlWidget(object):
             if n > m:
                 label = QtGui.QLabel('...')
                 width = label.sizeHint().width()
-                widget.setCellWidget(0, max_columns, QtGui.QLabel('...'))
+                widget.setCellWidget(0, max_items, QtGui.QLabel('...'))
                 widget.horizontalHeader().setResizeMode(
-                    max_columns, QtGui.QHeaderView.Fixed)
-                widget.horizontalHeader().resizeSection(max_columns, width)
+                    max_items, QtGui.QHeaderView.Fixed)
+                widget.horizontalHeader().resizeSection(max_items, width)
 
             widget.resizeRowToContents(0)
             height = widget.rowHeight(0) \
@@ -508,6 +512,9 @@ class OffscreenListControlWidget(object):
         temp_controller.add_trait(
             control_instance.trait_name,
             controller_widget.controller.trait(control_instance.trait_name))
+        if temp_controller.trait(control_instance.trait_name).groups \
+                is not None:
+            temp_controller.trait(control_instance.trait_name).groups = None
 
         value = getattr(controller_widget.controller,
                         control_instance.trait_name)
