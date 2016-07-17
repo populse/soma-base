@@ -16,6 +16,7 @@ import six
 from soma.qt_gui.qt_backend import QtGui, QtCore
 from soma.functiontools import partial
 from soma.qt_gui.controller_widget import ControllerWidget
+from soma.qt_gui.controller_widget import weak_proxy
 
 # Qt import
 try:
@@ -175,7 +176,8 @@ class ControllerControlWidget(object):
             delete_button.setFixedSize(30, 22)
             # Add list item callback
             add_hook = partial(
-                ControllerControlWidget.add_item, parent, control_name, frame)
+                ControllerControlWidget.add_item, weak_proxy(parent),
+                control_name, weak_proxy(frame))
             add_button.clicked.connect(add_hook)
 
         # Create the associated controller widget
@@ -195,7 +197,8 @@ class ControllerControlWidget(object):
         # Set some callback on the controller control tools
         # Resize callback
         resize_hook = partial(
-            ControllerControlWidget.expand_or_collapse, frame, resize_button)
+            ControllerControlWidget.expand_or_collapse, weak_proxy(frame),
+            weak_proxy(resize_button))
         resize_button.clicked.connect(resize_hook)
 
         # Create the label associated with the controller widget

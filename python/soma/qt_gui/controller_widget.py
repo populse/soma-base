@@ -22,6 +22,8 @@ from soma.qt_gui.timered_widgets import TimeredQLineEdit
 from soma.functiontools import partial
 from soma.sorted_dictionary import OrderedDict
 from soma.functiontools import SomaPartial
+import weakref
+from soma.utils.weak_proxy import get_ref, weak_proxy
 
 # Qt import
 try:
@@ -337,8 +339,9 @@ class ControllerWidget(QtGui.QWidget):
         # Go through all the controller widget controls
         for control_name, control_groups in six.iteritems(self._controls):
             for group_name, control in six.iteritems(control_groups):
-                hook1 = partial(self._key_modified, control_name)
-                hook2 = partial(self._delete_key, control_name)
+                hook1 = partial(weakref.proxy(self._key_modified),
+                                control_name)
+                hook2 = partial(weakref.proxy(self._delete_key), control_name)
                 #control = self._controls[control_name]
                 label_control = control[3]
                 if isinstance(label_control, tuple):
@@ -647,6 +650,10 @@ class ControllerWidget(QtGui.QWidget):
 
         group_widget.fold_button.clicked.connect(SomaPartial(
             self._toggle_group_visibility, group))
+        # FIXME: if we use this, self gets deleted somewhere. This is not
+        # normal.
+        #group_widget.fold_button.clicked.connect(SomaPartial(
+            #weakref.proxy(self._toggle_group_visibility), group))
 
         return group_widget
 

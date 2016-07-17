@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 # Soma import
 from soma.qt_gui.qt_backend import QtGui, QtCore
 from soma.utils.functiontools import SomaPartial
+from soma.qt_gui.controller_widget import weak_proxy
 
 if sys.version_info[0] >= 3:
     unicode = str
@@ -56,7 +57,7 @@ class EnumControlWidget(object):
         """
         # Hook: function that will be called to check for typo
         # when a 'textEdited' qt signal is emited
-        widget_callback = partial(cls.is_valid, control_instance)
+        widget_callback = partial(cls.is_valid, weak_proxy(control_instance))
 
         # Execute manually the first time the control check method
         widget_callback()
@@ -223,8 +224,9 @@ class EnumControlWidget(object):
         # Update one element of the controller.
         # Hook: function that will be called to update a specific
         # controller trait when an 'activated' qt signal is emited
-        widget_hook = partial(cls.update_controller, controller_widget,
-                              control_name, control_instance)
+        widget_hook = partial(cls.update_controller,
+                              weak_proxy(controller_widget),
+                              control_name, weak_proxy(control_instance))
 
         # When a qt 'activated' signal is emited, update the
         # 'control_name' controller trait value
@@ -234,8 +236,8 @@ class EnumControlWidget(object):
         # Hook: function that will be called to update the specific widget
         # when a trait event is detected.
         controller_hook = SomaPartial(
-            cls.update_controller_widget, controller_widget, control_name,
-            control_instance)
+            cls.update_controller_widget, weak_proxy(controller_widget),
+            control_name, weak_proxy(control_instance))
 
         # When the 'control_name' controller trait value is modified, update
         # the corresponding control

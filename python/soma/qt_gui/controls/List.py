@@ -21,11 +21,12 @@ from soma.qt_gui.qt_backend import QtGui, QtCore
 from soma.utils.functiontools import SomaPartial
 from soma.controller import trait_ids
 from soma.controller import Controller
-from soma.qt_gui.controller_widget import ControllerWidget
+from soma.qt_gui.controller_widget import ControllerWidget, get_ref, weak_proxy
 import traits.api as traits
 import json
 import csv
 import sys
+import weakref
 
 if sys.version_info[0] >= 3:
     from io import StringIO
@@ -170,6 +171,7 @@ class ListControlWidget(object):
         inner_trait = trait.handler.inner_traits()[0]
 
         # Create the list widget: a frame
+        parent = get_ref(parent)
         frame = QtGui.QFrame(parent=parent)
         #frame.setFrameShape(QtGui.QFrame.StyledPanel)
         frame.setFrameShape(QtGui.QFrame.NoFrame)
@@ -208,21 +210,27 @@ class ListControlWidget(object):
         delete_button.setFixedSize(40, 22)
 
         menu = QtGui.QMenu()
-        menu.addAction('Enter list', partial(ListControlWidget.enter_list,
-                                             parent, control_name, frame))
-        menu.addAction('Load list', partial(ListControlWidget.load_list,
-                                            parent, control_name, frame))
+        menu.addAction('Enter list',
+                       partial(ListControlWidget.enter_list,
+                               weak_proxy(parent), control_name,
+                               weak_proxy(frame)))
+        menu.addAction('Load list',
+                       partial(ListControlWidget.load_list,
+                               weak_proxy(parent), control_name,
+                               weak_proxy(frame)))
         if isinstance(inner_trait.trait_type, traits.File) \
                 or isinstance(inner_trait.trait_type, traits.Directory):
             menu.addAction('Select files',
-                           partial(ListControlWidget.select_files, parent,
-                                   control_name, frame))
+                           partial(ListControlWidget.select_files,
+                                   weak_proxy(parent),
+                                   control_name, weak_proxy(frame)))
         add_button.setMenu(menu)
 
         menu = QtGui.QMenu()
-        menu.addAction('Clear all', partial(ListControlWidget.clear_all,
-                                            parent, control_name, frame,
-                                            trait.trait_type.minlen))
+        menu.addAction('Clear all',
+                       partial(ListControlWidget.clear_all,
+                               weak_proxy(parent), control_name,
+                               weak_proxy(frame), trait.trait_type.minlen))
         delete_button.setMenu(menu)
 
         # Create a new controller that contains length 'control_value' inner
@@ -266,15 +274,18 @@ class ListControlWidget(object):
         # Set some callback on the list control tools
         # Resize callback
         resize_hook = partial(
-            ListControlWidget.expand_or_collapse, frame, resize_button)
+            ListControlWidget.expand_or_collapse, weak_proxy(frame),
+            weak_proxy(resize_button))
         resize_button.clicked.connect(resize_hook)
         # Add list item callback
         add_hook = partial(
-            ListControlWidget.add_list_item, parent, control_name, frame)
+            ListControlWidget.add_list_item, weak_proxy(parent),
+            control_name, weak_proxy(frame))
         add_button.clicked.connect(add_hook)
         # Delete list item callback
         delete_hook = partial(
-            ListControlWidget.delete_list_item, parent, control_name, frame)
+            ListControlWidget.delete_list_item, weak_proxy(parent),
+            control_name, weak_proxy(frame))
         delete_button.clicked.connect(delete_hook)
 
         # Create the label associated with the list widget
@@ -476,8 +487,8 @@ class ListControlWidget(object):
             # associated with a list widget when a list widget inner controller
             # trait is modified.
             list_controller_hook = SomaPartial(
-                cls.update_controller, controller_widget, control_name,
-                control_instance)
+                cls.update_controller, weak_proxy(controller_widget),
+                control_name, weak_proxy(control_instance))
 
             # Go through all list widget inner controller user traits
             for trait_name in control_instance.controller.user_traits():
@@ -493,8 +504,8 @@ class ListControlWidget(object):
             # Hook: function that will be called to update the specific widget
             # when a trait event is detected on the list controller.
             controller_hook = SomaPartial(
-                cls.update_controller_widget, controller_widget, control_name,
-                control_instance)
+                cls.update_controller_widget, weak_proxy(controller_widget),
+                control_name, weak_proxy(control_instance))
 
             # When the 'control_name' controller trait value is modified,
             # update the corresponding control
