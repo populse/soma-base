@@ -47,7 +47,7 @@ def get_ref(obj):
     if isinstance(obj, weakref.ReferenceType):
         return obj()
     elif isinstance(obj, weakref.ProxyType) and hasattr(obj, '_weakref'):
-        return obj._weakef()
+        return obj._weakref()
     return obj
 
 
