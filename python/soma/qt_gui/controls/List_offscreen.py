@@ -499,6 +499,7 @@ class OffscreenListControlWidget(object):
         edit_button: QToolButton
             the signal sender
         """
+        controller_widget = get_ref(controller_widget)
         widget = QtGui.QDialog(controller_widget)
         widget.setModal(True)
         layout = QtGui.QVBoxLayout()

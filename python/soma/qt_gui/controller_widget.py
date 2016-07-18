@@ -339,9 +339,10 @@ class ControllerWidget(QtGui.QWidget):
         # Go through all the controller widget controls
         for control_name, control_groups in six.iteritems(self._controls):
             for group_name, control in six.iteritems(control_groups):
-                hook1 = partial(weakref.proxy(self._key_modified),
-                                control_name)
-                hook2 = partial(weakref.proxy(self._delete_key), control_name)
+                hook1 = partial(self.__class__._key_modified,
+                                weakref.proxy(self), control_name)
+                hook2 = partial(self.__class__._delete_key,
+                                weakref.proxy(self), control_name)
                 #control = self._controls[control_name]
                 label_control = control[3]
                 if isinstance(label_control, tuple):
@@ -648,12 +649,12 @@ class ControllerWidget(QtGui.QWidget):
                 QtGui.QIcon.Normal, QtGui.QIcon.Off)
             group_widget.fold_button.setIcon(icon)
 
-        group_widget.fold_button.clicked.connect(SomaPartial(
-            self._toggle_group_visibility, group))
+        #group_widget.fold_button.clicked.connect(SomaPartial(
+            #self._toggle_group_visibility, group))
         # FIXME: if we use this, self gets deleted somewhere. This is not
         # normal.
-        #group_widget.fold_button.clicked.connect(SomaPartial(
-            #weakref.proxy(self._toggle_group_visibility), group))
+        group_widget.fold_button.clicked.connect(partial(
+            self.__class__._toggle_group_visibility, weak_proxy(self), group))
 
         return group_widget
 
@@ -672,7 +673,6 @@ class ControllerWidget(QtGui.QWidget):
         group_widget.fold_button.setIcon(icon)
 
     def _toggle_group_visibility(self, group, checked=False):
-        group_widget = self._groups[group]
         visible_groups = getattr(self.controller, 'visible_groups', set())
         if group in visible_groups:
             show = False

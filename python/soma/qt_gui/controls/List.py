@@ -817,17 +817,30 @@ class ListControlWidget(object):
 
     @staticmethod
     def enter_list(controller_widget, control_name, control_instance):
+        controller_widget = get_ref(controller_widget)
         widget = ListValuesEditor(controller_widget, controller_widget,
                                   control_name)
-
-        if widget.exec_():
-            parent_controller = controller_widget.controller
-            elem_trait = parent_controller.trait(control_name).inner_traits[0]
-            value = ListControlWidget.parse_list(
-                widget.textedit.toPlainText(), widget.format_c.currentText(),
-                widget.separator_c.currentText(), elem_trait)
-            if value is not None:
-                setattr(parent_controller, control_name, value)
+        done = False
+        while not done:
+            if widget.exec_():
+                parent_controller = controller_widget.controller
+                elem_trait \
+                    = parent_controller.trait(control_name).inner_traits[0]
+                value = ListControlWidget.parse_list(
+                    widget.textedit.toPlainText(),
+                    widget.format_c.currentText(),
+                    widget.separator_c.currentText(), elem_trait)
+                if value is not None:
+                    setattr(parent_controller, control_name, value)
+                    done = True
+                else:
+                    r = QtGui.QMessageBox.warning(
+                        controller_widget, 'Parsing error',
+                        'Could not parse the text input',
+                        QtGui.QMessageBox.Retry | QtGui.QMessageBox.Abort,
+                        QtGui.QMessageBox.Retry)
+                    if r == QtGui.QMessageBox.Abort:
+                        done = True
 
     @staticmethod
     def parse_list(text, format, separator, elem_trait):
@@ -841,7 +854,6 @@ class ListControlWidget(object):
             if format == 'JSON':
                 try:
                     parsed = json.loads(text)
-                    print('parsed json:', parsed)
                     return parsed
                 except:
                     pass
@@ -867,10 +879,14 @@ class ListControlWidget(object):
                     return parsed
                 except:
                     pass
+        # could not parse
+        return None
 
 
     @staticmethod
     def load_list(controller_widget, control_name, control_instance):
+        controller_widget = get_ref(controller_widget)
+        control_instance = get_ref(control_instance)
         fname = qt_backend.getOpenFileName(
             control_instance, "Open file", "", "", None,
             QtGui.QFileDialog.DontUseNativeDialog)
@@ -885,9 +901,15 @@ class ListControlWidget(object):
             value = ListControlWidget.parse_list(text, format, ',', elem_trait)
             if value is not None:
                 setattr(parent_controller, control_name, value)
+            else:
+                QtGui.QMessageBox.warning(
+                    controller_widget, 'Parsing error',
+                    'Could not parse the input file',
+                    QtGui.QMessageBox.Cancel, QtGui.QMessageBox.Cancel)
 
     @staticmethod
     def select_files(controller_widget, control_name, control_instance):
+        control_instance = get_ref(control_instance)
         parent_controller = controller_widget.controller
         elem_trait = parent_controller.trait(control_name).inner_traits[0]
         fnames = None
