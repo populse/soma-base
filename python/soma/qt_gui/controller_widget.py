@@ -598,12 +598,12 @@ class ControllerWidget(QtGui.QWidget):
             for label in control_labels:
                 label.hide()
 
-        # Show the control and associated labels
-        else:
-            for control_instance in control_instances:
-                control_instance.show()
-            for label in control_labels:
-                label.show()
+        ## Show the control and associated labels
+        #else:
+            #for control_instance in control_instances:
+                #control_instance.show()
+            #for label in control_labels:
+                #label.show()
 
     def _create_group_widget(self, group):
         group_widget = QtGui.QGroupBox()

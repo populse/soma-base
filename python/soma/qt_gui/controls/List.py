@@ -841,6 +841,8 @@ class ListControlWidget(object):
                         QtGui.QMessageBox.Retry)
                     if r == QtGui.QMessageBox.Abort:
                         done = True
+            else:
+                done = True
 
     @staticmethod
     def parse_list(text, format, separator, elem_trait):
