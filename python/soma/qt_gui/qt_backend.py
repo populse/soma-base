@@ -540,7 +540,7 @@ def init_matplotlib_backend():
 def init_traitsui_handler():
     try:
         from traitsui.qt4 import toolkit
-    except ImportError:
+    except:
         # copy of the code from traitsui.qt4.toolkit
 
         from traits.trait_notifiers import set_ui_handler

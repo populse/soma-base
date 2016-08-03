@@ -26,7 +26,6 @@ import traits.api as traits
 import json
 import csv
 import sys
-import weakref
 
 if sys.version_info[0] >= 3:
     from io import StringIO
@@ -843,7 +842,6 @@ class ListControlWidget(object):
                         done = True
             else:
                 done = True
-
     @staticmethod
     def parse_list(text, format, separator, elem_trait):
         if format == 'JSON':
