@@ -196,15 +196,14 @@ class SortedDictionary(dict):
         del self.sortedKeys[:]
         super(SortedDictionary, self).clear()
 
-    def sort(self, func=None):
-        """Sorts the dictionary using function func to compare keys.
+    def sort(self, key=None, reverse=False):
+        """Sorts the dictionary using key function key.
 
         Parameters:
         -----------
-        func: function key*key->int
-            comparison function, return -1 if e1<e2, 1 if e1>e2, 0 if e1==e2
+        key: function key
         """
-        self.sortedKeys.sort(func)
+        self.sortedKeys.sort(key=key, reverse=reverse)
 
     def compValues(self, key1, key2):
         """
