@@ -36,7 +36,7 @@ import os
 import errno
 
 
-def mkdir(dirname, mode=0777):
+def mkdir(dirname, mode=0o777):
     '''Same as os.mkdir, but try to prevent errors occurring from concurrent creation by several threads/processes.
     '''
     try:
@@ -47,7 +47,7 @@ def mkdir(dirname, mode=0777):
         # ignore EEXIST, job has already been done
 
 
-def makedirs(dirname, mode=0777):
+def makedirs(dirname, mode=0o777):
     '''Same as os.makedirs, but try to prevent errors occurring from concurrent creation by several threads/processes.
     '''
     ok = False
