@@ -598,13 +598,13 @@ class ObservableList(list):
         self.onChangeNotifier.notify(self.REMOVE_ACTION, [elem], index)
         return elem
 
-    def sort(self, func=None):
-        """Sorts the list using function func to compare elements.
+    def sort(self, key=None, reverse=False):
+        """Sorts the list using key function key.
         Notifies a modify action.
-        @type func: function elem*elem->int
-        @param func: comparison function, return -1 if e1<e2, 1 if e1>e2, 0 if e1==e2
+        @type key: function elem->key
+        @param key: key function
         """
-        super(ObservableList, self).sort(func)
+        super(ObservableList, self).sort(key=key, reverse=reverse)
         # all the elements of the list could be modified
         self.onChangeNotifier.notify(self.MODIFY_ACTION, self, 0)
 
@@ -833,13 +833,13 @@ class ObservableSortedDictionary(SortedDictionary):
         super(ObservableSortedDictionary, self).clear()
         self.onChangeNotifier.notify(self.REMOVE_ACTION, self.values(), 0)
 
-    def sort(self, func=None):
+    def sort(self, key=None, reverse=False):
         """Sorts the dictionary using function func to compare keys.
         Notifies a modify action.
-        @type func: function key*key->int
-        @param func: comparison function, return 1 if e1<e2, -1 if e1>e2, 0 if e1==e2
+        @type key: function key->key
+        @param key: key function
         """
-        super(ObservableSortedDictionary, self).sort(func)
+        super(ObservableSortedDictionary, self).sort(key=key, reverse=reverse)
         self.onChangeNotifier.notify(self.MODIFY_ACTION, self.values(), 0)
 
 
@@ -956,13 +956,23 @@ class EditableTree(ObservableAttributes, ObservableSortedDictionary):
         for item in toRemove:
             del self[item.id]
 
-    def sort(self, func=None):
+    def sort(self, key=None, reverse=False):
         """Recursive sort of the tree : items are sorted in all branches.
         """
-        ObservableSortedDictionary.sort(self, self.compItems)
+        ObservableSortedDictionary.sort(self, self._keyItems)
         for item in self.values():
             if not item.isLeaf():
-                item.sort(func)
+                item.sort(key=key, reverse=reverse)
+
+    def _keyItems(self, id):
+        """Key function
+        """
+        i1 = self[id]
+        # names are translated in lowercase to make an alphabetical sort independant of the case
+        # by default (uppercase letters are < to lowecase letters)
+        n1 = i1.name.lower()
+        # print "comp", i1.name,i1.isLeaf(), i2.name,i2.isLeaf(), res
+        return (not i1.isLeaf(), n1)
 
     def compItems(self, id1, id2):
         """Comparison function
@@ -1175,13 +1185,24 @@ class EditableTree(ObservableAttributes, ObservableSortedDictionary):
             for item in toRemove:
                 del self[item.id]
 
-        def sort(self, func=None):
+        def sort(self, key=None, reverse=False):
             """Recursive sort of the tree : items are sorted in all branches.
             """
-            ObservableSortedDictionary.sort(self, self.compItems)
+            ObservableSortedDictionary.sort(self, self._keyItems)
             for item in self.values():
                 if not item.isLeaf():
-                    item.sort(func)
+                    item.sort(key=key, reverse=reverse)
+
+        def _keyItems(self, id):
+            '''Sorting key function'''
+            i1 = self[id]
+            # names are translated in lowercase to make an alphabetical sort independant of the case
+            # by default (uppercase letters are < to lowecase letters)
+            n1 = i1.name.lower()
+            # print "comp", i1.name,i1.isLeaf(), i2.name,i2.isLeaf(), res
+            # leafs must go after subtrees
+            return (not i1.isLeaf(), n1)
+
 
         def compItems(self, id1, id2):
             """Comparison function
