@@ -222,7 +222,15 @@ class MinfXMLWriter(MinfWriter):
             nl = '\n'
         if sys.version_info[0] >= 3 and isinstance(line, bytes):
             line = line.decode('utf8')
-        self.__file.write(indent + line + nl)
+        try:
+            self.__file.write(indent + line + nl)
+        except TypeError:
+            # in python3 writing in a binary stream needs to write byte
+            # objects, not strings.
+            # however there is no [obvious] way to know if the file object
+            # is open in string or binary mode, and thus what it expects.
+            # if you want my opinion, it's completely crazy...
+            self.__file.write((indent + line + nl).encode())
 
     def flush(self):
         self.__file.flush()
