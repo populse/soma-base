@@ -189,72 +189,98 @@ def iterateMinf(source, targets=None, stop_on_error=True, exceptions=[]):
     '''
     if targets is not None:
         targets = iter(targets)
-    if not hasattr(source, 'readline'):
-        source = BufferAndFile(open(source))
-    elif not isinstance(source, BufferAndFile):
-        source.seek(0)
-        source = BufferAndFile(source)
 
-    # Check first non white character to see if the minf file is XML or not
-    start = source.read(5)
-    source.unread(start)
-    if sys.version_info[0] >= 3:
-        def next(it):
-            return it.__next__()
+    initial_source = source
+
+    if sys.version_info[0] >= 3 and not hasattr(initial_source, 'readline'):
+        # in python3 the encoding of a file should be specified when opening
+        # it: it cannot be changed afterwards. So in python3 we cannot read
+        # the encoding within the file (for instance in a XML file).
+        # This is completely silly, but here it is...
+        # So we just have to try several encodings...
+        try_encodings = ['UTF-8', 'latin1']
     else:
-        def next(it):
-            return it.next()
+        try_encodings = [None]
 
-    if start == 'attri':
-        try:
-            import numpy
-            d = {'nan': numpy.nan}
-        except:
-            d = {'nan': None}
-        try:
-            six.exec_(source.read().replace("\r\n", "\n"), d)
-        except Exception as e:
-            x = source
-            if hasattr(source, '_BufferAndFile__file'):
-                x = source._BufferAndFile__file
-            x = 'Error in iterateMinf while reading ' + str(x) + ': '
-            msg = x + e.message
-            # e.message = msg
-            # e.args = ( x + e.args[0], ) + e.args[1:]
-            print(x)
-            raise
-        minf = d['attributes']
-        if targets is not None:
-            result = next(targets)
-            _setTarget(result, minf)
-            yield result
-        else:
-            yield minf
-        return
-    elif start != '<?xml':
-        # Try gzip compressed file
-        gzSource = gzip.GzipFile(source.name)
-        if gzSource.read(5) != '<?xml':
-            raise MinfError(_('Invalid minf file: %s') % (source.name, ))
-        source = BufferAndFile(gzSource)
-        source.unread('<?xml')
+    for encoding in try_encodings:
+        if not hasattr(initial_source, 'readline'):
+            if sys.version_info[0] >= 3:
+                source = BufferAndFile(open(initial_source, encoding=encoding))
+            else:
+                source = BufferAndFile(open(initial_source))
+        elif not isinstance(source, BufferAndFile):
+            source.seek(0)
+            source = BufferAndFile(source)
 
-    r = MinfReader.createReader('XML')
-    iterator = r.nodeIterator(source)
-    minfNode = next(iterator)
-    expander = createMinfExpander(minfNode.attributes['reduction'])
-    count = 0
-    for nodeItem in iterator:
-        count += 1
-        if isinstance(nodeItem, EndStructure):
-            break
-        target = None
-        if targets is not None:
-            try:
-                target = next(targets)
-            except StopIteration:
-                targets = None
-        yield expander.expand(iterator, nodeItem, target=target, stop_on_error=stop_on_error, exceptions=exceptions)
+        try:
+            # Check first non white character to see if the minf file is XML or not
+            start = source.read(5)
+            source.unread(start)
+            if sys.version_info[0] >= 3:
+                def next(it):
+                    return it.__next__()
+            else:
+                def next(it):
+                    return it.next()
+
+            if start == 'attri':
+                try:
+                    import numpy
+                    d = {'nan': numpy.nan}
+                except:
+                    d = {'nan': None}
+                try:
+                    six.exec_(source.read().replace("\r\n", "\n"), d)
+                except Exception as e:
+                    x = source
+                    if hasattr(source, '_BufferAndFile__file'):
+                        x = source._BufferAndFile__file
+                    x = 'Error in iterateMinf while reading ' + str(x) + ': '
+                    msg = x + e.message
+                    # e.message = msg
+                    # e.args = ( x + e.args[0], ) + e.args[1:]
+                    print(x)
+                    raise
+                minf = d['attributes']
+                if targets is not None:
+                    result = next(targets)
+                    _setTarget(result, minf)
+                    yield result
+                else:
+                    yield minf
+                return
+            elif start != '<?xml':
+                # Try gzip compressed file
+                gzSource = gzip.GzipFile(source.name)
+                if gzSource.read(5) != '<?xml':
+                    raise MinfError(_('Invalid minf file: %s')
+                                    % (source.name, ))
+                source = BufferAndFile(gzSource)
+                source.unread('<?xml')
+
+            r = MinfReader.createReader('XML')
+            iterator = r.nodeIterator(source)
+            minfNode = next(iterator)
+            expander = createMinfExpander(minfNode.attributes['reduction'])
+            count = 0
+            for nodeItem in iterator:
+                count += 1
+                if isinstance(nodeItem, EndStructure):
+                    break
+                target = None
+                if targets is not None:
+                    try:
+                        target = next(targets)
+                    except StopIteration:
+                        targets = None
+                yield expander.expand(iterator, nodeItem, target=target,
+                                      stop_on_error=stop_on_error,
+                                      exceptions=exceptions)
+        except UnicodeDecodeError as e:
+            if encoding == try_encodings[-1]:
+                raise
+            continue
+        break # no error, don't process next encoding
 
 #------------------------------------------------------------------------------
 
