@@ -225,8 +225,13 @@ def update_query_string(
   would return:
   '/dir1/file1?param1=val1&param1=newval1&param2=val2&param2=newval2&paramN=valN&param3=newval3'  
   '''
-  import urlparse
-  import urllib
+  try:
+    from six.moves.urllib import parse as urllib
+    urlparse = urllib
+  except ImportError:
+    # some six versions do not provide six.moves.urllib (Ubuntu 12.04)
+    import urllib
+    import urlparse
   import types
   
   # Convert params_update_mode to a dictionary that contains the update mode
