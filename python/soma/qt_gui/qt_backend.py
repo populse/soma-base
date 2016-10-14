@@ -303,6 +303,7 @@ def ensure_compatible_qt5():
         from . import QtCore, QtGui
         patch_qt4_modules(QtCore, QtGui)
     if qt_backend in('PyQt4', 'PyQt5'):
+        from . import QtCore
         QtCore.Signal = QtCore.pyqtSignal
         QtCore.Slot = QtCore.pyqtSlot
 
