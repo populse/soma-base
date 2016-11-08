@@ -65,19 +65,23 @@ class QtImporter(object):
             return None
         set_qt_backend()
         qt_module = get_qt_module()
-        if make_compatible_qt5 and module_name == 'QtWidgets' \
-                and get_qt_backend() in ('PyQt4', 'PySide'):
-            module_name = 'QtGui'
+        if make_compatible_qt5 and get_qt_backend() in ('PyQt4', 'PySide'):
+            if module_name == 'QtWidgets':
+                module_name = 'QtGui'
+            elif module_name == 'QtWebKitWidgets':
+                module_name = 'QtWebKit'
         found = imp.find_module(module_name, qt_module.__path__)
         return self
 
     def load_module(self, name):  
         qt_backend = get_qt_backend()
         module_name = name.split('.')[-1]
-        if make_compatible_qt5 and module_name == 'QtWidgets':
-            imp_module_name = 'QtGui'
-        else:
-            imp_module_name = module_name
+        imp_module_name = module_name
+        if make_compatible_qt5:
+            if module_name == 'QtWidgets':
+                imp_module_name = 'QtGui'
+            elif module_name == 'QtWebKitWidgets':
+                imp_module_name = 'QtWebKit'
         __import__('.'.join([qt_backend, imp_module_name]))
         module = sys.modules['.'.join([qt_backend, imp_module_name])]
         # fixes: #13432 - Ubuntu 14.04 LTS: Importing some modules
@@ -127,17 +131,30 @@ class QtImporter(object):
                 uic.objcreator.load_plugin = _safe_load_plugin
             
         sys.modules[name] = module
-        if make_compatible_qt5 and imp_module_name == 'QtGui':
-            from . import QtCore
-            if qt_backend in ('PyQt4', 'PySide'):
-                sys.modules['.'.join([qt_backend, 'QtWidgets'])] = module
-                patch_qt4_modules(QtCore, module)
-            elif qt_backend == 'PyQt5':
-                __import__('.'.join([qt_backend, 'QtWidgets']))
-                qtwidgets = sys.modules['.'.join([qt_backend, 'QtWidgets'])]
-                patch_qt5_modules(QtCore, module, qtwidgets)
-                if module_name == 'QtWidgets':
-                    module = qtwidgets
+        if make_compatible_qt5:
+            if imp_module_name == 'QtGui':
+                from . import QtCore
+                if qt_backend in ('PyQt4', 'PySide'):
+                    sys.modules['.'.join([qt_backend, 'QtWidgets'])] = module
+                    patch_qt4_modules(QtCore, module)
+                elif qt_backend == 'PyQt5':
+                    __import__('.'.join([qt_backend, 'QtWidgets']))
+                    qtwidgets = sys.modules['.'.join([qt_backend,
+                                                      'QtWidgets'])]
+                    patch_qt5_modules(QtCore, module, qtwidgets)
+                    if module_name == 'QtWidgets':
+                        module = qtwidgets
+            elif imp_module_name == 'QtWebKit':
+                if qt_backend in ('PyQt4', 'PySide'):
+                    sys.modules['.'.join([qt_backend, 'QtWebKitWidgets'])] \
+                        = module
+                elif qt_backend == 'PyQt5':
+                    __import__('.'.join([qt_backend, 'QtWebKitWidgets']))
+                    qtwebkitwidgets = sys.modules[
+                        '.'.join([qt_backend,'QtWebKitWidgets'])]
+                    patch_qt5_webkit_modules(module, qtwebkitwidgets)
+                    if module_name == 'QtWebKitWidgets':
+                        module = qtwebkitwidgets
 
         return module
 
@@ -272,6 +289,13 @@ def patch_qt5_modules(QtCore, QtGui, QtWidgets):
     QtGui.QItemSelectionModel = QtCore.QItemSelectionModel
 
 
+def patch_qt5_webkit_modules(QtWebKit, QtWebKitWidgets):
+    # copy QtWebKitWidgets contents into QtWebKit
+    for key in QtWebKitWidgets.__dict__:
+        if not key.startswith('__') and key not in QtWebKit.__dict__:
+            setattr(QtWebKit, key, getattr(QtWebKitWidgets, key))
+
+
 def patch_qt4_modules(QtCore, QtGui):
     QtCore.QSortFilterProxyModel = QtGui.QSortFilterProxyModel
     QtCore.QItemSelectionModel = QtGui.QItemSelectionModel
@@ -284,10 +308,16 @@ def ensure_compatible_qt5():
     if qt_backend == 'PyQt5':
         qtgui = None
         qtwidgets = None
+        qtwebkit = None
+        qtwebkitwidgets = None
         if 'PyQt5.QtGui' in sys.modules:
             qtgui = sys.modules['PyQt5.QtGui']
         if 'PyQt5.QtWidgets' in sys.modules:
             qtwidgets = sys.modules['PyQt5.QtWidgets']
+        if 'PyQt5.QtWebKit' in sys.modules:
+            qtwebkit = sys.modules['PyQt5.QtWebKit']
+        if 'PyQt5.QtWebKitWidgets' in sys.modules:
+            qtwebkitwidgets = sys.modules['PyQt5.QtWebKitWidgets']
         if qtgui and qtwidgets is None:
             from . import QtWidgets
             qtwidgets = sys.modules['PyQt5.QtWidgets']
@@ -297,6 +327,13 @@ def ensure_compatible_qt5():
         elif qtgui and qtwidgets:
             from . import QtCore
             patch_qt5_modules(QtCore, qtgui, qtwidgets)
+        if qtwebkit and qtwebkitwidgets is None:
+            from . import QtWebKitWidgets
+            qtwebkitwidgets = sys.modules['PyQt5.QtWebKitWidgets']
+        elif qtwebkitwidgets and qtwebkit is None:
+            from . import QtWebKit
+        elif qtwebkit and qtwebkitwidgets:
+            patch_qt5_webkit_modules(qtwebkit, qtwebkitwidgets)
     else:
         if '%s.QtGui' % qt_backend in sys.modules:
             from . import QtWidgets
