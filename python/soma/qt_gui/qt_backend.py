@@ -576,6 +576,25 @@ def init_matplotlib_backend():
 
 
 def init_traitsui_handler():
+    ''' Setup handler for traits notification in Qt GUI.
+    This function needs to be called before using traits notification which
+    trigger GUI modification from non-principal threads.
+
+    **WARNING**: depending on the Qt bindings (PyQt or PySide), this function
+    may instantiate a QApplication. It seems that when using PyQt4,
+    QApplication is not instantiated, whereas when using PySide, it is.
+    This means that after this function has been called, one must check if
+    the application has been created before recreating it:
+
+    ::
+
+        app = QtGui.QApplication.instance()
+        if not app:
+            app = QtGui.QApplication(sys.argv)
+
+    This behaviour is triggered somewhere in the traitsui.qt4.toolkit module,
+    we cannot change it easily.
+    '''
     try:
         from traitsui.qt4 import toolkit
     except:
