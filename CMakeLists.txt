@@ -22,4 +22,4 @@ BRAINVISA_CREATE_CMAKE_CONFIG_FILES()
 # tests
 enable_testing()
 add_test( soma-base-tests
-          "${CMAKE_BINARY_DIR}/bin/bv_env_test" "${PYTHON_EXECUTABLE}" "-m" "soma.tests.test_soma_base" )
+          "${CMAKE_BINARY_DIR}/bin/bv_env_test" "${PYTHON_EXECUTABLE}" "-m" "soma.tests" )
