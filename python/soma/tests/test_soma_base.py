@@ -48,6 +48,7 @@ def run_all_tests():
 
     is_valid = True
     for module, ltest in tests.items():
+        print('test:', module, ltest)
         for test in ltest:
             is_valid = is_valid and test()
 
