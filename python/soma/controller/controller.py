@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 # Trait import
 from traits.api import HasTraits, Event, CTrait, Instance, Undefined, \
-    TraitType, TraitError, Any
+    TraitType, TraitError, Any, Set
 
 # Soma import
 from soma.sorted_dictionary import SortedDictionary, OrderedDict
@@ -344,7 +344,12 @@ class Controller(six.with_metaclass(ControllerMeta, HasTraits)):
                     trait.trait_type.klass)
                 controller.import_from_dict(value)
             else:
-                setattr(self, trait_name, value)
+                # check trait type for conversions
+                tr = self.trait(trait_name)
+                if tr and isinstance(tr.trait_type, Set):
+                    setattr(self, trait_name, set(value))
+                else:
+                    setattr(self, trait_name, value)
 
     def copy(self, with_values=True):
         """ Copy traits definitions to a new Controller object
