@@ -2,6 +2,7 @@ from __future__ import print_function
 
 from .load_pilots import load_pilots
 import soma
+import sys
 
 error_message = """
 
@@ -48,7 +49,6 @@ def run_all_tests():
 
     is_valid = True
     for module, ltest in tests.items():
-        print('test:', module, ltest)
         for test in ltest:
             is_valid = is_valid and test()
 
@@ -59,9 +59,13 @@ def is_valid_module():
     is_valid = run_all_tests()
     if is_valid:
         print(valid_message)
+        return True
     else:
         print(error_message)
+        return False
 
 
 if __name__ == "__main__":
-    is_valid_module()
+    res = is_valid_module()
+    if not res:
+        sys.exit(1)
