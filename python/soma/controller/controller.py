@@ -435,7 +435,7 @@ class OpenKeyController(Controller):
 
     def __setattr__(self, name, value):
         if not name.startswith('_') and name not in self.__dict__ \
-                and not self.trait(name) \
+                and name not in self.traits() \
                 and not name in OpenKeyController._reserved_names:
             self.add_trait(name, self._value_trait)
         super(OpenKeyController, self).__setattr__(name, value)
