@@ -371,15 +371,15 @@ def loadUi(ui_file, *args, **kwargs):
     current working directory therefore if this directory is not the one
     containing the ui file, icons cannot be loaded.
     '''
-    if get_qt_backend() == 'PyQt4':
+    if get_qt_backend() in ('PyQt4', 'PyQt5'):
         # the problem is corrected in version > 4.7.2,
-        from PyQt4 import QtCore
+        from . import QtCore
         if QtCore.PYQT_VERSION > 0x040702:
-            from PyQt4 import uic
+            from . import uic
             return uic.loadUi(ui_file, *args, **kwargs)
         else:
             # needed import and def
-            from PyQt4.uic.Loader import loader
+            from .uic.Loader import loader
             if not hasattr(globals(), 'partial'):
                 from soma.functiontools import partial
 
