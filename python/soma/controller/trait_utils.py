@@ -309,7 +309,7 @@ def trait_ids(trait):
         if real_id:
             main_id = real_id
 
-    # Use the convertion table to normalize the trait id
+    # Use the conversion table to normalize the trait id
     if main_id in _trait_cvt_table:
         main_id = _trait_cvt_table[main_id]
 
