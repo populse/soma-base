@@ -477,8 +477,12 @@ def getOpenFileName(parent=None, caption='', directory='', filter='',
             kwargs['selectedFilter'] = selectedFilter
         if options:
             kwargs['options'] = QtGui.QFileDialog.Options(options)
-        return get_qt_module().QtGui.QFileDialog.getOpenFileName(
+        filename = get_qt_module().QtGui.QFileDialog.getOpenFileName(
             parent, caption, directory, filter, **kwargs)
+        if get_qt_backend() == 'PyQt4':
+            return filename
+        else:
+            return filename[0] # PyQt5 returns (filaname, filter)
     else:
         return get_qt_module().QtGui.QFileDialog.getOpenFileName(
             parent, caption, directory, filter, selectedFilter,
@@ -498,11 +502,15 @@ def getSaveFileName(parent=None, caption='', directory='', filter='',
             kwargs['selectedFilter'] = selectedFilter
         if options:
             kwargs['options'] = QtGui.QFileDialog.Options(options)
-        return get_qt_module().QtGui.QFileDialog.getSaveFileName(parent,
-                                                                 caption, directory, filter, **kwargs)
+        filename = get_qt_module().QtGui.QFileDialog.getSaveFileName(
+            parent, caption, directory, filter, **kwargs)
+        if get_qt_backend() == 'PyQt4':
+            return filename
+        else:
+            return filename[0] # PyQt5 returns (filaname, filter)
     else:
-        return get_qt_module().QtGui.QFileDialog.getSaveFileName(parent,
-                                                                 caption, directory, filter, selectedFilter, options)[0]
+        return get_qt_module().QtGui.QFileDialog.getSaveFileName(
+            parent, caption, directory, filter, selectedFilter, options)[0]
 
 
 def getExistingDirectory(parent=None, caption='', directory='', options=None):
