@@ -58,7 +58,7 @@ class SomaTestLoader(unittest.TestLoader):
     def loadTestsFromTestCase(self, testCaseClass, argv=None):
         """Return a suite of all tests cases contained in
            testCaseClass."""
-        if issubclass(testCaseClass, unittest.suite.TestSuite):
+        if issubclass(testCaseClass, unittest.TestSuite):
             raise TypeError("Test cases should not be derived from "
                             "TestSuite. Maybe you meant to derive from"
                             " TestCase?")
