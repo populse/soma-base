@@ -53,7 +53,7 @@ from soma import singleton
 class FakeQtThreadCall(QObject):
 
     '''
-    Fake L{QtThreadCall} that behave as if always used from main thread.
+    Fake QtThreadCall that behave as if always used from main thread.
     '''
     def isInMainThread():
         return True
@@ -81,14 +81,16 @@ class QtThreadCall(singleton.Singleton, QObject):
     This object must be initialized in qt thread.
     It starts a QTimer and periodically execute tasks in its actions list.
 
-    @type lock: RLock
-    @ivar lock: lock to prevent concurrent access to actions list
-    @type actions: list
-    @ivar actions: tasks to execute
-    @type mainThread: Thread
-    @ivar mainThread: current thread at object initialisation
-    @type timer: QTimer
-    @ivar timer: timer to wake this object periodically
+    Attributes
+    ----------
+    lock: RLock
+        lock to prevent concurrent access to actions list
+    actions: list
+        tasks to execute
+    mainThread: Thread
+        current thread at object initialisation
+    timer: QTimer
+        timer to wake this object periodically
     """
 
     def __singleton_init__(self):
@@ -125,10 +127,12 @@ class QtThreadCall(singleton.Singleton, QObject):
 
     def push(self, function, *args, **kwargs):
         """
-        Add a function call to the actions list. the call is executed immediatly if current thread is main thread.
+        Add a function call to the actions list. the call is executed immediatly if current thread is main thread. Otherwise it will be executed some time in the main thread (asynchronously to the current thread). The function return value is ignored and will be lost.
 
-        @type function: function
-        @param function: the function to call in main thread.
+        Parameters
+        ----------
+        function: function
+            the function to call in main thread.
         """
         if self.isInMainThread():
             if kwargs is None or len(kwargs) == 0:
@@ -145,12 +149,23 @@ class QtThreadCall(singleton.Singleton, QObject):
 
     def call(self, function, *args, **kwargs):
         """
-        Send the function call to be executed in the qt main thread and wait for the result.
+        Send the function call to be executed in the qt main thread and wait for the result. The result will be returned to the calling thread.
 
-        @type function: function
-        @param function: the function to call in main thread.
+        .. warning::
 
-        @return: function call's result
+            If returned objects are thread-depenendent (typically, Qt widgets),
+            they must be destroyed within the thread which created them, namely
+            the main thread. The MainThreadLife object wrapper may be helpful
+            for this.
+
+        Parameters
+        ----------
+        function: function
+            the function to call in main thread.
+
+        Returns
+        -------
+        function call result
         """
         if self.isInMainThread():
             if kwargs is None or len(kwargs) == 0:
@@ -178,10 +193,12 @@ class QtThreadCall(singleton.Singleton, QObject):
         """
         Call the function, set the result in semaphore attributes and release the semaphore.
 
-        @type semaphore: threading.Semaphore
-        @ivar semaphore: thread which has added this task is blocked on this semaphore. function call's result will be kept in this semaphore attributes.
-        @type function: function
-        @param function: the function to call in main thread.
+        Parameters
+        ----------
+        semaphore: threading.Semaphore
+            thread which has added this task is blocked on this semaphore. function call's result will be kept in this semaphore attributes.
+        function: function
+            the function to call in main thread.
         """
         semaphore._mainThreadActionResult = None
         semaphore._mainThreadActionException = None
@@ -198,8 +215,9 @@ class QtThreadCall(singleton.Singleton, QObject):
 
     def isInMainThread(self):
         """
-        @rtype: boolean
-        @return: True if current thread is main thread
+        Returns
+        -------
+        boolean: True if the current thread is the main thread
         """
         # return threading.currentThread().getName() == 'MainThread'
         return threading.currentThread() is self.mainThread
@@ -225,3 +243,44 @@ class QtThreadCall(singleton.Singleton, QObject):
             except:
                 # Should call a customizable function here
                 raise
+
+
+class MainThreadLife(object):
+    '''This wrapper class ensures the contained object is deleted in the main
+    thread, and not in the current non-GUI thread. The principle is the
+    following:
+
+    * acquire a lock
+    * pass the object to something in the main thread
+    * the main thread waits on the lock while holding a reference on the object
+    * we delete the object in the calling thread
+    * the lock is releasd from the calling thread
+    * now the main thread can go on, and del / release the ref on the object:
+      it is the last ref on it, so it is actually deleted there.
+
+    The thing is only working if no other reference is held anywhere on the underlying object, otherwise we do not control its deletion.
+    '''
+    def __init__(self, obj_life=None, *args, **kwargs):
+        super(MainThreadLife, self).__init__(*args, **kwargs)
+        if obj_life is not None:
+            self._obj_life = obj
+
+    def __del__(self):
+        if not isinstance(threading.currentThread(), threading._MainThread) \
+                and hasattr(self, '_obj_life'):
+            lock = threading.Lock()
+            lock.acquire()
+            QtThreadCall().push(MainThreadLife.delInMainThread, lock,
+                                self._obj_life)
+            del self._obj_life
+            lock.release()
+
+    @staticmethod
+    def delInMainThread(lock, thing):
+        # wait for the lock to be released in the process thread
+        lock.acquire()
+        lock.release()
+        # now the process thread should have removed its reference on thing:
+        # we can safely delete it fom here, in the main thread.
+        del thing # probably useless
+
