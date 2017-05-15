@@ -225,3 +225,42 @@ class QtThreadCall(singleton.Singleton, QObject):
             except:
                 # Should call a customizable function here
                 raise
+
+
+class MainThreadLife(object):
+    '''This wrapper class ensures the contained object is deleted in the main
+    thread, and not in the current non-GUI thread. The principle is the
+    following:
+    - acquire a lock
+    - pass the object to something in the main thread
+    - the main thread waits on the lock while holding a reference on the object
+    - we delete the object in the calling thread
+    - the lock is releasd from the calling thread
+    - now the main thread can go on, and del / release the ref on the object:
+      it is the last ref on it, so it is actually deleted there.
+    '''
+    def __init__(self, obj_life=None, *args, **kwargs):
+        super(MainThreadLife, self).__init__(*args, **kwargs)
+        if obj_life is not None:
+            self._obj_life = obj
+
+    def __del__(self):
+        print('MainThreadLife.__del__')
+        if not isinstance(threading.currentThread(), threading._MainThread):
+            print('deleting in main thread')
+            lock = threading.Lock()
+            lock.acquire()
+            QtThreadCall().push(MainThreadLife.delInMainThread, lock,
+                                self._obj_life)
+            del self._obj_life
+            lock.release()
+
+    @staticmethod
+    def delInMainThread(lock, thing):
+        # wait for the lock to be released in the process thread
+        lock.acquire()
+        lock.release()
+        # now the process thread should have removed its reference on thing:
+        # we can safely delete it fom here, in the main thread.
+        del thing # probably useless
+
