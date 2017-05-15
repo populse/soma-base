@@ -48,30 +48,6 @@ SubModule: ``fom``: File Organization Model
     :members:
 
 
-SubModule: ``gui``
-==================
-
-The gui module should move to :mod:`soma.qt_gui`
-
-.. automodule:: soma.gui
-    :members:
-
-.. automodule:: soma.gui.file_selection
-    :members:
-
-.. automodule:: soma.gui.icon_factory
-    :members:
-
-.. automodule:: soma.gui.trait_to_widget
-    :members:
-
-.. automodule:: soma.gui.widget_controller_creation
-    :members:
-
-.. automodule:: soma.gui.widget_factory
-    :members:
-
-
 SubModule: ``html``
 ===================
 
@@ -114,77 +90,46 @@ SubModule: ``pyro``
     :members:
 
 
-SubModule: ``qt4gui``
-=====================
-
-.. automodule:: soma.qt4gui
-    :members:
-
-.. automodule:: soma.qt4gui.api
-    :members:
-
-``io``
-------
-
-.. automodule:: soma.qt4gui.io
-    :members:
-
-``list_tree_widgets``
----------------------
-
-.. automodule:: soma.qt4gui.list_tree_widgets
-    :members:
-
-``qtThread``
-------------
-
-.. automodule:: soma.qt4gui.qtThread
-    :members:
-
-``rangeSlider``
----------------
-
-.. automodule:: soma.qt4gui.rangeSlider
-    :members:
-
-``simple_table``
-----------------
-
-.. automodule:: soma.qt4gui.simple_table
-    :members:
-
-``text``
---------
-
-.. automodule:: soma.qt4gui.text
-    :members:
-
-``timered_widgets``
--------------------
-
-.. automodule:: soma.qt4gui.timered_widgets
-    :members:
-
-
 SubModule: ``qt_gui``
 =====================
 
 .. automodule:: soma.qt_gui
     :members:
 
-qt_backend
-----------
+SubModule: ``qt_backend``
+=========================
 
 .. automodule:: soma.qt_gui.qt_backend
     :members:
 
-widgets
--------
+SubModule: ``qtThread``
+=====================
 
-.. automodule:: soma.qt_gui.widgets
+.. automodule:: soma.qt_gui.qtThread
     :members:
 
-.. automodule:: soma.qt_gui.widgets.file_selection_widget
+SubModule: ``controller_widget``
+================================
+
+.. automodule:: soma.qt_gui.controller_widget
+    :members:
+
+SubModule: ``io``
+=================
+
+.. automodule:: soma.qt_gui.io
+    :members:
+
+SubModule: ``rangeSlider``
+==========================
+
+.. automodule:: soma.qt_gui.rangeSlider
+    :members:
+
+SubModule: ``timered_widgets``
+==============================
+
+.. automodule:: soma.qt_gui.timered_widgets
     :members:
 
 SubModule: ``singleton``
@@ -205,6 +150,13 @@ SubModule: ``sorted_dictionary``
 ================================
 
 .. automodule:: soma.sorted_dictionary
+    :members:
+
+
+SubModule: ``sqlite_tools``
+===========================
+
+.. automodule:: soma.sqlite_tools
     :members:
 
 
