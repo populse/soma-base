@@ -7,12 +7,11 @@ able to use the same code, there are several "modes":
   - in the run mode, the code is supposed to create data and perform the
     comparison
 The different modes are invoked by bv_maker. This works by using some CLI
-arguments and by setting environement variables.
+arguments and by setting environment variables.
 
-To do so, we need our own test loader that will pass some argument to the test
-cases. Note that the documentation of unittest.TestCase states that the
-subclasses should not change the signature of __init__ but in our case, it
-should be safe as long as we use the specialized test loader.
+To do so, we need our own test loader that will configure the test cases. This
+is done by modifying attributes at the class level (so that setUpClass can
+know in which mode it is).
 """
 
 import os
@@ -29,8 +28,9 @@ default_mode = run_mode
 class SomaTestLoader(unittest.TestLoader):
     """Base class for test loader that allows to pass keyword arguments to the
        test case class and use the environment to set the location of reference
-       files.
-       Inspired from http://stackoverflow.com/questions/11380413/python-unittest-passing-arguments
+       files. Inspired from http://stackoverflow.com/questions/11380413/ (but
+       here we modify the test case classes themselves).
+       Subclasses can modify the `parser` attribute to add other options.
     """
 
     parser = argparse.ArgumentParser(
@@ -68,11 +68,13 @@ class SomaTestLoader(unittest.TestLoader):
 
         args = self.parse_args_and_env(argv)
 
-        # Modification here: pass CLI arguments to testCaseClass.
+        # Modification here: configure testCaseClass.
         test_cases = []
         for test_case_name in testCaseNames:
+            for k, v in args.iteritems():
+                setattr(testCaseClass, k, v)
             test_cases.append(
-                testCaseClass(test_case_name, **args)
+                testCaseClass(test_case_name)
             )
         loaded_suite = self.suiteClass(test_cases)
 
@@ -82,57 +84,58 @@ class SomaTestLoader(unittest.TestLoader):
 class BaseSomaTestCase(unittest.TestCase):
     """
     Base class for test cases that honor the options to create reference files.
-    The base location for referennce data and run data are passed in the
-    constructor (for readability, they are named base_ref_data_dir and
-    base_run_data_dir). The classes can define private_dir to have a specific
+    The base location for reference data and run data are set in the class by
+    the loader. Subclasses can define private_dir to have a specific
     sub-directory inside those directories.
     This class don't define any setUp method so direct subclasses of this class
     can implement any scenario.
     """
 
+    # Declare base class attributes
+    test_mode = None
+    base_ref_data_dir = None
+    base_run_data_dir = None
+
     # Subclasses should define this variable to create a private folder (if
     # it's None, the base directory for run or ref will be used).
     private_dir = None
 
-    def __init__(self, testName, base_ref_data_dir, base_run_data_dir=None,
-                 test_mode=default_mode):
+    # Computed in property
+    _private_ref_data_dir = None
+    _private_run_data_dir = None
+
+    def __init__(self, testName):
         super(BaseSomaTestCase, self).__init__(testName)
-        self.test_mode = test_mode
-        self.base_ref_data_dir = base_ref_data_dir
-        self.base_run_data_dir = base_run_data_dir
         if self.test_mode == run_mode and not self.base_run_data_dir:
             msg_fmt = \
                 "base_run_data_dir must be provided when using '%s' mode"
             msg = msg_fmt % run_mode
             raise ValueError(msg)
-        # Computed in property
-        self._private_ref_data_dir = None
-        self._private_run_data_dir = None
 
-    @property
-    def private_ref_data_dir(self):
-        if self.private_dir:
-            if not self._private_ref_data_dir:
-                self._private_ref_data_dir = os.path.join(
-                    self.base_ref_data_dir, self.private_dir
+    @classmethod
+    def private_ref_data_dir(cls):
+        if cls.private_dir:
+            if not cls._private_ref_data_dir:
+                cls._private_ref_data_dir = os.path.join(
+                    cls.base_ref_data_dir, cls.private_dir
                 )
-            return self._private_ref_data_dir
+            return cls._private_ref_data_dir
         else:
-            return self.base_ref_data_dir
+            return cls.base_ref_data_dir
 
-    @property
-    def private_run_data_dir(self):
+    @classmethod
+    def private_run_data_dir(cls):
         # base_run_data_dir is None in run mode
-        if self.test_mode == ref_mode:
+        if cls.test_mode == ref_mode:
             return None
-        if self.private_dir:
-            if not self._private_run_data_dir:
-                self._private_run_data_dir = os.path.join(
-                    self.base_run_data_dir, self.private_dir
+        if cls.private_dir:
+            if not cls._private_run_data_dir:
+                cls._private_run_data_dir = os.path.join(
+                    cls.base_run_data_dir, cls.private_dir
                 )
-            return self._private_run_data_dir
+            return cls._private_run_data_dir
         else:
-            return self.base_run_data_dir
+            return cls.base_run_data_dir
 
 
 class SomaTestCaseWithoutRefFiles(BaseSomaTestCase):
@@ -141,66 +144,112 @@ class SomaTestCaseWithoutRefFiles(BaseSomaTestCase):
     ref mode).
     """
 
-    def __init__(self, testName, base_ref_data_dir, base_run_data_dir=None,
-                 test_mode=default_mode, force=False):
-        super(SomaTestCaseWithoutRefFiles, self).__init__(
-            testName, base_ref_data_dir, base_run_data_dir, test_mode, force
-        )
+    def __init__(self, testName):
+        super(SomaTestCaseWithoutRefFiles, self).__init__(testName)
         if self.test_mode == ref_mode:
             msg_fmt = "Test %s should not be run in '%s' mode"
             msg = msg_fmt % (self.__class__.__name__, ref_mode)
             raise EnvironmentError(msg)
 
 
+# Should we skip all tests in ref mode (all computation in setUp_ref_mode?)
 class SomaTestCase(BaseSomaTestCase):
     """
     Base class for tests that need simple customization for ref and run modes.
-    As the test mode is an instance property, we can't use it for setUpClass
-    and tearDownClass.
+    Subclasses can redefine `setUpClass_ref_mode`, `setUpClass_run_mode`,
+    `setUp_ref_mode` and `setUp_run_mode` (and corresponding methods for tear
+    down).
+
+    Note that the test will be skipped if ref data dir is not defined.
     """
+
+    @classmethod
+    def setUpClass_ref_mode(cls):
+        """
+        This method is called by setUpClass in ref mode.
+        """
+        pass
+
+    @classmethod
+    def setUpClass_run_mode(cls):
+        """
+        This method is called by setUpClass in run mode.
+        """
+        pass
+
+    @classmethod
+    def setUpClass(cls):
+        if not cls.base_ref_data_dir:
+            msg_fmt = \
+                "base_ref_data_dir must be provided for test %s"
+            msg = msg_fmt % cls.__name__
+            raise EnvironmentError(msg)
+        if cls.test_mode == ref_mode:
+            try:
+                os.makedirs(cls.private_ref_data_dir())
+            except:
+                pass
+            cls.setUpClass_ref_mode()
+        else:
+            try:
+                os.makedirs(cls.private_run_data_dir())
+            except:
+                pass
+            cls.setUpClass_run_mode()
+
+    @classmethod
+    def tearDownClass_ref_mode(cls):
+        """
+        This method is called by tearDownClass in ref mode.
+        """
+        pass
+
+    @classmethod
+    def tearDownClass_run_mode(cls):
+        """
+        This method is called by tearDownClass in run mode.
+        """
+        pass
+
+    @classmethod
+    def tearDownClass(cls):
+        if cls.test_mode == ref_mode:
+            cls.tearDownClass_ref_mode()
+        else:
+            cls.tearDownClass_run_mode()
 
     def setUp_ref_mode(self):
         """
-        This method is called once the setup is done in ref mode.
+        This method is called by setUp in ref mode.
         """
         pass
 
     def setUp_run_mode(self):
         """
-        This method is called once the setup is done in run mode.
+        This method is called by setUp in run mode.
         """
         pass
 
     def setUp(self):
         if self.test_mode == ref_mode:
-            try:
-                os.makedirs(self.private_ref_data_dir)
-            except:
-                pass
             self.setUp_ref_mode()
         else:
-            try:
-                os.makedirs(self.private_run_data_dir)
-            except:
-                pass
             self.setUp_run_mode()
 
     def tearDown_ref_mode(self):
         """
-        This method is called once the setup is done in ref mode.
+        This method is called by tearDown in ref mode.
         """
         pass
 
     def tearDown_run_mode(self):
         """
-        This method is called once the setup is done in run mode.
+        This method is called by tearDown in run mode.
         """
         pass
 
     def tearDown(self):
         if self.test_mode == ref_mode:
-            os.makedirs(self.private_ref_data_dir)
             self.tearDown_ref_mode()
         else:
-            os.makedirs(self.private_run_data_dir)
             self.tearDown_run_mode()
