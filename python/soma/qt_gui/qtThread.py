@@ -258,7 +258,30 @@ class MainThreadLife(object):
     * now the main thread can go on, and del / release the ref on the object:
       it is the last ref on it, so it is actually deleted there.
 
-    The thing is only working if no other reference is held anywhere on the underlying object, otherwise we do not control its deletion.
+    .. warning::
+
+        The thing is only working if no other reference is held anywhere on the underlying object, otherwise we do not control its deletion.
+
+    Ex:
+
+    ::
+
+        # from a secondary thread
+
+        widget = QtThreadCall().call(Qt.QWidget)
+        # widget.show() # should crash
+        QtThreadCall().push(widget.show)
+        # ... use it ...
+        # del widget # should crash
+
+    ::
+
+        # from a secondary thread
+
+        widget = MainThreadLife(QtThreadCall().call(Qt.QWidget))
+        QtThreadCall().push(widget.ref().show)
+        # ... use it ...
+        del widget # OK
     '''
     def __init__(self, obj_life=None, *args, **kwargs):
         super(MainThreadLife, self).__init__(*args, **kwargs)
@@ -274,6 +297,10 @@ class MainThreadLife(object):
                                 self._obj_life)
             del self._obj_life
             lock.release()
+
+    def ref(self):
+        '''Access the underlying object'''
+        return self._obj_life
 
     @staticmethod
     def delInMainThread(lock, thing):
