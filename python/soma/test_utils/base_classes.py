@@ -29,8 +29,7 @@ default_mode = run_mode
 class SomaTestLoader(unittest.TestLoader):
     """Base class for test loader that allows to pass keyword arguments to the
        test case class and use the environment to set the location of reference
-       files.
-       Inspired from http://stackoverflow.com/questions/11380413/python-unittest-passing-arguments
+       files. Inspired from http://stackoverflow.com/questions/11380413/.
     """
 
     parser = argparse.ArgumentParser(
@@ -199,8 +198,6 @@ class SomaTestCase(BaseSomaTestCase):
 
     def tearDown(self):
         if self.test_mode == ref_mode:
-            os.makedirs(self.private_ref_data_dir)
             self.tearDown_ref_mode()
         else:
-            os.makedirs(self.private_run_data_dir)
             self.tearDown_run_mode()
