@@ -179,6 +179,11 @@ class SomaTestCase(BaseSomaTestCase):
 
     @classmethod
     def setUpClass(cls):
+        if not cls.base_ref_data_dir:
+            msg_fmt = \
+                "base_ref_data_dir must be provided for test %s"
+            msg = msg_fmt % cls.__name__
+            raise EnvironmentError(msg)
         if cls.test_mode == ref_mode:
             try:
                 os.makedirs(cls.private_ref_data_dir())
