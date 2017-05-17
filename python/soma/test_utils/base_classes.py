@@ -71,7 +71,7 @@ class SomaTestLoader(unittest.TestLoader):
         # Modification here: configure testCaseClass.
         test_cases = []
         for test_case_name in testCaseNames:
-            for k, v in args.iteritems():
+            for k, v in args.items():
                 setattr(testCaseClass, k, v)
             test_cases.append(
                 testCaseClass(test_case_name)
