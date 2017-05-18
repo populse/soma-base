@@ -286,7 +286,7 @@ class MainThreadLife(object):
     def __init__(self, obj_life=None, *args, **kwargs):
         super(MainThreadLife, self).__init__(*args, **kwargs)
         if obj_life is not None:
-            self._obj_life = obj
+            self._obj_life = obj_life
 
     def __del__(self):
         if not isinstance(threading.currentThread(), threading._MainThread) \
