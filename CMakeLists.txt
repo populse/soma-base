@@ -22,4 +22,4 @@ BRAINVISA_CREATE_CMAKE_CONFIG_FILES()
 # tests
 enable_testing()
 brainvisa_add_test( soma-base-tests
-          "${TARGET_PYTHON_EXECUTABLE_NAME}" "-m" "soma.tests.test_soma_base" )
+          "${PYTHON_EXECUTABLE_NAME}" "-m" "soma.tests.test_soma_base" )
