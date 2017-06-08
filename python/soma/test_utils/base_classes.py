@@ -30,16 +30,28 @@ class SomaTestLoader(unittest.TestLoader):
        test case class and use the environment to set the location of reference
        files. Inspired from http://stackoverflow.com/questions/11380413/ (but
        here we modify the test case classes themselves).
-       Subclasses can modify the `parser` attribute to add other options.
+       The ArgumentParser is defined in the __init__ method. While it could be
+       a class atrtibute, this makes easier to modify it in subclasses.
+       The static method `default_parser` is used to create a new instance of
+       the basic parser.
     """
 
-    parser = argparse.ArgumentParser(
-        epilog="Note that the options are usually passed by make via bv_maker."
-    )
-    parser.add_argument('--test_mode', choices=test_modes,
-                        default=default_mode,
-                        help=('Mode to use (\'run\' for normal tests, '
-                              '\'ref\' for generating the reference files).'))
+    @staticmethod
+    def default_parser(description):
+        parser = argparse.ArgumentParser(
+            description=description,
+            epilog=("Note that the options are usually passed by make via "
+                    "bv_maker.")
+        )
+        parser.add_argument(
+            '--test_mode', choices=test_modes,
+            default=default_mode,
+            help=('Mode to use (\'run\' for normal tests, '
+                  '\'ref\' for generating the reference files).'))
+        return parser
+
+    def __init__(self):
+        self.parser = SomaTestLoader.default_parser("Soma test program.")
 
     def parse_args_and_env(self, argv):
         args = vars(self.parser.parse_args(argv))
