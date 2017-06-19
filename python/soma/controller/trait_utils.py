@@ -389,8 +389,12 @@ def build_expression(trait):
         logger.debug("Either compounds are %s", repr(trait.handler.handlers))
 
         # Update expression
-        either_expression = [build_expression(inner_trait())
-                             for inner_trait in trait.handler.handlers]
+        either_expression = []
+        for inner_trait in trait.handler.handlers:
+            if not isinstance(inner_trait,
+                              (traits.TraitType, traits.TraitInstance)):
+                inner_trait = inner_trait()
+            either_expression.append(build_expression(inner_trait))
         return "traits.Either({0})".format(", ".join(either_expression))
 
     # Default case
@@ -417,8 +421,12 @@ def build_expression(trait):
         logger.debug("Inner traits are %s", repr(trait.get_validate()[1]))
 
         # Update expression
-        tuple_expression = [build_expression(inner_trait())
-                            for inner_trait in trait.get_validate()[1]]
+        tuple_expression = []
+        for inner_trait in trait.get_validate()[1]:
+            if not isinstance(inner_trait,
+                              (traits.TraitType, traits.TraitInstance)):
+                inner_trait = inner_trait()
+            tuple_expression.append(build_expression(inner_trait))
         expression += "({0})".format(", ".join(tuple_expression))
 
     # Special case: List
