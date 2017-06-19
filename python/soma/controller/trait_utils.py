@@ -329,7 +329,7 @@ def trait_ids(trait):
         # Build each trait compound description
         trait_description = []
         for sub_trait in handler.handlers:
-            if not isinstance(sub_trait, traits.TreitType):
+            if not isinstance(sub_trait, traits.TraitType):
                 sub_trait = sub_trait()
             trait_description.extend(trait_ids(sub_trait))
         return trait_description
