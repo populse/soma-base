@@ -302,7 +302,11 @@ def trait_ids(trait):
         the string description (type) of the input trait.
     """
     # Get the trait class name
-    handler = trait.handler or trait
+    if hasattr(trait, 'handler'):
+        handler = trait.handler or trait
+    else:
+        # trait is already a handler
+        handler = trait
     main_id = handler.__class__.__name__
     if main_id == "TraitCoerceType":
         real_id = _type_to_trait_id.get(handler.aType)
