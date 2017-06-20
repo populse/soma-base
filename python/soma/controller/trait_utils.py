@@ -313,13 +313,10 @@ def eval_trait(expression, modules=set()):
     try:
         f()
     except:
-        print('namespace:', namespace)
-        print('expression:', expression)
-        raise
         raise Exception(
             "Can't evaluate expression '{0}' in namespace '{1}'."
             "Please investigate: '{2}'.".format(
-                expression, namespace.keys(), sys.exc_info()[1]))
+                expression, namespace, sys.exc_info()[1]))
 
     return namespace["eval_trait"]
 
@@ -372,7 +369,8 @@ def trait_ids(trait, modules=set()):
         # Build each trait compound description
         trait_description = []
         for sub_trait in handler.handlers:
-            if not isinstance(sub_trait, traits.api.TraitType):
+            if not isinstance(sub_trait, (traits.api.TraitType,
+                                          traits.api.TraitInstance)):
                 sub_trait = sub_trait()
             trait_description.extend(trait_ids(sub_trait, modules))
         return trait_description
@@ -450,7 +448,8 @@ def build_expression(trait, modules=set()):
         # Update expression
         either_expression = []
         for inner_trait in handler.handlers:
-            if not isinstance(inner_trait, traits.api.TraitType):
+            if not isinstance(inner_trait, (traits.api.TraitType,
+                                            traits.api.TraitInstance)):
                 inner_trait = inner_trait()
             either_expression.append(build_expression(inner_trait, modules))
         return "traits.api.Either({0})".format(", ".join(either_expression))
@@ -485,7 +484,8 @@ def build_expression(trait, modules=set()):
         # Update expression
         tuple_expression = []
         for inner_trait in trait.get_validate()[1]:
-            if not isinstance(inner_trait, traits.api.TraitType):
+            if not isinstance(inner_trait, (traits.api.TraitType,
+                                            traits.api.TraitInstance)):
                 inner_trait = inner_trait()
             tuple_expression.append(build_expression(inner_trait, modules))
         expression += "({0})".format(", ".join(tuple_expression))
