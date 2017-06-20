@@ -339,6 +339,10 @@ def trait_ids(trait):
             trait_description.extend(trait_ids(sub_trait))
         return trait_description
 
+    elif main_id in ("Instance", "TraitInstance"):
+        inner_id = handler.klass.__name__
+        return [main_id + "_" + inner_id]
+
     # Default case
     else:
         # FIXME may recurse indefinitely if the trait is recursive
@@ -385,12 +389,14 @@ def build_expression(trait):
     # Either case
     elif len(trait_description) > 1:
 
+        handler = trait.handler or trait
+
         # Debug message
-        logger.debug("Either compounds are %s", repr(trait.handler.handlers))
+        logger.debug("Either compounds are %s", repr(handler.handlers))
 
         # Update expression
         either_expression = []
-        for inner_trait in trait.handler.handlers:
+        for inner_trait in handler.handlers:
             if not isinstance(inner_trait,
                               (traits.TraitType, traits.TraitInstance)):
                 inner_trait = inner_trait()
@@ -433,23 +439,32 @@ def build_expression(trait):
     # Need to set the value type
     elif trait_item == "List":
 
+        # note: trait.inner_traits might be a method (ListInt) or a tuple
+        # (List), whereas trait.handler.inner_trait is always a method
+        handler = trait.handler or trait
+
         # Debug message
-        logger.debug("Inner traits are %s", repr(trait.inner_traits))
+        logger.debug("Inner traits are %s", repr(handler.inner_traits()))
 
         # Update expression
-        expression += "({0})".format(build_expression(trait.inner_traits[0]))
+        expression += "({0})".format(build_expression(
+            handler.inner_traits()[0]))
 
     # Special case: Dict
     # Need to set the key and value types
     elif trait_item == "Dict":
 
+        # note: trait.inner_traits might be a method (ListInt) or a tuple
+        # (List), whereas trait.handler.inner_trait is always a method
+        handler = trait.handler or trait
+
         # Debug message
-        logger.debug("Inner traits are %s", repr(trait.inner_traits))
+        logger.debug("Inner traits are %s", repr(handler.inner_traits()))
 
         # Update expression
         expression += "({0}, {1})".format(
-            build_expression(trait.inner_traits[0]),
-            build_expression(trait.inner_traits[1]))
+            build_expression(handler.inner_traits()[0]),
+            build_expression(handler.inner_traits()[1]))
 
     # Special case: Enum
     # Need to add enum values at the construction
@@ -485,6 +500,9 @@ def build_expression(trait):
     # Initialize the default file trait value to undefined
     elif trait_item == "File":
         expression += "(Undefined)"
+
+    elif trait_item in ("Instance", "TraitInstance"):
+        expression += "(%s())" % trait_spec[1]
 
     # Default
     else:
