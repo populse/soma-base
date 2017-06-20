@@ -372,9 +372,7 @@ def trait_ids(trait, modules=set()):
         # Build each trait compound description
         trait_description = []
         for sub_trait in handler.handlers:
-            if not isinstance(sub_trait,
-                              (traits.api.TraitType,
-                               traits.api.TraitInstance)):
+            if not isinstance(sub_trait, traits.api.TraitType):
                 sub_trait = sub_trait()
             trait_description.extend(trait_ids(sub_trait, modules))
         return trait_description
@@ -452,9 +450,7 @@ def build_expression(trait, modules=set()):
         # Update expression
         either_expression = []
         for inner_trait in handler.handlers:
-            if not isinstance(inner_trait,
-                              (traits.api.TraitType,
-                               traits.api.TraitInstance)):
+            if not isinstance(inner_trait, traits.api.TraitType):
                 inner_trait = inner_trait()
             either_expression.append(build_expression(inner_trait, modules))
         return "traits.api.Either({0})".format(", ".join(either_expression))
@@ -479,15 +475,17 @@ def build_expression(trait, modules=set()):
     # Need to set the value types
     if trait_item == "Tuple":
 
+        if hasattr(trait, 'as_ctrait') and trait.as_ctrait:
+            # probably a handler
+            trait = trait.as_ctrait()
+
         # Debug message
         logger.debug("Inner traits are %s", repr(trait.get_validate()[1]))
 
         # Update expression
         tuple_expression = []
         for inner_trait in trait.get_validate()[1]:
-            if not isinstance(inner_trait,
-                              (traits.api.TraitType,
-                               traits.api.TraitInstance)):
+            if not isinstance(inner_trait, traits.api.TraitType):
                 inner_trait = inner_trait()
             tuple_expression.append(build_expression(inner_trait, modules))
         expression += "({0})".format(", ".join(tuple_expression))
@@ -527,6 +525,15 @@ def build_expression(trait, modules=set()):
     # Need to add enum values at the construction
     elif trait_item == "Enum":
 
+        if hasattr(trait, 'as_ctrait') and trait.as_ctrait:
+            # probably a handler
+            trait = trait.as_ctrait()
+
+        print('ENUM, trait', trait, type(trait))
+        #print('handler:', handler, type(handler))
+        if hasattr(trait, 'as_ctrait') and trait.as_ctrait:
+            # probably a handler
+            trait = trait.as_ctrait()
         # Debug message
         logger.debug("Default values are %s", repr(trait.get_validate()[1]))
 
