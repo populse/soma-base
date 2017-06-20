@@ -44,6 +44,16 @@ _trait_cvt_table = {
     "OutputList": "List"
 }
 
+# factory functions for non-conventional types
+def _newbytes_factory():
+    from future.types.newbytes import newbytes
+    return newbytes
+
+# this table allows to get non-conventional types
+_type_factory_table = {
+    "future.types.newbytes.newbytes": _newbytes_factory,
+}
+
 
 def get_trait_desc(trait_name, trait, def_val=None):
     """ Generate a trait string description of the form:
@@ -272,7 +282,7 @@ def eval_trait(expression, modules=set()):
     # Create a new trait from its expression and namespace
     # First define the namespace were the expression will be executed
     namespace = {"traits": traits, "Undefined": traits.api.Undefined,
-                 "eval_trait": None}
+                 "eval_trait": None, 'trait_utils': sys.modules[__name__]}
     for mod in modules:
         xmod = []
         pmod = None
@@ -298,6 +308,8 @@ def eval_trait(expression, modules=set()):
     try:
         f()
     except:
+        print('namespace:', namespace)
+        raise
         raise Exception(
             "Can't evaluate expression '{0}' in namespace '{1}'."
             "Please investigate: '{2}'.".format(
@@ -364,7 +376,7 @@ def trait_ids(trait, modules=set()):
     elif main_id == "Instance":
         inner_id = handler.klass.__name__
         mod = handler.klass.__module__
-        if mod != "__builtin__":
+        if mod not in ("__builtin__", "__builtins__"):
             modules.add(mod)
             inner_id = '.'.join((mod, inner_id))
         return [main_id + "_" + inner_id]
@@ -372,7 +384,7 @@ def trait_ids(trait, modules=set()):
     elif main_id == "TraitInstance":
         inner_id = handler.aClass.__name__
         mod = handler.aClass.__module__
-        if mod != "__builtin__":
+        if mod not in ("__builtin__", "__builtins__"):
             modules.add(mod)
             inner_id = '.'.join((mod, inner_id))
         return [main_id + "_" + inner_id]
@@ -540,11 +552,30 @@ def build_expression(trait, modules=set()):
     elif trait_item == "File":
         expression += "(Undefined)"
 
-    elif trait_item in ("Instance", "TraitInstance"):
-        expression += "(%s())" % trait_spec[1]
+    elif trait_item == "Instance":
+        # determine if there is a specific type factory
+        if trait_spec[1] in _type_factory_table:
+            expression += "(trait_utils.get_type('%s')())" % trait_spec[1]
+        else:
+            expression += "(%s())" % trait_spec[1]
+
+    elif trait_item == "TraitInstance":
+        # determine if there is a specific type factory
+        if trait_spec[1] in _type_factory_table:
+            expression += "(trait_utils.get_type('%s'))" % trait_spec[1]
+        else:
+            expression += "(%s)" % trait_spec[1]
 
     # Default
     else:
         expression += "()"
 
     return expression
+
+
+def get_type(expression):
+    factory = _type_factory_table.get(expression, None)
+    if factory is not None:
+        return factory()
+    return eval_trait(expression)
+
