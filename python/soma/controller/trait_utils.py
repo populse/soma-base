@@ -49,9 +49,14 @@ def _newbytes_factory():
     from future.types.newbytes import newbytes
     return newbytes
 
+def _newstr_factory():
+    from future.types.newstr import newstr
+    return newstr
+
 # this table allows to get non-conventional types
 _type_factory_table = {
     "future.types.newbytes.newbytes": _newbytes_factory,
+    "future.types.newstr.newstr": _newstr_factory,
 }
 
 
