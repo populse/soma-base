@@ -529,8 +529,6 @@ def build_expression(trait, modules=set()):
             # probably a handler
             trait = trait.as_ctrait()
 
-        print('ENUM, trait', trait, type(trait))
-        #print('handler:', handler, type(handler))
         if hasattr(trait, 'as_ctrait') and trait.as_ctrait:
             # probably a handler
             trait = trait.as_ctrait()
