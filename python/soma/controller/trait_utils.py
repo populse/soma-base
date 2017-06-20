@@ -278,7 +278,6 @@ def eval_trait(expression, modules=set()):
         pmod = None
         for smod in mod.split('.'):
           xmod.append(smod)
-          print('import', '.'.join(xmod))
           rmod = importlib.import_module('.'.join(xmod))
           if len(xmod) == 1:
               namespace[xmod[0]] = rmod
