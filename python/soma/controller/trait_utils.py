@@ -309,6 +309,7 @@ def eval_trait(expression, modules=set()):
         f()
     except:
         print('namespace:', namespace)
+        print('expression:', expression)
         raise
         raise Exception(
             "Can't evaluate expression '{0}' in namespace '{1}'."
