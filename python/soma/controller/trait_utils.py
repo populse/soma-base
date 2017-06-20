@@ -370,7 +370,8 @@ def trait_ids(trait, modules=set()):
         trait_description = []
         for sub_trait in handler.handlers:
             if not isinstance(sub_trait, (traits.api.TraitType,
-                                          traits.api.TraitInstance)):
+                                          traits.api.TraitInstance,
+                                          traits.api.TraitCoerceType)):
                 sub_trait = sub_trait()
             trait_description.extend(trait_ids(sub_trait, modules))
         return trait_description
@@ -449,7 +450,8 @@ def build_expression(trait, modules=set()):
         either_expression = []
         for inner_trait in handler.handlers:
             if not isinstance(inner_trait, (traits.api.TraitType,
-                                            traits.api.TraitInstance)):
+                                            traits.api.TraitInstance,
+                                            traits.api.TraitCoerceType)):
                 inner_trait = inner_trait()
             either_expression.append(build_expression(inner_trait, modules))
         return "traits.api.Either({0})".format(", ".join(either_expression))
@@ -485,7 +487,8 @@ def build_expression(trait, modules=set()):
         tuple_expression = []
         for inner_trait in trait.get_validate()[1]:
             if not isinstance(inner_trait, (traits.api.TraitType,
-                                            traits.api.TraitInstance)):
+                                            traits.api.TraitInstance,
+                                            traits.api.TraitCoerceType)):
                 inner_trait = inner_trait()
             tuple_expression.append(build_expression(inner_trait, modules))
         expression += "({0})".format(", ".join(tuple_expression))
