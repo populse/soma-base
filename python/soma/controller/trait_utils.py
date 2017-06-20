@@ -339,8 +339,12 @@ def trait_ids(trait):
             trait_description.extend(trait_ids(sub_trait))
         return trait_description
 
-    elif main_id in ("Instance", "TraitInstance"):
+    elif main_id == "Instance":
         inner_id = handler.klass.__name__
+        return [main_id + "_" + inner_id]
+
+    elif main_id == "TraitInstance":
+        inner_id = handler.aClass.__name__
         return [main_id + "_" + inner_id]
 
     # Default case
