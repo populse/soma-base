@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 # Trait import
 from traits.api import HasTraits, Event, CTrait, Instance, Undefined, \
-    TraitType, TraitError, Any, Set
+    TraitType, TraitError, Any, Set, TraitInstance
 
 # Soma import
 from soma.sorted_dictionary import SortedDictionary, OrderedDict
@@ -196,7 +196,7 @@ class Controller(six.with_metaclass(ControllerMeta, HasTraits)):
 
             # Update each trait compound optional parameter
             for sub_trait in handler.handlers:
-                if not isinstance(sub_trait, traits.TraitInstance):
+                if not isinstance(sub_trait, TraitInstance):
                     sub_trait = sub_trait()
                 self._propagate_optional_parameter(sub_trait, optional)
 
