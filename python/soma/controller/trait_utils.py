@@ -13,12 +13,13 @@ from textwrap import wrap
 import re
 import logging
 import six
+import importlib
 
 # Define the logger
 logger = logging.getLogger(__name__)
 
 # Trait import
-import traits.api as traits
+import traits.api
 
 if sys.version_info[0] >= 3:
     unicode = str
@@ -41,6 +42,21 @@ _trait_cvt_table = {
     "OutputMultiPath_TraitCompound": "List",
     "OutputMultiPath": "List",
     "OutputList": "List"
+}
+
+# factory functions for non-conventional types
+def _newbytes_factory():
+    from future.types.newbytes import newbytes
+    return newbytes
+
+def _newstr_factory():
+    from future.types.newstr import newstr
+    return newstr
+
+# this table allows to get non-conventional types
+_type_factory_table = {
+    "future.types.newbytes.newbytes": _newbytes_factory,
+    "future.types.newstr.newstr": _newstr_factory,
 }
 
 
@@ -130,7 +146,7 @@ def is_trait_value_defined(value):
     is_valid = True
 
     # Check if the trait value is not valid
-    if (value is None or value is traits.Undefined or
+    if (value is None or value is traits.api.Undefined or
        (isinstance(value, six.string_types) and value == "")):
 
         is_valid = False
@@ -152,8 +168,8 @@ def is_trait_pathname(trait):
         True if trait is a file or a directory,
         False otherwise.
     """
-    return (isinstance(trait.trait_type, traits.File) or
-            isinstance(trait.trait_type, traits.Directory))
+    return (isinstance(trait.trait_type, traits.api.File) or
+            isinstance(trait.trait_type, traits.api.Directory))
 
 
 def clone_trait(trait_description):
@@ -170,33 +186,37 @@ def clone_trait(trait_description):
     """
     # Build the new trait expression
     trait_expression = []
+    mods = set()
 
     # Go through all its possible types (Either trait structure)
     for trait_spec in trait_description:
 
         # Split the current trait specification
         trait_spec = trait_spec.split("_")
-        trait_expression.append(build_expression_from_spec(trait_spec))
+        trait_expression.append(build_expression_from_spec(trait_spec, mods))
 
     # Build the final expression: use the Either trait if multiple expressions
     if len(trait_expression) > 1:
-        expression = "eval_trait = traits.Either("
+        expression = "eval_trait = traits.api.Either("
         for item in trait_expression:
             expression += "{0}, ".format(item)
         expression += ")"
     else:
         expression = "eval_trait = {0}".format(trait_expression[0])
 
-    return eval_trait(expression)
+    return eval_trait(expression, mods)
 
 
-def build_expression_from_spec(trait_spec):
+def build_expression_from_spec(trait_spec, modules=set()):
     """ Build the expression to instanciate the trait.
 
     Parameters
     ----------
     trait_spec: list of string (mandatory)
         a trait string description structure.
+    modules: set (optional)
+        modifiable set of module names that should be imported to instantiate
+        the trait
 
     Returns
     -------
@@ -218,7 +238,7 @@ def build_expression_from_spec(trait_spec):
                 trait_item))
 
         # Update the expression with the new item
-        expression += "traits.{0}(".format(trait_item)
+        expression += "traits.api.{0}(".format(trait_item)
         expression_size += 1
 
         # Tuple special case
@@ -240,7 +260,7 @@ def build_expression_from_spec(trait_spec):
 
                 # Update expression with the new item
                 else:
-                    expression += "traits.{0}(), ".format(tuple_item)
+                    expression += "traits.api.{0}(), ".format(tuple_item)
             break
 
     # Close and store the current trait expression
@@ -249,13 +269,15 @@ def build_expression_from_spec(trait_spec):
     return expression
 
 
-def eval_trait(expression):
+def eval_trait(expression, modules=set()):
     """ Evaluate an expression to create a new trait.
 
     Parameters
     ----------
     expression: str (mandatory)
         a string expression to evaluate in order to create a new trait.
+    modules: set (optional)
+        set of module names that should be imported to instantiate the trait
 
     Returns
     -------
@@ -263,9 +285,20 @@ def eval_trait(expression):
         a trait instance.
     """
     # Create a new trait from its expression and namespace
-    # Frist define the namespace were the expression will be executed
-    namespace = {"traits": traits, "Undefined": traits.Undefined,
-                 "eval_trait": None}
+    # First define the namespace were the expression will be executed
+    namespace = {"traits": traits, "Undefined": traits.api.Undefined,
+                 "eval_trait": None, 'trait_utils': sys.modules[__name__]}
+    for mod in modules:
+        xmod = []
+        pmod = None
+        for smod in mod.split('.'):
+          xmod.append(smod)
+          rmod = importlib.import_module('.'.join(xmod))
+          if len(xmod) == 1:
+              namespace[xmod[0]] = rmod
+          else:
+              setattr(pmod, smod, rmod)
+          pmod = rmod
 
     # Complete the expression
     expression = "eval_trait = {0}".format(expression)
@@ -280,21 +313,27 @@ def eval_trait(expression):
     try:
         f()
     except:
+        print('namespace:', namespace)
+        print('expression:', expression)
+        raise
         raise Exception(
             "Can't evaluate expression '{0}' in namespace '{1}'."
             "Please investigate: '{2}'.".format(
-                expression, namespace, sys.exc_info()[1]))
+                expression, namespace.keys(), sys.exc_info()[1]))
 
     return namespace["eval_trait"]
 
 
-def trait_ids(trait):
+def trait_ids(trait, modules=set()):
     """Return the type of the trait: File, Enum etc...
 
     Parameters
     ----------
     trait: trait instance (mandatory)
         a trait instance
+    modules: set (optional)
+        modifiable set of modules names that should be imported to instantiate
+        the trait
 
     Returns
     -------
@@ -302,7 +341,11 @@ def trait_ids(trait):
         the string description (type) of the input trait.
     """
     # Get the trait class name
-    handler = trait.handler or trait
+    if hasattr(trait, 'handler'):
+        handler = trait.handler or trait
+    else:
+        # trait is already a handler
+        handler = trait
     main_id = handler.__class__.__name__
     if main_id == "TraitCoerceType":
         real_id = _type_to_trait_id.get(handler.aType)
@@ -329,15 +372,33 @@ def trait_ids(trait):
         # Build each trait compound description
         trait_description = []
         for sub_trait in handler.handlers:
-            if not isinstance(sub_trait, traits.TraitType):
+            if not isinstance(sub_trait,
+                              (traits.api.TraitType,
+                               traits.api.TraitInstance)):
                 sub_trait = sub_trait()
-            trait_description.extend(trait_ids(sub_trait))
+            trait_description.extend(trait_ids(sub_trait, modules))
         return trait_description
+
+    elif main_id == "Instance":
+        inner_id = handler.klass.__name__
+        mod = handler.klass.__module__
+        if mod not in ("__builtin__", "__builtins__"):
+            modules.add(mod)
+            inner_id = '.'.join((mod, inner_id))
+        return [main_id + "_" + inner_id]
+
+    elif main_id == "TraitInstance":
+        inner_id = handler.aClass.__name__
+        mod = handler.aClass.__module__
+        if mod not in ("__builtin__", "__builtins__"):
+            modules.add(mod)
+            inner_id = '.'.join((mod, inner_id))
+        return [main_id + "_" + inner_id]
 
     # Default case
     else:
         # FIXME may recurse indefinitely if the trait is recursive
-        inner_id = '_'.join((trait_ids(i)[0]
+        inner_id = '_'.join((trait_ids(i, modules)[0]
                              for i in handler.inner_traits()))
         if not inner_id:
             klass = getattr(handler, 'klass', None)
@@ -355,13 +416,16 @@ def trait_ids(trait):
             return [main_id]
 
 
-def build_expression(trait):
+def build_expression(trait, modules=set()):
     """ Build the expression to instanciate the trait.
 
     Parameters
     ----------
     trait: trait instance (mandatory)
         a trait instance.
+    modules: set (optional)
+        modifiable set of modules names that should be imported to instantiate
+        the trait
 
     Returns
     -------
@@ -371,7 +435,7 @@ def build_expression(trait):
     # Get the trait desciption
     # If the desciption list return more than one element, we have to deal with
     # an Either trait
-    trait_description = trait_ids(trait)
+    trait_description = trait_ids(trait, modules)
 
     # Error case
     if len(trait_description) == 0:
@@ -380,13 +444,20 @@ def build_expression(trait):
     # Either case
     elif len(trait_description) > 1:
 
+        handler = trait.handler or trait
+
         # Debug message
-        logger.debug("Either compounds are %s", repr(trait.handler.handlers))
+        logger.debug("Either compounds are %s", repr(handler.handlers))
 
         # Update expression
-        either_expression = [build_expression(inner_trait())
-                             for inner_trait in trait.handler.handlers]
-        return "traits.Either({0})".format(", ".join(either_expression))
+        either_expression = []
+        for inner_trait in handler.handlers:
+            if not isinstance(inner_trait,
+                              (traits.api.TraitType,
+                               traits.api.TraitInstance)):
+                inner_trait = inner_trait()
+            either_expression.append(build_expression(inner_trait, modules))
+        return "traits.api.Either({0})".format(", ".join(either_expression))
 
     # Default case
     else:
@@ -399,7 +470,7 @@ def build_expression(trait):
     # Standard case: add atomic trait description in the
     # expression
     trait_item = trait_spec[0]
-    expression = "traits.{0}".format(trait_item)
+    expression = "traits.api.{0}".format(trait_item)
 
     # Debug message
     logger.debug("Current item is a %s", trait_item)
@@ -412,31 +483,45 @@ def build_expression(trait):
         logger.debug("Inner traits are %s", repr(trait.get_validate()[1]))
 
         # Update expression
-        tuple_expression = [build_expression(inner_trait())
-                            for inner_trait in trait.get_validate()[1]]
+        tuple_expression = []
+        for inner_trait in trait.get_validate()[1]:
+            if not isinstance(inner_trait,
+                              (traits.api.TraitType,
+                               traits.api.TraitInstance)):
+                inner_trait = inner_trait()
+            tuple_expression.append(build_expression(inner_trait, modules))
         expression += "({0})".format(", ".join(tuple_expression))
 
     # Special case: List
     # Need to set the value type
     elif trait_item == "List":
 
+        # note: trait.inner_traits might be a method (ListInt) or a tuple
+        # (List), whereas trait.handler.inner_trait is always a method
+        handler = trait.handler or trait
+
         # Debug message
-        logger.debug("Inner traits are %s", repr(trait.inner_traits))
+        logger.debug("Inner traits are %s", repr(handler.inner_traits()))
 
         # Update expression
-        expression += "({0})".format(build_expression(trait.inner_traits[0]))
+        expression += "({0})".format(build_expression(
+            handler.inner_traits()[0], modules))
 
     # Special case: Dict
     # Need to set the key and value types
     elif trait_item == "Dict":
 
+        # note: trait.inner_traits might be a method (ListInt) or a tuple
+        # (List), whereas trait.handler.inner_trait is always a method
+        handler = trait.handler or trait
+
         # Debug message
-        logger.debug("Inner traits are %s", repr(trait.inner_traits))
+        logger.debug("Inner traits are %s", repr(handler.inner_traits()))
 
         # Update expression
         expression += "({0}, {1})".format(
-            build_expression(trait.inner_traits[0]),
-            build_expression(trait.inner_traits[1]))
+            build_expression(handler.inner_traits()[0], modules),
+            build_expression(handler.inner_traits()[1], modules))
 
     # Special case: Enum
     # Need to add enum values at the construction
@@ -452,7 +537,7 @@ def build_expression(trait):
     # Need to add the lower and upper bounds
     elif trait_item == "Range":
 
-        if isinstance(trait, traits.CTrait):
+        if isinstance(trait, traits.api.CTrait):
             # Debug message
             logger.debug("Range is %f - %f", trait.handler._low,
                          trait.handler._high)
@@ -473,8 +558,30 @@ def build_expression(trait):
     elif trait_item == "File":
         expression += "(Undefined)"
 
+    elif trait_item == "Instance":
+        # determine if there is a specific type factory
+        if trait_spec[1] in _type_factory_table:
+            expression += "(trait_utils.get_type('%s')())" % trait_spec[1]
+        else:
+            expression += "(%s())" % trait_spec[1]
+
+    elif trait_item == "TraitInstance":
+        # determine if there is a specific type factory
+        if trait_spec[1] in _type_factory_table:
+            expression += "(trait_utils.get_type('%s'))" % trait_spec[1]
+        else:
+            expression += "(%s)" % trait_spec[1]
+
     # Default
     else:
         expression += "()"
 
     return expression
+
+
+def get_type(expression):
+    factory = _type_factory_table.get(expression, None)
+    if factory is not None:
+        return factory()
+    return eval_trait(expression)
+

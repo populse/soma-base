@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 # Trait import
 from traits.api import HasTraits, Event, CTrait, Instance, Undefined, \
-    TraitType, TraitError, Any, Set
+    TraitType, TraitError, Any, Set, TraitInstance
 
 # Soma import
 from soma.sorted_dictionary import SortedDictionary, OrderedDict
@@ -167,7 +167,10 @@ class Controller(six.with_metaclass(ControllerMeta, HasTraits)):
         """
         """
         # Get the trait class name
-        handler = trait.handler or trait
+        if hasattr(trait, 'handler'):
+            handler = trait.handler or trait
+        else:
+            handler = trait # hope it is already a handler
         main_id = handler.__class__.__name__
         if main_id == "TraitCoerceType":
             real_id = _type_to_trait_id.get(handler.aType)
@@ -196,7 +199,9 @@ class Controller(six.with_metaclass(ControllerMeta, HasTraits)):
 
             # Update each trait compound optional parameter
             for sub_trait in handler.handlers:
-                self._propagate_optional_parameter(sub_trait(), optional)
+                if not isinstance(sub_trait, TraitInstance):
+                    sub_trait = sub_trait()
+                self._propagate_optional_parameter(sub_trait, optional)
 
         # Default case
         else:
