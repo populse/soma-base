@@ -167,7 +167,10 @@ class Controller(six.with_metaclass(ControllerMeta, HasTraits)):
         """
         """
         # Get the trait class name
-        handler = trait.handler or trait
+        if hasattr(trait, 'handler'):
+            handler = trait.handler or trait
+        else:
+            handler = trait # hope it is already a handler
         main_id = handler.__class__.__name__
         if main_id == "TraitCoerceType":
             real_id = _type_to_trait_id.get(handler.aType)
