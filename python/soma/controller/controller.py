@@ -196,7 +196,9 @@ class Controller(six.with_metaclass(ControllerMeta, HasTraits)):
 
             # Update each trait compound optional parameter
             for sub_trait in handler.handlers:
-                self._propagate_optional_parameter(sub_trait(), optional)
+                if not isinstance(sub_trait, traits.TraitInstance):
+                    sub_trait = sub_trait()
+                self._propagate_optional_parameter(sub_trait, optional)
 
         # Default case
         else:
