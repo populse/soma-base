@@ -26,6 +26,8 @@ def _notebook_run(path, output_nb):
     dirname, __ = os.path.split(path)
     old_cwd = os.getcwd()
     os.chdir(dirname)
+    if not os.path.isabs(path):
+        path = os.path.basename(path)
     ret_code = 1
     args = ["jupyter", "nbconvert", "--to", "notebook", "--execute",
       "--ExecutePreprocessor.timeout=60",
@@ -57,21 +59,27 @@ def notebook_run(path):
     dirname, __ = os.path.split(path)
     os.chdir(dirname)
     nb = None
-    with tempfile.NamedTemporaryFile(suffix=".ipynb") as fout:
-        print('temp nb:', fout.name)
+    fout = tempfile.mkstemp(suffix=".ipynb")
+    os.close(fout[0])
+    try:
+        print('temp nb:', fout[1])
         args = [sys.executable, '-m', 'soma.test_utils.test_notebook',
-                path, fout.name]
+                path, fout[1]]
 
         try:
             # call _notebook_run as an external process because it will
             # sys.exit()
             ret_code = subprocess.call(args)
 
-            fout.seek(0)
-            nb = nbformat.read(fout, nbformat.current_nbformat)
+            nb = nbformat.read(open(fout[1]), nbformat.current_nbformat)
         except Exception as e:
             print('EXCEPTION:', e)
             return None, [e]
+    finally:
+        try:
+            os.unlink(fout[1])
+        except:
+            pass
 
     errors = [output for cell in nb.cells if "outputs" in cell
                      for output in cell["outputs"]\
@@ -89,15 +97,15 @@ def test_notebook(notebook_filename):
 
     Returns
     -------
-    code: 0 if successful, 1 if failed
+    code: True if successful, False if failed
     """
     print("running notebook test for", notebook_filename)
     nb, errors = notebook_run(notebook_filename)
 
     if len(errors) == 0:
-        code = 0
+        code = True
     else:
-        code = 1
+        code = False
     return code
 
 
