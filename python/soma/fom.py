@@ -913,8 +913,8 @@ class AttributesToPaths(object):
         self.non_discriminant_attributes = set(
             i for i in self.all_attributes if not self.foms.attribute_definitions[i].get('discriminant', True))
         fom_format_index = self.all_attributes.index('fom_format')
-        sql = 'CREATE TABLE rules ( %s, _fom_first, _fom_prefered_format, _fom_rule )' % ','.join(repr('_' + i)
-                                                                                                  for i in self.all_attributes)
+        sql = 'CREATE TABLE rules ( %s, _fom_first, _fom_prefered_format, _fom_rule )' % ','.join(repr('_' + str(i))
+                                for i in self.all_attributes)
         if debug:
             debug.debug(sql)
         self._db.execute(sql)
