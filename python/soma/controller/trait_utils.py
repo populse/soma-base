@@ -414,7 +414,8 @@ def trait_ids(trait, modules=set()):
 
 
 def build_expression(trait, modules=set()):
-    """ Build the expression to instanciate the trait.
+    """ Build a Python expression that can be used with eval to instanciate
+    the same trait as the one given in parameter.
 
     Parameters
     ----------
