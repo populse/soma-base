@@ -15,8 +15,7 @@ logger = logging.getLogger(__name__)
 
 # Trait import
 from traits.api import HasTraits, Event, CTrait, Instance, Undefined, \
-    TraitType, TraitError, Any, Set, TraitInstance
-
+    TraitType, TraitError, Any, Set, TraitInstance, TraitCoerceType
 # Soma import
 from soma.sorted_dictionary import SortedDictionary, OrderedDict
 from soma.controller.trait_utils import _type_to_trait_id
@@ -28,7 +27,7 @@ class ControllerMeta(HasTraits.__class__):
     """
     def __new__(mcs, name, bases, dictionary):
         """ Method that can be used to define factories.
-
+ from traits.api import TraitCoerceType
         Parameters
         ----------
         mcls: meta class (mandatory)
@@ -199,7 +198,7 @@ class Controller(six.with_metaclass(ControllerMeta, HasTraits)):
 
             # Update each trait compound optional parameter
             for sub_trait in handler.handlers:
-                if not isinstance(sub_trait, TraitInstance):
+                if not isinstance(sub_trait, (TraitInstance, TraitCoerceType)):
                     sub_trait = sub_trait()
                 self._propagate_optional_parameter(sub_trait, optional)
 
