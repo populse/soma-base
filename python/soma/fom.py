@@ -305,28 +305,29 @@ class FileOrganizationModelManager(object):
         looked for in self.paths.'''
         self._cache = {}
         for path in self.paths:
-            for i in os.listdir(path):
-                full_path = osp.join(path, i)
-                if osp.isdir(full_path):
-                    for ext in ('.json', '.yaml'):
-                        main_file = osp.join(full_path, i + ext)
-                        if osp.exists(main_file):
-                            d = read_json(main_file)
+            if os.path.isdir(path):
+                for i in os.listdir(path):
+                    full_path = osp.join(path, i)
+                    if osp.isdir(full_path):
+                        for ext in ('.json', '.yaml'):
+                            main_file = osp.join(full_path, i + ext)
+                            if osp.exists(main_file):
+                                d = read_json(main_file)
+                                name = d.get('fom_name')
+                                if not name:
+                                    raise ValueError(
+                                        'file %s does not contain fom_name'
+                                        % main_file)
+                                self._cache[name] = full_path
+                    elif i.endswith('.json') or i.endswith('.yaml'):
+                        d = read_json(full_path)
+                        if d:
                             name = d.get('fom_name')
                             if not name:
                                 raise ValueError(
                                     'file %s does not contain fom_name'
-                                    % main_file)
+                                    % full_path)
                             self._cache[name] = full_path
-                elif i.endswith('.json') or i.endswith('.yaml'):
-                    d = read_json(full_path)
-                    if d:
-                        name = d.get('fom_name')
-                        if not name:
-                            raise ValueError(
-                                'file %s does not contain fom_name'
-                                % full_path)
-                        self._cache[name] = full_path
         return self._cache.keys()
 
     def load_foms(self, *names):
