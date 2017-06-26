@@ -57,6 +57,7 @@ def notebook_run(path):
         return None, []
 
     dirname, __ = os.path.split(path)
+    old_cwd = os.getcwd()
     os.chdir(dirname)
     nb = None
     fout = tempfile.mkstemp(suffix=".ipynb")
@@ -80,6 +81,7 @@ def notebook_run(path):
             os.unlink(fout[1])
         except:
             pass
+        os.chdir(old_cwd)
 
     errors = [output for cell in nb.cells if "outputs" in cell
                      for output in cell["outputs"]\
