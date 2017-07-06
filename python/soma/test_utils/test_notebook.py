@@ -13,7 +13,7 @@ except ImportError:
     main_jupyter = None
 
 
-def _notebook_run(path, output_nb):
+def _notebook_run(path, output_nb, timeout=60):
     """Execute a notebook via nbconvert and collect output.
        :returns (parsed nb object, execution errors)
 
@@ -30,7 +30,7 @@ def _notebook_run(path, output_nb):
         path = os.path.basename(path)
     ret_code = 1
     args = ["jupyter", "nbconvert", "--to", "notebook", "--execute",
-      "--ExecutePreprocessor.timeout=60",
+      "--ExecutePreprocessor.timeout=%d" % timeout,
       "--ExecutePreprocessor.kernel_name=python%d" % sys.version_info[0],
       "--output", output_nb, path]
     old_argv = sys.argv
@@ -46,7 +46,7 @@ def _notebook_run(path, output_nb):
     return ret_code
 
 
-def notebook_run(path):
+def notebook_run(path, timeout=60):
     """Execute a notebook via nbconvert and collect output.
        :returns (parsed nb object, execution errors)
 
@@ -112,5 +112,8 @@ def test_notebook(notebook_filename):
 
 
 if __name__ == '__main__':
-    sys.exit(_notebook_run(sys.argv[1], sys.argv[2]))
+    timeout=60
+    if len(sys.argv) >=4:
+        timeout = int(sys.argv[3])
+    sys.exit(_notebook_run(sys.argv[1], sys.argv[2], timeout=timeout))
 
