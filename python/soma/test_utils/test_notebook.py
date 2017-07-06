@@ -90,19 +90,21 @@ def notebook_run(path, timeout=60):
     return nb, errors
 
 
-def test_notebook(notebook_filename):
+def test_notebook(notebook_filename, timeout=60):
     """Almost the same as notebook_run() but returns a single arror code
 
     Parameters
     ----------
     notebook_filename: filename of the notebook (.ipynb) to test
+    timeout: int
+        max time in seconds to execute one cell
 
     Returns
     -------
     code: True if successful, False if failed
     """
     print("running notebook test for", notebook_filename)
-    nb, errors = notebook_run(notebook_filename)
+    nb, errors = notebook_run(notebook_filename, timeout)
 
     if len(errors) == 0:
         code = True
