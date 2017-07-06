@@ -65,7 +65,7 @@ def notebook_run(path, timeout=60):
     try:
         print('temp nb:', fout[1])
         args = [sys.executable, '-m', 'soma.test_utils.test_notebook',
-                path, fout[1]]
+                path, fout[1], str(timeout)]
 
         try:
             # call _notebook_run as an external process because it will
