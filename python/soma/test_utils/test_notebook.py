@@ -103,6 +103,10 @@ def test_notebook(notebook_filename, timeout=60):
     -------
     code: True if successful, False if failed
     """
+    if main_jupyter is None:
+        raise Warning('cannot import nbformat and/or jupyter_core.command: '
+                      'cannot test notebooks')
+
     print("running notebook test for", notebook_filename)
     nb, errors = notebook_run(notebook_filename, timeout)
 
