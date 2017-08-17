@@ -43,7 +43,7 @@ modification only after an inactivity period.
 '''
 __docformat__ = "restructuredtext en"
 
-from soma.qt_gui.qt_backend import QtCore, QtGui
+from soma.qt_gui.qt_backend import QtCore, QtGui, Qt
 
 #-------------------------------------------------------------------------
 
@@ -144,7 +144,7 @@ class QLineEditModificationTimer(QtCore.QObject):
 
 
 #-------------------------------------------------------------------------
-class TimeredQLineEdit(QtGui.QLineEdit):
+class TimeredQLineEdit(Qt.QLineEdit):
 
     '''
     Create a QLineEdit instance that has an private attribute
@@ -166,9 +166,9 @@ class TimeredQLineEdit(QtGui.QLineEdit):
         '''
         timerInterval = kwargs.pop('timerInterval', None)
         if kwargs:
-            QtGui.QLineEdit.__init__(self, *args, **kwargs)
+            Qt.QLineEdit.__init__(self, *args, **kwargs)
         else:
-            QtGui.QLineEdit.__init__(self, *args)
+            Qt.QLineEdit.__init__(self, *args)
         self.__timer = QLineEditModificationTimer(self,
                                                   timerInterval=timerInterval)
         self.__timer.userModification.connect(self.userModification)
