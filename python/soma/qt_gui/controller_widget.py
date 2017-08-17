@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 # Soma import
 from soma.qt_gui import qt_backend
-from soma.qt_gui.qt_backend import QtGui, QtCore
+from soma.qt_gui.qt_backend import QtGui, QtCore, Qt
 from soma.controller import trait_ids
 from soma.qt_gui.timered_widgets import TimeredQLineEdit
 from soma.functiontools import partial
@@ -35,7 +35,7 @@ except AttributeError:
 qt_backend.init_traitsui_handler()
 
 
-class ScrollControllerWidget(QtGui.QScrollArea):
+class ScrollControllerWidget(Qt.QScrollArea):
 
     """ Class that create a widget to set the controller parameters.
 
