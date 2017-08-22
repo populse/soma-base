@@ -27,7 +27,7 @@ class ControllerMeta(HasTraits.__class__):
     """
     def __new__(mcs, name, bases, dictionary):
         """ Method that can be used to define factories.
- from traits.api import TraitCoerceType
+
         Parameters
         ----------
         mcls: meta class (mandatory)
