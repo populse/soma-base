@@ -44,8 +44,8 @@ class GlobalNaming(Singleton):
         if isfunction(obj) or isclass(obj):
             return obj.__module__ + '.' + obj.__name__
         elif ismethod(obj):
-            if obj.im_self is not None:
-                return obj.im_class.__module__ + '.' + obj.im_class.__name__ + '().' + obj.im_func.__name__
+            if obj.__self__ is not None:
+                return obj.__class__.__module__ + '.' + obj.__class__.__name__ + '().' + obj.__func__.__name__
         elif isinstance(obj, object):
             return obj.__class__.__module__ + '.' + obj.__class__.__name__ + '()'
         raise ValueError('Cannot find global name for %s' % repr(obj))
