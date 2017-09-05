@@ -6,5 +6,5 @@
 # for details.
 #
 
-from loader import load_objects
-from late_binding_property import LateBindingProperty
+from .loader import load_objects
+from .late_binding_property import LateBindingProperty

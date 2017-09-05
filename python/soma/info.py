@@ -1,6 +1,6 @@
 version_major = 4
 version_minor = 5
-version_micro = 7
+version_micro = 9
 version_extra = ''
 _version_major = version_major
 _version_minor = version_minor
@@ -52,4 +52,7 @@ ISRELEASE = _version_extra == ''
 VERSION = __version__
 PROVIDES = ["soma-base"]
 REQUIRES = []
-EXTRA_REQUIRES = {"doc": ["sphinx>=%s" % SPHINX_MIN_VERSION]}
+EXTRAS_REQUIRE = {
+    "doc": ["sphinx>=%s" % SPHINX_MIN_VERSION],
+    "crypto": ["pycrypto"]
+}

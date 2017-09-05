@@ -44,9 +44,12 @@ In addition OrderedDict is provided here, either as the standard
 collections.OrderedDict class if python version >= 2.7, or based on
 SortedDictionary if python version < 2.7.
 '''
+from __future__ import print_function
+
 __docformat__ = "restructuredtext en"
 
 import sys
+import six
 from soma.undefined import Undefined
 
 
@@ -98,7 +101,10 @@ class SortedDictionary(dict):
         list
             sorted list of (key, value) pairs
         '''
-        return [x for x in self.iteritems()]
+        if sys.version_info[0] >= 3:
+            return self.iteritems()
+        else:
+            return [x for x in self.iteritems()]
 
     def values(self):
         '''
@@ -110,7 +116,7 @@ class SortedDictionary(dict):
         return [x for x in self.itervalues()]
 
     def __setitem__(self, key, value):
-        if not self.has_key(key):
+        if key not in self:
             self.sortedKeys.append(key)
         super(SortedDictionary, self).__setitem__(key, value)
 
@@ -151,7 +157,7 @@ class SortedDictionary(dict):
             try:
                 yield (k, self[k])
             except KeyError:
-                print '!SortedDictionary error!', self.keys(), self.sortedKeys
+                print('!SortedDictionary error!', self.keys(), self.sortedKeys)
                 raise
 
     def insert(self, index, key, value):
@@ -167,7 +173,7 @@ class SortedDictionary(dict):
         key: key to insert
             value associated to key
         '''
-        if self.has_key(key):
+        if key in self:
             raise KeyError(key)
         self.sortedKeys.insert(index, key)
         super(SortedDictionary, self).__setitem__(key, value)
@@ -190,15 +196,14 @@ class SortedDictionary(dict):
         del self.sortedKeys[:]
         super(SortedDictionary, self).clear()
 
-    def sort(self, func=None):
-        """Sorts the dictionary using function func to compare keys.
+    def sort(self, key=None, reverse=False):
+        """Sorts the dictionary using key function key.
 
         Parameters:
         -----------
-        func: function key*key->int
-            comparison function, return -1 if e1<e2, 1 if e1>e2, 0 if e1==e2
+        key: function key
         """
-        self.sortedKeys.sort(func)
+        self.sortedKeys.sort(key=key, reverse=reverse)
 
     def compValues(self, key1, key2):
         """
@@ -246,7 +251,7 @@ class SortedDictionary(dict):
                                for k, v in self.iteritems()) + '}'
 
     def update(self, dict_obj):
-        for k, v in dict_obj.iteritems():
+        for k, v in six.iteritems(dict_obj):
             self[k] = v
 
     def copy(self):

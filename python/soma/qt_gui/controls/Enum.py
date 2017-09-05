@@ -9,6 +9,7 @@
 # System import
 import logging
 from functools import partial
+import sys
 
 # Define the logger
 logger = logging.getLogger(__name__)
@@ -16,6 +17,9 @@ logger = logging.getLogger(__name__)
 # Soma import
 from soma.qt_gui.qt_backend import QtGui, QtCore
 from soma.utils.functiontools import SomaPartial
+
+if sys.version_info[0] >= 3:
+    unicode = str
 
 
 class EnumControlWidget(object):
@@ -236,7 +240,7 @@ class EnumControlWidget(object):
         # When the 'control_name' controller trait value is modified, update
         # the corresponding control
         controller_widget.controller.on_trait_change(
-            controller_hook, name=control_name)
+            controller_hook, name=control_name, dispatch='ui')
 
         # Store the trait - control connection we just build
         control_instance._controller_connections = (

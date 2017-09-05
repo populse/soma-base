@@ -41,6 +41,7 @@ Utility classes and functions for debugging.
 - license: `CeCILL B <http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html>`_
 '''
 from __future__ import absolute_import
+from __future__ import print_function
 
 __docformat__ = 'restructuredtext en'
 
@@ -102,8 +103,8 @@ def print_stack(out=sys.stdout, frame=None):
         if frame is None:
             frame = sys._getframe(1)
         for info in stack_calls_info(frame):
-            print >> out, 'File "%(filename)s", line %(lineno)d' % info + ' in ' + info[
-                'function']
+            print('File "%(filename)s", line %(lineno)d' % info + ' in '
+                  + info['function'], file=out)
             for name, value in info['arguments']:
                 out.write('   ' + name + ' = ')
                 pprint(value, out, 3)

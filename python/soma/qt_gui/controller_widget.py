@@ -9,15 +9,19 @@
 # System import
 import logging
 import os
+import six
 
 # Define the logger
 logger = logging.getLogger(__name__)
 
 # Soma import
-from soma.qt_gui.qt_backend import QtGui, QtCore
+from soma.qt_gui import qt_backend
+from soma.qt_gui.qt_backend import QtGui, QtCore, Qt
 from soma.controller import trait_ids
 from soma.qt_gui.timered_widgets import TimeredQLineEdit
 from soma.functiontools import partial
+from soma.sorted_dictionary import OrderedDict
+from soma.functiontools import SomaPartial
 
 # Qt import
 try:
@@ -25,8 +29,11 @@ try:
 except AttributeError:
     _fromUtf8 = lambda s: s
 
+# setup notification in Qt GUI thread
+qt_backend.init_traitsui_handler()
 
-class ScrollControllerWidget(QtGui.QScrollArea):
+
+class ScrollControllerWidget(Qt.QScrollArea):
 
     """ Class that create a widget to set the controller parameters.
 
@@ -75,6 +82,7 @@ class ScrollControllerWidget(QtGui.QScrollArea):
         # Create the controller widget
         self.controller_widget = ControllerWidget(
             controller, parent, name, live, hide_labels, select_controls)
+        self.controller_widget.layout().setContentsMargins(2, 2, 2, 2)
         self.controller_widget.setSizePolicy(QtGui.QSizePolicy.Expanding,
                                              QtGui.QSizePolicy.Preferred)
 
@@ -189,8 +197,10 @@ class ControllerWidget(QtGui.QWidget):
         self._grid_layout = QtGui.QGridLayout()
         self._grid_layout.setAlignment(QtCore.Qt.AlignTop)
         self._grid_layout.setSpacing(3)
-        self._grid_layout.setContentsMargins(5, 5, 5, 5)
+        self._grid_layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(self._grid_layout)
+
+        self._groups = OrderedDict()
 
         # Create all the layout controls associated with the controller values
         # we want to tune (ie the user traits)
@@ -230,17 +240,18 @@ class ControllerWidget(QtGui.QWidget):
         valid = True
 
         # Go through all the controller widget controls
-        for control_name, control in self._controls.iteritems():
+        for control_name, control_groups in six.iteritems(self._controls):
+            for group_name, control in six.iteritems(control_groups):
 
-            # Unpack the control item
-            trait, control_class, control_instance, control_label = control
+                # Unpack the control item
+                trait, control_class, control_instance, control_label = control
 
-            # Call the current control specific check method
-            valid = control_class.is_valid(control_instance)
+                # Call the current control specific check method
+                valid = control_class.is_valid(control_instance)
 
-            # Stop checking if a wrong control has been found
-            if not valid:
-                break
+                # Stop checking if a wrong control has been found
+                if not valid:
+                    break
 
         return valid
 
@@ -251,14 +262,15 @@ class ControllerWidget(QtGui.QWidget):
         widget user defined parameters.
         """
         # Go through all the controller widget controls
-        for control_name, control in self._controls.iteritems():
+        for control_name, control_groups in six.iteritems(self._controls):
+            for group_name, control in six.iteritems(control_groups):
 
-            # Unpack the control item
-            trait, control_class, control_instance, control_label = control
+                # Unpack the control item
+                trait, control_class, control_instance, control_label = control
 
-            # Call the current control specific update controller method
-            control_class.update_controller(self, control_name,
-                                            control_instance)
+                # Call the current control specific update controller method
+                control_class.update_controller(self, control_name,
+                                                control_instance)
 
     def update_controller_widget(self):
         """ Update the controller widget.
@@ -267,14 +279,16 @@ class ControllerWidget(QtGui.QWidget):
         the controller traits values.
         """
         # Go through all the controller widget controls
-        for control_name, control in self._controls.iteritems():
+        for control_name, control_groups in six.iteritems(self._controls):
+            for group_name, control in six.iteritems(control_groups):
 
-            # Unpack the control item
-            trait, control_class, control_instance, control_label = control
+                # Unpack the control item
+                trait, control_class, control_instance, control_label = control
 
-            # Call the current control specific update controller widget method
-            control_class.update_controller_widget(self, control_name,
-                                                   control_instance)
+                # Call the current control specific update controller widget
+                # method
+                control_class.update_controller_widget(self, control_name,
+                                                      control_instance)
 
     def connect(self):
         """ Connect the controller trait and the controller widget controls
@@ -287,20 +301,28 @@ class ControllerWidget(QtGui.QWidget):
         if not self.connected:
 
             # Go through all the controller widget controls
-            for control_name, control in self._controls.iteritems():
+            for control_name, control_groups in six.iteritems(self._controls):
+                for group_name, control in six.iteritems(control_groups):
 
-                # Unpack the control item
-                trait, control_class, control_instance, control_label = control
+                    # Unpack the control item
+                    trait, control_class, control_instance, control_label \
+                        = control
 
-                # Call the current control specific connection method
-                logger.debug("Connecting control '{0}: {1}'...".format(
-                    control_name, control_instance))
-                control_class.connect(self, control_name, control_instance)
+                    # Call the current control specific connection method
+                    logger.debug("Connecting control '{0}: {1}'...".format(
+                        control_name, control_instance))
+                    control_class.connect(self, control_name, control_instance)
 
             # Add an event connected with the 'user_traits_changed' controller
             # signal: update the controls
-            self.controller.on_trait_change(self.update_controls,
-                                            "user_traits_changed")
+            self.controller.on_trait_change(
+                self.update_controls, "user_traits_changed", dispatch='ui')
+
+            # if 'visible_groups' is a trait, connect it to groups
+            if self.controller.trait('visible_groups'):
+                self.controller.on_trait_change(
+                    self.groups_vibility_changed, 'visible_groups',
+                    dispatch='ui')
 
             # Update the controller widget values
             self.update_controller_widget()
@@ -313,16 +335,17 @@ class ControllerWidget(QtGui.QWidget):
             return
         keys_connect = {}
         # Go through all the controller widget controls
-        for control_name, control in self._controls.iteritems():
-            hook1 = partial(self._key_modified, control_name)
-            hook2 = partial(self._delete_key, control_name)
-            control = self._controls[control_name]
-            label_control = control[3]
-            if isinstance(label_control, tuple):
-                label_control = label_control[0]
-            label_control.userModification.connect(hook1)
-            label_control.buttonPressed.connect(hook2)
-            keys_connect[control_name] = (label_control, hook1, hook2)
+        for control_name, control_groups in six.iteritems(self._controls):
+            for group_name, control in six.iteritems(control_groups):
+                hook1 = partial(self._key_modified, control_name)
+                hook2 = partial(self._delete_key, control_name)
+                #control = self._controls[control_name]
+                label_control = control[3]
+                if isinstance(label_control, tuple):
+                    label_control = label_control[0]
+                label_control.userModification.connect(hook1)
+                label_control.buttonPressed.connect(hook2)
+                keys_connect[control_name] = (label_control, hook1, hook2)
         self._keys_connections = keys_connect
 
     def disconnect(self):
@@ -336,20 +359,29 @@ class ControllerWidget(QtGui.QWidget):
             self.controller.on_trait_change(
                 self.update_controls, "user_traits_changed", remove=True)
 
+            # if 'visible_groups' is a trait, connect it to groups
+            if self.controller.trait('visible_groups'):
+                self.controller.on_trait_change(
+                    self.groups_vibility_changed, 'visible_groups',
+                    remove=True)
+
             # Go through all the controller widget controls
-            for control_name, control in self._controls.iteritems():
+            for control_name, control_groups in six.iteritems(self._controls):
+                for group_name, control in six.iteritems(control_groups):
 
-                # Unpack the control item
-                trait, control_class, control_instance, control_label = control
+                    # Unpack the control item
+                    trait, control_class, control_instance, control_label \
+                        = control
 
-                # Call the current control specific disconnection method
-                control_class.disconnect(self, control_name, control_instance)
+                    # Call the current control specific disconnection method
+                    control_class.disconnect(self, control_name,
+                                             control_instance)
 
             # Update the connection status
             self.connected = False
 
     def disconnect_keys(self):
-        for control_name, connections in self._keys_connections.iteritems():
+        for control_name, connections in six.iteritems(self._keys_connections):
             label_widget, hook1, hook2 = connections
             label_widget.userModification.disconnect(hook1)
             label_widget.buttonPressed.disconnect(hook2)
@@ -372,36 +404,37 @@ class ControllerWidget(QtGui.QWidget):
 
         # Go through all the controller widget controls
         to_remove_controls = []
-        for control_name, control in self._controls.iteritems():
+        for control_name, control_groups in six.iteritems(self._controls):
+            for group_name, control in six.iteritems(control_groups):
 
-            # Message
-            logger.debug(
-                "Check if we need to update '{0}': trait in '{1}' "
-                "different from '{2}'?".format(
-                    control_name, control, user_traits.get(control_name)))
+                # Message
+                logger.debug(
+                    "Check if we need to update '{0}': trait in '{1}' "
+                    "different from '{2}'?".format(
+                        control_name, control, user_traits.get(control_name)))
 
-            # Unpack the control item
-            trait, control_class, control_instance, control_label = control
+                # Unpack the control item
+                trait, control_class, control_instance, control_label = control
 
-            # If the the controller trait is different from the trait
-            # associated with the control
-            if user_traits.get(control_name) != trait:
+                # If the the controller trait is different from the trait
+                # associated with the control
+                if user_traits.get(control_name) != trait:
 
-                # Close and schedule for deletation the control widget
-                control_instance.close()
-                control_instance.deleteLater()
+                    # Close and schedule for deletation the control widget
+                    control_instance.close()
+                    control_instance.deleteLater()
 
-                # Close and schedule for deletation the control labels
-                if isinstance(control_label, tuple):
-                    for label in control_label:
-                        label.close()
-                        label.deleteLater()
-                elif control_label:
-                    control_label.close()
-                    control_label.deleteLater()
+                    # Close and schedule for deletation the control labels
+                    if isinstance(control_label, tuple):
+                        for label in control_label:
+                            label.close()
+                            label.deleteLater()
+                    elif control_label:
+                        control_label.close()
+                        control_label.deleteLater()
 
-                # Store the controls to be removed
-                to_remove_controls.append(control_name)
+                    # Store the controls to be removed
+                    to_remove_controls.append(control_name)
 
         # Delete all dead controls from the class '_controls' intern parameter
         for control_name in to_remove_controls:
@@ -431,13 +464,14 @@ class ControllerWidget(QtGui.QWidget):
         At the end the controls with wrong values will be colored in red.
         """
         # Go through all the controller widget controls
-        for control_name, control in self._controls.iteritems():
+        for control_name, control_groups in six.iteritems(self._controls):
+            for group_name, control in six.iteritems(control_groups):
 
-            # Unpack the control item
-            trait, control_class, control_instance, control_label = control
+                # Unpack the control item
+                trait, control_class, control_instance, control_label = control
 
-            # Call the current control specific check method
-            control_class.check(control_instance)
+                # Call the current control specific check method
+                control_class.check(control_instance)
 
     def _create_controls(self):
         """ Method that will create a control for each user trait of the
@@ -449,16 +483,16 @@ class ControllerWidget(QtGui.QWidget):
         # Select only the controller traits of interest
         all_traits = self.controller.user_traits()
         if self.select_controls is None:
-            slected_traits = all_traits
+            selected_traits = all_traits
         elif self.select_controls == "inputs":
-            slected_traits = dict(
+            selected_traits = dict(
                 (trait_name, trait)
-                for trait_name, trait in all_traits.iteritems()
+                for trait_name, trait in six.iteritems(all_traits)
                 if trait.output == False)
         elif self.select_controls == "outputs":
-            slected_traits = dict(
+            selected_traits = dict(
                 (trait_name, trait)
-                for trait_name, trait in all_traits.iteritems()
+                for trait_name, trait in six.iteritems(all_traits)
                 if trait.output == True)
         else:
             raise Exception(
@@ -466,8 +500,11 @@ class ControllerWidget(QtGui.QWidget):
                 "options are 'inputs' or 'outputs'.".format(self.select_controls))
 
         # Go through all the controller user traits
-        for trait_name, trait in slected_traits.iteritems():
+        skipped = set(['visible_groups'])
+        for trait_name, trait in six.iteritems(selected_traits):
 
+            if trait_name in skipped:
+                continue
             # Create the widget
             self.create_control(trait_name, trait)
 
@@ -483,10 +520,12 @@ class ControllerWidget(QtGui.QWidget):
             a trait item
         """
         # Search if the current trait has already been processed
-        control = self._controls.get(trait_name)
+        control_groups = self._controls.get(trait_name)
+        control_instances = []
+        control_labels = []
 
         # If no control has been found in the class intern parameters
-        if control is None:
+        if control_groups is None:
 
             # Call the search function that will map the trait type to the
             # corresponding control type
@@ -502,126 +541,243 @@ class ControllerWidget(QtGui.QWidget):
                     "user interface.".format(trait_name, trait_ids(trait)))
                 return
 
-            # Create the control instance and associated label
-            if self.editable_labels:
-                label_class = DeletableLineEdit
+            # handle groups
+            layouts = []
+            groups = trait.groups
+            if groups:
+                for group in groups:
+                    group_widget = self._groups.get(group)
+                    if group_widget is None:
+                        group_widget = self._create_group_widget(group)
+                        self._groups[group] = group_widget
+                    layouts.append(group_widget.hideable_widget.layout())
             else:
-                label_class = QtGui.QLabel
-            control_instance, control_label = control_class.create_widget(
-                self, trait_name, getattr(self.controller, trait_name),
-                trait, label_class)
-            control_class.is_valid(control_instance)
+                layouts.append(self._grid_layout)
 
-            # If the trait contains a description, insert a tool tip to the
-            # control instance
-            tooltip = ""
-            if trait.desc:
-                tooltip = "<b>" + trait_name + ":</b> " + trait.desc
-            control_instance.setToolTip(tooltip)
-
-            # Get the last empty row in the grid layout
-            # Trick: If the grid layout is empty check the element 0
-            # (not realistic but te grid layout return None)
-            last_row = self._grid_layout.rowCount()
-            widget_item = self._grid_layout.itemAtPosition(last_row, 1)
-            while widget_item is None and last_row > 0:
-                last_row -= 1
-                widget_item = self._grid_layout.itemAtPosition(last_row, 1)
-            last_row += 1
-
-            # If the control has no label, append the control in a two
-            # columns span area of the grid layout
-            if control_label is None:
-
-                # Grid layout 'addWidget' parameters: QWidget, int row,
-                # int column, int rowSpan, int columnSpan
-                self._grid_layout.addWidget(
-                    control_instance, last_row, 0, 1, 2)
-
-            # If the control has two labels, add a first row with the
-            # labels (one per column), and add the control in
-            # the next row of the grid layout in the second column
-            elif isinstance(control_label, tuple):
-
-                # Get the number of label
-                nb_of_labels = len(control_label)
-
-                # If more than two labels are detected, print an error message.
-                # We actually consider only the two first labels and skip the
-                # others
-                if nb_of_labels > 2:
-                    logger.error("To many labels associated with control "
-                                 "'{0}': {1}. Only consider the two first "
-                                 "labels and skip the others".format(
-                                     trait_name, control_label))
-
-                # Append each label in different columns
-                if not self.hide_labels:
-                    self._grid_layout.addWidget(
-                        control_label[0], last_row, 0)
-                if nb_of_labels >= 2:
-                    self._grid_layout.addWidget(control_label[1], last_row, 1)
-
-                # Append the control in the next row in the second column
-                self._grid_layout.addWidget(control_instance, last_row + 1, 1)
-
-            # Otherwise, append the label and control in two separate
-            # columns of the grid layout
-            else:
-
-                # Append the label in the first column
-                if not self.hide_labels:
-                    self._grid_layout.addWidget(control_label, last_row, 0)
-
-                # Append the control in the second column
-                self._grid_layout.addWidget(
-                    control_instance, last_row, 1, 1, 1)
-
-            # Store some informations about the inserted control in the
-            # private '_controls' class parameter
-            # Keys: the trait names
-            # Parameters: the trait - the control name - the control - and
-            # the labels associated with the control
-            self._controls[trait_name] = (
-                trait, control_class, control_instance, control_label)
+            group = None
+            for i, layout in enumerate(layouts):
+                if groups:
+                    group = groups[i]
+                control_instance, control_label \
+                      = self._create_control_in_layout(trait_name, trait,
+                                                       layout, group)
+                control_instances.append(control_instance)
+                if control_label:
+                    if not isinstance(control_label, tuple):
+                        control_label = [control_label]
+                    control_labels += list(control_label)
+                    if isinstance(control_label[0], QtGui.QLabel):
+                        control_label[0].setTextInteractionFlags(
+                            QtCore.Qt.TextSelectableByKeyboard |
+                            QtCore.Qt.TextSelectableByMouse)
 
         # Otherwise, the control associated with the current trait name is
         # already inserted in the grid layout, just unpack the values
         # contained in the private '_controls' class parameter
         else:
-            trait, control_class, control_instance, control_label = control
-
-        # Convert 'control_label' parameter to tuple
-        control_label = control_label or ()
-        if not isinstance(control_label, tuple):
-            control_label = (control_label, )
+            for group, control in six.iteritems(control_groups):
+                trait, control_class, control_instance, control_label = control
+                control_instances.append(control_instance)
+                if control_label:
+                    if isinstance(control_label, tuple):
+                        control_labels += list(control_label)
+                    else:
+                        control_labels.append(control_label)
 
         # Each trait has a hidden property. Take care of this information
         hide = getattr(trait, "hidden", False)
 
         # Hide the control and associated labels
         if hide:
-            control_instance.hide()
-            for label in control_label:
+            for control_instance in control_instances:
+                control_instance.hide()
+            for label in control_labels:
                 label.hide()
 
         # Show the control and associated labels
         else:
-            control_instance.show()
-            for label in control_label:
+            for control_instance in control_instances:
+                control_instance.show()
+            for label in control_labels:
                 label.show()
+
+    def _create_group_widget(self, group):
+        group_widget = QtGui.QGroupBox()
+        last_row = self._grid_layout.rowCount()
+        self._grid_layout.addWidget(group_widget, last_row, 0,
+                                    1, 2)
+        lay1 = QtGui.QVBoxLayout()
+        lay1.setContentsMargins(0, 0, 0, 0)
+        lay2 = QtGui.QHBoxLayout()
+        lay1.addLayout(lay2)
+        lay2.setContentsMargins(10, 0, 0, 0)
+        lay2.addWidget(QtGui.QLabel('<html><em>%s</em></html>' % group))
+        lay2.addStretch(1)
+        icon = QtGui.QIcon()
+        icon.addPixmap(
+            QtGui.QPixmap(_fromUtf8(":/soma_widgets_icons/nav_down")),
+            QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        group_widget.fold_button = QtGui.QPushButton(icon, '')
+        group_widget.fold_button.setFixedSize(30, 20)
+        lay2.addWidget(group_widget.fold_button)
+        widget = QtGui.QWidget()
+        group_widget.setLayout(lay1)
+        lay1.addWidget(widget)
+        group_widget.hideable_widget = widget
+        layout = QtGui.QGridLayout()
+        widget.setLayout(layout)
+        layout.setAlignment(QtCore.Qt.AlignTop)
+        layout.setSpacing(3)
+        layout.setContentsMargins(5, 5, 5, 5)
+        group_widget.setAlignment(QtCore.Qt.AlignLeft)
+
+        visible_groups = getattr(self.controller, 'visible_groups', set())
+        if group in visible_groups:
+            show = True
+        else:
+            show = False
+        group_widget.hideable_widget.setVisible(show)
+
+        if not show:
+            icon = QtGui.QIcon()
+            icon.addPixmap(
+                QtGui.QPixmap(_fromUtf8(":/soma_widgets_icons/nav_right")),
+                QtGui.QIcon.Normal, QtGui.QIcon.Off)
+            group_widget.fold_button.setIcon(icon)
+
+        group_widget.fold_button.clicked.connect(SomaPartial(
+            self._toggle_group_visibility, group))
+
+        return group_widget
+
+    def _set_group_visibility(self, group, checked):
+        group_widget = self._groups[group]
+        group_widget.hideable_widget.setVisible(checked)
+        icon = QtGui.QIcon()
+        if checked:
+            icon.addPixmap(
+                QtGui.QPixmap(_fromUtf8(":/soma_widgets_icons/nav_down")),
+                QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        else:
+            icon.addPixmap(
+                QtGui.QPixmap(_fromUtf8(":/soma_widgets_icons/nav_right")),
+                QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        group_widget.fold_button.setIcon(icon)
+
+    def _toggle_group_visibility(self, group, checked=False):
+        group_widget = self._groups[group]
+        visible_groups = getattr(self.controller, 'visible_groups', set())
+        if group in visible_groups:
+            show = False
+            visible_groups.remove(group)
+        else:
+            show = True
+            visible_groups.add(group)
+        self._set_group_visibility(group, show)
+        self.controller.visible_groups = visible_groups
+
+    def _create_control_in_layout(self, trait_name, trait, layout, group=None):
+        # Call the search function that will map the trait type to the
+        # corresponding control type
+        control_class = self.get_control_class(trait)
+        # Create the control instance and associated label
+        if self.editable_labels:
+            label_class = DeletableLineEdit
+        else:
+            label_class = QtGui.QLabel
+        control_instance, control_label = control_class.create_widget(
+            self, trait_name, getattr(self.controller, trait_name),
+            trait, label_class)
+        control_class.is_valid(control_instance)
+
+        # If the trait contains a description, insert a tool tip to the
+        # control instance
+        tooltip = ""
+        if trait.desc:
+            tooltip = "<b>" + trait_name + ":</b> " + trait.desc
+        control_instance.setToolTip(tooltip)
+
+        # Get the last empty row in the grid layout
+        # Trick: If the grid layout is empty check the element 0
+        # (not realistic but te grid layout return None)
+        last_row = layout.rowCount()
+        widget_item = layout.itemAtPosition(last_row, 1)
+        while widget_item is None and last_row > 0:
+            last_row -= 1
+            widget_item = layout.itemAtPosition(last_row, 1)
+        last_row += 1
+
+        # If the control has no label, append the control in a two
+        # columns span area of the grid layout
+        if control_label is None:
+
+            # Grid layout 'addWidget' parameters: QWidget, int row,
+            # int column, int rowSpan, int columnSpan
+            layout.addWidget(
+                control_instance, last_row, 0, 1, 2)
+
+        # If the control has two labels, add a first row with the
+        # labels (one per column), and add the control in
+        # the next row of the grid layout in the second column
+        elif isinstance(control_label, tuple):
+
+            # Get the number of label
+            nb_of_labels = len(control_label)
+
+            # If more than two labels are detected, print an error message.
+            # We actually consider only the two first labels and skip the
+            # others
+            if nb_of_labels > 2:
+                logger.error("To many labels associated with control "
+                              "'{0}': {1}. Only consider the two first "
+                              "labels and skip the others".format(
+                                  trait_name, control_label))
+
+            # Append each label in different columns
+            if not self.hide_labels:
+                layout.addWidget(
+                    control_label[0], last_row, 0)
+            if nb_of_labels >= 2:
+                layout.addWidget(control_label[1], last_row, 1)
+
+            # Append the control in the next row in the second column
+            layout.addWidget(control_instance, last_row + 1, 1)
+
+        # Otherwise, append the label and control in two separate
+        # columns of the grid layout
+        else:
+
+            # Append the label in the first column
+            if not self.hide_labels:
+                layout.addWidget(control_label, last_row, 0)
+
+            # Append the control in the second column
+            layout.addWidget(
+                control_instance, last_row, 1, 1, 1)
+
+        # Store some informations about the inserted control in the
+        # private '_controls' class parameter
+        # Keys: the trait names
+        # Parameters: the trait - the control name - the control - and
+        # the labels associated with the control
+        self._controls.setdefault(trait_name, {})[group] = (
+            trait, control_class, control_instance, control_label)
+
+        return control_instance, control_label
 
     def _key_modified(self, old_key):
         """ Dict / open controller key modification callback
         """
-        control_label = self._controls[old_key][3]
-        if isinstance(control_label, tuple):
-            control_label = control_label[0]
-        key = str(control_label.text())
-        was_connected = self.connected
-        if was_connected:
-            self.disconnect()
-        self.disconnect_keys()
+        control_groups = self._controls[old_key]
+        control_labels = []
+        for group_name, control in six.iteritems(control_groups):
+            control_labels += control[3]
+        for control_label in control_labels:
+            key = str(control_label.text())
+            was_connected = self.connected
+            if was_connected:
+                self.disconnect()
+            self.disconnect_keys()
 
         controller = self.controller
         trait = controller.trait(old_key)
@@ -655,6 +811,15 @@ class ControllerWidget(QtGui.QWidget):
             main_control_class.update_controller(
                 controller_widget, control_name, frame)
         # self.update_controller()
+
+    def groups_vibility_changed(self):
+        visible_groups = self.controller.visible_groups or set()
+        for group, group_widget in six.iteritems(self._groups):
+            if group in visible_groups:
+                show = True
+            else:
+                show = False
+            self._set_group_visibility(group, show)
 
     #
     # Class Methods

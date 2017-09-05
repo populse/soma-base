@@ -8,20 +8,21 @@
 
 # System import
 import logging
+import six
 
 # Define the logger
 logger = logging.getLogger(__name__)
 
 # Trait import
 from traits.api import HasTraits, Event, CTrait, Instance, Undefined, \
-    TraitType, TraitError, Any
+    TraitType, TraitError, Any, Set, TraitInstance
 
 # Soma import
 from soma.sorted_dictionary import SortedDictionary, OrderedDict
 from soma.controller.trait_utils import _type_to_trait_id
 
 
-class ControllerMeta(HasTraits.__metaclass__):
+class ControllerMeta(HasTraits.__class__):
 
     """ This metaclass allows for automatic registration of factories.
     """
@@ -42,7 +43,7 @@ class ControllerMeta(HasTraits.__metaclass__):
         return super(ControllerMeta, mcs).__new__(mcs, name, bases, dictionary)
 
 
-class Controller(HasTraits):
+class Controller(six.with_metaclass(ControllerMeta, HasTraits)):
 
     """ A Controller contains some traits: attributes typing and observer
     (callback) pattern.
@@ -64,8 +65,6 @@ class Controller(HasTraits):
     remove_trait
     _clone_trait
     """
-    # Meta class used to defined factories
-    __metaclass__ = ControllerMeta
 
     # This event is necessary because there is no event when a trait is
     # removed with remove_trait and because it is sometimes better to send
@@ -104,7 +103,7 @@ class Controller(HasTraits):
         if class_traits:
             sorted_names = sorted(
                 (getattr(trait, "order", ""), name)
-                for name, trait in class_traits.iteritems()
+                for name, trait in six.iteritems(class_traits)
                 if self.is_user_trait(trait))
             sorted_names = [sorted_name[1] for sorted_name in sorted_names]
 
@@ -168,7 +167,10 @@ class Controller(HasTraits):
         """
         """
         # Get the trait class name
-        handler = trait.handler or trait
+        if hasattr(trait, 'handler'):
+            handler = trait.handler or trait
+        else:
+            handler = trait # hope it is already a handler
         main_id = handler.__class__.__name__
         if main_id == "TraitCoerceType":
             real_id = _type_to_trait_id.get(handler.aType)
@@ -197,7 +199,9 @@ class Controller(HasTraits):
 
             # Update each trait compound optional parameter
             for sub_trait in handler.handlers:
-                self._propagate_optional_parameter(sub_trait(), optional)
+                if not isinstance(sub_trait, TraitInstance):
+                    sub_trait = sub_trait()
+                self._propagate_optional_parameter(sub_trait, optional)
 
         # Default case
         else:
@@ -303,7 +307,7 @@ class Controller(HasTraits):
             follow the mapping protocol API.
         """
         state_dict = dict_class()
-        for trait_name, trait in self.user_traits().iteritems():
+        for trait_name, trait in six.iteritems(self.user_traits()):
             if exclude_transient and trait.transient:
                 continue
             value = getattr(self, trait_name)
@@ -334,7 +338,7 @@ class Controller(HasTraits):
             for trait_name in self.user_traits():
                 if trait_name not in state_dict:
                     delattr(self, trait_name)
-        for trait_name, value in state_dict.iteritems():
+        for trait_name, value in six.iteritems(state_dict):
             trait = self.trait(trait_name)
             if trait is None and not isinstance(self, OpenKeyController):
                 raise KeyError(
@@ -345,7 +349,12 @@ class Controller(HasTraits):
                     trait.trait_type.klass)
                 controller.import_from_dict(value)
             else:
-                setattr(self, trait_name, value)
+                # check trait type for conversions
+                tr = self.trait(trait_name)
+                if tr and isinstance(tr.trait_type, Set):
+                    setattr(self, trait_name, set(value))
+                else:
+                    setattr(self, trait_name, value)
 
     def copy(self, with_values=True):
         """ Copy traits definitions to a new Controller object
@@ -365,11 +374,34 @@ class Controller(HasTraits):
             True.
         """
         copied = self.__class__()
-        for name, trait in self.user_traits().iteritems():
+        for name, trait in six.iteritems(self.user_traits()):
             copied.add_trait(name, trait)
             if with_values:
                 setattr(copied, name, getattr(self, name))
         return copied
+
+    def reorder_traits(self, traits_list):
+        """ Reorder traits in the controller according to a new ordered list.
+
+        If the new list does not contain all user traits, the remaining ones
+        will be appended at the end.
+
+        Parameters
+        ----------
+        traits_list: list
+            New list of trait names. This list order will be kept.
+        """
+        former_traits = set(self._user_traits.sortedKeys)
+        for t in traits_list:
+            if t not in former_traits:
+                raise ValueError("parameter %s is not is Controller traits."
+                                 % t)
+        new_traits = list(traits_list)
+        done = set(new_traits)
+        for t in self._user_traits.sortedKeys:
+            if t not in done:
+                new_traits.append(t)
+        self._user_traits.sortedKeys = new_traits
 
 
 class OpenKeyController(Controller):
@@ -408,7 +440,7 @@ class OpenKeyController(Controller):
 
     def __setattr__(self, name, value):
         if not name.startswith('_') and name not in self.__dict__ \
-                and not self.trait(name) \
+                and name not in self.traits() \
                 and not name in OpenKeyController._reserved_names:
             self.add_trait(name, self._value_trait)
         super(OpenKeyController, self).__setattr__(name, value)
@@ -464,7 +496,7 @@ class ControllerTrait(TraitType):
                 return sup_inst.validate(value)
             else:
                 return value
-        if not hasattr(value, 'iteritems'):
+        if not hasattr(value, 'items'):
             raise TraitError('trait must be a Controller or a mapping type')
         new_value = getattr(object, name).copy(with_values=False)
         if self.inner_trait:

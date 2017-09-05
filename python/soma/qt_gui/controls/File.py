@@ -11,6 +11,7 @@ import logging
 import os
 from functools import partial
 import traits.api as traits
+import sys
 
 # Define the logger
 logger = logging.getLogger(__name__)
@@ -20,6 +21,9 @@ from soma.qt_gui.qt_backend import QtGui, QtCore
 from soma.qt_gui import qt_backend
 from soma.utils.functiontools import SomaPartial
 from soma.qt_gui.timered_widgets import TimeredQLineEdit
+
+if sys.version_info[0] >= 3:
+    unicode = str
 
 
 class FileControlWidget(object):
@@ -155,6 +159,9 @@ class FileControlWidget(object):
         widget.path = path
         # Create a browse button
         button = QtGui.QPushButton("...", widget)
+        button.setObjectName('file_button')
+        button.setStyleSheet('QPushButton#file_button '
+                             '{padding: 2px 10px 2px 10px; margin: 0px;}')
         layout.addWidget(button)
         widget.browse = button
 
@@ -204,7 +211,10 @@ class FileControlWidget(object):
             synchronize with the controller
         """
         # Update the controller only if the control is valid
-        control_class = controller_widget._controls[control_name][1]
+        control_groups = controller_widget._controls[control_name]
+        if not control_groups:
+            return
+        control_class = control_groups.values()[0][1]
         if control_class.is_valid(control_instance):
 
             # Get the control value
@@ -298,7 +308,7 @@ class FileControlWidget(object):
             # When the 'control_name' controller trait value is modified,
             # update the corresponding control
             controller_widget.controller.on_trait_change(
-                controller_hook, name=control_name)
+                controller_hook, name=control_name, dispatch='ui')
 
             # Store the trait - control connection we just build
             control_instance._controller_connections = (

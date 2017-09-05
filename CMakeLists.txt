@@ -6,7 +6,7 @@ find_package( python REQUIRED )
 
 BRAINVISA_DEPENDENCY( DEV DEPENDS "${BRAINVISA_PACKAGE_NAME}" RUN "= ${${BRAINVISA_PACKAGE_NAME}_VERSION}" )
 BRAINVISA_DEPENDENCY( RUN DEPENDS python RUN ">= ${PYTHON_SHORT_VERSION}" )
-BRAINVISA_DEPENDENCY( DEV DEPENDS python DEV ">= 2.4;<< 3.0" )
+BRAINVISA_DEPENDENCY( DEV DEPENDS python DEV ">= 2.4;<< 4.0" )
 
 set( SOMA-BASE_DEFINITIONS "-DUSE_SOMA_CONFIG" )
 
@@ -21,4 +21,5 @@ BRAINVISA_CREATE_CMAKE_CONFIG_FILES()
 
 # tests
 enable_testing()
-add_test(soma-base-tests "${CMAKE_BINARY_DIR}/bin/bv_env" "${PYTHON_EXECUTABLE}" "${CMAKE_BINARY_DIR}/python/test/test_soma_base.py")
+brainvisa_add_test( soma-base-tests
+          "${PYTHON_EXECUTABLE_NAME}" "-m" "soma.tests.test_soma_base" )

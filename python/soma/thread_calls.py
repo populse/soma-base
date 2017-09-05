@@ -149,7 +149,7 @@ class SingleThreadCalls:
             semaphore._result = result
             semaphore._exception = None
             semaphore.release()
-        except Exception, e:
+        except Exception as e:
             semaphore._exception = e
             semaphore.release()
     _executeAndNotify = staticmethod(_executeAndNotify)

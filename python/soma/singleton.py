@@ -65,9 +65,18 @@ class Singleton(object):
 
       o1 = MyClass()
       o2 = MyClass()
-      print o1 is o2
+      print(o1 is o2)
 
     '''
+
+    @classmethod
+    def get_instance(cls):
+        try:
+            return getattr(cls, '_singleton_instance')
+        except AttributeError:
+            msg = "Class %s has not been initialized" % cls.__name__
+            raise ValueError(msg)
+
     def __new__(cls, *args, **kwargs):
         if '_singleton_instance' not in cls.__dict__:
             cls._singleton_instance = super(Singleton, cls).__new__(cls)

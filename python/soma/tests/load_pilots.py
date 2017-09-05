@@ -1,3 +1,4 @@
+from __future__ import print_function
 import os, sys
 import logging
 
@@ -43,7 +44,7 @@ def load_pilots(root, path):
 
             try:
                 __import__(module_name)
-            except ImportError, e:
+            except ImportError as e:
                 # An api exists, but it cannot be imported
                 logging.debug("Could not import {0}:"
                               "{1}".format(module_name, e))
@@ -65,4 +66,4 @@ if __name__ == "__main__":
 
     import soma
     module_path = soma.__path__[0]
-    print load_pilots(module_path, module_path)
+    print(load_pilots(module_path, module_path))

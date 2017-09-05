@@ -42,6 +42,7 @@ Base classes for writing various minf formats (XML, HDF5, Python's pickle, etc.)
 '''
 __docformat__ = "restructuredtext en"
 
+import six
 from soma.translation import translate as _
 
 
@@ -53,12 +54,15 @@ class RegisterMinfWriterClass(type):
     register all classes derived from L{MinfWriter}.
     '''
     def __init__(cls, name, bases, dict):
-        if cls.name is not None:
+        # why test hasattr(cls, name) ?
+        # on Ubuntu 12.04 the six.with_metaclass() function may trigger this
+        # constructor on a "NewBase" type which doesn't have the name attribute
+        if hasattr(cls, 'name') and cls.name is not None:
             MinfWriter._allWriterClasses[cls.name] = cls
 
 
 #------------------------------------------------------------------------------
-class MinfWriter(object):
+class MinfWriter(six.with_metaclass(RegisterMinfWriterClass, object)):
 
     '''
     Class derived from MinfWriter are responsible of writing a specific format of
@@ -70,8 +74,6 @@ class MinfWriter(object):
       - L{write} to write objects in minf file.
       - L{close} to terminate writing and close the min file.
     '''
-
-    __metaclass__ = RegisterMinfWriterClass
 
     #: all classes derived from L{MinfWriter} are automatically stored in that
     #: dictionary (keys are formats name and values are class objects).
@@ -121,8 +123,13 @@ class MinfWriter(object):
         '''
         writer = MinfWriter._allWriterClasses.get(format)
         if writer is None:
-            raise(_('No minf writer for format "%(format)s", possible formats are: %(possible)s') %
-                  {'format': format, 'possible': ', '.join(['"' + i + '"' for i in MinfWriter._allWriterClasses])})
+            raise ValueError(
+                _('No minf writer for format "%(format)s", possible formats are: %(possible)s')
+                %
+                {'format': format,
+                 'possible': ', '.join(['"' + i + '"'
+                                        for i in
+                                        MinfWriter._allWriterClasses])})
         if not hasattr(destFile, 'write'):
             destFile = open(destFile, 'w')
         return writer(destFile, reducer, )

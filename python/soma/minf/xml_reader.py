@@ -65,7 +65,12 @@ from soma.minf.xhtml import XHTML
 # This module only contains a definition of XML tags and attributes.
 # It is designed to allow "import *".
 from soma.minf.xml_tags import *
-from cStringIO import StringIO
+if sys.version_info[0] >= 3:
+    # python3
+    from io import StringIO
+    unicode = str
+else:
+    from cStringIO import StringIO
 
 #------------------------------------------------------------------------------
 

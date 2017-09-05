@@ -43,6 +43,7 @@ Base classes for reading various minf formats (XML, HDF5, Python's pickle, etc.)
 __docformat__ = "restructuredtext en"
 
 
+import six
 from soma.translation import translate as _
 
 #------------------------------------------------------------------------------
@@ -55,12 +56,15 @@ class RegisterMinfReaderClass(type):
     register all classes derived from L{MinfReader}.
     '''
     def __init__(cls, name, bases, dict):
-        if cls.name is not None:
+        # why test hasattr(cls, name) ?
+        # on Ubuntu 12.04 the six.with_metaclass() function may trigger this
+        # constructor on a "NewBase" type which doesn't have the name attribute
+        if hasattr(cls, 'name') and cls.name is not None:
             MinfReader._allReaderClasses[cls.name] = cls
 
 
 #------------------------------------------------------------------------------
-class MinfReader(object):
+class MinfReader(six.with_metaclass(RegisterMinfReaderClass, object)):
 
     '''
     Class derived from MinfReader are responsible of reading a specific format of
@@ -71,7 +75,6 @@ class MinfReader(object):
     must be callable without arguments (except C{self}), it does not have to be
     overloaded.
     '''
-    __metaclass__ = RegisterMinfReaderClass
 
     #: all classes derived from L{MinfReader} are automatically stored in that
     #: dictionary (keys are formats name and values are class objects).
@@ -90,7 +93,8 @@ class MinfReader(object):
         '''
         reader = MinfReader._allReaderClasses.get(format)
         if reader is None:
-            raise(_('No minf reader for format "%(format)s", possible formats are: %(possible)s') %
+            raise ValueError(
+                _('No minf reader for format "%(format)s", possible formats are: %(possible)s') %
                   {'format': format, 'possible': ', '.join(['"' + i + '"' for i in MinfReader._allReaderClasses])})
         return reader()
     createReader = staticmethod(createReader)

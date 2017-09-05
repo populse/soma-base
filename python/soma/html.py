@@ -41,7 +41,16 @@ Utility functions for HTML format.
 '''
 __docformat__ = "restructuredtext en"
 
-import htmlentitydefs
+try:
+    import htmlentitydefs
+except ImportError:
+    # python3
+    import html.entities as htmlentitydefs
+import six
+import sys
+
+if sys.version_info[0] >= 3:
+    unicode = str
 
 #------------------------------------------------------------------------------
 #: mapping of charaters to be escaped for HTML
@@ -57,8 +66,16 @@ def htmlEscape(msg):
     """
     global _htmlEscape
     if _htmlEscape is None:
-        _htmlEscape = dict([(ord(j.decode('iso-8859-1')), u'&' + i + u';')
-                           for i, j in htmlentitydefs.entitydefs.iteritems() if len(j) == 1])
+        if sys.version_info[0] >= 3:
+            _htmlEscape = dict([(ord(j), u'&' + i + u';')
+                              for i, j
+                                  in six.iteritems(htmlentitydefs.entitydefs)
+                                  if len(j) == 1])
+        else:
+            _htmlEscape = dict([(ord(j.decode('iso-8859-1')), u'&' + i + u';')
+                              for i, j
+                                  in six.iteritems(htmlentitydefs.entitydefs)
+                                  if len(j) == 1])
     return unicode(msg).translate(_htmlEscape)
 
 
@@ -70,6 +87,19 @@ def lesserHtmlEscape(msg):
     """
     global _lesserHtmlEscape
     if _lesserHtmlEscape is None:
-        _lesserHtmlEscape = dict([(ord(j.decode('iso-8859-1')), u'&' + i + u';')
-                                 for i, j in htmlentitydefs.entitydefs.iteritems() if len(j) == 1 and j not in (u'"', u'é', u'à', u'è', u'â', u'ê', u'ô', u'î', u'û', u'ù', u'ö', )])
+        if sys.version_info[0] >= 3:
+            _lesserHtmlEscape = dict([(ord(j), u'&' + i + u';')
+                                    for i, j
+                                    in six.iteritems(htmlentitydefs.entitydefs)
+                                    if len(j) == 1 and j not in
+                                        (u'"', u'é', u'à', u'è', u'â', u'ê',
+                                         u'ô', u'î', u'û', u'ù', u'ö', )])
+        else:
+            _lesserHtmlEscape = dict([(ord(j.decode('iso-8859-1')), u'&' + i
+                                      + u';')
+                                    for i, j
+                                    in six.iteritems(htmlentitydefs.entitydefs)
+                                    if len(j) == 1 and j not in
+                                        (u'"', u'é', u'à', u'è', u'â', u'ê',
+                                         u'ô', u'î', u'û', u'ù', u'ö', )])
     return unicode(msg).translate(_lesserHtmlEscape)

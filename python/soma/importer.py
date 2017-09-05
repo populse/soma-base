@@ -44,6 +44,8 @@ __docformat__ = "restructuredtext en"
 import sys
 import imp
 import types
+import six
+import importlib
 
 from soma.functiontools import partial
 from soma.singleton import Singleton
@@ -52,34 +54,50 @@ from soma.singleton import Singleton
 class ExtendedImporter(Singleton):
 
     '''
-      C{ExtendedImporter} is used to import external modules in a module managing rules that allow ro rename and delete or do anything else on the imported package. As imported packages could modify each others, all the registered rules are applied after each import using this C{ExtendedImporter}.
+      ExtendedImporter is used to import external modules in a module managing rules that allow ro rename and delete or do anything else on the imported package. As imported packages could modify each others, all the registered rules are applied after each import using this ExtendedImporter.
     '''
     extendedModules = dict()
 
-    def importInModule(self, moduleName, globals, locals, importedModuleName, namespacesList=[], handlersList=None, *args, **kwargs):
+    def importInModule(self, moduleName, globals, locals, importedModuleName,
+                       namespacesList=[], handlersList=None, *args, **kwargs):
         '''
         This method is used to import a module applying rules (rename rule, delete rule, ...) .
 
-        @moduleName string: name of the module to import into.
-        @globals dict: globals dictionary of the module to import into.
-        @locals dict: locals dictionary of the module to import into.
-        @importedModuleName string: name of the imported module.
-        @namespacesList list: a list of rules concerned namespaces for the imported module.
-        @handlersList list: a list of handlers to apply during the import of the module.
+        Parameters
+        ----------
+        moduleName: string
+            name of the module to import into (destination, not where to find
+            it).
+        globals: dict
+            globals dictionary of the module to import into.
+        locals: dict
+            locals dictionary of the module to import into.
+        importedModuleName: string
+            name of the imported module. Normally relative to the current
+            calling module package.
+        namespacesList: list
+            a list of rules concerned namespaces for the imported module.
+        handlersList: list
+            a list of handlers to apply during the import of the module.
         '''
         if (handlersList is None):
             # Add default handler
             handlersList = [GenericHandlers.moveChildren]
 
+        if not moduleName:
+            moduleName = locals['__name__']
+        elif moduleName.startswith('.'):
+            moduleName = locals['__name__'] + moduleName
+
+        package = locals['__package__']
+
         # Import the module
         # Note : Pyro overloads __import__ method and usual keyword 'level' of
         # __builtin__.__import__ is not supported
-        importedModule = __import__(importedModuleName, globals,  locals, [])
+        importedModule = importlib.import_module('.' + importedModuleName,
+                                                 package)
+        sys.modules[importedModuleName.split('.')[-1]] = importedModule
 
-        if not moduleName:
-            moduleName = locals['__name__']
-        else:
-            moduleName = locals['__name__'] + '.' + moduleName
         # Add the extended module to the list if not already exists
         if moduleName not in self.extendedModules:
             extendedModule = ExtendedModule(moduleName, globals, locals)
@@ -89,7 +107,8 @@ class ExtendedImporter(Singleton):
 
         if len(namespacesList) == 0:
             extendedModule.addHandlerRules(
-                importedModule, handlersList, importedModuleName, *args, **kwargs)
+                importedModule, handlersList, importedModuleName, *args,
+                **kwargs)
         else:
             for namespace in namespacesList:
                 extendedModule.addHandlerRules(
@@ -196,7 +215,7 @@ class GenericHandlers:
             # Changes child objects module, recursively and avoiding loops
             stack = []
             done = []
-            for (childName, childObject) in locals.iteritems():
+            for (childName, childObject) in six.iteritems(locals):
                 if not childName.startswith("__") \
                     and hasattr( childObject, '__module__' ) \
                         and childObject.__module__ == referedModule.__name__:
@@ -215,7 +234,7 @@ class GenericHandlers:
                                 if not x.startswith( '__' ) \
                                         and y not in stack and y not in done:
                                     stack.append(y)
-                    except Exception, e:
+                    except Exception as e:
                         del e
 
     # Declare a function to delete non generics Reader/Writer objects
@@ -233,11 +252,14 @@ class GenericHandlers:
 
         # Remove Reader and Writer classes because a generic class
         # to manage it exists
+        to_remove = []
         for key in locals.keys():
             if not key.startswith('__'):
                 for prefix in prefixes:
                     if key.startswith(prefix):
-                        del locals[key]
+                        to_remove.append(key)
+        for key in to_remove:
+            del locals[key]
 
 
 class ExtendedImporterHelper:

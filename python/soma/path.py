@@ -46,6 +46,11 @@ import platform
 import fnmatch
 import hashlib
 import re
+import six
+import sys
+
+if sys.version_info[0] >= 3:
+    basestring = str
 
 
 def split_path(path):
@@ -220,8 +225,13 @@ def update_query_string(
   would return:
   '/dir1/file1?param1=val1&param1=newval1&param2=val2&param2=newval2&paramN=valN&param3=newval3'  
   '''
-  import urlparse
-  import urllib
+  try:
+    from six.moves.urllib import parse as urllib
+    urlparse = urllib
+  except ImportError:
+    # some six versions do not provide six.moves.urllib (Ubuntu 12.04)
+    import urllib
+    import urlparse
   import types
   
   # Convert params_update_mode to a dictionary that contains the update mode
@@ -267,7 +277,7 @@ def update_query_string(
   url_params = urlparse.parse_qs(url_parsed.query)
 
   # Update parameters dictionary
-  for p, v in params.iteritems():
+  for p, v in six.iteritems(params):
     update_mode = params_update_mode.get(
       p,
       default_update_mode

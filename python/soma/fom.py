@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
+from __future__ import print_function
 
 import sys
 import os
@@ -10,6 +11,7 @@ import re
 import pprint
 import sqlite3
 import json
+import six
 try:
     import bz2
 except ImportError:
@@ -51,8 +53,16 @@ try:
 except ImportError:
     import json as json_reader
 
-
 from soma.path import split_path
+
+if sys.version_info[0] >= 3:
+    basestring = str
+    xrange = range
+    def items_list(d):
+        return list(d.items())
+else:
+    def items_list(d):
+        return d.items()
 
 
 def deep_update(update, original):
@@ -60,7 +70,7 @@ def deep_update(update, original):
     Recursively update a dict.
     Subdict's won't be overwritten but also updated.
     '''
-    for key, value in original.iteritems():
+    for key, value in six.iteritems(original):
         if not key in update:
             update[key] = value
         elif isinstance_dict(value):
@@ -77,7 +87,7 @@ def read_json(file_name):
     '''
     try:
         return json_reader.load(open(file_name, 'r'), object_pairs_hook=OrderedDict)
-    except ValueError, e:
+    except ValueError as e:
         if json_reader.__name__ != 'yaml':
             extra_msg = ' Check your python installation, and perhaps un a "pip install PyYAML" or "easy_install PyYAML"'
         else:
@@ -108,7 +118,7 @@ class DirectoryAsDict(object):
         st_content = self.cache.get_directory(self.directory)
         if st_content is not None:
             st, content = st_content
-            for i in content.iteritems():
+            for i in six.iteritems(content):
                 yield i
         else:
             try:
@@ -197,7 +207,7 @@ class DirectoryAsDict(object):
             debug.info('%s files=%d, directories=%d, size=%d'
                        % (time.asctime(), files + links, directories, files_size))
         count += 1
-        for name, content in dirdict.iteritems():
+        for name, content in six.iteritems(dirdict):
             path_size += len(name)
             st, content = content
             if st:
@@ -295,28 +305,29 @@ class FileOrganizationModelManager(object):
         looked for in self.paths.'''
         self._cache = {}
         for path in self.paths:
-            for i in os.listdir(path):
-                full_path = osp.join(path, i)
-                if osp.isdir(full_path):
-                    for ext in ('.json', '.yaml'):
-                        main_file = osp.join(full_path, i + ext)
-                        if osp.exists(main_file):
-                            d = read_json(main_file)
+            if os.path.isdir(path):
+                for i in os.listdir(path):
+                    full_path = osp.join(path, i)
+                    if osp.isdir(full_path):
+                        for ext in ('.json', '.yaml'):
+                            main_file = osp.join(full_path, i + ext)
+                            if osp.exists(main_file):
+                                d = read_json(main_file)
+                                name = d.get('fom_name')
+                                if not name:
+                                    raise ValueError(
+                                        'file %s does not contain fom_name'
+                                        % main_file)
+                                self._cache[name] = full_path
+                    elif i.endswith('.json') or i.endswith('.yaml'):
+                        d = read_json(full_path)
+                        if d:
                             name = d.get('fom_name')
                             if not name:
                                 raise ValueError(
                                     'file %s does not contain fom_name'
-                                    % main_file)
+                                    % full_path)
                             self._cache[name] = full_path
-                elif i.endswith('.json') or i.endswith('.yaml'):
-                    d = read_json(full_path)
-                    if d:
-                        name = d.get('fom_name')
-                        if not name:
-                            raise ValueError(
-                                'file %s does not contain fom_name'
-                                % full_path)
-                        self._cache[name] = full_path
         return self._cache.keys()
 
     def load_foms(self, *names):
@@ -340,7 +351,7 @@ class FileOrganizationModelManager(object):
             if fom_name not in jsons:
                 json = jsons[fom_name] = read_json(self.file_name(fom_name))
                 stack.extend(json.get('fom_import', []))
-        jsons = jsons.values()
+        jsons = list(jsons.values())
         result = jsons.pop(0)
         for json in jsons:
             for n in ('attribute_definitions', 'formats', 'format_lists', 'shared_patterns', 'patterns', 'processes'):
@@ -416,7 +427,7 @@ class FileOrganizationModels(object):
         # Update attribute definitions
         attribute_definitions = json_dict.get('attribute_definitions')
         if attribute_definitions:
-            for attribute, definition in attribute_definitions.iteritems():
+            for attribute, definition in six.iteritems(attribute_definitions):
                 existing_definition = self.attribute_definitions.get(
                     attribute)
                 values = definition.get('values')
@@ -442,7 +453,7 @@ class FileOrganizationModels(object):
         self.format_lists.update(json_dict.get('format_lists', {}))
         self.shared_patterns.update(json_dict.get('shared_patterns', {}))
         if self.shared_patterns:
-            stack = self.shared_patterns.items()
+            stack = items_list(self.shared_patterns)
             while stack:
                 name, pattern = stack.pop()
                 if isinstance(pattern, list):
@@ -471,10 +482,10 @@ class FileOrganizationModels(object):
 
         if processes:
             process_patterns = OrderedDict()
-            for process, parameters in processes.iteritems():
+            for process, parameters in six.iteritems(processes):
                 process_dict = OrderedDict()
                 process_patterns[process] = process_dict
-                for parameter, rules in parameters.iteritems():
+                for parameter, rules in six.iteritems(parameters):
                     if isinstance(rules, basestring):
                         rules = self.shared_patterns[rules[1:-1]]
                     parameter_rules = []
@@ -486,8 +497,10 @@ class FileOrganizationModels(object):
                         else:
                             try:
                                 pattern, formats, rule_attributes = rule
-                            except Exception, e:
-                                print 'error in FOM: %s, process: %s, param: %s, rule:' % (fom_name, process, parameter), rule
+                            except Exception as e:
+                                print('error in FOM: %s, process: %s, param: '
+                                    '%s, rule:'
+                                    % (fom_name, process, parameter), rule)
                                 raise
                         rule_attributes['fom_process'] = process
                         rule_attributes['fom_parameter'] = parameter
@@ -529,7 +542,7 @@ class FileOrganizationModels(object):
                                 format), repr(rule_formats)))
                         continue
                 keep = True
-                for attribute, selection_value in selection.iteritems():
+                for attribute, selection_value in six.iteritems(selection):
                     if attribute == 'format':
                         continue
                     rule_value = rule_attributes.get(attribute)
@@ -550,7 +563,7 @@ class FileOrganizationModels(object):
     def _expand_json_patterns(self, json_patterns, parent, parent_attributes):
         attributes = parent_attributes.copy()
         attributes.update(json_patterns.get('fom_attributes', {}))
-        for attribute, value in attributes.iteritems():
+        for attribute, value in six.iteritems(attributes):
             if attribute not in self.attribute_definitions:
                 self.attribute_definitions[
                     attribute] = {'values': set((value,))}
@@ -565,7 +578,7 @@ class FileOrganizationModels(object):
             # raise ValueError( 'Attribute "%s" must be declared in
             # attribute_definitions' % key_attribute )
 
-        for key, value in json_patterns.iteritems():
+        for key, value in six.iteritems(json_patterns):
             if key.startswith('fom_') and key != 'fom_dummy':
                 continue
             if key_attribute:
@@ -584,7 +597,7 @@ class FileOrganizationModels(object):
                         rule_attributes = attributes.copy()
                     else:
                         pattern, format_list, rule_attributes = rule
-                        for attribute, value in rule_attributes.iteritems():
+                        for attribute, value in six.iteritems(rule_attributes):
                             definition = self.attribute_definitions.setdefault(
                                 attribute, {})
                             values = definition.setdefault('values', set())
@@ -630,7 +643,7 @@ class FileOrganizationModels(object):
                     rules.append([pattern, rule_attributes])
 
     def _parse_patterns(self, patterns, dest_patterns):
-        for key, value in patterns.iteritems():
+        for key, value in six.iteritems(patterns):
             if isinstance_dict(value):
                 self._parse_patterns(
                     value, dest_patterns.setdefault(key, OrderedDict()))
@@ -663,7 +676,7 @@ class FileOrganizationModels(object):
 
     def pprint(self, out=sys.stdout):
         for i in ('fom_names', 'attribute_definitions', 'formats', 'format_lists', 'shared_patterns', 'patterns', 'rules'):
-            print >> out, '-' * 20, i, '-' * 20
+            print('-' * 20, i, '-' * 20, file=out)
             pprint.pprint(getattr(self, i), out)
 
 
@@ -735,23 +748,24 @@ class PathToAttributes(object):
 
     def _pprint(self, file, node, indent):
         if node:
-            print >> file, '  ' * indent + '{'
-            for pattern, rules_subpattern in node.iteritems():
+            print('  ' * indent + '{', file=file)
+            for pattern, rules_subpattern in six.iteritems(node):
                 ext_rules, subpattern = rules_subpattern
-                print >> file, '  ' * (indent + 1) + repr(pattern) + ': { ('
+                print('  ' * (indent + 1) + repr(pattern) + ': { (', file=file)
                 if ext_rules:
-                    print >> file, '  ' * (indent + 1) + '{'
-                    for ext, rules in ext_rules.iteritems():
-                        print >> file, '  ' * \
-                            (indent + 2) + repr(ext) + ': ', repr(rules)
-                    print >> file, '  ' * (indent + 1) + '},'
+                    print('  ' * (indent + 1) + '{', file=file)
+                    for ext, rules in six.iteritems(ext_rules):
+                        print('  ' * \
+                            (indent + 2) + repr(ext) + ': ', repr(rules),
+                          file=file)
+                    print('  ' * (indent + 1) + '},', file=file)
                 else:
-                    print >> file, '  ' * (indent + 1) + '{},'
+                    print('  ' * (indent + 1) + '{},', file=file)
                 self._pprint(file, subpattern, indent + 1)
-                print >> file, '),'
-            print >> file, '  ' * indent + '}',
+                print('),', file=file)
+            print('  ' * indent + '}', file=file, end=' ')
         else:
-            print >> file, '  ' * indent + '{}',
+            print('  ' * indent + '{}', file=file, end=' ')
 
     def parse_directory(self, dirdict, single_match=False, all_unknown=False, log=None):
         if isinstance(dirdict, basestring):
@@ -759,7 +773,7 @@ class PathToAttributes(object):
         return self._parse_directory(dirdict, [([], self.hierarchical_patterns, {})], single_match, all_unknown, log)
 
     def _parse_directory(self, dirdict, parsing_list, single_match, all_unknown, log):
-        for name, content in dirdict.iteritems():
+        for name, content in six.iteritems(dirdict):
             st, content = content
             # Split extention on left most dot
             l = name.split('.')
@@ -781,7 +795,8 @@ class PathToAttributes(object):
                     log.debug('?? ' + name + ' ' + repr(
                         pattern_attributes) + ' ' + repr(hierarchical_patterns.keys()))
                 branch_matched = False
-                for pattern, rules_subpattern in hierarchical_patterns.iteritems():
+                for pattern, rules_subpattern \
+                        in six.iteritems(hierarchical_patterns):
                     stop_parsing = False
                     for name_no_ext, ext in possible_extension_split:
                         ext_rules, subpattern = rules_subpattern
@@ -807,7 +822,7 @@ class PathToAttributes(object):
                                 full_path = path + [name]
                                 if log:
                                     log.debug('directory matched: %s %s' % (
-                                        repr(full_path), (repr([i[0] for i in content.iteritems()]) if content else None)))
+                                        repr(full_path), (repr([i[0] for i in six.iteritems(content)]) if content else None)))
                                 matched_directories.append(
                                     (full_path, subpattern, new_attributes))
                             else:
@@ -860,7 +875,7 @@ class PathToAttributes(object):
                 yield path + [name], st, None
 
     def _parse_unknown_directory(self, dirdict, path, log):
-        for name, content in dirdict.iteritems():
+        for name, content in six.iteritems(dirdict):
             st, content = content
             if log:
                 log.debug('?-> ' + '/'.join(path + [name]) + ' None')
@@ -898,8 +913,8 @@ class AttributesToPaths(object):
         self.non_discriminant_attributes = set(
             i for i in self.all_attributes if not self.foms.attribute_definitions[i].get('discriminant', True))
         fom_format_index = self.all_attributes.index('fom_format')
-        sql = 'CREATE TABLE rules ( %s, _fom_first, _fom_prefered_format, _fom_rule )' % ','.join(repr('_' + i)
-                                                                                                  for i in self.all_attributes)
+        sql = 'CREATE TABLE rules ( %s, _fom_first, _fom_prefered_format, _fom_rule )' % ','.join(repr('_' + str(i))
+                                for i in self.all_attributes)
         if debug:
             debug.debug(sql)
         self._db.execute(sql)
@@ -1097,7 +1112,8 @@ class AttributesToPaths(object):
                 if selection:
                     sql += ' WHERE ' + \
                         ' AND '.join('_' + i + ' = ?' for i in selection)
-                    values = list(self._db.execute(sql, selection.values()))
+                    values = list(self._db.execute(sql,
+                                                   list(selection.values())))
                 else:
                     values = list(self._db.execute(sql))
                 if values and (len(values) > 1 or ('',) in values):
@@ -1155,7 +1171,7 @@ if __name__ == '__main__':
                              # debug=logging )
     # form='MINC'
     # form=','+'MESH'
-    # print 'form',form
+    # print('form',form)
     directories = {"input_directory": "/input",
                    "output_directory": "/output",
                    "shared_directory": "/shared"}
@@ -1168,9 +1184,9 @@ if __name__ == '__main__':
         'protocol': u'subjects', 'analysis': 'default_analysis', 'fom_parameter': 'head_mesh',
         'acquisition': 'default_acquisition', 'subject': u'002_S_0816_S18402_I40732', 'fom_format': 'fom_prefered'}
     for p, a in atp.find_paths(d, debug=logging):
-        print '->', repr(p), a
+        print('->', repr(p), a)
     # for parameter in fom.patterns[ 'morphologistSimp.SimplifiedMorphologist' ]:
-        # print '- %s' % parameter
+        # print('- %s' % parameter)
         # for p, a in atp.find_paths( { 'fom_parameter': parameter,
                                       #'protocol': 'c',
                                       #'subject': 's',
@@ -1178,4 +1194,4 @@ if __name__ == '__main__':
                                       #'acquisition': 'a',
                                       #'fom_format': 'fom_prefered',
                                 #} ):
-        # print ' ', repr( p ), a
+        # print(' ', repr( p ), a)

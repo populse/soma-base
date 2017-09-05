@@ -44,7 +44,10 @@ __docformat__ = "epytext en"
 import struct
 import random
 import binascii
-import types
+import sys
+
+if sys.version_info[0] >= 3:
+    basestring = str
 
 #-------------------------------------------------------------------------
 
@@ -86,12 +89,20 @@ class Uuid(object):
     def __getinitargs__(self):
         return (str(self), )
 
-    def __str__(self):
-        return binascii.hexlify( self.__uuid[0:4] ) + '-' + \
-            binascii.hexlify( self.__uuid[4:6] ) + '-' + \
-            binascii.hexlify( self.__uuid[6:8] ) + '-' + \
-            binascii.hexlify( self.__uuid[8:10] ) + '-' + \
-            binascii.hexlify(self.__uuid[10:16])
+    if sys.version_info[0] >= 3:
+        def __str__(self):
+            return (binascii.hexlify( self.__uuid[0:4] ) + b'-' + \
+                binascii.hexlify( self.__uuid[4:6] ) + b'-' + \
+                binascii.hexlify( self.__uuid[6:8] ) + b'-' + \
+                binascii.hexlify( self.__uuid[8:10] ) + b'-' + \
+                binascii.hexlify(self.__uuid[10:16])).decode()
+    else:
+        def __str__(self):
+            return binascii.hexlify( self.__uuid[0:4] ) + '-' + \
+                binascii.hexlify( self.__uuid[4:6] ) + '-' + \
+                binascii.hexlify( self.__uuid[6:8] ) + '-' + \
+                binascii.hexlify( self.__uuid[8:10] ) + '-' + \
+                binascii.hexlify(self.__uuid[10:16])
 
     def __repr__(self):
         return repr(str(self))
@@ -102,7 +113,7 @@ class Uuid(object):
     def __eq__(self, other):
         if isinstance(other, Uuid):
             return self.__uuid == other.__uuid
-        elif isinstance(other, types.StringTypes):  # assume string-like object (str or unicode)
+        elif isinstance(other, basestring):  # assume string-like object (str or unicode)
             return self.__uuid == Uuid(other).__uuid
         else:
             return False
@@ -110,7 +121,7 @@ class Uuid(object):
     def __ne__(self, other):
         if isinstance(other, Uuid):
             return self.__uuid != other.__uuid
-        elif isinstance(other, types.StringTypes):  # assume string-like object (str or unicode)
+        elif isinstance(other, basestring):  # assume string-like object (str or unicode)
             return self.__uuid != Uuid(other).__uuid
         else:
             return True

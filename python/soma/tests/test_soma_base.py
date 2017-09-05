@@ -1,5 +1,8 @@
-from load_pilots import load_pilots
+from __future__ import print_function
+
+from .load_pilots import load_pilots
 import soma
+import sys
 
 error_message = """
 
@@ -55,10 +58,14 @@ def run_all_tests():
 def is_valid_module():
     is_valid = run_all_tests()
     if is_valid:
-        print valid_message
+        print(valid_message)
+        return True
     else:
-        print error_message
+        print(error_message)
+        return False
 
 
 if __name__ == "__main__":
-    is_valid_module()
+    res = is_valid_module()
+    if not res:
+        sys.exit(1)

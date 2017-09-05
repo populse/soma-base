@@ -47,12 +47,6 @@ SubModule: ``fom``
 :mod:`soma.fom`
 
 
-SubModule: ``gui``
-------------------
-
-:mod:`soma.gui`
-
-
 SubModule: ``html``
 -------------------
 
@@ -87,12 +81,6 @@ SubModule: ``pyro``
 -------------------
 
 :mod:`soma.pyro`
-
-
-SubModule: ``qt4gui``
----------------------
-
-:mod:`soma.qt4gui`
 
 
 SubModule: ``qt_gui``

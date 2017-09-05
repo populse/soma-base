@@ -11,6 +11,7 @@ import os
 import logging
 from functools import partial
 from traits.api import Instance
+import six
 
 # Define the logger
 logger = logging.getLogger(__name__)
@@ -72,10 +73,14 @@ class DictControlWidget(object):
 
         # Go through all the controller widget controls
         controller_widget = control_instance.controller_widget
-        for control_name, control in controller_widget._controls.iteritems():
+        for control_name, control_groups \
+                in six.iteritems(controller_widget._controls):
 
+            if not control_groups:
+                continue
             # Unpack the control item
-            trait, control_class, control_instance, control_label = control
+            trait, control_class, control_instance, control_label \
+                = control_groups.values()[0]
 
             # Call the current control specific check method
             valid = control_class.is_valid(control_instance)
@@ -175,11 +180,13 @@ class DictControlWidget(object):
             QtGui.QPixmap(_fromUtf8(":/soma_widgets_icons/nav_down")),
             QtGui.QIcon.Normal, QtGui.QIcon.Off)
         resize_button.setIcon(icon)
+        resize_button.setFixedSize(30, 22)
+        add_button.setFixedSize(30, 22)
 
         # Create a new controller that contains length 'control_value' inner
         # trait elements
         controller = DictController()
-        for name, inner_control_values in control_value.iteritems():
+        for name, inner_control_values in six.iteritems(control_value):
             controller.add_trait(str(name), inner_trait)
             setattr(controller, str(name), inner_control_values)
 
@@ -318,7 +325,7 @@ class DictControlWidget(object):
                     user_traits_changed = True
 
             # Update the controller associated with the current control
-            for trait_name, value in trait_value.iteritems():
+            for trait_name, value in six.iteritems(trait_value):
                 setattr(control_instance.controller, trait_name, value)
 
             # Connect the inner dict controller
@@ -393,7 +400,7 @@ class DictControlWidget(object):
             # When the 'control_name' controller trait value is modified,
             # update the corresponding control
             controller_widget.controller.on_trait_change(
-                controller_hook, control_name)
+                controller_hook, control_name, dispatch='ui')
 
             # Update the dict connection status
             control_instance._controller_connections = (
@@ -404,16 +411,18 @@ class DictControlWidget(object):
             # Connect also all dict items
             inner_controls = control_instance.controller_widget._controls
             for (inner_control_name,
-                 inner_control) in inner_controls.iteritems():
+                 inner_control_groups) in six.iteritems(inner_controls):
+                for group, inner_control \
+                        in six.iteritems(inner_control_groups):
 
-                # Unpack the control item
-                inner_control_instance = inner_control[2]
-                inner_control_class = inner_control[1]
+                    # Unpack the control item
+                    inner_control_instance = inner_control[2]
+                    inner_control_class = inner_control[1]
 
-                # Call the inner control connect method
-                inner_control_class.connect(
-                    control_instance.controller_widget, inner_control_name,
-                    inner_control_instance)
+                    # Call the inner control connect method
+                    inner_control_class.connect(
+                        control_instance.controller_widget, inner_control_name,
+                        inner_control_instance)
 
             # Update the dict control connection status
             control_instance.connected = True
@@ -459,16 +468,18 @@ class DictControlWidget(object):
             # Disconnect also all dict items
             inner_controls = control_instance.controller_widget._controls
             for (inner_control_name,
-                 inner_control) in inner_controls.iteritems():
+                 inner_control_groups) in six.iteritems(inner_controls):
+                for group, inner_control \
+                        in six.iteritems(inner_control_groups):
 
-                # Unpack the control item
-                inner_control_instance = inner_control[2]
-                inner_control_class = inner_control[1]
+                    # Unpack the control item
+                    inner_control_instance = inner_control[2]
+                    inner_control_class = inner_control[1]
 
-                # Call the inner control disconnect method
-                inner_control_class.disconnect(
-                    control_instance.controller_widget, inner_control_name,
-                    inner_control_instance)
+                    # Call the inner control disconnect method
+                    inner_control_class.disconnect(
+                        control_instance.controller_widget, inner_control_name,
+                        inner_control_instance)
 
             # Update the dict control connection status
             control_instance.connected = False

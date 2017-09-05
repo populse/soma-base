@@ -4,6 +4,8 @@ import os
 import collections
 import datetime
 import glob
+import six
+import sys
 from soma.sorted_dictionary import SortedDictionary
 from soma.controller import Controller
 try:
@@ -11,6 +13,9 @@ try:
 except ImportError:
     from enthought.traits.api import HasTraits, Str, Enum, Directory, File
 from soma.application import Application
+
+if sys.version_info[0] >= 3:
+    unicode = str
 
 
 class Study(Controller):
@@ -82,14 +87,13 @@ class Study(Controller):
     #"""Get number of run process and iterate"""
     # def inc_nb_run_process(self,process_name):
         # print 'process_name',process_name
-        # if self.compteur_run_process.has_key(process_name):
+        # if process_name in self.compteur_run_process:
             # valeur=self.compteur_run_process[process_name]
             # print 'valeur',valeur
             # self.compteur_run_process[process_name]=valeur+1
         # else:
             # self.compteur_run_process[process_name]=1
     def save_run(self, attributes, process):
-        print 'save run'
         # Create date directory
         date = datetime.datetime.now()
         date_directory = str(date.day) + '_' + str(
@@ -122,7 +126,7 @@ class Study(Controller):
         run['output'] = collections.OrderedDict()
         # dicti_sorted=SortedDictionary(*[(key,a[key]) for key in a])
 
-        for name, trait in process.user_traits().iteritems():
+        for name, trait in six.iteritems(process.user_traits()):
             if trait.is_trait_type(File) is False:
                 run['parameters'][name] = getattr(process, name)
             elif trait.output is False:
