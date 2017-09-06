@@ -16,6 +16,7 @@ import six
 from soma.qt_gui.qt_backend import QtGui, QtCore
 from soma.functiontools import partial
 from soma.qt_gui.controller_widget import ControllerWidget
+from soma.qt_gui.controller_widget import weak_proxy
 
 # Qt import
 try:
@@ -175,7 +176,8 @@ class ControllerControlWidget(object):
             delete_button.setFixedSize(30, 22)
             # Add list item callback
             add_hook = partial(
-                ControllerControlWidget.add_item, parent, control_name, frame)
+                ControllerControlWidget.add_item, weak_proxy(parent),
+                control_name, weak_proxy(frame))
             add_button.clicked.connect(add_hook)
 
         # Create the associated controller widget
@@ -195,8 +197,12 @@ class ControllerControlWidget(object):
         # Set some callback on the controller control tools
         # Resize callback
         resize_hook = partial(
-            ControllerControlWidget.expand_or_collapse, frame, resize_button)
+            ControllerControlWidget.expand_or_collapse, weak_proxy(frame),
+            weak_proxy(resize_button))
         resize_button.clicked.connect(resize_hook)
+
+        if getattr(trait, 'expanded') is False:
+            ControllerControlWidget.set_expanded(frame, resize_button, False)
 
         # Create the label associated with the controller widget
         control_label = trait.label
@@ -315,11 +321,33 @@ class ControllerControlWidget(object):
         resize_button: QToolButton
             the signal sender
         """
+        # Hide the control
+        if control_instance.isVisible():
+            state = False
+        # Show the control
+        else:
+            state = True
+        ControllerControlWidget.set_expanded(control_instance, resize_button,
+                                             state)
+
+    @staticmethod
+    def set_expanded(control_instance, resize_button, state):
+        """ Expand or collapse a 'ControllerControlWidget'.
+
+        Parameters
+        ----------
+        control_instance: QFrame (mandatory)
+            the list widget item
+        resize_button: QToolButton
+            the signal sender
+        state: bool
+            expanded (True) or collapsed (False)
+        """
         # Change the icon depending on the button status
         icon = QtGui.QIcon()
 
         # Hide the control
-        if control_instance.isVisible():
+        if not state:
             control_instance.hide()
             icon.addPixmap(
                 QtGui.QPixmap(_fromUtf8(":/soma_widgets_icons/nav_right")),

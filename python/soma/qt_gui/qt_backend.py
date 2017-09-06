@@ -73,7 +73,7 @@ class QtImporter(object):
         found = imp.find_module(module_name, qt_module.__path__)
         return self
 
-    def load_module(self, name):
+    def load_module(self, name):  
         qt_backend = get_qt_backend()
         module_name = name.split('.')[-1]
         imp_module_name = module_name
@@ -84,6 +84,52 @@ class QtImporter(object):
                 imp_module_name = 'QtWebKit'
         __import__('.'.join([qt_backend, imp_module_name]))
         module = sys.modules['.'.join([qt_backend, imp_module_name])]
+        # fixes: #13432 - Ubuntu 14.04 LTS: Importing some modules
+        #                                   of scikit learn from
+        #                                   brainvisa process raises segfault
+        # ref: https://bioproj.extra.cea.fr/redmine/issues/13432
+        if module_name == 'uic' and qt_backend == 'PyQt4':
+            def _safe_load_plugin(plugin, plugin_globals, plugin_locals):
+                def _safe_getFilter():
+                    import sys, DLFCN
+                    res = plugin_locals['getFilter_orig']()
+                    sys.setdlopenflags(DLFCN.RTLD_NOW)
+                    
+                    return res
+                    
+                import os
+                __import__('.'.join(['PyQt4', 'uic', 'objcreator']))
+                uic = sys.modules['.'.join([qt_backend, module_name])]
+                res = uic.objcreator.load_plugin_orig(plugin,
+                                                      plugin_globals,
+                                                      plugin_locals)
+                
+                # It seems that this function is sometimes called with a first
+                # argument of type File, sometimes of type str. Both cases
+                # should be handled by this switch.
+                if hasattr(plugin, "name"):
+                    filename = plugin.name
+                else:
+                    filename = plugin
+                if os.path.splitext(os.path.basename(filename))[0] == 'kde4':
+                    # Replaces kde4 getFilter function
+                    if ('getFilter_orig' not in plugin_locals):
+                        plugin_locals['getFilter_orig'] = plugin_locals['getFilter']
+                        plugin_locals['getFilter'] = _safe_getFilter
+                    
+                return res
+            
+            __import__('.'.join([qt_backend, module_name, 'objcreator']))
+            uic = sys.modules['.'.join([qt_backend, module_name])]
+            # Replaces the load_plugin function in objcreator
+            #uic.port_v2.load_plugin.load_plugin_orig \
+                #= uic.port_v2.load_plugin.load_plugin
+            #uic.port_v2.load_plugin.load_plugin = _safe_load_plugin
+            if not hasattr(uic.objcreator, 'load_plugin_orig'):
+                uic.objcreator.load_plugin_orig \
+                    = uic.objcreator.load_plugin
+                uic.objcreator.load_plugin = _safe_load_plugin
+            
         sys.modules[name] = module
         if make_compatible_qt5:
             if imp_module_name == 'QtGui':
@@ -111,6 +157,7 @@ class QtImporter(object):
                         module = qtwebkitwidgets
 
         return module
+
 
 # tune the import statement to get Qt submodules in this one
 sys.meta_path.append(QtImporter())
