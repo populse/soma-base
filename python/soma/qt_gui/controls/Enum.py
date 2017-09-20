@@ -62,24 +62,24 @@ class EnumControlWidget(object):
         # Execute manually the first time the control check method
         widget_callback()
 
-        # When a qt 'textChanged' signal is emited, check if the new
+        # When a qt 'editTextChanged' signal is emited, check if the new
         # user value is correct
-        control_instance.textChanged.connect(widget_callback)
+        control_instance.editTextChanged.connect(widget_callback)
 
     @staticmethod
     def add_callback(callback, control_instance):
-        """ Method to add a callback to the control instance when a 'textChanged'
+        """ Method to add a callback to the control instance when a 'editTextChanged'
         signal is emited.
 
         Parameters
         ----------
         callback: @function (mandatory)
-            the function that will be called when a 'textChanged' signal is
+            the function that will be called when a 'editTextChanged' signal is
             emited.
         control_instance: QComboBox (mandatory)
             the control widget we want to validate
         """
-        control_instance.textChanged.connect(callback)
+        control_instance.editTextChanged.connect(callback)
 
     @staticmethod
     def create_widget(parent, control_name, control_value, trait,
