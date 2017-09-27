@@ -604,7 +604,13 @@ def init_traitsui_handler():
     we cannot change it easily.
     '''
     try:
-        from traitsui.qt4 import toolkit
+        if get_qt_backend() in ('PyQt4', 'PySide'):
+            from traitsui.qt4 import toolkit
+        else:
+            # if usinf Qt5 we must not import traitsui.qt4, which would cause
+            # a crash. Then use the code taken from traitsui.qt4.toolkit
+            # in a qt-independent manner
+            raise ImportError('traitsui doesn\'t provide a PyQt5 backend')
     except:
         # copy of the code from traitsui.qt4.toolkit
 
