@@ -386,14 +386,17 @@ class FileControlWidget(object):
         if FileControlWidget.is_valid(control_instance):
             current_control_value = unicode(control_instance.path.text())
 
+        # get widget via a __self__ in a method, because control_instance may
+        # be a weakproxy.
+        widget = control_instance.__repr__.__self__
         # Create a dialog to select a file
         if control_instance.output:
             fname = qt_backend.getSaveFileName(
-                control_instance, "Output file", current_control_value, "",
+                widget, "Output file", current_control_value, "",
                 None, QtGui.QFileDialog.DontUseNativeDialog)
         else:
             fname = qt_backend.getOpenFileName(
-                control_instance, "Open file", current_control_value, "", None,
+                widget, "Open file", current_control_value, "", None,
                 QtGui.QFileDialog.DontUseNativeDialog)
 
         # Set the selected file path to the path sub control
