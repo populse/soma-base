@@ -194,6 +194,7 @@ def set_qt_backend(backend=None, pyqt_api=1, compatible_qt5=None):
     * If QT_API environement variable is not set, use PyQt4, with PyQt API v1
     * if QT_API is set to "pyqt", use PyQt4, with PyQt API v2
     * if QT_API is set to "pyside", use PySide
+    * if QT_API is set to "pyqt5", use PyQt5
 
     Moreover if using PyQt4, QtCore is patched to duplicate QtCore.pyqtSignal
     and QtCore.pyqtSlot as QtCore.Signal and QtCore.Slot. This is meant to ease
@@ -241,7 +242,9 @@ def set_qt_backend(backend=None, pyqt_api=1, compatible_qt5=None):
             # see
             # https://ipython.org/ipython-doc/dev/interactive/reference.html#pyqt-and-pyside
             qt_api = os.getenv('QT_API')
-            if qt_api == 'pyqt':
+            if qt_api == 'pyqt5':
+                backend = 'PyQt5'
+            elif qt_api == 'pyqt':
                 backend = 'PyQt4'
                 pyqt_api = 2
             elif qt_api == 'pyside':
