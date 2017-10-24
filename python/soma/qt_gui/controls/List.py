@@ -887,8 +887,13 @@ class ListControlWidget(object):
     def load_list(controller_widget, control_name, control_instance):
         controller_widget = get_ref(controller_widget)
         control_instance = get_ref(control_instance)
+
+        # get widget via a __self__ in a method, because control_instance may
+        # be a weakproxy.
+        widget = control_instance.__repr__.__self__
+
         fname = qt_backend.getOpenFileName(
-            control_instance, "Open file", "", "", None,
+            widget, "Open file", "", "", None,
             QtGui.QFileDialog.DontUseNativeDialog)
         if fname:
             parent_controller = controller_widget.controller
