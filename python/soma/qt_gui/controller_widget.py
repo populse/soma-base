@@ -31,6 +31,7 @@ try:
 except AttributeError:
     _fromUtf8 = lambda s: s
 
+qt_backend.set_qt_backend(compatible_qt5=True)
 # setup notification in Qt GUI thread
 qt_backend.init_traitsui_handler()
 
