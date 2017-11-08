@@ -16,6 +16,7 @@ import six
 logger = logging.getLogger(__name__)
 
 # Soma import
+from soma.qt_gui import qt_backend
 from soma.qt_gui.qt_backend import QtGui, QtCore
 from soma.utils.functiontools import SomaPartial, partial
 from soma.controller import trait_ids
@@ -239,12 +240,20 @@ class OffscreenListControlWidget(object):
             if litem is not None:
                 item = litem.widget()
                 widget.setCellWidget(0, i, item)
-            widget.horizontalHeader().setResizeMode(
-                i, QtGui.QHeaderView.Stretch)
+            if qt_backend.get_qt_backend() == 'PyQt5':
+                widget.horizontalHeader().setSectionResizeMode(
+                    i, QtGui.QHeaderView.Stretch)
+            else:
+                widget.horizontalHeader().setResizeMode(
+                    i, QtGui.QHeaderView.Stretch)
         if n > m:
             widget.setCellWidget(0, max_items, QtGui.QLabel('...'))
-            widget.horizontalHeader().setResizeMode(
-                max_items, QtGui.QHeaderView.Fixed)
+            if qt_backend.get_qt_backend() == 'PyQt5':
+                widget.horizontalHeader().setSectionResizeMode(
+                    max_items, QtGui.QHeaderView.Fixed)
+            else:
+                widget.horizontalHeader().setResizeMode(
+                    max_items, QtGui.QHeaderView.Fixed)
 
         widget.resizeRowToContents(0)
         #scroll_height = widget.findChildren(QtGui.QScrollBar)[-1].height()
@@ -346,14 +355,22 @@ class OffscreenListControlWidget(object):
                 item = items[None][2]
                 if item not in owned_widgets:
                     widget.setCellWidget(0, i, item)
-                widget.horizontalHeader().setResizeMode(
-                    i, QtGui.QHeaderView.Stretch)
+                if qt_backend.get_qt_backend() == 'PyQt5':
+                    widget.horizontalHeader().setSectionResizeMode(
+                        i, QtGui.QHeaderView.Stretch)
+                else:
+                    widget.horizontalHeader().setResizeMode(
+                        i, QtGui.QHeaderView.Stretch)
             if n > m:
                 label = QtGui.QLabel('...')
                 width = label.sizeHint().width()
                 widget.setCellWidget(0, max_items, QtGui.QLabel('...'))
-                widget.horizontalHeader().setResizeMode(
-                    max_items, QtGui.QHeaderView.Fixed)
+                if qt_backend.get_qt_backend() == 'PyQt5':
+                    widget.horizontalHeader().setSectionResizeMode(
+                        max_items, QtGui.QHeaderView.Fixed)
+                else:
+                    widget.horizontalHeader().setResizeMode(
+                        max_items, QtGui.QHeaderView.Fixed)
                 widget.horizontalHeader().resizeSection(max_items, width)
 
             widget.resizeRowToContents(0)
