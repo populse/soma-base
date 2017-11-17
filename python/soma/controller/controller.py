@@ -264,6 +264,7 @@ class Controller(six.with_metaclass(ControllerMeta, HasTraits)):
 
         # Update/set the optional trait parameter
         self._propagate_optional_parameter(trait_instance)
+        self.user_traits_changed = True
 
     def remove_trait(self, name):
         """ Remove a trait from its name.
@@ -282,6 +283,7 @@ class Controller(six.with_metaclass(ControllerMeta, HasTraits)):
         # Remove name from the '_user_traits' without error if it
         # is not present
         self._user_traits.pop(name, None)
+        self.user_traits_changed = True
 
     def export_to_dict(self, exclude_undefined=False,
                        exclude_transient=False,
