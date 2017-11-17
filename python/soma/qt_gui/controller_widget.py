@@ -592,12 +592,11 @@ class ControllerWidget(QtGui.QWidget):
         # Each trait has a hidden property. Take care of this information
         hide = getattr(trait, "hidden", False)
 
-        # Hide the control and associated labels
-        if hide:
-            for control_instance in control_instances:
-                control_instance.hide()
-            for label in control_labels:
-                label.hide()
+        # Show/Hide the control and associated labels
+        for control_instance in control_instances:
+            control_instance.setVisible(not hide)
+        for label in control_labels:
+            label.setVisible(not hide)
 
         ## Show the control and associated labels
         #else:
