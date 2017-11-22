@@ -425,7 +425,7 @@ class MinfExpander(object):
                     targetType=targetType, stop_on_error=stop_on_error, exceptions=exceptions)
             except Exception as e:
                 if stop_on_error:
-                    raise e
+                    raise
                 else:
                     result = None
                     exceptions.append(sys.exc_info())
@@ -522,7 +522,7 @@ class MinfExpander(object):
                         setattr(result, key, value)
                     except Exception as e:
                         if stop_on_error:
-                            raise e
+                            raise
                         else:
                             exceptions.append(sys.exc_info())
 
@@ -533,7 +533,7 @@ class MinfExpander(object):
                         result[key] = value
                     except Exception as e:
                         if stop_on_error:
-                            raise e
+                            raise
                         else:
                             exceptions.append(sys.exc_info())
 

@@ -292,7 +292,9 @@ def readMinf(source, targets=None, stop_on_error=True, exceptions=[]):
 
     see: :func`iterateMinf`
     '''
-    return tuple(iterateMinf(source, targets=targets, stop_on_error=stop_on_error, exceptions=exceptions))
+    return tuple(iterateMinf(source, targets=targets, 
+                             stop_on_error=stop_on_error, 
+                             exceptions=exceptions))
 
 
 #------------------------------------------------------------------------------

@@ -22,6 +22,8 @@ from soma.qt_gui.timered_widgets import TimeredQLineEdit
 from soma.functiontools import partial
 from soma.sorted_dictionary import OrderedDict
 from soma.functiontools import SomaPartial
+import weakref
+from soma.utils.weak_proxy import get_ref, weak_proxy
 
 # Qt import
 try:
@@ -29,6 +31,7 @@ try:
 except AttributeError:
     _fromUtf8 = lambda s: s
 
+qt_backend.set_qt_backend(compatible_qt5=True)
 # setup notification in Qt GUI thread
 qt_backend.init_traitsui_handler()
 
@@ -337,8 +340,10 @@ class ControllerWidget(QtGui.QWidget):
         # Go through all the controller widget controls
         for control_name, control_groups in six.iteritems(self._controls):
             for group_name, control in six.iteritems(control_groups):
-                hook1 = partial(self._key_modified, control_name)
-                hook2 = partial(self._delete_key, control_name)
+                hook1 = partial(self.__class__._key_modified,
+                                weakref.proxy(self), control_name)
+                hook2 = partial(self.__class__._delete_key,
+                                weakref.proxy(self), control_name)
                 #control = self._controls[control_name]
                 label_control = control[3]
                 if isinstance(label_control, tuple):
@@ -587,19 +592,18 @@ class ControllerWidget(QtGui.QWidget):
         # Each trait has a hidden property. Take care of this information
         hide = getattr(trait, "hidden", False)
 
-        # Hide the control and associated labels
-        if hide:
-            for control_instance in control_instances:
-                control_instance.hide()
-            for label in control_labels:
-                label.hide()
+        # Show/Hide the control and associated labels
+        for control_instance in control_instances:
+            control_instance.setVisible(not hide)
+        for label in control_labels:
+            label.setVisible(not hide)
 
-        # Show the control and associated labels
-        else:
-            for control_instance in control_instances:
-                control_instance.show()
-            for label in control_labels:
-                label.show()
+        ## Show the control and associated labels
+        #else:
+            #for control_instance in control_instances:
+                #control_instance.show()
+            #for label in control_labels:
+                #label.show()
 
     def _create_group_widget(self, group):
         group_widget = QtGui.QGroupBox()
@@ -645,8 +649,12 @@ class ControllerWidget(QtGui.QWidget):
                 QtGui.QIcon.Normal, QtGui.QIcon.Off)
             group_widget.fold_button.setIcon(icon)
 
-        group_widget.fold_button.clicked.connect(SomaPartial(
-            self._toggle_group_visibility, group))
+        #group_widget.fold_button.clicked.connect(SomaPartial(
+            #self._toggle_group_visibility, group))
+        # FIXME: if we use this, self gets deleted somewhere. This is not
+        # normal.
+        group_widget.fold_button.clicked.connect(partial(
+            self.__class__._toggle_group_visibility, weak_proxy(self), group))
 
         return group_widget
 
@@ -665,7 +673,6 @@ class ControllerWidget(QtGui.QWidget):
         group_widget.fold_button.setIcon(icon)
 
     def _toggle_group_visibility(self, group, checked=False):
-        group_widget = self._groups[group]
         visible_groups = getattr(self.controller, 'visible_groups', set())
         if group in visible_groups:
             show = False

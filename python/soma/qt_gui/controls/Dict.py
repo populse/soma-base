@@ -22,7 +22,7 @@ from soma.utils.functiontools import SomaPartial
 from soma.controller import trait_ids
 from soma.controller import Controller
 from soma.sorted_dictionary import OrderedDict
-from soma.qt_gui.controller_widget import ControllerWidget
+from soma.qt_gui.controller_widget import ControllerWidget, weak_proxy
 
 # Qt import
 try:
@@ -207,7 +207,8 @@ class DictControlWidget(object):
         # Set some callback on the dict control tools
         # Resize callback
         resize_hook = partial(
-            DictControlWidget.expand_or_collapse, frame, resize_button)
+            DictControlWidget.expand_or_collapse, weak_proxy(frame),
+            weak_proxy(resize_button))
         resize_button.clicked.connect(resize_hook)
         # Add dict item callback
         add_hook = partial(
@@ -377,8 +378,8 @@ class DictControlWidget(object):
             # associated with a dict widget when a dict widget inner controller
             # trait is modified.
             dict_controller_hook = SomaPartial(
-                cls.update_controller, controller_widget, control_name,
-                control_instance)
+                cls.update_controller, weak_proxy(controller_widget),
+                control_name, weak_proxy(control_instance))
 
             # Go through all dict widget inner controller user traits
             for trait_name in control_instance.controller.user_traits():
@@ -394,8 +395,8 @@ class DictControlWidget(object):
             # Hook: function that will be called to update the specific widget
             # when a trait event is detected on the dict controller.
             controller_hook = SomaPartial(
-                cls.update_controller_widget, controller_widget, control_name,
-                control_instance)
+                cls.update_controller_widget, weak_proxy(controller_widget),
+                control_name, weak_proxy(control_instance))
 
             # When the 'control_name' controller trait value is modified,
             # update the corresponding control
