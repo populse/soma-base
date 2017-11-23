@@ -44,7 +44,6 @@ __docformat__ = "restructuredtext en"
 import os
 import platform
 import fnmatch
-import glob
 import hashlib
 import re
 import six
@@ -356,9 +355,9 @@ def find_in_path(file, path=None):
     for i in path:
         p = os.path.normpath(os.path.abspath(i))
         if p:
-            r = glob.glob(os.path.join(p, file))
-            if r:
-                return r[0]
+            r = os.path.join(p, file)
+            if os.path.isdir(p) and os.path.exists(r):
+                return r
 
 
 def locate_file(pattern, root=os.curdir):

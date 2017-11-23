@@ -1,131 +1,84 @@
 # -*- coding: utf-8 -*-
 
+'''Base classes for the management of association between Python objects and
+factories (i.e. a function that create something for an object) taking into
+account classes hierachy but without storing anything in the objects classes.
+'''
+
 from __future__ import absolute_import
-from __future__ import print_function
 
-import six
-from importlib import import_module
-from pkgutil import iter_modules
+from weakref import WeakKeyDictionary
 
 
-def find_subclasses_in_module(module_name, parent_class):
+class MetaFactories(type):
+
+    '''This is the metaclass of Factories.
+    It intercepts Factories class creation to make sure that they have
+    a _global_factories attibute.'''
+
+    def __new__(mcs, name, bases, dictionary):
+        if '_global_factories' not in dictionary:
+            dictionary['_global_factories'] = {}
+        return type.__new__(mcs, name, bases, dictionary)
+
+
+class Factories(object):
+
     '''
-    Find all the classes defined in a Python module that derive from a
-    given class or class name. If the module is a package, it also look
-    into submodules.
+    This is the base class for managing association between any Python object
+    and a factory. For instance, WidgetFactories is derived from Factories and
+    used to register all factories allowing to create a graphical widget for a
+    Python object.
+
+    There are two levels of associations between Python objects and factories
+    (i.e. two dictionaries). The global factories are associated at the class
+    level (for classes derived from Factories) with the register_global_factory
+    method. The global factories are shared by all instances. On the other hand,
+    if one wants to customize some factories for a specific context, it can
+    create one Factories instance per context and use register_factory method
+    to create an associtation at the instance level.
     '''
-    if isinstance(parent_class, six.string_types):
-        check = lambda item: (isinstance(item, type) and 
-                              item.__module__ == module_name and 
-                              parent_class in (i.__name__ 
-                                               for i in item.__mro__))
-    else:
-        check = lambda item: (isinstance(item, type) and 
-                              item.__module__ == module_name and 
-                              issubclass(item, parent_class))
-    for i in find_items_in_module(module_name, check):
-        yield i
+    __metaclass__ = MetaFactories
+    _global_factories = None
 
+    def __init__(self):
+        super(Factories, self).__init__()
+        self._factories = WeakKeyDictionary()
 
-def find_items_in_module(module_name, check):
-    '''
-    Find all the items defined in a Python module that where check(cls) is
-    True. If the module is a package, it also look recursively into
-    submodules.
-    '''
-    try:
-        module = import_module(module_name)
-    except ImportError:
-        return
-    
-    for i in six.itervalues(module.__dict__):
-        if check(i):
-            yield i
-    path = getattr(module, '__path__', None)
-    if path:
-        for importer, submodule_name, ispkg in iter_modules(path):
-            for j in find_items_in_module('%s.%s' % 
-                    (module.__name__, submodule_name), check):
-                yield j
-
-
-class ClassFactory(object):
-    '''
-    ClassFactory is the base class for creating factories that can look
-    for classes in Python modules and create instances.
-    '''
-    
-    def __init__(self, class_types={}):
-        # List of Python modules where classes are looked for
-        self.module_path = []
-        # Instance-level association between a class_type (which is a string)
-        # and the corresponding class. There can also be class-level
-        # class_types (see get_class method).
-        self.class_types = {}
-        # Cache of instances returned by get method. This is a dictionary
-        # whose keys are (class_type, factory_id) and values are instances.
-        self.instances = {}
-    
-    def find_class(self, class_type, factory_id):
+    @classmethod
+    def register_global_factory(cls, klass, factory):
         '''
-        Find a class deriving of the class corresponding to class_type and
-        whose factory_id attribute has a given value. Look for all
-        subclasses of parent class declared in the modules of self.module_pats
-        and return the first one having cls.factory_id == factory_id. If
-        none is found, returns None.
+        Create an association between a class and a global factory.
         '''
-        base_class = self.get_class(class_type)
-        for module_name in self.module_path:
-            for cls in find_subclasses_in_module(module_name, base_class):
-                if cls.factory_id == factory_id:
-                    return cls
-        return None
-    
-    def get_class(self, class_type):
-        '''
-        Return the class corresponding to a given class type. First look
-        for a dictionary in self.class_types, then look into parent
-        classes.
-        '''
-        class_types = getattr(self, 'class_types', None)
-        if class_types:
-            cls = class_types.get(class_type)
-            if cls is not None:
-                return cls
-        for parent_class in self.__class__.__mro__:
-            class_types = getattr(parent_class, 'class_types', None)
-            if class_types:
-                cls = class_types.get(class_type)
-                if cls is not None:
-                    return cls
-        raise ValueError('Unknown class type: %s' % class_type)
+        cls._global_factories[klass] = factory
 
-
-
-    def get(self, class_type, factory_id):
+    def get_global_factory(self, key):
         '''
-        Returns an instance of the class identified by class_type and
-        factory_id. There can be only one instance per class_type and
-        factory_id. Once created with the first call of this method, it
-        is stored in self.instances and simply returned in subsequent
-        calls.
-
-        If get_class is True, return the class instead of an instance
+        Retrieve the global factory associated to a class or an instance. Only
+        direct association is used. In order to take into account class hierarchy,
+        one must use get_factory method.
         '''
-        instance = self.instances.get((class_type, factory_id))
-        if instance is None:
-            cls = self.find_class(class_type, factory_id)
-            if cls is not None:
-                if hasattr(cls.__init__, '__code__') \
-                        and cls.__init__.__code__.co_argcount != 1:
-                    # The class constructor takes arguments: we cannot
-                    # instantiate it: register the class itself
-                    instance = cls
-                else:
-                    instance = cls()
-                self.instances[(class_type, factory_id)] = instance
-            else:
-                raise ValueError('Cannot find a class for class type "%s" '
-                                 'and factory id "%s"' % (class_type, 
-                                                          factory_id))
-        return instance
+        return self._global_factories.get(key)
+
+    def register_factory(self, class_or_instance, factory):
+        '''
+        Create an association between a class (or an instance) and a factory.
+        '''
+        self._factories[class_or_instance] = factory
+
+    def get_factory(self, something):
+        '''
+        Retrieve the factory associated to an object.
+        First look into the object instance and then in the object class hierarchy.
+        At each step a registered factory in the Factories instance is looked for.
+        If there is none, self.get_global_factory is used.
+        Returns None if no factory is found.
+        '''
+        for key in (something, ) + something.__class__.__mro__:
+            factory = self._factories.get(key)
+            if factory is not None:
+                break
+            factory = self.get_global_factory(key)
+            if factory is not None:
+                break
+        return factory

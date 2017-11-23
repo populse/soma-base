@@ -16,16 +16,14 @@ import six
 logger = logging.getLogger(__name__)
 
 # Soma import
-from soma.qt_gui import qt_backend
 from soma.qt_gui.qt_backend import QtGui, QtCore
 from soma.utils.functiontools import SomaPartial, partial
 from soma.controller import trait_ids
 from soma.controller import Controller
 from soma.qt_gui.controller_widget import ControllerWidget, \
-    ScrollControllerWidget, get_ref, weak_proxy
+    ScrollControllerWidget
 
 from .List import ListControlWidget, ListController
-import weakref
 
 # Qt import
 try:
@@ -178,7 +176,7 @@ class OffscreenListControlWidget(object):
 
         # view the model
         items = OffscreenListControlWidget.partial_view_widget(
-            weak_proxy(parent), weak_proxy(frame), control_value)
+            parent, frame, control_value)
         layout.addWidget(items)
         #layout.addWidget(QtGui.QLabel('...'))
         frame.control_widget = items
@@ -200,8 +198,8 @@ class OffscreenListControlWidget(object):
         # Set some callback on the list control tools
         # Resize callback
         edit_hook = partial(
-            OffscreenListControlWidget.edit_elements, weak_proxy(parent),
-            weak_proxy(frame), weak_proxy(edit_button))
+            OffscreenListControlWidget.edit_elements, parent, frame,
+            edit_button)
         edit_button.clicked.connect(edit_hook)
 
         return (frame, label)
@@ -240,20 +238,12 @@ class OffscreenListControlWidget(object):
             if litem is not None:
                 item = litem.widget()
                 widget.setCellWidget(0, i, item)
-            if qt_backend.get_qt_backend() == 'PyQt5':
-                widget.horizontalHeader().setSectionResizeMode(
-                    i, QtGui.QHeaderView.Stretch)
-            else:
-                widget.horizontalHeader().setResizeMode(
-                    i, QtGui.QHeaderView.Stretch)
+            widget.horizontalHeader().setResizeMode(
+                i, QtGui.QHeaderView.Stretch)
         if n > m:
             widget.setCellWidget(0, max_items, QtGui.QLabel('...'))
-            if qt_backend.get_qt_backend() == 'PyQt5':
-                widget.horizontalHeader().setSectionResizeMode(
-                    max_items, QtGui.QHeaderView.Fixed)
-            else:
-                widget.horizontalHeader().setResizeMode(
-                    max_items, QtGui.QHeaderView.Fixed)
+            widget.horizontalHeader().setResizeMode(
+                max_items, QtGui.QHeaderView.Fixed)
 
         widget.resizeRowToContents(0)
         #scroll_height = widget.findChildren(QtGui.QScrollBar)[-1].height()
@@ -355,22 +345,14 @@ class OffscreenListControlWidget(object):
                 item = items[None][2]
                 if item not in owned_widgets:
                     widget.setCellWidget(0, i, item)
-                if qt_backend.get_qt_backend() == 'PyQt5':
-                    widget.horizontalHeader().setSectionResizeMode(
-                        i, QtGui.QHeaderView.Stretch)
-                else:
-                    widget.horizontalHeader().setResizeMode(
-                        i, QtGui.QHeaderView.Stretch)
+                widget.horizontalHeader().setResizeMode(
+                    i, QtGui.QHeaderView.Stretch)
             if n > m:
                 label = QtGui.QLabel('...')
                 width = label.sizeHint().width()
                 widget.setCellWidget(0, max_items, QtGui.QLabel('...'))
-                if qt_backend.get_qt_backend() == 'PyQt5':
-                    widget.horizontalHeader().setSectionResizeMode(
-                        max_items, QtGui.QHeaderView.Fixed)
-                else:
-                    widget.horizontalHeader().setResizeMode(
-                        max_items, QtGui.QHeaderView.Fixed)
+                widget.horizontalHeader().setResizeMode(
+                    max_items, QtGui.QHeaderView.Fixed)
                 widget.horizontalHeader().resizeSection(max_items, width)
 
             widget.resizeRowToContents(0)
@@ -409,8 +391,8 @@ class OffscreenListControlWidget(object):
             # associated with a list widget when a list widget inner controller
             # trait is modified.
             list_controller_hook = SomaPartial(
-                cls.update_controller, weak_proxy(controller_widget),
-                control_name, weak_proxy(control_instance))
+                cls.update_controller, controller_widget, control_name,
+                control_instance)
 
             # Go through all list widget inner controller user traits
             for trait_name in control_instance.controller.user_traits():
@@ -426,8 +408,8 @@ class OffscreenListControlWidget(object):
             # Hook: function that will be called to update the specific widget
             # when a trait event is detected on the list controller.
             controller_hook = SomaPartial(
-                cls.update_controller_widget, weak_proxy(controller_widget),
-                control_name, weak_proxy(control_instance))
+                cls.update_controller_widget, controller_widget, control_name,
+                control_instance)
 
             # When the 'control_name' controller trait value is modified,
             # update the corresponding control
@@ -516,7 +498,6 @@ class OffscreenListControlWidget(object):
         edit_button: QToolButton
             the signal sender
         """
-        controller_widget = get_ref(controller_widget)
         widget = QtGui.QDialog(controller_widget)
         widget.setModal(True)
         layout = QtGui.QVBoxLayout()

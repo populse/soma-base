@@ -19,7 +19,6 @@ logger = logging.getLogger(__name__)
 from soma.qt_gui.qt_backend import QtGui, QtCore
 from soma.utils.functiontools import SomaPartial
 from soma.qt_gui.timered_widgets import TimeredQLineEdit
-from soma.utils.weak_proxy import weak_proxy
 
 if sys.version_info[0] >= 3:
     unicode = str
@@ -93,7 +92,7 @@ class StrControlWidget(object):
         """
         # Hook: function that will be called to check for typo
         # when a 'userModification' qt signal is emited
-        widget_callback = partial(cls.is_valid, weak_proxy(control_instance))
+        widget_callback = partial(cls.is_valid, control_instance)
 
         # The first time execute manually the control check method
         widget_callback()
@@ -266,19 +265,15 @@ class StrControlWidget(object):
             # Update one element of the controller.
             # Hook: function that will be called to update a specific
             # controller trait when a 'userModification' qt signal is emited
-            widget_hook = partial(cls.update_controller,
-                                  weak_proxy(controller_widget),
-                                  control_name, weak_proxy(control_instance),
-                                  False)
+            widget_hook = partial(cls.update_controller, controller_widget,
+                                  control_name, control_instance, False)
 
             # When a qt 'userModification' signal is emited, update the
             # 'control_name' controller trait value
             control_instance.userModification.connect(widget_hook)
 
-            widget_hook2 = partial(cls.update_controller,
-                                   weak_proxy(controller_widget),
-                                   control_name, weak_proxy(control_instance),
-                                   True)
+            widget_hook2 = partial(cls.update_controller, controller_widget,
+                                   control_name, control_instance, True)
 
             control_instance.editingFinished.connect(widget_hook2)
 
@@ -286,8 +281,8 @@ class StrControlWidget(object):
             # Hook: function that will be called to update the control value
             # when the 'control_name' controller trait is modified.
             controller_hook = SomaPartial(
-                cls.update_controller_widget, weak_proxy(controller_widget),
-                control_name, weak_proxy(control_instance))
+                cls.update_controller_widget, controller_widget, control_name,
+                control_instance)
 
             # When the 'control_name' controller trait value is modified,
             # update the corresponding control

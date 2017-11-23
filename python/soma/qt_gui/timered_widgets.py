@@ -44,7 +44,6 @@ modification only after an inactivity period.
 __docformat__ = "restructuredtext en"
 
 from soma.qt_gui.qt_backend import QtCore, QtGui, Qt
-import weakref
 
 #-------------------------------------------------------------------------
 
@@ -79,7 +78,7 @@ class QLineEditModificationTimer(QtCore.QObject):
         QtCore.QObject.__init__(self)
         # QLineEdit<qt.QLineEdit> instance associated with this
         # QLineEditModificationTimer
-        self.qLineEdit = weakref.proxy(qLineEdit)
+        self.qLineEdit = qLineEdit
         if timerInterval is None:
             self.timerInterval = self.defaultTimerInterval
         else:
