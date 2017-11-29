@@ -46,7 +46,7 @@ def get_ref(obj):
     '''
     if isinstance(obj, weakref.ReferenceType):
         return obj()
-    elif isinstance(obj, weakref.ProxyType) and hasattr(obj, '_weakref'):
+    elif isinstance(obj, weakref.ProxyTypes) and hasattr(obj, '_weakref'):
         return obj._weakref()
     return obj
 
@@ -55,7 +55,7 @@ def weak_proxy(obj):
     ''' Build a weak proxy (weakref.proxy) from an object, if it is not already
     one, and keep a reference to the original object (via a weakref.ref) in it.
     '''
-    if isinstance(obj, weakref.ProxyType):
+    if isinstance(obj, weakref.ProxyTypes):
         return obj
     real_obj = get_ref(obj)
     wr = weakref.proxy(real_obj)
