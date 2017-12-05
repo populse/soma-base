@@ -14,7 +14,7 @@ from functools import partial
 logger = logging.getLogger(__name__)
 
 # Soma import
-from soma.qt_gui.qt_backend import QtGui
+from soma.qt_gui.qt_backend import QtGui, Qt
 from soma.utils.functiontools import SomaPartial
 from soma.qt_gui.controller_widget import weak_proxy
 
@@ -182,9 +182,15 @@ class BoolControlWidget(object):
             controller_widget.controller, control_name, False)
 
         if new_controller_value is traits.Undefined:
-            new_controller_value = False
+            control_instance.setTristate(True)
         # Set the trait value to the bool control
-        control_instance.setChecked(new_controller_value)
+        if new_controller_value is True:
+            new_controller_checked = Qt.Qt.Checked
+        elif new_controller_value is False:
+            new_controller_checked = Qt.Qt.Unchecked
+        else:
+            new_controller_checked = Qt.Qt.PartiallyChecked
+        control_instance.setCheckState(new_controller_checked)
         logger.debug("'BoolControlWidget' has been updated with value "
                      "'{0}'.".format(new_controller_value))
 
