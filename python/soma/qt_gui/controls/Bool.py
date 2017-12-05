@@ -18,6 +18,8 @@ from soma.qt_gui.qt_backend import QtGui
 from soma.utils.functiontools import SomaPartial
 from soma.qt_gui.controller_widget import weak_proxy
 
+import traits.api as traits
+
 
 class BoolControlWidget(object):
 
@@ -179,6 +181,8 @@ class BoolControlWidget(object):
         new_controller_value = getattr(
             controller_widget.controller, control_name, False)
 
+        if new_controller_value is traits.Undefined:
+            new_controller_value = False
         # Set the trait value to the bool control
         control_instance.setChecked(new_controller_value)
         logger.debug("'BoolControlWidget' has been updated with value "
