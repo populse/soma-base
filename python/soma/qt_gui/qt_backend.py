@@ -586,6 +586,9 @@ def init_matplotlib_backend():
     return mpl_backend_mod
 
 
+traits_ui_handler_initialized = False
+
+
 def init_traitsui_handler():
     ''' Setup handler for traits notification in Qt GUI.
     This function needs to be called before using traits notification which
@@ -606,11 +609,15 @@ def init_traitsui_handler():
     This behaviour is triggered somewhere in the traitsui.qt4.toolkit module,
     we cannot change it easily.
     '''
+    global traits_ui_handler_initialized
+    if traits_ui_handler_initialized:
+        return # already done
+
     try:
         if get_qt_backend() in ('PyQt4', 'PySide'):
             from traitsui.qt4 import toolkit
         else:
-            # if usinf Qt5 we must not import traitsui.qt4, which would cause
+            # if using Qt5 we must not import traitsui.qt4, which would cause
             # a crash. Then use the code taken from traitsui.qt4.toolkit
             # in a qt-independent manner
             raise ImportError('traitsui doesn\'t provide a PyQt5 backend')
