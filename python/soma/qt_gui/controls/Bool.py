@@ -14,8 +14,11 @@ from functools import partial
 logger = logging.getLogger(__name__)
 
 # Soma import
-from soma.qt_gui.qt_backend import QtGui
+from soma.qt_gui.qt_backend import QtGui, Qt
 from soma.utils.functiontools import SomaPartial
+from soma.qt_gui.controller_widget import weak_proxy
+
+import traits.api as traits
 
 
 class BoolControlWidget(object):
@@ -52,7 +55,7 @@ class BoolControlWidget(object):
         """
         # Hook: function that will be called to check for typo
         # when a 'clicked' qt signal is emited
-        widget_callback = partial(cls.is_valid, control_instance)
+        widget_callback = partial(cls.is_valid, weak_proxy(control_instance))
 
         # Execute manually the first time the control check method
         widget_callback()
@@ -178,8 +181,16 @@ class BoolControlWidget(object):
         new_controller_value = getattr(
             controller_widget.controller, control_name, False)
 
+        if new_controller_value is traits.Undefined:
+            control_instance.setTristate(True)
         # Set the trait value to the bool control
-        control_instance.setChecked(new_controller_value)
+        if new_controller_value is True:
+            new_controller_checked = Qt.Qt.Checked
+        elif new_controller_value is False:
+            new_controller_checked = Qt.Qt.Unchecked
+        else:
+            new_controller_checked = Qt.Qt.PartiallyChecked
+        control_instance.setCheckState(new_controller_checked)
         logger.debug("'BoolControlWidget' has been updated with value "
                      "'{0}'.".format(new_controller_value))
 
@@ -207,8 +218,9 @@ class BoolControlWidget(object):
             # Update one element of the controller.
             # Hook: function that will be called to update a specific
             # controller trait when a 'textChanged' qt signal is emited
-            widget_hook = partial(cls.update_controller, controller_widget,
-                                  control_name, control_instance)
+            widget_hook = partial(cls.update_controller,
+                                  weak_proxy(controller_widget),
+                                  control_name, weak_proxy(control_instance))
 
             # When a qt 'clicked' signal is emited, update the
             # 'control_name' controller trait value
@@ -218,8 +230,8 @@ class BoolControlWidget(object):
             # Hook: function that will be called to update the control value
             # when the 'control_name' controller trait is modified.
             controller_hook = SomaPartial(
-                cls.update_controller_widget, controller_widget, control_name,
-                control_instance)
+                cls.update_controller_widget, weak_proxy(controller_widget),
+                control_name, weak_proxy(control_instance))
 
             # When the 'control_name' controller trait value is modified,
             # update the corresponding control
