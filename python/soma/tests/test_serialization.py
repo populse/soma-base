@@ -3,7 +3,7 @@ from __future__ import print_function
 
 import unittest
 import json
-from soma.serialization import JSONSerializable
+from soma.serialization import JSONSerializable, from_json
 
 
 class TestSerializable(JSONSerializable):
@@ -30,31 +30,31 @@ class TestJSONSerialization(unittest.TestCase):
     def test_instance_serialization(self):
         x = TestSerializable(12345, 67890)
         j = json.dumps(x.to_json())
-        y = JSONSerializable.from_json(json.loads(j))
+        y = from_json(json.loads(j))
         self.assertEqual(x,y)
 
 
     def test_serialization_formats(self):
-        y = JSONSerializable.from_json('soma.tests.test_serialization.test_serializable')
+        y = from_json('soma.tests.test_serialization.test_serializable')
         self.assertEqual(y, TestSerializable(None, None))
         x = TestSerializable(12345, 67890)
-        y = JSONSerializable.from_json(['soma.tests.test_serialization.test_serializable',
+        y = from_json(['soma.tests.test_serialization.test_serializable',
                                         [12345, 67890]])
         self.assertEqual(x, y)
-        y = JSONSerializable.from_json(['soma.tests.test_serialization.test_serializable',
+        y = from_json(['soma.tests.test_serialization.test_serializable',
                                         {'a': 12345, 'b': 67890}])
         self.assertEqual(x, y)
-        y = JSONSerializable.from_json(['soma.tests.test_serialization.test_serializable',
+        y = from_json(['soma.tests.test_serialization.test_serializable',
                                         [12345], {'b': 67890}])
         self.assertEqual(x, y)
 
     def test_serialization_failure(self):
         with self.assertRaises(ValueError):
-            JSONSerializable.from_json('missing_dot')
+            from_json('missing_dot')
         with self.assertRaises(ValueError):
-            JSONSerializable.from_json('invalid.module.name')
+            from_json('invalid.module.name')
         with self.assertRaises(ValueError):
-            JSONSerializable.from_json('soma.tests.test_serialization.not_existing')
+            from_json('soma.tests.test_serialization.not_existing')
 
 def test():
     suite = unittest.TestLoader().loadTestsFromTestCase(TestJSONSerialization)
