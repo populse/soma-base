@@ -39,13 +39,14 @@ XML or Python format. The minf framework provides tools to read and write
 minf files but also to customize the way Python objects are read an written.
 
 There are several submodules in this package but main functions and classes
-can be imported from C{soma.minf.api}:
-  - for reading minf files: :func:`iterateMinf`, :func:`readMinf`
-  - for writing minf files: :func:`createMinfWriter`, :func:`writeMinf`
-  - for customizing minf files: :func:`createReducerAndExpander`, :func:`registerClass`, :func:`registerClassAs`
+can be imported from :py:mod:`soma.minf.api`:
+
+- for reading minf files: :func:`iterateMinf`, :func:`readMinf`
+- for writing minf files: :func:`createMinfWriter`, :func:`writeMinf`
+- for customizing minf files: :func:`createReducerAndExpander`, :func:`registerClass`, :func:`registerClassAs`
 
 * author: Yann Cointepas
-* organization: `NeuroSpin <http://www.neurospin.org>`_
+* organization: NeuroSpin
 * license: `CeCILL B <http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html>`_
 '''
 from __future__ import print_function

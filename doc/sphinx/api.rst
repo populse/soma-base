@@ -103,7 +103,7 @@ SubModule: ``qt_backend``
     :members:
 
 SubModule: ``qtThread``
-=====================
+=======================
 
 .. automodule:: soma.qt_gui.qtThread
     :members:
@@ -194,8 +194,30 @@ SubModule: ``utils``
 .. automodule:: soma.utils
     :members:
 
+SubModule: ``utils.functiontools``
+----------------------------------
 
 .. automodule:: soma.utils.functiontools
+    :members:
+
+SubModule: ``utils.find_library``
+---------------------------------
+.. automodule:: soma.utils.find_library
+    :members:
+
+.SubModule: ``utils.late_binding_property``
+-------------------------------------------
+. automodule:: soma.utils.late_binding_property
+    :members:
+
+SubModule: ``utils.loader``
+---------------------------
+.. automodule:: soma.utils.loader
+    :members:
+
+SubModule: ``utils.weak_proxy``
+-------------------------------
+.. automodule:: soma.utils.weak_proxy
     :members:
 
 
@@ -203,13 +225,6 @@ SubModule: ``uuid``
 ===================
 
 .. automodule:: soma.uuid
-    :members:
-
-
-SubModule: ``zipfile``
-======================
-
-.. automodule:: soma.zipfile
     :members:
 
 

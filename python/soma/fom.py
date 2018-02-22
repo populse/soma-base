@@ -32,7 +32,8 @@ try:
 
         '''
         This class has a single static method load that loads an
-        JSON file with two features not provided by all JSON readers :
+        JSON file with two features not provided by all JSON readers:
+
         - JSON syntax is extended. For instance comments are allowed.
         - The order of elements in dictionaries can be preserved by
           using parameter object_pairs_hook=OrderedDict (as in Python

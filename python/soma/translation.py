@@ -33,19 +33,21 @@
 # knowledge of the CeCILL-B license and that you accept its terms.
 
 '''
-Importing this module defines a L{translate} function that translate
+Importing this module defines a :func:`translate` function that translates
 messages of an application. The current implementation does nothing but
 defines a minimum API.
 
 Example::
-  from soma.translation import translate as _
-  try:
-    f = open( configurationFileName )
-  except OSError:
-    raise RuntimeError( _( 'Cannot open configuration file "%s"' ) % ( configurationFileName, ) )
+
+    from soma.translation import translate as _
+    try:
+        f = open(configurationFileName)
+    except OSError:
+        raise RuntimeError(_('Cannot open configuration file "%s"')
+                          % (configurationFileName, ))
 
 * author: Yann Cointepas
-* organization: `NeuroSpin <http://www.neurospin.org>`_
+* organization: NeuroSpin
 * license: `CeCILL B <http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html>`_
 '''
 __docformat__ = "restructuredtext en"
@@ -54,10 +56,12 @@ __docformat__ = "restructuredtext en"
 #------------------------------------------------------------------------------
 def translate(message):
     '''
-    Translate C{message} into the current application language.
-    Current implementation does nothing, C{message} is returned untouched.
+    Translate *message* into the current application language.
+    The current implementation does nothing, *message* is returned untouched.
 
-    @param message: message to translate
-    @type  message: unicode
+    Parameters
+    ----------
+    message: unicode
+        message to translate
     '''
     return message

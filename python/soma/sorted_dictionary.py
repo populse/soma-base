@@ -37,7 +37,7 @@ Sorted dictionary behave like a dictionary but keep the item insertion
 order.
 
 * author: Yann Cointepas
-* organization: NeuroSpin (http://www.neurospin.org)
+* organization: NeuroSpin
 * license: CeCILL B (http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html)
 
 In addition OrderedDict is provided here, either as the standard
@@ -74,7 +74,7 @@ class SortedDictionary(dict):
 
     def __init__(self, *args):
         '''
-        Initialize the dictionary with a list of ( key, value ) pairs.
+        Initialize the dictionary with a list of (key, value) pairs.
         '''
         super(SortedDictionary, self).__init__()
         self.sortedKeys = []
@@ -199,8 +199,8 @@ class SortedDictionary(dict):
     def sort(self, key=None, reverse=False):
         """Sorts the dictionary using key function key.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         key: function key
         """
         self.sortedKeys.sort(key=key, reverse=reverse)

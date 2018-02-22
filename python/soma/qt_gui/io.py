@@ -57,30 +57,34 @@ class Socket(QObject):
     To handle specific message format, redefine readMessage method. By default it reads a line on the socket.
     To process messages, redefine processMessage method. By default it prints the message to standard output.
 
-    @type dest: string
-    @ivar dest: socket server machine
-    @type port: int
-    @ivar port: port that the socket server listens
-    @type socket: socket.socket
-    @ivar socket: python socket object
-    @type socketnotifier: qt.QSocketNotifier
-    @ivar socketnotifier: the notifier sends a signal when there's something to read on the socket.
-    @type readLock: threading.Lock
-    @ivar readLock: lock to prevent threads from reading at the same time on the socket
-    @type writeLock: threading.Lock
-    @ivar writeLock: lock to prevent threads from writing at the same time on the socket
-    @type lock: threading.RLock
-    @ivar lock: lock to prevent concurrent access on object data because it can be used by multiple threads.
-    At least principal thread and reading messages thread when it not possible to use a QSocketNotifier.
-    @type initialized: bool
-    @ivar initialized: indicates if the connection is correctly opened
-    @type notifyenabled: bool
-    @ivar notifyenabled: indicates if message received on the socket must be processed.
+    Attributes
+    ----------
+    dest: string
+        socket server machine
+    port: int
+        port that the socket server listens
+    socket: socket.socket
+        python socket object
+    socketnotifier: qt.QSocketNotifier
+        the notifier sends a signal when there's something to read on the
+        socket.
+    readLock: threading.Lock
+        lock to prevent threads from reading at the same time on the socket
+    writeLock: threading.Lock
+        lock to prevent threads from writing at the same time on the socket
+    lock: threading.RLock
+        lock to prevent concurrent access on object data because it can be used
+        by multiple threads. At least principal thread and reading messages
+        thread when it not possible to use a QSocketNotifier.
+    initialized: bool
+        indicates if the connection is correctly opened
+    notifyenabled: bool
+        indicates if message received on the socket must be processed.
 
-    @type loopRetry: int
-    @cvar loopRetry: max number of connection tries
-    @type defaultPort: int
-    @cvar defaultPort: default port for socket server
+    loopRetry: int
+        class attribute: max number of connection tries
+    defaultPort: int
+        class attribute: default port for socket server
     """
 
     loopRetry = 60      # Retry to connect 60 times (1 minute)
@@ -88,10 +92,12 @@ class Socket(QObject):
 
     def __init__(self, host, port=None):
         """
-        @type host: string
-        @param host: socket server machine (localhost if it is current machine)
-        @type port: int
-        @param port: port that the socket server listens
+        Parameters
+        ----------
+        host: string
+            socket server machine (localhost if it is current machine)
+        port: int
+            port that the socket server listens
         """
         super(Socket, self).__init__()
         self.dest = host
@@ -109,11 +115,15 @@ class Socket(QObject):
     def initialize(self, port=None):
         """
         Connects the socket to the server and sets the frame to read data from the socket.
-        Two methods for reading :
-          - reading thread
-          - QSocketNotifier (not possible on windows platform)
-        @type port: int
-        @param port: port that the socket server listens
+        Two methods for reading:
+
+        - reading thread
+        - QSocketNotifier (not possible on windows platform)
+
+        Returns
+        -------
+        port: int
+            port that the socket server listens
         """
         if self.initialized:
             return
@@ -268,11 +278,14 @@ class Socket(QObject):
 
     def readLine(self, timeout):
         """
-        Reads a line of data from the socket (a string followed by '\n').
+        Reads a line of data from the socket (a string followed by ``'\\n'``).
         self.readLock must be acquired before calling this method.
         If data cannot be read before timeout (in seconds), an IOError exception is raised.
-        @type timeout: int
-        @param timeout: max time to wait before reading the message.
+
+        Returns
+        -------
+        timeout: int
+            max time to wait before reading the message.
         """
         msg = b''
         char = b''
@@ -309,10 +322,15 @@ class Socket(QObject):
         Reads a message from the socket. This method only gets the readlock and reads a line.
         To read specific message formats, subclass Socket and redefine this method.
 
-        @type timeout: int
-        @param timeout: max time to wait before reading the message.
-        @rtype: string
-        @return: the message received from the socket
+        Parameters
+        ----------
+        timeout: int
+            max time to wait before reading the message.
+
+        Returns
+        -------
+        message: string
+            the message received from the socket
         """
         self.readLock.acquire()
         try:

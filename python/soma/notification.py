@@ -38,7 +38,7 @@ callbacks (I{i.e} Python callables) that will all be called by a single
 L{notify<Notifier.notify>} call.
 
 * author: Yann Cointepas, Dominique Geffroy
-* organization: `NeuroSpin <http://www.neurospin.org>`_
+* organization: NeuroSpin
 * license: `CeCILL B <http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html>`_
 '''
 __docformat__ = "restructuredtext en"
@@ -266,15 +266,15 @@ class VariableParametersNotifier(Notifier):
 class ObservableAttributes(object):
 
     '''
-    L{ObservableAttributes} allow to track modification of attributes at
+    ObservableAttributes allow to track modification of attributes at
     runtime. By registering callbacks, it is possible to be warn of the
     modification (setting and deletion) of any attribute of the instance.
     '''
 
     def __init__(self, *args, **kwargs):
 
-        #: L{VariableParametersNotifier} instance notified whenever any attribute
-        #: is modified. Use L{self.onAttributeChange} to register a function on
+        #: VariableParametersNotifier instance notified whenever any attribute
+        #: is modified. Use self.onAttributeChange to register a function on
         #: this notifier.
 #    self.__dict__[ '_onAnyAttributeChange' ] = \
 #      self._createAttributeNotifier()
@@ -311,7 +311,7 @@ class ObservableAttributes(object):
         First, call functions registered for modification of the attribute named
         C{name}, then call functions registered for modification of any attribute.
 
-        @see: L{onAttributeChange}
+        see: onAttributeChange
         '''
         # Notify the change of this attribute
         if hasattr(self, '_onAttributeChange'):
@@ -348,25 +348,34 @@ class ObservableAttributes(object):
         Register a function to be called when an attribute is modified or
         deleted. To call the function for any attribute modification, use the
         following syntax::
-          instance.onAttributeChange( function )
-        To register a function for a named attribute, use the following syntax::
-          instance.onAttributeChange( attributeName, function )
 
-        The registered function can have 0 to 4 parameters. Depending on its number
-        of parameters, it will be called with the following values:
-          - 4 parameters: C{( object, attributeName, newValue, oldValue )}
-          - 3 parameters: C{( attributeName, newValue, oldValue )}
-          - 2 parameters: C{( newValue, oldValue )}
-          - 1 parameter: C{( newValue )}
+            instance.onAttributeChange(function)
+
+        To register a function for a named attribute, use the following
+        syntax::
+
+            instance.onAttributeChange(attributeName, function)
+
+        The registered function can have 0 to 4 parameters. Depending on its
+        number of parameters, it will be called with the following values:
+
+        - 4 parameters: (object, attributeName, newValue, oldValue)
+        - 3 parameters: (attributeName, newValue, oldValue)
+        - 2 parameters: (newValue, oldValue)
+        - 1 parameter: (newValue)
+
         Where:
-          - C{object} is the object whose attribute has been modified or deleted.
-          - C{attributeName} is the name of the modified or deleted attribute.
-          - C{newValue} is the value of the attribute after modification or
-            C{Undefined} if the attribute has been deleted.
-          - C{oldValue} is the value of the attribute before modification. If
-            the attribute where not defined, C{oldValue = L{Undefined}}.
-        If the function accepts a variable number of parameters, it will be called
-        with the maximum number of arguments possible.
+
+        - **object** is the object whose attribute has been modified or
+          deleted.
+        - **attributeName** is the name of the modified or deleted attribute.
+        - **newValue** is the value of the attribute after modification or
+          ``Undefined`` if the attribute has been deleted.
+        - **oldValue** is the value of the attribute before modification. If
+          the attribute was not defined, ``oldValue = Undefined``.
+
+        If the function accepts a variable number of parameters, it will be
+        called with the maximum number of arguments possible.
         '''
         if second is None:
             if hasattr(self, '_onAnyAttributeChange'):
@@ -394,17 +403,17 @@ class ObservableAttributes(object):
     def delayAttributeNotification(self, ignoreDoubles=False):
         '''
         Stop attribute modification notification until
-        L{restartAttributeNotification} is called. After a call to
-        L{delayAttributeNotification}, all modification notification will only be
-        stored until L{restartAttributeNotification} is called. This call is
-        recursive on all attributes values that are instance of
-        L{ObservableAttributes}.
+        :py:meth:`restartAttributeNotification` is called. After a call to
+        ``delayAttributeNotification``, all modification notification will only
+        be stored until :py:meth:`restartAttributeNotification` is called. This
+        call is recursive on all attributes values that are instance of
+        :py:class:`ObservableAttributes`.
 
-        @type  ignoreDoubles: C{bool}
-        @param ignoreDoubles: If C{True} (C{False} is the default), all
-          notification with the same parameters as a previous notification will be
-          ignored (I{i.e.} notification will be done only once for two identical
-          events).
+        Parameters
+        ----------
+        ignoreDoubles: bool
+            If True (False is the default), all notification with the same
+            parameters as a previous notification will be ignored (*i.e.* notification will be done only once for two identical events).
         '''
         self._delayAttributeNotification(
             ignoreDoubles=ignoreDoubles, checkedObjects=set())
@@ -476,25 +485,27 @@ class ObservableList(list):
 
     """
     A list that notifies its changes to registred listeners.
-    Inherits from python list and contains an instance of L{soma.notification.Notifier} (onChangeNotifier).
+    Inherits from python list and contains an instance of :class:`soma.notification.Notifier` (:meth:`onChangeNotifier`).
 
     Example::
 
-    l=ObservableList()
-    l.addListener(update)
-    l.append(e)
-    -> calls onChangeNotifier.notify(INSERT_ACTION, [e], len(l))
-    -> calls update(INSERT_ACTION, [e], len(l))
+        l = ObservableList()
+        l.addListener(update)
+        l.append(e)
 
-    @type INSERT_ACTION: int
-    @cvar INSERT_ACTION: used to notify insertion of new elements  in the list
-    @type REMOVE_ACTION: int
-    @cvar REMOVE_ACTION: used to notify elements deletion
-    @type MODIFY_ACTION: int
-    @cvar MODIFY_ACTION: used to notify elements modification
+    * calls onChangeNotifier.notify(INSERT_ACTION, [e], len(l))
+    * calls update(INSERT_ACTION, [e], len(l))
 
-    @type onChangeNotifier: Notifier
-    @ivar onChangeNotifier: the Notifier's notify method is called when the list has changed.
+    INSERT_ACTION: int
+        used to notify insertion of new elements  in the list
+    REMOVE_ACTION: int
+        REMOVE_ACTION: used to notify elements deletion
+    MODIFY_ACTION: int
+        MODIFY_ACTION: used to notify elements modification
+
+    onChangeNotifier: Notifier
+        onChangeNotifier: the Notifier's notify method is called when the list
+        has changed.
     """
 
     # actions to notify
@@ -504,8 +515,10 @@ class ObservableList(list):
 
     def __init__(self, content=None):
         """
-        @type content: list
-        @param content: elements to initialize the list's content
+        Parameters
+        ----------
+        content: list
+            elements to initialize the list content
         """
         # call a super class method can be done two different ways:
         # - superClass.method(self, ...)
@@ -545,14 +558,19 @@ class ObservableList(list):
 
     def addListener(self, listener):
         """Registers the listener callback method in the notifier.
-        The method must take 3 arguments : action, elems list, position
-          - INSERT_ACTION : elems have been inserted at position in the list
-          - REMOVE_ACTION : elems have been removed [at position] in the list
-          - MODIFY_ACTION : at position, some elements have been replaced by elems
+        The method must take 3 arguments: action, elems list, position
+
+        - INSERT_ACTION: elems have been inserted at position in the list
+        - REMOVE_ACTION: elems have been removed [at position] in the list
+        - MODIFY_ACTION: at position, some elements have been replaced by
+          elems
+
         The position given in the notify method will be between 0 and len(self)
 
-        @type listener: function
-        @param listener: function to call to notify changes
+        Parameters
+        ----------
+        listener: function
+            function to call to notify changes
         """
         self.onChangeNotifier.add(listener)
 
@@ -744,25 +762,27 @@ class ObservableSortedDictionary(SortedDictionary):
 
     """
     A sorted dictionary that notifies its changes.
-    Inherits from python list and contains an instance of L{soma.notification.Notifier} (onChangeNotifier).
+    Inherits from python list and contains an instance of
+    :class:`soma.notification.Notifier` (:meth:`onChangeNotifier`).
 
     Example::
 
-    d=ObservableSortedDictionary()
-    d.addListener(update)
-    d.insert(index, key, e)
-    -> calls onChangeNotifier.notify(INSERT_ACTION, [e], index)
-    -> calls update(INSERT_ACTION, [e], index)
+        d=ObservableSortedDictionary()
+        d.addListener(update)
+        d.insert(index, key, e)
 
-    @type INSERT_ACTION: int
-    @cvar INSERT_ACTION: used to notify insertion of new elements  in the dictionary
-    @type REMOVE_ACTION: int
-    @cvar REMOVE_ACTION: used to notify elements deletion
-    @type MODIFY_ACTION: int
-    @cvar MODIFY_ACTION: used to notify elements modification
+    * calls onChangeNotifier.notify(INSERT_ACTION, [e], index)
+    * calls update(INSERT_ACTION, [e], index)
 
-    @type onChangeNotifier: Notifier
-    @ivar onChangeNotifier: the Notifier's notify method is called when the dictionaty has changed.
+    INSERT_ACTION: int
+        used to notify insertion of new elements  in the dictionary
+    REMOVE_ACTION: int
+        used to notify elements deletion
+    MODIFY_ACTION: int
+        used to notify elements modification
+
+    onChangeNotifier: Notifier
+        the Notifier's notify method is called when the dictionaty has changed.
     """
 
     # actions to notify
@@ -789,13 +809,17 @@ class ObservableSortedDictionary(SortedDictionary):
     def addListener(self, listener):
         """Registers the listener callback method in the notifier.
         The method must take 3 arguments : action, elems list, position
-          - INSERT_ACTION : elems have been inserted at position in the dictionary
-          - REMOVE_ACTION : elems have been removed [at position] in the dict
-          - MODIFY_ACTION : at position, some elements have been replaced by elems
+
+        - INSERT_ACTION : elems have been inserted at position in the dictionary
+        - REMOVE_ACTION : elems have been removed [at position] in the dict
+        - MODIFY_ACTION : at position, some elements have been replaced by elems
+
         The position given in the notify method will be between 0 and len(self)
 
-        @type listener: function
-        @param listener: function to call to notify changes
+        Parameters
+        ----------
+        listener: function
+            function to call to notify changes
         """
         self.onChangeNotifier.add(listener)
 

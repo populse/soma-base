@@ -261,7 +261,9 @@ class QRangeSlider(QtGui.QWidget, Ui_Form):
     Customizing QRangeSlider
 
     You can style the range slider as below:
-    ::
+
+    .. code-block:: css
+
         QRangeSlider * {
             border: 0px;
             padding: 0px;
@@ -280,7 +282,9 @@ class QRangeSlider(QtGui.QWidget, Ui_Form):
         }
 
     Styling the range slider handles follows QSplitter options:
-    ::
+
+    .. code-block:: css
+
         QRangeSlider > QSplitter::handle {
             background: #393;
         }
