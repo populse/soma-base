@@ -159,72 +159,94 @@ def update_query_string(
   '''
   Update the query string parameters in a path.
 
-  :param string path:
+  Parameters
+  ----------
+  path: string
         The path to update parameters within.
 
-  :param dict params:
+  params: dict
         A dictionnary that contains keys and parameters to set in the query 
         string
 
-  :param (dict|string|list|int) params_update_mode:
+  params_update_mode: dict|string|list|int
         The default value is QueryStringParamUpdateMode.REPLACE that lead to
         replace value in the query string path by the one given in the params
         dictionary.
+
         It is possible to change the default behaviour giving the value 
         QueryStringParamUpdateMode.APPEND. This will lead to always append
         values of the params dictionary to values of the query string path.
-        The default behaviour can also be changed by specifying a parameter name
-        as string, in this case only values for that parameter name will be 
-        appended. It can also contains a list or a tuple of parameter names for
-        which values will be appended.
+        The default behaviour can also be changed by specifying a parameter
+        name as string, in this case only values for that parameter name will
+        be appended. It can also contains a list or a tuple of parameter names
+        for which values will be appended.
+
         Finally, this parameter can be a dictionary that specifies which 
         parameter has to be appended or replaced. The dictionary contains 
         parameter names in its keys and QueryStringParamUpdateMode in values.
         
-  :returns:
+  Returns
+  -------
+  path: string
         The path updated with given parameters
         
   Example
-  =======
+  -------
   A path containing a query string is:
-  /dir1/file1?param1=val1&param2=val2&paramN=valN
+  ``/dir1/file1?param1=val1&param2=val2&paramN=valN``
   
   the params dictionary contains:
-  {'param1':'newval1', param2=newval2', param3':'newval3'}
+  ``{'param1':'newval1', param2=newval2', param3':'newval3'}``
   
-  update_query_string('/dir1/file1?param1=val1&param2=val2&paramN=valN',
-                      {'param1':'newval1', 'param2':'newval2', 'param3':'newval3'})
-  would return:
-  '/dir1/file1?param1=newval1&param2=newval2&paramN=valN&param3=newval3'
+  ::
+
+      update_query_string('/dir1/file1?param1=val1&param2=val2&paramN=valN',
+                          {'param1':'newval1', 'param2':'newval2', 'param3':'newval3'})
+
+  would return::
+
+      '/dir1/file1?param1=newval1&param2=newval2&paramN=valN&param3=newval3'
   
-  
-  update_query_string('/dir1/file1?param1=val1&param2=val2&paramN=valN',
-                      {'param1':'newval1', 'param2':'newval2', 'param3':'newval3'},
-                      QueryStringParamUpdateMode.APPEND)
-  would return:
-  '/dir1/file1?param1=val1&param1=newval1&param2=val2&param2=newval2&paramN=valN&param3=newval3'
+  ::
 
+      update_query_string('/dir1/file1?param1=val1&param2=val2&paramN=valN',
+                          {'param1':'newval1', 'param2':'newval2', 'param3':'newval3'},
+                          QueryStringParamUpdateMode.APPEND)
 
-  update_query_string('/dir1/file1?param1=val1&param2=val2&paramN=valN',
-                      {'param1':'newval1', 'param2':'newval2', 'param3':'newval3'},
-                      'param2')
-  would return:
-  '/dir1/file1?param1=newval1&param2=val2&param2=newval2&paramN=valN&param3=newval3'
+  would return::
 
+      '/dir1/file1?param1=val1&param1=newval1&param2=val2&param2=newval2&paramN=valN&param3=newval3'
 
-  update_query_string('/dir1/file1?param1=val1&param2=val2&paramN=valN',
-                      {'param1':'newval1', 'param2':'newval2', 'param3':'newval3'},
-                      ('param1', 'param2'))
-  would return:
-  '/dir1/file1?param1=val1&param1=newval1&param2=val2&param2=newval2&paramN=valN&param3=newval3'
+  ::
 
-  
-  update_query_string('/dir1/file1?param1=val1&param2=val2&paramN=valN',
-                      {'param1':'newval1', 'param2':'newval2', 'param3':'newval3'},
-                      {'param1': QueryStringParamUpdateMode.APPEND, 
-                       'param2': QueryStringParamUpdateMode.REPLACE})
-  would return:
-  '/dir1/file1?param1=val1&param1=newval1&param2=val2&param2=newval2&paramN=valN&param3=newval3'  
+      update_query_string('/dir1/file1?param1=val1&param2=val2&paramN=valN',
+                          {'param1':'newval1', 'param2':'newval2', 'param3':'newval3'},
+                          'param2')
+
+  would return::
+
+      '/dir1/file1?param1=newval1&param2=val2&param2=newval2&paramN=valN&param3=newval3'
+
+  ::
+
+      update_query_string('/dir1/file1?param1=val1&param2=val2&paramN=valN',
+                          {'param1':'newval1', 'param2':'newval2', 'param3':'newval3'},
+                          ('param1', 'param2'))
+
+  would return::
+
+      '/dir1/file1?param1=val1&param1=newval1&param2=val2&param2=newval2&paramN=valN&param3=newval3'
+
+  ::
+
+      update_query_string('/dir1/file1?param1=val1&param2=val2&paramN=valN',
+                          {'param1':'newval1', 'param2':'newval2', 'param3':'newval3'},
+                          {'param1': QueryStringParamUpdateMode.APPEND,
+                          'param2': QueryStringParamUpdateMode.REPLACE})
+
+  would return::
+
+      '/dir1/file1?param1=val1&param1=newval1&param2=val2&param2=newval2&paramN=valN&param3=newval3'
   '''
   try:
     from six.moves.urllib import parse as urllib
@@ -314,12 +336,14 @@ def no_symlink(path):
     Example
     =======
       With the following configuration::
+
         /usr/local/software-1.0 is a directory
         /usr/local/software-1.0/bin is a directory
         /usr/local/software-1.0/bin/command is a file
         /usr/local/software is a symlink to software-1.0
         /home/bin/command is a symlink to /usr/local/software/bin/command
-      no_symlink( '/home/bin/command' ) would return '/usr/local/software-1.0/bin/command'
+
+      no_symlink('/home/bin/command') would return ``/usr/local/software-1.0/bin/command``
 
     '''
     s = split_path(p)

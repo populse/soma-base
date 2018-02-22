@@ -412,12 +412,12 @@ def _pixmap(self, prop):
 
 
 def loadUi(ui_file, *args, **kwargs):
-    '''Load a .ui file and returns the widget instance.
+    '''Load a ``.ui`` file and returns the widget instance.
 
     This function is a replacement of PyQt4.uic.loadUi. The only difference is
-    that relative icon or pixmap file names that are stored in the *.ui file
-    are considered to be relative to the directory containing the ui file. With
-    PyQt4.uic.loadUi, relative file names are considered relative to the
+    that relative icon or pixmap file names that are stored in the ``*.ui``
+    file are considered to be relative to the directory containing the ui file.
+    With PyQt4.uic.loadUi, relative file names are considered relative to the
     current working directory therefore if this directory is not the one
     containing the ui file, icons cannot be loaded.
     '''

@@ -32,7 +32,7 @@
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL-B license and that you accept its terms.
 
-'''Utility functions to make a weak proxy which also keeps an access to its original object reference. weakref.proxy() doesn't allow this, but functions that check types (C+/Python biudings for instance) cannot work with proxies.
+'''Utility functions to make a weak proxy which also keeps an access to its original object reference. weakref.proxy() doesn't allow this, but functions that check types (C+/Python bindings for instance) cannot work with proxies.
 
 We build such a proxy by setting a weakref.ref() object in the proxy (actually in the object itself).
 '''
