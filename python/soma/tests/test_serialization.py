@@ -1,6 +1,7 @@
  
 from __future__ import print_function
 
+import sys
 import unittest
 import json
 from soma.serialization import JSONSerializable, from_json
@@ -49,12 +50,15 @@ class TestJSONSerialization(unittest.TestCase):
         self.assertEqual(x, y)
 
     def test_serialization_failure(self):
-        with self.assertRaises(ValueError):
-            from_json('missing_dot')
-        with self.assertRaises(ValueError):
-            from_json('invalid.module.name')
-        with self.assertRaises(ValueError):
-            from_json('soma.tests.test_serialization.not_existing')
+        # The following assert structure is not working
+        # on Python 2.6
+        if sys.version_info[:2] > (2,6):
+            with self.assertRaises(ValueError):
+                from_json('missing_dot')
+            with self.assertRaises(ValueError):
+                from_json('invalid.module.name')
+            with self.assertRaises(ValueError):
+                from_json('soma.tests.test_serialization.not_existing')
 
 def test():
     suite = unittest.TestLoader().loadTestsFromTestCase(TestJSONSerialization)
