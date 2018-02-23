@@ -248,6 +248,6 @@ intersphinx_mapping = {
   'somabase': ( os.path.join( docpath, 'soma-base-' + version + '/sphinx' ), None ),
   'pyaims': ( os.path.join( docpath, 'pyaims-' + version + '/sphinx' ), None ),
   'pyana': ( os.path.join( docpath, 'pyanatomist-' + version + '/sphinx' ), None ),
-  'python': ('http://docs.python.org', None),
+  'python': ('http://docs.python.org/%d.%d' % sys.version_info[:2], None),
 }
 
