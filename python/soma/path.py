@@ -36,7 +36,7 @@
 Some useful functions to manage file or directorie names.
 
 * author: Yann Cointepas
-* organization: `NeuroSpin <http://www.neurospin.org>`_
+* organization: NeuroSpin
 * license: `CeCILL B <http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html>`_
 '''
 __docformat__ = "restructuredtext en"
@@ -329,54 +329,26 @@ def update_query_string(
   
   return urlparse.urlunparse(url_new)
 
-def no_symlink(path):
-    '''
-    Read all symlinks in path to return the "real" path.
-
-    Example
-    =======
-      With the following configuration::
-
-        /usr/local/software-1.0 is a directory
-        /usr/local/software-1.0/bin is a directory
-        /usr/local/software-1.0/bin/command is a file
-        /usr/local/software is a symlink to software-1.0
-        /home/bin/command is a symlink to /usr/local/software/bin/command
-
-      no_symlink('/home/bin/command') would return ``/usr/local/software-1.0/bin/command``
-
-    '''
-    s = split_path(p)
-    p = ''
-    while s:
-        p = os.path.join(p, s.pop(0))
-        while os.path.islink(p):
-            d, f = os.path.split(p)
-            p = os.path.normpath(os.path.join(d, os.readlink(p)))
-    return p
-
-
-#: Character used to separate directories in environment variables such as PATH
-path_separator = os.pathsep
-
 
 def find_in_path(file, path=None):
     '''
     Look for a file in a series of directories. By default, directories are
-    contained in C{PATH} environment variable. But another environment variable
-    name or a sequence of directories names can be given in C{path} parameter.
+    contained in ``PATH`` environment variable. But another environment
+    variable name or a sequence of directories names can be given in *path*
+    parameter.
 
     Examples::
-      find_in_path( 'sh' ) could return '/bin/sh'
-      find_in_path( 'libpython2.5.so', 'LD_LIBRARY_PATH' ) could return '/usr/local/lib/libpython2.5.so'
+
+      find_in_path('sh') could return '/bin/sh'
+      find_in_path('libpython2.7.so', 'LD_LIBRARY_PATH') could return '/usr/local/lib/libpython2.7.so'
     '''
     if path is None:
-        path = os.environ.get('PATH').split(path_separator)
+        path = os.environ.get('PATH').split(os.pathsep)
     elif isinstance(path, basestring):
         var = os.environ.get(path)
         if var is None:
             var = path
-        path = var.split(path_separator)
+        path = var.split(os.pathsep)
     for i in path:
         p = os.path.normpath(os.path.abspath(i))
         if p:
@@ -407,10 +379,13 @@ def which(program):
     """
     Identifies the location of an executable
 
-    :param string program
+    Parameters
+    ----------
+    program: string
         The executable to find
 
-    :returns:
+    Returns
+    -------
         The full path of the executable
     """
     def is_exe(fpath):

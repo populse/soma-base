@@ -49,6 +49,7 @@ all important items can be imported from soma.api. For example, if
 one wants to use the Application class defined in the module
 soma.application, he just have to use the following import
 statement::
+
   from soma.api import Application
 
 Main classes
@@ -65,7 +66,7 @@ Advanced classes
 Information
 -----------
 - Yann Cointepas
-- NeuroSpin (http://www.neurospin.org) and IFR 49 (http://www.ifr49.org)
+- NeuroSpin
 - License: CeCILL B (http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html)
 '''
 
