@@ -403,7 +403,10 @@ def locate_file(pattern, root=os.curdir):
 
 def which(program):
     """
-    Identifies the location of an executable
+    Identifies the location of an executable.
+
+    **OBSOLETE** the same can be done using :func:`find_in_path`, this function
+    will be removed in the next version of soma-base.
 
     Parameters
     ----------
