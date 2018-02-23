@@ -36,7 +36,7 @@ It is useful when you want to call qt functions from another thread.
 It enables to do thread safe calls because all tasks sent are executed in the same thread (qt main thread).
 
 * author: Dominique Geffroy
-* organization: `NeuroSpin <http://www.neurospin.org>`_
+* organization: NeuroSpin
 * license: `CeCILL B <http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html>`_
 """
 from __future__ import print_function
@@ -155,8 +155,8 @@ class QtThreadCall(singleton.Singleton, QObject):
 
             If returned objects are thread-depenendent (typically, Qt widgets),
             they must be destroyed within the thread which created them, namely
-            the main thread. The MainThreadLife object wrapper may be helpful
-            for this.
+            the main thread. The :class:`MainThreadLife` object wrapper may be
+            helpful for this.
 
         Parameters
         ----------

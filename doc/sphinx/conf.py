@@ -238,6 +238,7 @@ extlinks = {
   'cartoddox '),
   'graphdox' : ('../build-stable-release/share/doc/graph-' + version + '/doxygen/%s',
   'graphdox '),
+  'pyqt': ('https://pyside.github.io/docs/pyside/PySide/%s', 'pyqt'),
 }
 
 import soma
