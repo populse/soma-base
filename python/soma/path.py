@@ -56,14 +56,17 @@ if sys.version_info[0] >= 3:
 
 def split_path(path):
     '''
-    Iteratively apply C{os.path.split} to build a list. Ignore trailing directory separator.
+    Iteratively apply :func:`os.path.split` to build a list. Ignore trailing directory separator.
 
-    Examples::
-      split_path( '/home/myaccount/data/file.csv' ) returns [ '/', 'home', 'myaccount', 'data', 'file.csv' ]
-      split_path( 'home/myaccount/data/file.csv' ) returns [ 'home', 'myaccount', 'data', 'file.csv' ]
-      split_path( '/home/myaccount/data/' ) returns [ '/', 'home', 'myaccount', 'data' ]
-      split_path( '/home/myaccount/data' ) returns [ '/', 'home', 'myaccount', 'data' ]
-      split_path( '' ) returns [ '' ]
+    Examples
+    --------
+    ::
+
+        split_path('/home/myaccount/data/file.csv') returns ['/', 'home', 'myaccount', 'data', 'file.csv']
+        split_path('home/myaccount/data/file.csv') returns ['home', 'myaccount', 'data', 'file.csv']
+        split_path('/home/myaccount/data/') returns ['/', 'home', 'myaccount', 'data']
+        split_path('/home/myaccount/data') returns ['/', 'home', 'myaccount', 'data']
+        split_path('') returns ['']
   '''
     result = []
     a, b = os.path.split(path)
@@ -84,19 +87,23 @@ def relative_path(path, referenceDirectory):
     Return a relative version of a path given a
     reference directory.
 
-    os.path.join( referenceDirectory, relative_path( path, referenceDirectory ) )
-    returns os.path.abspath( path )
+    ::
+
+        os.path.join(referenceDirectory, relative_path(path, referenceDirectory))
+        returns os.path.abspath(pat)
 
     Example
     =======
-      relative_path( '/usr/local/brainvisa-3.1/bin/brainvisa', '/usr/local' )
-      returns 'brainvisa-3.1/bin/brainvisa'
+    ::
 
-      relative_path( '/usr/local/brainvisa-3.1/bin/brainvisa', '/usr/local/bin' )
-      returns '../brainvisa-3.1/bin/brainvisa'
+        relative_path('/usr/local/brainvisa-3.1/bin/brainvisa', '/usr/local')
+        returns 'brainvisa-3.1/bin/brainvisa'
 
-      relative_path( '/usr/local/brainvisa-3.1/bin/brainvisa', '/tmp/test/brainvisa' )
-      returns '../../../usr/local/brainvisa-3.1/bin/brainvisa'
+        relative_path('/usr/local/brainvisa-3.1/bin/brainvisa', '/usr/local/bin')
+        returns '../brainvisa-3.1/bin/brainvisa'
+
+        relative_path('/usr/local/brainvisa-3.1/bin/brainvisa', '/tmp/test/brainvisa')
+        returns '../../../usr/local/brainvisa-3.1/bin/brainvisa'
     '''
     sPath = split_path(os.path.abspath(path))
     sReferencePath = split_path(os.path.abspath(referenceDirectory))
@@ -118,11 +125,17 @@ def split_query_string(path):
 
     Example
     =======
-    A path containing a query string is :
-    /dir1/file1?param1=val1&param2=val2&paramN=valN
+    A path containing a query string is::
 
-    split_query_string( '/dir1/file1?param1=val1&param2=val2&paramN=valN' ) would
-    return ( '/dir1/file1', '?param1=val1&param2=val2&paramN=valN' )
+        /dir1/file1?param1=val1&param2=val2&paramN=valN
+
+    ::
+
+        split_query_string( '/dir1/file1?param1=val1&param2=val2&paramN=valN' )
+
+    would return::
+
+        ('/dir1/file1', '?param1=val1&param2=val2&paramN=valN')
 
     '''
     m = query_string_re.search(path)
@@ -139,11 +152,17 @@ def remove_query_string(path):
 
     Example
     =======
-    A path containing a query string is :
-    /dir1/file1?param1=val1&param2=val2&paramN=valN
+    A path containing a query string is::
 
-    remove_query_string( '/dir1/file1?param1=val1&param2=val2&paramN=valN' ) would
-    return '/dir1/file1'
+        /dir1/file1?param1=val1&param2=val2&paramN=valN
+
+    ::
+
+        remove_query_string( '/dir1/file1?param1=val1&param2=val2&paramN=valN' )
+
+    would return::
+
+        '/dir1/file1'
 
     '''
     return query_string_re.sub('', path)
@@ -195,11 +214,13 @@ def update_query_string(
 
     Example
     -------
-    A path containing a query string is:
-    ``/dir1/file1?param1=val1&param2=val2&paramN=valN``
+    A path containing a query string is::
 
-    the params dictionary contains:
-    ``{'param1':'newval1', param2=newval2', param3':'newval3'}``
+        /dir1/file1?param1=val1&param2=val2&paramN=valN
+
+    the params dictionary contains::
+
+        {'param1':'newval1', param2=newval2', param3':'newval3'}
 
     ::
 
