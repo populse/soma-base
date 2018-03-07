@@ -36,7 +36,7 @@
 Utility classes and functions for Python import and sip namespace renaming.
 
 * author: Yann Cointepas
-* organization: `NeuroSpin <http://www.neurospin.org>`_
+* organization: NeuroSpin
 * license: `CeCILL B <http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html>`_
 '''
 __docformat__ = "restructuredtext en"
@@ -127,10 +127,13 @@ class ExtendedImporter(Singleton):
 class ExtendedModule:
 
     '''
-    Register a series of rules to apply during the import process of the extended module.
-    An extended module is able to refer to other modules and to apply rules to these other
-    modules. The extended module manages the globals and locals variables declared for the module.
-    Each rule contains the module to which it refers, and the handlers to call for the rule to apply. The calling order is the registering order.
+    Register a series of rules to apply during the import process of the
+    extended module. An extended module is able to refer to other modules and
+    to apply rules to these other modules. The extended module manages the
+    globals and locals variables declared for the module.
+
+    Each rule contains the module to which it refers, and the handlers to call
+    for the rule to apply. The calling order is the registering order.
     '''
 
     def __init__(self, moduleName, globals, locals):
@@ -143,8 +146,12 @@ class ExtendedModule:
         '''
         This method is used to add handler rules (renaming rule, deleting rule, ...) .
 
-        @module module: module object to apply rules to.
-        @handlersList list: a list of handlers to the module.
+        Parameters
+        ----------
+        module: module
+            module object to apply rules to.
+        handlersList: list
+            a list of handlers to the module.
         '''
         for handler in handlersList:
             self.addPartialRules(
@@ -154,8 +161,13 @@ class ExtendedModule:
         '''
         This method is used to add handler rules (renaming rule, deleting rule, ...) .
 
-        @module module: module object to apply rules to.
-        @partialsList list: a list of C{partial} object that will be called during the import of the module.
+        Parameters
+        ----------
+        module: module
+            module object to apply rules to.
+        partialsList: list
+            a list of :func:`functools.partial` objects that will be called
+            during the import of the module.
         '''
         key = module
 
@@ -168,7 +180,7 @@ class ExtendedModule:
 
     def applyRules(self):
         '''
-        Apply the C{partial} handler rules (renaming rule, deleting rule, ...) for the C{ExtendedModule}.
+        Apply the :func:`functools.partial` handler rules (renaming rule, deleting rule, ...) for the :class:`ExtendedModule`.
         '''
         for referedModule, partialsList in self.rules.items():
             for handler in partialsList:
@@ -186,9 +198,14 @@ class GenericHandlers:
         '''
         This static method is used to move child objects of a refered module to the extended module.
 
-        @namespace string: namespace of the referedModule to get objects to move from.
-        @extendedModule ExtendedModule: C{ExtendeModule} object into which move objects.
-        @referedModule module: refered module object to get objects to move from.
+        Parameters
+        ----------
+        namespace: string
+            namespace of the referedModule to get objects to move from.
+        extendedModule: ExtendedModule
+            :class:`ExtendedModule` object into which move objects.
+        referedModule: module
+            refered module object to get objects to move from.
         '''
 
         # Get module names
@@ -243,10 +260,16 @@ class GenericHandlers:
         '''
         This static method is used to remove children from the extended module.
 
-        @namespace string: namespace of the referedModule.
-        @prefixes list: list of prefixes of objects to remove.
-        @extendedModule ExtendedModule: C{ExtendeModule} object to remove objects from.
-        @referedModule module: refered module object.
+        Parameters
+        ----------
+        namespace: string
+            namespace of the referedModule.
+        prefixes: list
+            list of prefixes of objects to remove.
+        extendedModule: ExtendedModule
+            :class:`ExtendedModule` object to remove objects from.
+        referedModule: module
+            refered module object.
         '''
         locals = extendedModule.locals
 
@@ -273,10 +296,17 @@ class ExtendedImporterHelper:
         '''
         This static method is used to get an object contained in the namespace of a module.
 
-        @name string: complete name including namespace of the object to get.
-        @module module: module object to get objects from.
+        Parameters
+        ----------
+        name: string
+            complete name including namespace of the object to get.
+        module: module
+            module object to get objects from.
 
-        @return:  Object found in the module or None if no object was found.
+        Returns
+        -------
+        object:
+            Object found in the module or None if no object was found.
         '''
 
         # Split the name of the object
@@ -307,10 +337,17 @@ class ExtendedImporterHelper:
         '''
         This static method is used to get an object contained in another object.
 
-        @module object: object to get objects from.
-        @listName list: complete name including name hierarchy split in list.
+        Parameters
+        ----------
+        object: module
+            object to get objects from.
+        listName: list
+            complete name including name hierarchy split in list.
 
-        @return:  Object found in the hierarchy or None if no object was found.
+        Returns
+        -------
+        object:
+            Object found in the hierarchy or None if no object was found.
         '''
         result = None
 

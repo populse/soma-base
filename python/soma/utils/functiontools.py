@@ -74,13 +74,13 @@ class SomaPartial(object):
 
     Example::
 
-      from soma.functiontools import partial
+        from soma.functiontools import partial
 
-      def f( a, b, c ):
-        return ( a, b, c )
+        def f(a, b, c):
+            return (a, b, c)
 
-      g = partial( f, 'a', c='c' )
-      g( 'b' ) # calls f( 'a', 'b', c='c' )
+        g = partial(f, 'a', c='c')
+        g('b') # calls f('a', 'b', c='c')
     '''
 
     def __init__(self, function, *args, **kwargs):
@@ -122,19 +122,21 @@ def getArgumentsSpecification(callable):
     accepts classes and returns only information about the parameters that can
     be used in a call to *callable* (*e.g.* the first *self* parameter of bound
     methods is ignored). If *callable* has not an appropriate type, a
-    :py:class:`TypeError` exception is raised.
+    :class:`TypeError <exceptions.TypeError>` exception is raised.
 
-    - callable: *function*, *method*, *class* or *instance*
+    Parameters
+    ----------
+    callable: callable
+        *function*, *method*, *class* or *instance* to inspect
 
-      callable to inspect
-
-    - returns: *tuple* of four elements
-
-      As :py:func:`inspect.getargspec`, returns
-      *(args, varargs, varkw, defaults)* where *args* is a list of the argument
-      names (it may contain nested lists). *varargs* and *varkw* are the names
-      of the ``*`` and ``**`` arguments or *None*. *defaults* is an n-tuple of
-      the default values of the last *n* arguments.
+    Returns
+    -------
+    tuple:
+        As :func:`inspect.getargspec`, returns
+        *(args, varargs, varkw, defaults)* where *args* is a list of the
+        argument names (it may contain nested lists). *varargs* and *varkw* are
+        the names of the ``*`` and ``**`` arguments or *None*. *defaults* is a
+        n-tuple of the default values of the last *n* arguments.
     '''
     if inspect.isfunction(callable):
         return inspect.getargspec(callable)
@@ -180,13 +182,15 @@ def getCallableString(callable):
     '''
     Returns a translated human readable string representing a callable.
 
-    - callable: *function*, *method*, *class* or *instance*
+    Parameters
+    ----------
+    callable: callable
+        *function*, *method*, *class* or *instance* to inspect
 
-      callable to inspect
-
-    - returns: *string*
-
-      type and name of the callable
+    Returns
+    --------
+    string:
+        type and name of the callable
     '''
     if inspect.isfunction(callable):
         name = _('function %s') % (callable.__name__, )
@@ -204,20 +208,22 @@ def getCallableString(callable):
 
 def hasParameter(callable, parameterName):
     '''
-    Return True if *callable* can be called with a parameter named
+    Returns *True* if *callable* can be called with a parameter named
     *parameterName*. Otherwise, returns *False*.
 
-    - callable: *function*, *method*, *class* or *instance*
+    .. seealso:: :py:func:`getArgumentsSpecification`
 
-      callable to inspect
+    Parameters
+    ----------
+    callable: callable
+        *function*, *method*, *class* or *instance* to inspect
+    parameterName: string
+        name of the parameter
 
-    - parameterName: *string*
+    Returns
+    -------
+    bool:
 
-      name of the parameter
-
-    - returns: *bool*
-
-    see: :py:func:`getArgumentsSpecification`
     '''
     args, varargs, varkw, defaults = getArgumentsSpecification(callable)
     return varkw is not None or parameterName in args
@@ -227,19 +233,22 @@ def hasParameter(callable, parameterName):
 
 def numberOfParameterRange(callable):
     '''
-    Return the minimum and maximum number of parameter that can be used to call a
-    function. If the maximum number of argument is not defined, it is set to
-    None.
+    Returns the minimum and maximum number of parameter that can be used to
+    call a function. If the maximum number of argument is not defined, it is
+    set to *None*.
 
-    - callable: *function*, *method*, *class* or *instance*
+    .. seealso:: :func:`getArgumentsSpecification`
 
-      callable to inspect
+    Parameters
+    ----------
+    callable: callable
+        *function*, *method*, *class* or *instance* to inspect
 
-    - returns: *tuple* of two elements
+    Returns
+    -------
+    tuple:
+        two elements (minimum, maximum)
 
-      (minimum, maximum)
-
-    see: :py:func:`getArgumentsSpecification`
     '''
     args, varargs, varkw, defaults = getArgumentsSpecification(callable)
     if defaults is None or len(defaults) > len(args):
@@ -257,18 +266,18 @@ def numberOfParameterRange(callable):
 #-------------------------------------------------------------------------
 def checkParameterCount(callable, paramCount):
     '''
-    Check that a callable can be called with *paramCount* arguments. If not, a
+    Checks that a callable can be called with *paramCount* arguments. If not, a
     RuntimeError is raised.
 
-    - callable: *function*, *method*, *class* or *instance*
+    .. seealso:: :func:`getArgumentsSpecification`
 
-      callable to inspect
+    Parameters
+    ----------
+    callable: callable
+        *function*, *method*, *class* or *instance* to inspect
+    paramCount: int
+        number of parameters
 
-    - paramCount: *integer*
-
-      number of parameters
-
-    see: :py:func:`getArgumentsSpecification`
     '''
     minimum, maximum = numberOfParameterRange(callable)
     if ( maximum is not None and paramCount > maximum ) or \
@@ -283,7 +292,8 @@ def checkParameterCount(callable, paramCount):
 
 def drange(start, stop, step=1):
     '''
-    Creates lists containing arithmetic progressions of any number type (integer, float, ...)
+    Creates lists containing arithmetic progressions of any number type (int,
+    float, ...)
     '''
     r = start
     while r < stop:

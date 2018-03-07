@@ -14,48 +14,52 @@ object given its JSON.
 class JSONSerializable(object):
     '''
     Instances of classes deriving from `JSONSerializable` can be serialized
-    in a JSON compatible object with `to_json` method. This JSON object
+    in a JSON compatible object with :meth:`to_json` method. This JSON object
     contains a reference to a factory as well as the full state of the 
     instance. Calling the factory with the state of the instance makes it
-    possible to recreate the instance (this is what function `from_json`
+    possible to recreate the instance (this is what function :func:`from_json`
     is doing). A typical usage of this serialization system is to store the
     JSON serialization of an instance in a configuration file (or database)
     and latter (possibly in another Python instance) recreate the same
     instance. This is an alternative to pickle allowing to use a standard
     representation format (JSON) and to have full control on instances
-    creation.    
-    '''            
+    creation.
+    '''
     def to_json(self):
         '''
         Return a JSON serialization of self. The returned object can be given
-        to `from_json` to create another instance that is eqivalent to self.
+        to :func:`from_json` to create another instance that is eqivalent to
+        self.
         Here, equivalent means that all attributes values are the same and the
-        methods called with the same parameters gives the same results.
-        
-        See `from_json` to have insight of what is a JSON serialization object.
+        methods called with the same parameters give the same results.
+
+        See :func:`from_json` to have insight of what is a JSON serialization
+        object.
         '''
         raise NotImplementedError()
 
 def from_json(json_serialization):
     '''
     Takes a JSON serialization object (typically created by a
-    to_json() method) and create and return the corresponding instance.
+    :meth:`JSONSerializable.to_json` method) and create and return the
+    corresponding instance.
     
     A JSON serialization object can have one of the following structures:
     - A simple string containing a factory reference
     - A list with one, two or three of the following items:
-        - factory : a mandatory item containing a reference to a factory
-                    (see `find_factory`)
+
+        - factory: a mandatory item containing a reference to a factory
+          (see :func:`find_factory`)
         - args: an optional item containing a list of parameters values
-                for the factory
+          for the factory
         - kwargs: an optional item containing a dictionary of parameters
-                    for the factory
+          for the factory
     
-    A reference to a factory identifies a callable (e.g a function or a
-    class) in a Python module. It is a string containing the module name
+    A reference to a factory identifies a :class:`callable` (e.g a function or
+    a class) in a Python module. It is a string containing the module name
     and the callable name separated by a dot. For instance 
-    'catidb.data_models.catidb_3_4' would identify the catidb_3_4
-    callable in the catidb.data_models module.
+    ``'catidb.data_models.catidb_3_4'`` would identify the *catidb_3_4*
+    callable in the *catidb.data_models* module.
     '''
     if isinstance(json_serialization, six.string_types):
         callable = find_factory(json_serialization)
@@ -81,14 +85,15 @@ def from_json(json_serialization):
 
 def find_factory(reference):
     '''
-    Find a factory callable given its reference. The reference is simply
+    Finds a factory callable given its reference. The reference is simply
     a string containing a module name and the name of fatory in that module
-    separated by a dot. For instance 'my_packages.my_module.my_factory'
-    would refer to the item my_factory in the module my_packages.my_module.
-    This funcion simply loads the module and return the module attribute with
+    separated by a dot. For instance ``'my_packages.my_module.my_factory'``
+    would refer to the item *my_factory* in the module
+    ``my_packages.my_module``.
+    This funcion simply loads the module and returns the module attribute with
     the factory name.
     
-    ValueError is raised if the factory cannot be found.
+    :class:`exceptions.ValueError` is raised if the factory cannot be found.
     '''
     split = reference.rsplit('.', 1)
     if len(split) != 2:

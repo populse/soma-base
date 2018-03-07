@@ -36,7 +36,7 @@
 This module provides the class ThreadSafeProxy.
 
 * author: Yann Cointepas
-* organization: `NeuroSpin <http://www.neurospin.org>`_
+* organization: NeuroSpin
 * license: `CeCILL B <http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html>`_
 '''
 __docformat__ = "restructuredtext en"
@@ -49,23 +49,26 @@ from soma.functiontools import partial
 
 
 class ThreadSafeProxy(object):
+    '''
+    This class makes it possible to share Pyro 3 proxy across multiple threads.
+    A single Pyro thread is created. This thread will be the only one to use
+    Pyro proxy objects. A L{ThreadSafeProxy} is a proxy on a Pyro proxy that
+    will send all activity (methods calls and attributes getting and setting)
+    to the Pyro thread.
+
+    Example
+    -------
+
+    ::
+
+        import Pyro.core
+        from soma.pyro import ThreadSafeProxy
+
+        threadSafeProxy = ThreadSafeProxy(Pyro.core.getProxyFromURI('PYRO://127.0.0.1:7766/84a68da2260374b1b334d9591c4fd84f'))
+    '''
     _thread = None
 
     def __init__(self, proxy):
-        '''
-        This class makes it possible to share Pyro proxy across multiple threads.
-        A single Pyro thread is created. This thread will be the only one to use Pyro
-        proxy objects. A L{ThreadSafeProxy} is a proxy on a Pyro proxy that will send
-        all activity (methods calls and attributes getting and setting) to the
-        Pyro thread.
-
-        Example
-        -------
-          import Pyro.core
-          from soma.pyro import ThreadSafeProxy
-
-          threadSafeProxy = ThreadSafeProxy( Pyro.core.getProxyFromURI( 'PYRO://127.0.0.1:7766/84a68da2260374b1b334d9591c4fd84f' ) )
-        '''
         newProxy = self.pyroThreadCall(proxy.__class__, proxy.URI)
         object.__setattr__(self, '_proxy', newProxy)
 

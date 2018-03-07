@@ -36,7 +36,7 @@
 Universal unique identifier.
 
 - author: Yann Cointepas
-- organization: `NeuroSpin <http://www.neurospin.org>`_
+- organization: NeuroSpin
 - license: `CeCILL B <http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html>`_
 '''
 __docformat__ = "epytext en"
@@ -65,12 +65,18 @@ class Uuid(object):
 
     def __init__(self, uuid=None):
         '''
-        Uuid constructor. If C{uuid} is ommited or C{None}, a new random
-        Uuid is created, if it is a string if must be 36 characters long and follow
-        the pattern C{XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX} where C{X} is an
-        hexadecimal digit (example: C{'ad2d8fb0-7831-50bc-2fb6-5df048304001'}). If
-        C{uuid} is a Uuid instance, no new instance is created, in this
-        case, C{Uuid( uuid )} returns C{uuid}.
+        Uuid constructor. If *uuid* is ommited or *None*, a new random
+        Uuid is created; if it is a string if must be 36 characters long and
+        follow the pattern::
+
+            XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
+
+        where ``X`` is an
+        hexadecimal digit (example:
+        ``'ad2d8fb0-7831-50bc-2fb6-5df048304001'``).
+
+        If *uuid* is an Uuid instance, no new instance is created, in this
+        case, *Uuid(uuid)* returns *uuid*.
         '''
         if isinstance(uuid, Uuid):
             return

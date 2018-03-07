@@ -238,6 +238,8 @@ extlinks = {
   'cartoddox '),
   'graphdox' : ('../build-stable-release/share/doc/graph-' + version + '/doxygen/%s',
   'graphdox '),
+  'pyqt': ('https://pyside.github.io/docs/pyside/PySide/%s', 'pyqt'),
+  'traits': ('http://docs.enthought.com/traits/%s', 'traits'),
 }
 
 import soma
@@ -249,5 +251,6 @@ intersphinx_mapping = {
   'pyaims': ( os.path.join( docpath, 'pyaims-' + version + '/sphinx' ), None ),
   'pyana': ( os.path.join( docpath, 'pyanatomist-' + version + '/sphinx' ), None ),
   'python': ('http://docs.python.org/%d.%d' % sys.version_info[:2], None),
+  'traits': ('http://docs.enthought.com/traits', None),
 }
 

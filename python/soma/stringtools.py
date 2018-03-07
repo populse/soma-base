@@ -36,13 +36,15 @@
 This module contains text related functions.
 
 * author: Yann Cointepas
-* organization: `NeuroSpin <http://www.neurospin.org>`_
+* organization: NeuroSpin
 * license: `CeCILL B <http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html>`_
 '''
 __docformat__ = "restructuredtext en"
 
 
 def string_to_list(s):
+    """
+    """
     s = s.strip(' ')
     while s:
         if s[0] == '"':
@@ -70,10 +72,14 @@ def string_to_list(s):
 
 
 def list_to_string(l):
+    """
+    """
     return ' '.join((quote_string(i) for i in l))
 
 
 def quote_string(unquoted):
+    """
+    """
     if unquoted:
         if unquoted.find(' ') > -1:
             return '"' + unquoted.replace('"', '\\"') + '"'
@@ -83,6 +89,8 @@ def quote_string(unquoted):
 
 
 def unquote_string(quoted):
+    """
+    """
     if quoted and quoted[0] == '"':
         if quoted[-1] == '"':
             quoted = quoted[1: -1]

@@ -38,7 +38,7 @@ QtCore.QTimer to a QtGui.QLineEdit in order to signal user
 modification only after an inactivity period.
 
 * author: Yann Cointepas
-* organization: `NeuroSpin <http://www.neurospin.org>`_
+* organization: NeuroSpin
 * license: `CeCILL B <http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html>`_
 '''
 __docformat__ = "restructuredtext en"
@@ -64,6 +64,8 @@ class QLineEditModificationTimer(QtCore.QObject):
 
     def __init__(self, qLineEdit, timerInterval=None):
         '''
+        .. seealso:: :class:`TimeredQLineEdit`
+
         Parameters
         ----------
         qLineEdit: (QtGui.QLineEdit instance)
@@ -73,7 +75,6 @@ class QLineEditModificationTimer(QtCore.QObject):
             userModification signal. Default value is
             QLineEditModificationTimer.defaultTimerInterval
 
-        see: TimeredQLineEdit
         '''
 
         QtCore.QObject.__init__(self)
@@ -115,19 +116,19 @@ class QLineEditModificationTimer(QtCore.QObject):
 
     def stopInternalModification(self):
         '''
-        Stop emitting C{userModification} signal when associated
-        L{QLineEdit<qt.QLineEdit>} is modified.
+        Stop emitting ``userModification`` signal when associated
+        :pyqt:`QLineEdit <QtGui/QLineEdit.html>` is modified.
 
-        @see: L{startInternalModification}
+        .. seealso:: :meth:`startInternalModification`
         '''
         self.__internalModification = False
 
     def startInternalModification(self):
         '''
         Restart emitting C{userModification} signal when associated
-        L{QLineEdit<qt.QLineEdit>} is modified.
+        :pyqt:`QLineEdit <QtGui/QLineEdit.html>` is modified.
 
-        @see: L{stopInternalModification}
+        .. seealso:: :meth:`stopInternalModification`
         '''
         self.__internalModification = True
 
@@ -159,11 +160,11 @@ class TimeredQLineEdit(Qt.QLineEdit):
     def __init__(self, *args, **kwargs):
         '''
         All non keyword parameters of the constructor are passed to
-        L{QLineEdit<QtGui.QLineEdit>} constructor. An optional C{timerInterval}
-        keyword parameter can be given, it is passed to
-        L{QLineEditModificationTimer} constructor. At the time this class was
-        created, L{QLineEdit<qt.QLineEdit>} constructor did not accept keyword
-        parameters.
+        :pyqt:`QLineEdit <QtGui/QLineEdit.html>` constructor. An optional
+        *timerInterval* keyword parameter can be given, it is passed to
+        :class:`QLineEditModificationTimer` constructor. At the time this class
+        was created, :pyqt:`QLineEdit <QtGui/QLineEdit.html>` constructor did
+        not accept keyword parameters.
         '''
         timerInterval = kwargs.pop('timerInterval', None)
         if kwargs:
@@ -176,13 +177,13 @@ class TimeredQLineEdit(Qt.QLineEdit):
 
     def stopInternalModification(self):
         '''
-        @see: L{QLineEditModificationTimer.stopInternalModification}
+        .. seealso:: :meth:`QLineEditModificationTimer.stopInternalModification`
         '''
         self.__timer.stopInternalModification()
 
     def startInternalModification(self):
         '''
-        @see: L{QLineEditModificationTimer.startInternalModification}
+        .. seealso:: :meth:`QLineEditModificationTimer.startInternalModification`
         '''
         self.__timer.startInternalModification()
 

@@ -59,6 +59,8 @@ All other classes in this module are considered implementation details.
 (Also note that HelpFormatter and RawDescriptionHelpFormatter are only
 considered public as object names -- the API of the formatter objects is
 still considered an implementation detail.)
+
+Author: Steven J. Bethard <steven.bethard@gmail.com>.
 """
 
 __version__ = '1.2.1'
@@ -757,10 +759,12 @@ class Action(_AttributeHolder):
         - nargs -- The number of command-line arguments that should be
             consumed. By default, one argument will be consumed and a single
             value will be produced.  Other values include:
+
                 - N (an integer) consumes N arguments (and produces a list)
                 - '?' consumes zero or one arguments
                 - '*' consumes zero or more arguments (and produces a list)
                 - '+' consumes one or more arguments (and produces a list)
+
             Note that the difference between the default and nargs=1 is that
             with the default, a single value will be produced, while with
             nargs=1, a list containing a single value will be produced.

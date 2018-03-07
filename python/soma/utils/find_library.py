@@ -1,5 +1,6 @@
-''' replacement for ctypes.util.find_library.
-Provides a better version of find_library(), and allows to patch the ctypes.util module to use our version: see patch_ctypes_find_library().
+''' replacement for :func:`ctypes.util.find_library`.
+Provides a better version of :func:`find_library`, and allows to patch the
+:mod:`ctypes` module to use our version: see :func:`patch_ctypes_find_library`.
 '''
 
 import os
@@ -10,12 +11,12 @@ import glob
 ctypes_find_library = ctypes.util.find_library
 
 def find_library(name):
-    ''' ctypes.util.find_library is broken on linux at least: it relies on
-    ldconfig, which only searches system paths, not user paths nor
-    LD_LIBRARY_PATH, or alternatively uses gcc, which is not always installed
-    nor configured.
+    ''' :func:`ctypes.util.find_library` is broken on linux at least: it relies
+    on ``ldconfig``, which only searches system paths, not user paths nor
+    ``LD_LIBRARY_PATH``, or alternatively uses ``gcc``, which is not always
+    installed nor configured.
 
-    Here we are looking in [[DY]LD_LIBRARY_]PATH (depending on the system)
+    Here we are looking in ``[[DY]LD_LIBRARY_]PATH`` (depending on the system)
     '''
     def sorted_match(filenames):
         return sorted(filenames)[-1] # probably not the best
@@ -66,7 +67,7 @@ def find_library(name):
 
 
 def patch_ctypes_find_library():
-    ''' replace ctypes.util.find_library by our version
+    ''' replace :func:`ctypes.util.find_library` by our version
     '''
     if ctypes.util.find_library is ctypes_find_library:
         ctypes.util.find_library = find_library

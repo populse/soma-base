@@ -10,7 +10,7 @@ from pkgutil import iter_modules
 
 def find_subclasses_in_module(module_name, parent_class):
     '''
-    Find all the classes defined in a Python module that derive from a
+    Finds all the classes defined in a Python module that derive from a
     given class or class name. If the module is a package, it also look
     into submodules.
     '''
@@ -29,8 +29,8 @@ def find_subclasses_in_module(module_name, parent_class):
 
 def find_items_in_module(module_name, check):
     '''
-    Find all the items defined in a Python module that where check(cls) is
-    True. If the module is a package, it also look recursively into
+    Finds all the items defined in a Python module that where *check(cls)* is
+    *True*. If the module is a package, it also look recursively into
     submodules.
     '''
     try:
@@ -51,7 +51,7 @@ def find_items_in_module(module_name, check):
 
 class ClassFactory(object):
     '''
-    ClassFactory is the base class for creating factories that can look
+    *ClassFactory* is the base class for creating factories that can look
     for classes in Python modules and create instances.
     '''
     
@@ -68,11 +68,12 @@ class ClassFactory(object):
     
     def find_class(self, class_type, factory_id):
         '''
-        Find a class deriving of the class corresponding to class_type and
-        whose factory_id attribute has a given value. Look for all
-        subclasses of parent class declared in the modules of self.module_pats
-        and return the first one having cls.factory_id == factory_id. If
-        none is found, returns None.
+        Finds a class deriving of the class corresponding to *class_type* and
+        whose *factory_id* attribute has a given value. Look for all
+        subclasses of parent class declared in the modules of
+        :attr:`self.module_path`
+        and returns the first one having ``cls.factory_id == factory_id``. If
+        none is found, returns *None*.
         '''
         base_class = self.get_class(class_type)
         for module_name in self.module_path:
@@ -83,7 +84,7 @@ class ClassFactory(object):
     
     def get_class(self, class_type):
         '''
-        Return the class corresponding to a given class type. First look
+        Returns the class corresponding to a given class type. First look
         for a dictionary in self.class_types, then look into parent
         classes.
         '''
@@ -104,13 +105,13 @@ class ClassFactory(object):
 
     def get(self, class_type, factory_id):
         '''
-        Returns an instance of the class identified by class_type and
-        factory_id. There can be only one instance per class_type and
-        factory_id. Once created with the first call of this method, it
-        is stored in self.instances and simply returned in subsequent
+        Returns an instance of the class identified by *class_type* and
+        *factory_id*. There can be only one instance per *class_type* and
+        *factory_id*. Once created with the first call of this method, it
+        is stored in :attr:`self.instances` and simply returned in subsequent
         calls.
 
-        If get_class is True, return the class instead of an instance
+        If *get_class* is *True*, returns the class instead of an instance
         '''
         instance = self.instances.get((class_type, factory_id))
         if instance is None:

@@ -4,6 +4,8 @@ import logging
 
 
 def create_logger(name):
+    """
+    """
     logger = logging.getLogger()
     handler = logging.StreamHandler()
     formatter = logging.Formatter(

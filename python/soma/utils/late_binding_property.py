@@ -20,7 +20,7 @@ class LateBindingProperty(property):
         classes.
 
         Regular properties require to redefine the property in derived classes,
-        while LateBindingProperty does not :
+        while *LateBindingProperty* does not:
 
         >>> class C(object):
         ...
