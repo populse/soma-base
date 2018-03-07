@@ -8,6 +8,8 @@ from soma.singleton import Singleton
 
 
 class GlobalNaming(Singleton):
+    """ No doc ?
+    """
 
     def __singleton_init__(self):
         super(GlobalNaming, self).__singleton_init__()
@@ -16,6 +18,8 @@ class GlobalNaming(Singleton):
         self._names = WeakKeyDictionary()
 
     def parse_global_name(self, global_name):
+        """
+        """
         m = self._global_name_re.match(global_name)
         if m:
             # return module, name, args, attributes
@@ -23,6 +27,8 @@ class GlobalNaming(Singleton):
         raise ValueError('Invalid global name syntax: ' + global_name)
 
     def get_object(self, global_name):
+        """
+        """
         module, name, args, attributes = self.parse_global_name(global_name)
         module = __import__(module, fromlist=[name], level=0)
         try:
@@ -38,6 +44,8 @@ class GlobalNaming(Singleton):
         return value
 
     def get_name(self, obj):
+        """
+        """
         result = self._names.get(obj)
         if result is not None:
             return result
@@ -52,8 +60,12 @@ class GlobalNaming(Singleton):
 
 
 def get_object(global_name):
+    """
+    """
     return GlobalNaming().get_object(global_name)
 
 
 def get_name(obj):
+    """
+    """
     return GlobalNaming().get_name(obj)

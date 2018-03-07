@@ -66,6 +66,7 @@ def load_objects(module_name, object_name=None, allowed_instances=None):
 
 def cleanup(attribute):
     """ cleanup avoiding:
+
         * Windows reserved characters
         * '_' since it is reserved by Brainvisa
         * tab, newline and null character

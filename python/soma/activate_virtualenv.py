@@ -6,18 +6,23 @@
 # for details.
 #
 
-'''Importation of this module activate a virtualenv if
-os.environ['SOMA_VIRTUALENV'] contains the directory path of the virutalenv.
-This module makes it possible to use a specific virtualenv directory in
+'''Importation of this module activate a
+`virtualenv <https://virtualenv.pypa.io/>`_ if
+``os.environ['SOMA_VIRTUALENV']`` contains the directory path of the
+*virutalenv*.
+
+This module makes it possible to use a specific *virtualenv* directory in
 contexts where it is difficult activate it (for instance in crontab). For
-instance, a script importing cubicweb the following way :
+instance, a script importing cubicweb the following way::
 
-from soma import activate_virtualenv
-import cubicweb
+    from soma import activate_virtualenv
+    import cubicweb
 
-can be set to use a specifiv virutalenv install of cubicweb:
+can be set to use a specific *virutalenv* install of *cubicweb*:
 
-env SOMA_VIRTUALENV=/path/to/virutalenv python /path/to/script.py
+.. code-block:: bash
+
+    env SOMA_VIRTUALENV=/path/to/virutalenv python /path/to/script.py
 '''
 
 import os

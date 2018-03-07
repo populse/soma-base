@@ -230,20 +230,29 @@ class SingleThreadCalls:
         '''
         This method extracts all functions (along with their parameters) from
         the queue and execute them. It returns the number of function executed
-        C{None} if self.stop() has been called (in that case the processing loop
-        must end).
+        *None* if :meth:`self.stop() <stop>` has been called (in that case the
+        processing loop must end).
 
-        The processing thread must continuoulsy call this method until C{None} is
-        returned.
+        The processing thread must continuoulsy call this method until *None*
+        is returned.
 
-        @type  blocking: bool
-        @param blocking: if C{blocking} is False (the default), C{processFunctions}
-        returns C{0} immediately if it cannot access the function list (for example
-        if it is locked by another thread that is registering a function). If
-        C{blocking} is True, C{processFunctions} waits until the function list is
-        available.
+        .. seealso:: :meth:`processingLoop`
 
-        @see: L{processingLoop}
+        Parameters
+        ----------
+        blocking: bool
+            if *blocking* is *False* (the default), *processFunctions*
+
+        Returns
+        -------
+        int:
+            * Returns 0 immediately if it cannot access the function list (for
+              example if it is locked by another thread that is registering a
+              function).
+            * If *blocking* is *True*, *processFunctions* waits until the
+              function list is available, and returns the number of function
+              called
+            * If :meth:`stop` has been called, *None* is returned
         '''
         if self._condition.acquire(blocking):
             try:
@@ -263,8 +272,9 @@ class SingleThreadCalls:
 
     def processingLoop(self):
         '''
-        Continuously execute L{processFunctions} until it returns C{None}
-        @see: L{processFunctions}
+        Continuously executes :meth:`processFunctions` until it returns *None*
+
+        .. seealso:: :meth:`processFunctions`
         '''
         actionCount = 0
         self._condition.acquire()

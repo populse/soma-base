@@ -11,6 +11,7 @@ without copying the data.  The conversion functions in the opposite
 direction however do not copy the data.
 
 TODO:
+
 - support record arrays in rgb2qimage
   (i.e. grok the output of qimage2numpy)
 - support unusual widths/alignments also in gray2qimage and

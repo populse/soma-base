@@ -33,10 +33,21 @@
 # knowledge of the CeCILL-B license and that you accept its terms.
 
 '''
-L{Undefined} is a constant that can be used as a special value different from any other Python value including C{None}.
+:attr:`Undefined` (or :attr:`undefined`) is a constant that can be used as
+a special value different from any other Python value including *None*.
+
+If the :traits:`traits <index.html>` library is available, we just use its
+:traits:`Undefined <traits_api_reference/trait_base.html#traits.trait_base.Undefined>` implementation.
+
+Example::
+
+    from soma.undefined import undefined
+
+    if object.value is undefined:
+        # do something
 
 * author: Yann Cointepas
-* organization: `NeuroSpin <http://www.neurospin.org>`_
+* organization: NeuroSpin
 * license: `CeCILL B <http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html>`_
 '''
 __docformat__ = "restructuredtext en"
@@ -58,25 +69,18 @@ if undefined is None:
     class UndefinedClass(Singleton):
 
         '''
-        C{UndefinedClass} instance is used to represent an undefined attribute value
-        when C{None} cannot be used because it can be a valid value. Should only be
-        used for value checking.
+        *UndefinedClass* instance is used to represent an undefined attribute
+        value when *None* cannot be used because it can be a valid value.
 
-        @see: L{Undefined}
+        Should only be used for value checking.
         '''
 
         def __repr__(self):
             '''
-            @return: C{'<undefined>'}
+            Returns
+            -------
+            ``'<undefined>'``
             '''
             return '<undefined>'
 
-    #: C{Undefined} contains the instance of UndefinedClass and can be used to check
-    #: wether a value is undefined or not.
-    #:
-    #: Example::
-    #:    from soma.undefined import undefined
-    #:
-    #:    if object.value is undefined:
-    # :      # do something
     Undefined = undefined = UndefinedClass()

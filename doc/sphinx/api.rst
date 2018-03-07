@@ -1,10 +1,31 @@
 :orphan:
 
 
-SubModule: :mod:`soma.application`
+SubModule: ``activate_virtualenv``
 ==================================
 
+.. automodule:: soma.activate_virtualenv
+    :members:
+
+
+SubModule: ``application``
+==========================
+
 .. automodule:: soma.application
+    :members:
+
+
+SubModule: ``archive``
+======================
+
+.. automodule:: soma.archive
+    :members:
+
+
+SubModule: ``argparse``
+=======================
+
+.. automodule:: soma.argparse
     :members:
 
 
@@ -12,6 +33,13 @@ SubModule: ``bufferandfile``
 ============================
 
 .. automodule:: soma.bufferandfile
+    :members:
+
+
+SubModule: ``config``
+=====================
+
+.. automodule:: soma.config
     :members:
 
 
@@ -34,6 +62,13 @@ API
     :members:
 
 
+SubModule: ``crypt``
+====================
+
+.. automodule:: soma.crypt
+    :members:
+
+
 SubModule: ``debug``
 ====================
 
@@ -41,10 +76,24 @@ SubModule: ``debug``
     :members:
 
 
+SubModule: ``factory``
+======================
+
+.. automodule:: soma.factory
+    :members:
+
+
 SubModule: ``fom``: File Organization Model
 ===========================================
 
 .. automodule:: soma.fom
+    :members:
+
+
+SubModule: ``global_naming``
+============================
+
+.. automodule:: soma.global_naming
     :members:
 
 
@@ -59,6 +108,20 @@ SubModule: ``importer``
 =======================
 
 .. automodule:: soma.importer
+    :members:
+
+
+SubModule: ``info``
+===================
+
+.. automodule:: soma.info
+    :members:
+
+
+SubModule: ``logging``
+======================
+
+.. automodule:: soma.logging
     :members:
 
 
@@ -89,6 +152,12 @@ SubModule: ``pyro``
 .. automodule:: soma.pyro
     :members:
 
+
+SubModule: ``qimage2ndarray``
+=============================
+
+.. automodule:: soma.qimage2ndarray
+    :members:
 
 SubModule: ``qt_gui``
 =====================
@@ -126,11 +195,24 @@ SubModule: ``rangeSlider``
 .. automodule:: soma.qt_gui.rangeSlider
     :members:
 
+SubModule: ``safemkdir``
+========================
+
+.. automodule:: soma.safemkdir
+    :members:
+
 SubModule: ``timered_widgets``
 ==============================
 
 .. automodule:: soma.qt_gui.timered_widgets
     :members:
+
+SubModule: ``serialization``
+============================
+
+.. automodule:: soma.serialization
+    :members:
+
 
 SubModule: ``singleton``
 ========================
@@ -194,20 +276,20 @@ SubModule: ``utils``
 .. automodule:: soma.utils
     :members:
 
+SubModule: ``utils.find_library``
+---------------------------------
+.. automodule:: soma.utils.find_library
+    :members:
+
 SubModule: ``utils.functiontools``
 ----------------------------------
 
 .. automodule:: soma.utils.functiontools
     :members:
 
-SubModule: ``utils.find_library``
----------------------------------
-.. automodule:: soma.utils.find_library
-    :members:
-
 .SubModule: ``utils.late_binding_property``
 -------------------------------------------
-. automodule:: soma.utils.late_binding_property
+.. automodule:: soma.utils.late_binding_property
     :members:
 
 SubModule: ``utils.loader``
