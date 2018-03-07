@@ -183,7 +183,7 @@ class TimeredQLineEdit(Qt.QLineEdit):
 
     def startInternalModification(self):
         '''
-        @see: L{QLineEditModificationTimer.startInternalModification}
+        .. seealso:: :meth:`QLineEditModificationTimer.startInternalModification`
         '''
         self.__timer.startInternalModification()
 

@@ -36,7 +36,7 @@
 Utility functions for HTML format.
 
 * author: Yann Cointepas
-* organization: `NeuroSpin <http://www.neurospin.org>`_
+* organization: NeuroSpin
 * license: `CeCILL B <http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html>`_
 '''
 __docformat__ = "restructuredtext en"

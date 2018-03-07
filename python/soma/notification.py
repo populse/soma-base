@@ -34,8 +34,8 @@
 
 '''
 This module provides a notification system that can be used to register
-callbacks (I{i.e} Python callables) that will all be called by a single
-L{notify<Notifier.notify>} call.
+callbacks (*i.e* Python callables) that will all be called by a single
+:meth:`Notifier.notify` call.
 
 * author: Yann Cointepas, Dominique Geffroy
 * organization: NeuroSpin
@@ -66,17 +66,19 @@ else:
 class Notifier:
 
     '''
-    Register a series of functions (or Notifiers instances) which are all called
-    whith L{notify} method. The calling order is the registering order. If a
-    Notifier is registered, its L{notify} method is called whenever
-    C{self.notify()} is called.
+    Register a series of functions (or Notifier instances) which are all called
+    whith the :meth:`notify` method. The calling order is the registering
+    order. If a Notifier is registered, its :meth:`notify` method is called
+    whenever *self.notify()* is called.
     '''
 
     def __init__(self, parameterCount=None):
         '''
-        @type  parameterCount: integer
-        @param parameterCount: if not None, each registered function must be
-        callable with that number of arguments (checking is done on registration).
+        Parameters
+        ----------
+        parameterCount: int
+            if not None, each registered function must be callable with that
+            number of arguments (checking is done on registration).
         '''
         self._listeners = []
         self._parameterCount = parameterCount
@@ -84,13 +86,15 @@ class Notifier:
 
     def add(self, listener):
         '''
-        Register a callable or a Notifier that will be called whenever L{notify} is
-        called. If the notifier has a C{parameterCount},
-        L{checkParameters.checkParameterCount} is used to verify that C{listener}
-        can be called with C{parameterCount} parameters.
-        @type  listener: Python callable (function, method, I{etc.}) or L{Notifier}
-        instance
-        @param listener: item to add to the notification list.
+        Register a callable or a Notifier that will be called whenever
+        :meth:`notify` is called. If the notifier has a *parameterCount*,
+        :func:`checkParameterCount <soma.utils.functiontools.checkParameterCount>` is used to verify that
+        *listener* can be called with *parameterCount* parameters.
+
+        Parameters
+        ----------
+        listener: Python callable (function, method, *etc*.) or :class:`Notifier` instance
+            item to add to the notification list.
         '''
 
         if listener not in self._listeners:
@@ -109,12 +113,17 @@ class Notifier:
 
     def remove(self, listener):
         '''
-        Remove an item from the notification list. Do nothing if C{listener} is not
-        in the list.
-        @type  listener: Python callable or L{Notifier} instance
-        @param listener: item previously registered with .L{add}.
-        @rtype: bool
-        @return; C{True} if a listener has been removed, C{False} otherwise.
+        Remove an item from the notification list. Do nothing if *listener* is
+        not in the list.
+
+        Parameters
+        ----------
+        listener: Python callable or :class:`Notifier` instance
+            item previously registered with :meth:`add`.
+        Returns
+        -------
+        bool:
+            *True* if a listener has been removed, *False* otherwise.
         '''
 
         try:
@@ -126,10 +135,12 @@ class Notifier:
 
     def notify(self, *args):
         '''
-        Calls all the registered items in the notification list. All the parameters
-        given to L{notify} are passed to the items in the list. For items in the
-        list that are L{Notifier} instance, their L{notify} method is called
-        @see: L{delayNotification}, L{restartNotification}
+        Calls all the registered items in the notification list. All the
+        parameters given to :meth:`notify` are passed to the items in the list.
+        For items in the list that are :class:`Notifier` instance, their
+        :meth:`notify` method is called
+
+        .. seealso:: :meth:`delayNotification`, :meth:`restartNotification`
         '''
         if self._delayedNotification is None:
             # if self._listeners: print '!notify!', self, ':', args, '(' + str(len( self._listeners )), 'listeners)'
@@ -150,23 +161,27 @@ class Notifier:
 
     def delayNotification(self, ignoreDoubles=False):
         '''
-        Stop notification until L{restartNotification} is called. After a call to
-        L{delayNotification}, all calls to L{notify} will only store the
-        notification parameters until L{restartNotification} is called.
-        @type  ignoreDoubles: C{bool}
-        @param ignoreDoubles: If C{True} (the default), all calls to L{notify} with
-        the same parameters as a previous call will be ignored (I{i.e.}
-        notification will be done only once for two identical calls).
+        Stop notification until :meth:`restartNotification` is called. After a
+        call to :meth`delayNotification`, all calls to :meth:`notify` will only
+        store the notification parameters until :meth:`restartNotification` is
+        called.
+
+        Parameters
+        ----------
+        ignoreDoubles: bool
+            If *True* (the default), all calls to :meth:`notify` with
+            the same parameters as a previous call will be ignored (*i.e.*
+            notification will be done only once for two identical calls).
         '''
         self._delayedNotification = []
         self._delayedNotificationIgnoreDoubles = ignoreDoubles
 
     def restartNotification(self):
         '''
-        Restart notifications that have been delayed by L{delayNotification}. All
-        the calls to L{notify} that has been done between the call to
-        L{delayNotification} and the call to L{restartNotification}, are applied
-        immediately.
+        Restart notifications that have been delayed by
+        :meth:`delayNotification`. All the calls to :meth:`notify` that have
+        been done between the call to :meth:`delayNotification` and the call to
+        :meth:`restartNotification`, are applied immediately.
         '''
         delayedNotification = self._delayedNotification
         if delayedNotification is not None:
@@ -179,7 +194,7 @@ class Notifier:
 class ReorderedCall(object):
 
     '''
-    @todo: documentation
+    **todo:** documentation
     '''
 
     def __init__(self, function, parametersOrder):
@@ -200,8 +215,9 @@ class VariableParametersNotifier(Notifier):
 
     def __init__(self, mainParameters, *otherParameters):
         '''
-        @see: L{Notifier.__init__}
-        @todo: documentation
+        .. seealso:: :class:`Notifier`
+
+        **todo** documentation
         '''
         Notifier.__init__(self, len(mainParameters))
         self.__parameters = {
@@ -228,8 +244,9 @@ class VariableParametersNotifier(Notifier):
 
     def add(self, listener):
         '''
-        @see: L{Notifier.add}
-        @todo: documentation
+        .. seealso:: :meth:`Notifier.add`
+
+        **todo:** documentation
         '''
         if isinstance(listener, Notifier):
             realListener = listener
@@ -249,8 +266,9 @@ class VariableParametersNotifier(Notifier):
 
     def remove(self, listener):
         '''
-        @see: L{Notifier.remove}
-        @todo: documentation
+        .. seealso:: :meth:`Notifier.remove`
+
+        **todo:** documentation
         '''
 
         for i in xrange(len(self._listeners)):
@@ -266,7 +284,7 @@ class VariableParametersNotifier(Notifier):
 class ObservableAttributes(object):
 
     '''
-    ObservableAttributes allow to track modification of attributes at
+    ObservableAttributes allows to track modification of attributes at
     runtime. By registering callbacks, it is possible to be warn of the
     modification (setting and deletion) of any attribute of the instance.
     '''
@@ -290,12 +308,13 @@ class ObservableAttributes(object):
             '_onAttributeChange', {})
         super(ObservableAttributes, self).__init__(*args, **kwargs)
 
+    @staticmethod
     def _createAttributeNotifier():
         '''
-        Static method creating a L{VariableParametersNotifier} instance for
-        attribute modification notification.
+        Static method creating a :class:`VariableParametersNotifier` instance
+        for attribute modification notification.
 
-        @see: L{notifyAttributeChange}
+        see :meth:`notifyAttributeChange`.
         '''
         return VariableParametersNotifier(
             ('object', 'attributeName', 'newValue', 'oldValue'),
@@ -304,14 +323,14 @@ class ObservableAttributes(object):
             ('newValue', 'oldValue'),
             ('attributeName', 'newValue', 'oldValue'),
         )
-    _createAttributeNotifier = staticmethod(_createAttributeNotifier)
 
     def notifyAttributeChange(self, name, value, oldValue=Undefined):
         '''
-        First, call functions registered for modification of the attribute named
-        C{name}, then call functions registered for modification of any attribute.
+        First, calls functions registered for modification of the attribute
+        named *name*, then call functions registered for modification of any
+        attribute.
 
-        see: onAttributeChange
+        .. seealso:: :meth:`onAttributeChange`
         '''
         # Notify the change of this attribute
         if hasattr(self, '_onAttributeChange'):
@@ -325,7 +344,8 @@ class ObservableAttributes(object):
 
     def __setattr__(self, name, value):
         '''
-        Change the value of attribute C{name} then calls L{notifyAttributeChange}.
+        Changes the value of attribute *name* then calls
+        :meth:`notifyAttributeChange`.
         '''
         oldValue = getattr(self, name, Undefined)
         super(ObservableAttributes, self).__setattr__(name, value)
@@ -334,8 +354,8 @@ class ObservableAttributes(object):
 
     def __delattr__(self, name):
         '''
-        Delete the attribute C{name} then calls L{notifyAttributeChange} with
-        C{newValue=L{Undefined}}.
+        Deletes the attribute *name* then calls :meth:`notifyAttributeChange`
+        with ``newValue = :class:`Undefined` ``.
         '''
         oldValue = getattr(self, name, Undefined)
         super(ObservableAttributes, self).__delattr__(name)
@@ -345,7 +365,7 @@ class ObservableAttributes(object):
 
     def onAttributeChange(self, first, second=None):
         '''
-        Register a function to be called when an attribute is modified or
+        Registers a function to be called when an attribute is modified or
         deleted. To call the function for any attribute modification, use the
         following syntax::
 
@@ -390,9 +410,10 @@ class ObservableAttributes(object):
 
     def removeOnAttributeChange(self, first, second=None):
         '''
-        Remove a function previously registered with L{onAttributeChange}. To
-        remove a function, the arguments of L{removeOnAttributeChange} must be the
-        same as those passed to L{onAttributeChange} to register the function.
+        Remove a function previously registered with :meth:`onAttributeChange`.
+        To remove a function, the arguments of :meth:`removeOnAttributeChange`
+        must be the same as those passed to :meth:`onAttributeChange` to
+        register the function.
         '''
         if second is None:
             result = self._onAnyAttributeChange.remove(first)
@@ -403,11 +424,11 @@ class ObservableAttributes(object):
     def delayAttributeNotification(self, ignoreDoubles=False):
         '''
         Stop attribute modification notification until
-        :py:meth:`restartAttributeNotification` is called. After a call to
-        ``delayAttributeNotification``, all modification notification will only
-        be stored until :py:meth:`restartAttributeNotification` is called. This
-        call is recursive on all attributes values that are instance of
-        :py:class:`ObservableAttributes`.
+        :meth:`restartAttributeNotification` is called. After a call to
+        :meth:`delayAttributeNotification`, all modification notification will
+        only be stored until :meth:`restartAttributeNotification` is called.
+        This call is recursive on all attributes values that are instance of
+        :class:`ObservableAttributes`.
 
         Parameters
         ----------
@@ -418,7 +439,8 @@ class ObservableAttributes(object):
         self._delayAttributeNotification(
             ignoreDoubles=ignoreDoubles, checkedObjects=set())
 
-    def _delayAttributeNotification(self, ignoreDoubles=False, checkedObjects=None):
+    def _delayAttributeNotification(self, ignoreDoubles=False,
+                                    checkedObjects=None):
 
         if not checkedObjects == None:
             checkedObjects.add(self)
@@ -447,10 +469,10 @@ class ObservableAttributes(object):
 
     def restartAttributeNotification(self):
         '''
-        Restart notifications that have been delayed by
-        L{delayAttributeNotification}. All the modifications that happened between
-        the call to L{delayAttributeNotification} and the call to
-        L{restartAttributeNotification}, are notified immediately.
+        Restarts notifications that have been delayed by
+        :meth:`delayAttributeNotification`. All the modifications that happened
+        between the call to :meth:`delayAttributeNotification` and the call to
+        :meth:`restartAttributeNotification`, are notified immediately.
         '''
         self._restartAttributeNotification(checkedObjects=set())
 
@@ -485,7 +507,8 @@ class ObservableList(list):
 
     """
     A list that notifies its changes to registred listeners.
-    Inherits from python list and contains an instance of :class:`soma.notification.Notifier` (:meth:`onChangeNotifier`).
+    Inherits from python list and contains an instance of :class:`Notifier`
+    (:attr:`onChangeNotifier`).
 
     Example::
 
@@ -493,18 +516,20 @@ class ObservableList(list):
         l.addListener(update)
         l.append(e)
 
-    * calls onChangeNotifier.notify(INSERT_ACTION, [e], len(l))
-    * calls update(INSERT_ACTION, [e], len(l))
+    * calls :meth:`onChangeNotifier.notify(INSERT_ACTION, [e], len(l)) <Notifier.notify>`
+    * calls ``update(INSERT_ACTION, [e], len(l))``
 
+    Attributes
+    ----------
     INSERT_ACTION: int
         used to notify insertion of new elements  in the list
     REMOVE_ACTION: int
-        REMOVE_ACTION: used to notify elements deletion
+        used to notify elements deletion
     MODIFY_ACTION: int
-        MODIFY_ACTION: used to notify elements modification
+        used to notify elements modification
 
     onChangeNotifier: Notifier
-        onChangeNotifier: the Notifier's notify method is called when the list
+        the Notifier's notify method is called when the list
         has changed.
     """
 
@@ -536,21 +561,31 @@ class ObservableList(list):
             self.extend(content)
 
     def __getinitargs__(self):
-        """Returns the args to pass to the __init__ method to construct this object.
-        It is usefull to save ObservableList object to minf format.
-        @rtype: tuple
-        @return: arg content to pass to the __init__ method for creating a copy of this object
+        """Returns the args to pass to the __init__ method to construct this
+        object.
+        It is useful to save an :class:`ObservableList` object to :mod:`minf`
+        format.
+
+        Returns
+        -------
+        tuple:
+            arg content to pass to the __init__ method for creating a copy of this object
         """
         content = []
         content.extend(self)
         return (content)
 
     def __reduce__(self):
-        """This method is redefined for enable deepcopy of this object (and potentially pickle).
-        It gives the arguments to pass to the init method of the object when creating a copy
+        """This method is redefined for enable deepcopy of this object (and
+        potentially pickle).
+        It gives the arguments to pass to the init method of the object when
+        creating a copy
 
-        @rtype: tuple
-        @return: class name, init args, state, iterator on elements to copy, dictionary iterator
+        Returns
+        -------
+        tuple:
+            class name, init args, state, iterator on elements to copy,
+            dictionary iterator
         """
         # class name, init args, parameters for setstate, elements iterator,
         # dictionary iterator
@@ -560,12 +595,15 @@ class ObservableList(list):
         """Registers the listener callback method in the notifier.
         The method must take 3 arguments: action, elems list, position
 
+        *action* should be one of:
+
         - INSERT_ACTION: elems have been inserted at position in the list
         - REMOVE_ACTION: elems have been removed [at position] in the list
         - MODIFY_ACTION: at position, some elements have been replaced by
           elems
 
-        The position given in the notify method will be between 0 and len(self)
+        The position given in the notify method will be between 0 and
+        ``len(self)``
 
         Parameters
         ----------
@@ -599,14 +637,22 @@ class ObservableList(list):
 
     def remove(self, elem):
         """Removes the first occurence of elem in the list.
+
         Notifies a remove action. """
         super(ObservableList, self).remove(elem)
         self.onChangeNotifier.notify(self.REMOVE_ACTION, [elem])
 
     def pop(self, pos=None):
-        """Removes the element at position pos or the last element if pos is None.
+        """Removes the element at position pos or the last element if pos is
+        *None*.
+
         Notifies a remove action.
-        @return: the removed element"""
+
+        Returns
+        -------
+        object:
+            the removed element
+        """
         if pos is not None:
             index = self.getPositiveIndex(pos)
             elem = super(ObservableList, self).pop(pos)
@@ -618,9 +664,13 @@ class ObservableList(list):
 
     def sort(self, key=None, reverse=False):
         """Sorts the list using key function key.
+
         Notifies a modify action.
-        @type key: function elem->key
-        @param key: key function
+
+        Returns
+        -------
+        key: function
+            key function: elem->key
         """
         super(ObservableList, self).sort(key=key, reverse=reverse)
         # all the elements of the list could be modified
@@ -634,9 +684,10 @@ class ObservableList(list):
 
     def __setitem__(self, key, value):
         """Sets value to element at position key in the list.
-        Notifies a modify action.
 
-        C{l[key]=value}
+        Notifies a modify action::
+
+            l[key] = value
         """
         index = self.getPositiveIndex(key)
         super(ObservableList, self).__setitem__(key, value)
@@ -644,9 +695,10 @@ class ObservableList(list):
 
     def __delitem__(self, key):
         """Removes the element at position key in the list.
-        Notifies a remove action.
 
-        C{del l[key]}
+        Notifies a remove action::
+
+            del l[key]
         """
         index = self.getPositiveIndex(key)
         super(ObservableList, self).__delitem__(key)
@@ -655,10 +707,13 @@ class ObservableList(list):
     def __setslice__(self, i, j, seq):
         """Sets values in seq to elements in the interval i,j.
 
-        If i and j are negative numbers, there are converted before this call in index+len(self)
-        Notifies a modify action.
+        If i and j are negative numbers, there are converted before this call
+        in ``index + len(self)``
 
-        C{l[i:j]=seq}"""
+        Notifies a modify action:
+
+            l[i:j] = seq
+        """
         indexI = self.getIndexInRange(i)
         indexJ = self.getIndexInRange(j)
         super(ObservableList, self).__setslice__(i, j, seq)
@@ -686,10 +741,13 @@ class ObservableList(list):
     def __delslice__(self, i, j):
         """Removes elements in the interval i,j.
 
-        If i and j are negative numbers, there are converted before this call in index+len(self).
-        Notifies a remove action.
+        If i and j are negative numbers, there are converted before this call
+        in ``index + len(self)``.
 
-        C{del l[i:j]}"""
+        Notifies a remove action::
+
+            del l[i:j]
+        """
         indexI = self.getIndexInRange(i)
         indexJ = self.getIndexInRange(j)
         seq = self[indexI:indexJ]
@@ -699,7 +757,7 @@ class ObservableList(list):
             self.onChangeNotifier.notify(self.REMOVE_ACTION, seq, indexI)
 
     def __iadd__(self, l):
-        """C{list+=l} <=> C{list.extend(l)}
+        """``list += l`` <=> ``list.extend(l)``
 
         Notifies insert action."""
         index = len(self)
@@ -708,7 +766,7 @@ class ObservableList(list):
         return newList
 
     def __imul__(self, n):
-        """C{list*=n}
+        """``list *= n``
 
         Notifies insert action."""
         index = len(self)
@@ -717,10 +775,11 @@ class ObservableList(list):
         return newList
 
     def getPositiveIndex(self, i):
-        """Returns an index between 0 and len(self)
-          - if i is negative, it is replaced by len(self)+i
-          - if index is again negative, it is replaced by 0
-          - if index is beyond len(self) it is replaced by len(self)
+        """Returns an index between 0 and ``len(self)``
+
+        - if *i* is negative, it is replaced by ``len(self) + i``
+        - if *index* is again negative, it is replaced by 0
+        - if *index* is beyond ``len(self)`` it is replaced by ``len(self)``
         """
         l = len(self)
         if i < 0:
@@ -731,7 +790,10 @@ class ObservableList(list):
 
     def getIndexInRange(self, i):
         """Returns an index in the range of the list.
-        if i<0 return 0, if i>len(self), return len(self)"""
+
+        * if ``i < 0`` returns 0
+        * if ``i > len(self)``, returns ``len(self)``
+        """
         if i < 0:
             index = 0
         else:
@@ -744,7 +806,9 @@ class ObservableList(list):
 
     def itemIndex(self, item):
         """
-        Returns item's index in the list. It's different from index method that returns index of the first element that has the same value as item.
+        Returns item's index in the list. It is different from the
+        :meth:`list.index` method that returns the index of the first element
+        that has the same value as *item*.
         """
         i = 0
         for it in self:
@@ -763,7 +827,7 @@ class ObservableSortedDictionary(SortedDictionary):
     """
     A sorted dictionary that notifies its changes.
     Inherits from python list and contains an instance of
-    :class:`soma.notification.Notifier` (:meth:`onChangeNotifier`).
+    :class:`Notifier` (:attr:`onChangeNotifier`).
 
     Example::
 
@@ -771,9 +835,11 @@ class ObservableSortedDictionary(SortedDictionary):
         d.addListener(update)
         d.insert(index, key, e)
 
-    * calls onChangeNotifier.notify(INSERT_ACTION, [e], index)
-    * calls update(INSERT_ACTION, [e], index)
+    * calls :meth:`onChangeNotifier.notify(INSERT_ACTION, [e], index) <Notifier.notify>`
+    * calls ``update(INSERT_ACTION, [e], index)``
 
+    Attributes
+    ----------
     INSERT_ACTION: int
         used to notify insertion of new elements  in the dictionary
     REMOVE_ACTION: int
@@ -799,20 +865,25 @@ class ObservableSortedDictionary(SortedDictionary):
 
     def __getinitargs__(self):
         """Returns the args to pass to the __init__ method to construct this object.
-        It is usefull to save ObservableList object to minf format.
-        @rtype: tuple
-        @return: arg content to pass to the __init__ method for creating a copy of this object
+        It is useful to save ObservableList object to minf format.
+        Returns
+        -------
+        tuple:
+            arg content to pass to the __init__ method for creating a copy of
+            this object
         """
         content = items_list(self)
         return (content)
 
     def addListener(self, listener):
         """Registers the listener callback method in the notifier.
-        The method must take 3 arguments : action, elems list, position
+        The method must take 3 arguments: action, elems list, position
 
-        - INSERT_ACTION : elems have been inserted at position in the dictionary
-        - REMOVE_ACTION : elems have been removed [at position] in the dict
-        - MODIFY_ACTION : at position, some elements have been replaced by elems
+        *action* should be one of:
+
+        - INSERT_ACTION: elems have been inserted at position in the dictionary
+        - REMOVE_ACTION: elems have been removed [at position] in the dict
+        - MODIFY_ACTION: at position, some elements have been replaced by elems
 
         The position given in the notify method will be between 0 and len(self)
 
@@ -840,28 +911,41 @@ class ObservableSortedDictionary(SortedDictionary):
 
     def insert(self, index, key, value):
         '''
-        insert a ( C{key}, C{value} ) pair in sorted dictionary before position
-        C{index}. If C{key} is already in the dictionary, a C{KeyError} is raised.
-        @type  index: integer
-        @param index: index of C{key} in the sorted keys
-        @param key: key to insert
-        @param value: value associated to C{key}
+        inserts a (*key*, *value*) pair in the sorted dictionary before
+        position *index*. If *key* is already in the dictionary, a
+        :class:`KeyError <exceptions.KeyError>` is raised.
+
+        Parameters
+        ----------
+        key:
+            key to insert
+        value:
+            value associated to *key*
+
+        Returns
+        -------
+        index: integer
+            index of C{key} in the sorted keys
         '''
         super(ObservableSortedDictionary, self).insert(index, key, value)
         self.onChangeNotifier.notify(self.INSERT_ACTION, [value], index)
 
     def clear(self):
         '''
-        Remove all items from dictionary
+        Removes all items from dictionary
         '''
         super(ObservableSortedDictionary, self).clear()
         self.onChangeNotifier.notify(self.REMOVE_ACTION, self.values(), 0)
 
     def sort(self, key=None, reverse=False):
-        """Sorts the dictionary using function func to compare keys.
+        """Sorts the dictionary using function *key* to compare keys.
+
         Notifies a modify action.
-        @type key: function key->key
-        @param key: key function
+
+        Parameters
+        ----------
+        key: function
+            key function key->key
         """
         super(ObservableSortedDictionary, self).sort(key=key, reverse=reverse)
         self.onChangeNotifier.notify(self.MODIFY_ACTION, self.values(), 0)
@@ -874,39 +958,76 @@ class EditableTree(ObservableAttributes, ObservableSortedDictionary):
     This class can be derived to change implementation.
 
     An EditableTree contains items which can be
-      - an item branch : it contains other items as children
-      - an item leaf : doesn't have children
 
-    The list of items is an ObservableSortedDictionary which notifies its changes to registred listeners.
+    - an item branch: it contains other items as children
+    - an item leaf: doesn't have children
+
+    The list of items is an :class:`ObservableSortedDictionary` which notifies
+    its changes to registred listeners.
+
     If the tree is modifiable, new items can be added.
-    Every item is an EditableTree.Item.
-    EditableTree is iterable over its items.
 
-    EditableTree also inherits from ObservableAttributes, so registred listeners can be notified of attributes value change.
+    Every item is an :class:`EditableTree.Item`.
+
+    *EditableTree* is iterable over its items.
+
+    *EditableTree* also inherits from :class:`ObservableAttributes`, so
+    registred listeners can be notified of attributes value change.
 
     To call a method when item list changes::
-    C{editableTree.addListener(callbackMethod)}
+
+      editableTree.addListener(callbackMethod)
+
     To call a method when an item list changes at any depth in the tree::
-    C{editableTree.addListenerRec(callbackMethod)}
+
+        editableTree.addListenerRec(callbackMethod)
+
     To call a method when an attribute of the tree changes::
-    C{editableTree.onAttributeChange(attributeName, callbackMethod)}
+
+        editableTree.onAttributeChange(attributeName, callbackMethod)
+
     To call a method when an attribute changes at any depth in the tree::
-    C{editableTree.onAttributeChangeRec(attributeName, callbackMethod)}
 
-    @type defaultName: string
-    @cvar defaultName: default name of the tree
+        editableTree.onAttributeChangeRec(attributeName, callbackMethod)
 
-    @type name: string
-    @ivar name: the name of the tree
-    @type modifiable: boolean
-    @ivar modifiable: if true, new items can be added, items can be deleted and modified
-    @type unamed: boolean
-    @param unamed: indicates if name parameter was none, so the tree has the default name.
-    :param visible: bool, indicates if the tree is visible (if not it may be hidden in a graphical representation)
+    Attributes
+    ----------
+    defaultName: string
+        default name of the tree
+    name: string
+        the name of the tree
+    id: string
+        tree identifier (a hash by default)
+    modifiable: bool
+        if *True*, new items can be added, items can be deleted and modified
+    unamed: bool
+        indicates if *name* parameter was none, so the tree has the default
+        name.
+    visible: bool
+        indicates if the tree is visible (if not it may be hidden in a
+        graphical representation)
     """
     defaultName = "tree"
 
-    def __init__(self, name=None, id=None, modifiable=True, content=[], visible=True, enabled=True):
+    def __init__(self, name=None, id=None, modifiable=True, content=[],
+                 visible=True, enabled=True):
+        """
+        Parameters
+        ----------
+        name: string
+            the name of the tree
+        id: string
+            tree identifier (a hash by default)
+        modifiable: bool
+            if *True*, new items can be added, items can be deleted and
+            modified
+        content: list
+            children items (:class:`EditableTree.Item`)
+        visible: bool
+            indicates if the tree is visible (if not it may be hidden in a
+            graphical representation)
+        enabled: bool
+        """
         dictContent = [(i.id, i) for i in content]
         super(EditableTree, self).__init__(*dictContent)
         if name is None:
@@ -925,9 +1046,11 @@ class EditableTree(ObservableAttributes, ObservableSortedDictionary):
 
     def __getinitargs__(self):
         """Returns the args to pass to the __init__ method to construct this object.
-        It is usefull in order to save EditableTree object to minf format.
-        @rtype: tuple
-        @return: arg content to pass to the __init__ method for creating a copy of this object
+        It is useful in order to save EditableTree object to minf format.
+        Returns
+        -------
+        tuple:
+            arg content to pass to the __init__ method for creating a copy of this object
         """
         # elements in the tuple must be serializable with minf, so the content
         # must be of type list
@@ -946,7 +1069,9 @@ class EditableTree(ObservableAttributes, ObservableSortedDictionary):
 
     def add(self, item):
         """
-        Add an item in the tree. If this item's id is already present in the tree as a key, add the item's content in the corresponding key.
+        Adds an item in the tree. If this item's id is already present in the
+        tree as a key, add the item's content in the corresponding key.
+
         recursive method
         """
         key = item.id
@@ -960,16 +1085,18 @@ class EditableTree(ObservableAttributes, ObservableSortedDictionary):
             self[key] = item
 
     def isDescendant(self, item):
-        """Return true if current item is a child or a child's child... of the item in parameter
-        Always false for the root of the tree"""
+        """Returns *True* if the current item is a child or a child's child...
+        of the item in parameter
+
+        Always *False* for the root of the tree"""
         return False
 
     def isLeaf(self):
         return False
 
     def removeEmptyBranches(self):
-        """If a branch item doesn't contain any leaf or branch that contains leaf recursivly,
-        the item is removed from the tree. """
+        """If a branch item doesn't contain any leaf or branch that contains
+        leaf recursivly, the item is removed from the tree. """
         toRemove = []
         for child in self.values():
             if not child.isLeaf():
@@ -981,7 +1108,7 @@ class EditableTree(ObservableAttributes, ObservableSortedDictionary):
             del self[item.id]
 
     def sort(self, key=None, reverse=False):
-        """Recursive sort of the tree : items are sorted in all branches.
+        """Recursive sort of the tree: items are sorted in all branches.
         """
         ObservableSortedDictionary.sort(self, self._keyItems)
         for item in self.values():
@@ -1000,9 +1127,12 @@ class EditableTree(ObservableAttributes, ObservableSortedDictionary):
 
     def compItems(self, id1, id2):
         """Comparison function
-        return 1 if i1 > i2
-        -1 if i1 < i2
-        0 if they are equal"""
+
+        Returns:
+
+        - 1 if ``i1 > i2``
+        - -1 if ``i1 < i2``
+        - 0 if they are equal"""
         res = 0
         i1 = self[id1]
         i2 = self[id2]
@@ -1033,8 +1163,12 @@ class EditableTree(ObservableAttributes, ObservableSortedDictionary):
                 item.addListenerRec(listener)
 
     def onAttributeChangeRec(self, attributeName, listener):
-        """Add a listener of the changes of this attribute value in the tree recursivly at every level.
-        The listener is added to the attribute change notifier of all branches of the tree."""
+        """Add a listener of the changes of this attribute value in the tree
+        recursivly at every level.
+
+        The listener is added to the attribute change notifier of all branches
+        of the tree.
+        """
         self.onAttributeChange(attributeName, listener)
         for item in self.values():
             if not item.isLeaf():
@@ -1043,30 +1177,33 @@ class EditableTree(ObservableAttributes, ObservableSortedDictionary):
     #-------------------------------------------------------------------------
     class Item(ObservableAttributes):
 
-        """Base element of an EditableTree
-        The attributes :
-        - icon : filename of the image that can be used to represent the item
-        - name : Text representation of the item
-        - movable : true if the item can be moved in the tree
-        - modifiable : true if the item can change (add children, change text, icon)
-        - delEnabled : true if deletion of the item is allowed
+        """Base element of an :class:`EditableTree`
 
-        Item inherits from L{ObservableAttributes}, so it can notify registred listener of attributes changes (for example name).
+        *Item* inherits from :class:`ObservableAttributes`, so it can notify
+        registred listeners of attributes changes (for example :attr:`name`).
 
-        @type icon: string
-        @ivar icon: file name of an icon to represent the item.
-        @type name: string
-        @ivar name: name of the item
-        @type tooltip: string
-        @ivar tooltip: description associated to the item
-        @type copyEnabled: boolean
-        @ivar copyEnabled: indicates if this item can be copied
-        @type modifiable: boolean
-        @ivar modifiable: indicates if the item can be modified (renamed for example)
-        @type delEnabled: boolean
-        @ivar delEnabled: indicates if the item can be deleted
-        :param visible: bool, indicates if current item is visible (if not it may be hidden in a graphical representation)
-        :param enabled: bool, indicates if the item is enabled, it could be visible but disabled
+        Attributes
+        ----------
+        icon: string
+            filename of the image that can be used to represent the item
+        name: string
+            Text representation of the item
+        movable: bool
+            True if the item can be moved in the tree
+        modifiable: bool
+            True if the item can changed (add children, change text, icon)
+        delEnabled: bool
+            True if deletion of the item is allowed
+        tooltip: string
+            description associated to the item
+        copyEnabled: bool
+            indicates if this item can be copied
+        visible: bool
+            indicates if current item is visible (if not it may be hidden in a
+            graphical representation)
+        enabled: bool
+            indicates if the item is enabled, it could be visible but disabled
+
         """
 
         def __init__(self, name=None, id=None, icon=None, tooltip=None, copyEnabled=True, modifiable=True, delEnabled=True, visible=True, enabled=True, *args):
@@ -1088,18 +1225,26 @@ class EditableTree(ObservableAttributes, ObservableSortedDictionary):
 
         def __getinitargs__(self):
             """Returns the args to pass to the __init__ method to construct this object.
-            It is usefull to save L{ObservableList} object to minf format.
-            @rtype: tuple
-            @return: arg content to pass to the __init__ method for creating a copy of this object
+            It is useful to save L{ObservableList} object to minf format.
+            Returns
+            -------
+            tuple:
+                arg content to pass to the __init__ method for creating a copy
+                of this object
             """
             return (self.name, self.id, self.icon, self.tooltip, self.copyEnabled, self.modifiable, self.delEnabled, self.visible, self.enabled)
 
         def __reduce__(self):
-            """This method is redefined for enable deepcopy of this object (and potentially pickle).
+            """This method is redefined for enable deepcopy of this object (and
+            potentially pickle).
+
             It gives the arguments to pass to the init method of the object when creating a copy
 
-            @rtype: tuple
-            @return: class name, init args, state, iterator on elements to copy, dictionary iterator
+            Returns
+            -------
+            tuple:
+                class name, init args, state, iterator on elements to copy,
+                dictionary iterator
             """
             return (self.__class__, self.__getinitargs__(), None, None, None)
 
@@ -1121,7 +1266,9 @@ class EditableTree(ObservableAttributes, ObservableSortedDictionary):
                     child.setAllModificationsEnabled(bool)
 
         def isDescendant(self, item):
-            """Return true if current item is a child or a child's child... of the item in parameter"""
+            """Returns *True* if the current item is a child or a child's
+            child... of the item in parameter
+            """
             found = False
             # print self.name, "is descendant", item.name, "? "
             if not item.isLeaf():
@@ -1139,13 +1286,17 @@ class EditableTree(ObservableAttributes, ObservableSortedDictionary):
     #-------------------------------------------------------------------------
     class Branch(Item, ObservableSortedDictionary):
 
-        """ A Branch is an item that can contain other items.
-        It inherits from Item and from ObservableSortedDictionary, so it can have children items.
+        """ A Branch is an :class:`Item <EditableTree.Item>` that can contain
+        other items.
+
+        It inherits from :class:`Item <EditableTree.Item>` and from
+        :class:`ObservableSortedDictionary`, so it can have children items.
         """
         defaultName = "new"
 
         def __init__(self, name=None, id=None, icon=None, tooltip=None, copyEnabled=True, modifiable=True, delEnabled=True, content=[], visible=True, enabled=True):
-            """All parameters must have default values to be able to create new elements automatically"""
+            """All parameters must have default values to be able to create new
+            elements automatically"""
             # super(EditableTree.Branch, self).__init__(content)  #, name, icon, tooltip, copyEnabled, modifiable, delEnabled)
             # EditableTree.Item.__init__(self, name, icon, tooltip,
             # copyEnabled, modifiable, delEnabled)
@@ -1164,8 +1315,10 @@ class EditableTree(ObservableAttributes, ObservableSortedDictionary):
             return (self.name, self.id, self.icon, self.tooltip, self.copyEnabled, self.modifiable, self.delEnabled, content, self.visible, self.enabled)
 
         def __reduce__(self):
-            """This method is redefined for enable deepcopy of this object (and potentially pickle).
-            It gives the arguments to pass to the init method of the object when creating a copy
+            """This method is redefined for enable deepcopy of this object (and
+            potentially pickle).
+            It gives the arguments to pass to the init method of the object
+            when creating a copy
             """
             return (self.__class__, self.__getinitargs__(), None, None, None)
 
@@ -1184,7 +1337,9 @@ class EditableTree(ObservableAttributes, ObservableSortedDictionary):
 
         def add(self, item):
             """
-            Add an item in the tree. If this item's id is already present in the tree as a key, add the item's content in the corresponding key.
+            Adds an item in the tree. If this item's id is already present in
+            the tree as a key, add the item's content in the corresponding key.
+
             recursive method
             """
             key = item.id
@@ -1210,7 +1365,7 @@ class EditableTree(ObservableAttributes, ObservableSortedDictionary):
                 del self[item.id]
 
         def sort(self, key=None, reverse=False):
-            """Recursive sort of the tree : items are sorted in all branches.
+            """Recursive sort of the tree: items are sorted in all branches.
             """
             ObservableSortedDictionary.sort(self, self._keyItems)
             for item in self.values():
@@ -1230,9 +1385,12 @@ class EditableTree(ObservableAttributes, ObservableSortedDictionary):
 
         def compItems(self, id1, id2):
             """Comparison function
-            return 1 if i1 > i2
-            -1 if i1 < i2
-            0 if they are equal"""
+
+            Returns
+
+            - 1 if i1 > i2
+            - -1 if i1 < i2
+            - 0 if they are equal"""
             res = 0
             i1 = self[id1]
             i2 = self[id2]
@@ -1284,19 +1442,29 @@ class EditableTree(ObservableAttributes, ObservableSortedDictionary):
 class ObservableNotifier(Notifier):
 
     """
-    This notifier can notify when the first listener is added and when the last listener is removed.
-    It enables to use the notifier only when there's some listeners registred.
+    This notifier can notify when the first listener is added and when the last
+    listener is removed.
 
-    @type onAddFirstListener: Notifier
-    @ivar onAddFirstListener: register a listener on this notifier to be called when the first listener is registred on ObservableNotifier
-    @type onRemoveLastListener: Notifier
-    @ivar onRemoveLastListener: register a listener on this notifier to be called when the last listener is removed from ObservableNotifier
+    It enables to use the notifier only when there are some listeners
+    registred.
+
+    Attributes
+    ----------
+    onAddFirstListener: :class:`Notifier`
+        register a listener on this notifier to be called when the first
+        listener is registred on ObservableNotifier
+    onRemoveLastListener: :class:`Notifier`
+        register a listener on this notifier to be called when the last
+        listener is removed from ObservableNotifier
     """
 
     def __init__(self, parameterCount=None):
         """
-        @type parameterCount: integer
-        @param parameterCount: if not None, each registered function must be callable with that number of arguments (checking is done on registration).
+        Parameters
+        ----------
+        parameterCount: int
+            if not *None*, each registered function must be callable with that
+            number of arguments (checking is done on registration).
         """
         Notifier.__init__(self, parameterCount)
         self.onAddFirstListener = Notifier()

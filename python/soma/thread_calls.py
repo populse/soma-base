@@ -52,7 +52,7 @@ for the call to be done) or synchronously (the requesting thread is stopped
 until the call is done and the result available).
 
 * author: Yann Cointepas
-* organization: `NeuroSpin <http://www.neurospin.org>`_
+* organization: NeuroSpin
 * license: `CeCILL B <http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html>`_
 '''
 __docformat__ = "restructuredtext en"
@@ -64,29 +64,39 @@ import time
 class SingleThreadCalls:
 
     '''
-    Allows the registration of functions that are going to be called from a single
-    thread. This single thread must continuously call L{processFunctions}.
-    Registration can be blocking (see L{call}) or non blocking (see L{push}).
-    Blocking registration wait for the function to be processed and returns its
-    result (or raises its exception). Non blocking registration put the function
-    in the list and return immediately, ignoring any return value or exception.
+    Allows the registration of functions that are going to be called from a
+    single thread. This single thread must continuously call
+    :meth:`processFunctions`.
+
+    Registration can be blocking (see :meth:`call`) or non blocking (see
+    :meth:`push`).
+
+    Blocking registration waits for the function to be processed and returns
+    its result (or raises its exception). Non blocking registration puts the
+    function in the list and returns immediately, ignoring any return value or
+    exception.
 
     Example::
-      stc = SingleThreadCall()
-      processingThread = threading.Thread( target=stc.processingLoop )
-      stc.setProcessingThread( processingThread )
-      processingThread.start()
+
+        stc = SingleThreadCall()
+        processingThread = threading.Thread(target=stc.processingLoop)
+        stc.setProcessingThread(processingThread)
+        processingThread.start()
     '''
 
     def __init__(self, thread=None):
         '''
         The thread passed in parameter is the processing thread of this
         SingleThreadCalls. When started (which is not been done by
-        C{SingleThreadCall}) it must continuously call L{processFunctions} to
-        execute the functions that have been registered with L{call} and L{push}.
-        @type  thread: C{threading.Thread} instance or C{None}
-        @param thread: Processing thread. If C{None}, C{threading.currentThread()}
-        is used.
+        :class:`SingleThreadCall`) it must continuously call
+        :meth:`processFunctions` to execute the functions that have been
+        registered with :meth:`call` and :meth:`push`.
+
+        Parameters
+        ----------
+        thread: :class:`threading.Thread` instance or *None*
+            Processing thread. If *None*, :func:`threading.currentThread`
+            is used.
         '''
         self._queue = []
         if thread is None:
@@ -96,11 +106,14 @@ class SingleThreadCalls:
 
     def setProcessingThread(self, thread):
         '''
-        Define the thread that processes the functions. The behaviour of L{call}
-        and L{push} is different if called from the processing thread or from
-        another one.
-        @type  thread: C{threading.Thread} instance
-        @param thread: Processing thread
+        Defines the thread that processes the functions. The behaviour of
+        :meth:`call` and :meth:`push` is different if called from the
+        processing thread or from another one.
+
+        Parameters
+        ----------
+        thread: :class:`threading.Thread`
+            Processing thread
         '''
         self._condition.acquire()
         try:
@@ -110,17 +123,30 @@ class SingleThreadCalls:
 
     def call(self, function, *args, **kwargs):
         '''
-        Register a function call and wait for the processing thread to call it.
-        Returns the result of the function. If an exception is raised during the
-        execution of the function, this exception is also raised by C{call()}.
-        Therefore C{call} behave like a direct call to the function.
-        It is possible to use C{call} from the processing thread. In this case,
-        no registration is done (the function is executed immedialey).
-        @type  function: callable
-        @param function: function to execute
-        @param args: parameters of the function
-        @param kwargs: keyword parameters of the function
-        @return: the result of the function call
+        Registers a function call and waits for the processing thread to call
+        it.
+
+        Returns the result of the function. If an exception is raised during
+        the execution of the function, this exception is also raised by
+        :meth:`call`.
+        Therefore :meth:`call` behaves like a direct call to the function.
+
+        It is possible to use :meth:`call` from the processing thread. In this
+        case, no registration is done (the function is executed immedialey).
+
+        Parameters
+        ----------
+        function: callable
+            function to execute
+        args:
+            parameters of the function
+        kwargs:
+            keyword parameters of the function
+
+        Returns
+        -------
+        any type
+            the result of the function call
         '''
         if threading.currentThread() is self._thread:
             result = apply(function, args, kwargs)
@@ -156,14 +182,24 @@ class SingleThreadCalls:
 
     def push(self, function, *args, **kwargs):
         '''
-        Same as L{call} method but always put the function on the queue and
-        returns immediatly. If C{push} is called from the processing thread,
-        the function is called immediately (I{i.e.} synchronously).
-        @type  function: callable
-        @param function: function to execute
-        @param args: parameters of the function
-        @param kwargs: keyword parameters of the function
-        @return: C{None}
+        Same as the :meth:`call` method but always puts the function on the
+        queue and returns immediatly. If :meth:`push` is called from the
+        processing thread, the function is called immediately (*i.e.*
+        synchronously).
+
+        Parameters
+        ----------
+        function: callable
+            function to execute
+        args:
+            parameters of the function
+        kwargs:
+            keyword parameters of the function
+
+        Returns
+        -------
+        None:
+            push() does not return anything.
         '''
         if threading.currentThread() is self._thread:
             apply(function, args, kwargs)

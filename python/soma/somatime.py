@@ -36,7 +36,7 @@
 Utility classes and functions for time handling.
 
 * author: Yann Cointepas
-* organization: NeuroSpin (http://www.neurospin.org)
+* organization: NeuroSpin
 * license: CeCILL B (http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html)
 '''
 __docformat__ = "restructuredtext en"
@@ -47,6 +47,8 @@ from soma.translation import translate as _
 
 
 def timeDifferenceToString(difference):
+    """
+    """
     days = int(difference / 86400)
     difference -= days * 86400
     hours = int(difference / 3600)

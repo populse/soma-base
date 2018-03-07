@@ -36,8 +36,7 @@
 Singleton pattern.
 
 - author: Yann Cointepas
-- organization: `NeuroSpin <http://www.neurospin.org>`_ and
-  `IFR 49 <http://www.ifr49.org>`_
+- organization: NeuroSpin
 - license: `CeCILL B <http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html>`_
 '''
 from __future__ import absolute_import
@@ -49,10 +48,10 @@ class Singleton(object):
     '''
     Implements the singleton pattern. A class deriving from ``Singleton`` can
     have only one instance. The first instanciation will create an object and
-    other instanciations return the same object. Note that the :py:meth:`__init__`
+    other instanciations return the same object. Note that the :meth:`__init__`
     method (if any) is still called at each instanciation (on the same object).
-    Therefore, :py:class:`Singleton` derived classes should define
-    :py:meth:`__singleton_init__`
+    Therefore, :class:`Singleton` derived classes should define
+    :meth:`__singleton_init__`
     instead of :py:meth:`__init__` because the former is only called once.
 
     Example::

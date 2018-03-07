@@ -36,7 +36,7 @@
 This module contains functions and classes related to sqlite databases.
 
 * author: Yann Cointepas
-* organization: `NeuroSpin <http://www.neurospin.org>`_
+* organization: NeuroSpin
 * license: `CeCILL B <http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html>`_
 '''
 from __future__ import absolute_import
