@@ -123,6 +123,19 @@ class Graph(object):
         self._nodes = {}
         self._links = []
 
+    def create_node(self, name, meta):
+        """Create a new Graph node and adds it to the graph
+ 
+         Parameters
+        ----------
+        name: str (mandatory)
+        the name of the node
+
+        meta: object
+        an python object to store in the node
+        """
+        self.add_node(GraphNode(name, meta))
+        
     def add_node(self, node):
         """ Method to add a GraphNode in the Graph
 
@@ -241,7 +254,7 @@ if __name__ == '__main__':
     g = Graph()
 
     for o in objects:
-        g.add_node(GraphNode(o, None))
+        g.create_node(o, None)
 
     for d in dependancies:
         g.add_link(d[0], d[1])
