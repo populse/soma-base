@@ -134,7 +134,9 @@ class Graph(object):
         meta: object
         an python object to store in the node
         """
-        self.add_node(GraphNode(name, meta))
+        node = GraphNode(name, meta)
+        self.add_node(node)
+        return node
         
     def add_node(self, node):
         """ Method to add a GraphNode in the Graph
