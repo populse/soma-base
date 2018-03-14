@@ -106,7 +106,7 @@ class Graph(object):
     ----------
     _nodes : dict
         the graph nodes {node.name: node}
-    _links : list
+    _links : set
         graph edges (from_node, to_node)
 
     Methods
@@ -121,7 +121,7 @@ class Graph(object):
         """ Create a Graph
         """
         self._nodes = {}
-        self._links = []
+        self._links = set()
 
     def create_node(self, name, meta):
         """Create a new Graph node and adds it to the graph
@@ -184,7 +184,7 @@ class Graph(object):
         if (from_node, to_node) not in self._links:
             self._nodes[to_node].add_link_from(self._nodes[from_node])
             self._nodes[from_node].add_link_to(self._nodes[to_node])
-            self._links.append((from_node, to_node))
+            self._links.add((from_node, to_node))
 
     def topological_sort(self):
         """ Perform the topological sort: find an order in which all the
@@ -242,7 +242,7 @@ if __name__ == '__main__':
     objects = ["chaussures", "chaussettes", "slip", "pantalon", "ceinture",
         "chemise", "veste", "cravate"]
 
-    dependancies = [
+    dependencies = [
         ("slip", "pantalon"),
         ("chemise", "cravate"),
         ("chemise", "pantalon"),
@@ -258,7 +258,7 @@ if __name__ == '__main__':
     for o in objects:
         g.create_node(o, None)
 
-    for d in dependancies:
+    for d in dependencies:
         g.add_link(d[0], d[1])
 
     r = g.topological_sort()
