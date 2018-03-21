@@ -36,8 +36,7 @@
 Utility classes and functions for debugging.
 
 - author: Yann Cointepas
-- organization: `NeuroSpin <http://www.neurospin.org>`_ and
-  `IFR 49 <http://www.ifr49.org>`_
+- organization: NeuroSpin
 - license: `CeCILL B <http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html>`_
 '''
 from __future__ import absolute_import

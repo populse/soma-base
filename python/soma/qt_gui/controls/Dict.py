@@ -80,7 +80,7 @@ class DictControlWidget(object):
                 continue
             # Unpack the control item
             trait, control_class, control_instance, control_label \
-                = control_groups.values()[0]
+                = control_groups.values().__iter__().__next__()
 
             # Call the current control specific check method
             valid = control_class.is_valid(control_instance)

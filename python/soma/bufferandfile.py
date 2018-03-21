@@ -58,17 +58,17 @@ class BufferAndFile(object):
       from soma.bufferandfile import BufferAndFile
 
       # Open a file with a buffer
-      f = BufferAndFile.open( fileName )
+      f = BufferAndFile.open(fileName)
       # Check that the file content is XML
-      start = f.read( 5 )
+      start = f.read(5)
       # Put back the read characters
       f.unread( start )
       if start == '<?xml':
-        # Use the file in an XML parser
-        ...
+          # Use the file in an XML parser
+          ...
       elif start == '&HDF':
-        # Use the file in an HDF5 parser
-        ...
+          # Use the file in an HDF5 parser
+          ...
 
     '''
 
@@ -167,7 +167,7 @@ class BufferAndFile(object):
 
     def tell(self):
         '''
-        POsition in file
+        Position in file
         '''
         return self.__file.tell() - len(self.__buffer)
 

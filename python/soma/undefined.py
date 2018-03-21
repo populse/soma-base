@@ -54,9 +54,9 @@ __docformat__ = "restructuredtext en"
 
 try:
     # If possible, use _Undefined from traits
-    from traits.trait_base import _Undefined
+    from traits.api import Undefined
     # Undefined is also defined for backward compatibility
-    undefined = Undefined = _Undefined()
+    undefined = Undefined
 except ImportError:
     undefined = None
 

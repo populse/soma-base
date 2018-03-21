@@ -216,7 +216,7 @@ class FileControlWidget(object):
         control_groups = controller_widget._controls[control_name]
         if not control_groups:
             return
-        control_class = control_groups.values()[0][1]
+        control_class = control_groups.values().__iter__().__next__()[1]
         if control_class.is_valid(control_instance):
 
             # Get the control value
