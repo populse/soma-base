@@ -15,6 +15,13 @@ class TestSerializable(JSONSerializable):
     def __cmp__(self, other):
         return cmp((self.a, self.b), (other.a, other.b))
 
+    # python3 does not support __cmp__()
+    def __eq__(self, other):
+        return self.a == other.a and self.b == other.b
+
+    def __lt__(self, other):
+        return (self.a, self.b) < (other.a, other.b)
+
     def to_json(self):
         return ['soma.tests.test_serialization.test_serializable',
                 [self.a, self.b]]
