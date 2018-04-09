@@ -41,6 +41,7 @@ import logging
 import sys
 import os
 import imp
+import six
 from soma.utils.functiontools import partial
 
 
@@ -64,16 +65,19 @@ class QtImporter(object):
         if modpath != __name__ or module_name == 'sip':
             return None
         set_qt_backend()
+        qt_backend = get_qt_backend()
         qt_module = get_qt_module()
-        if make_compatible_qt5 and get_qt_backend() in ('PyQt4', 'PySide'):
+        if make_compatible_qt5 and qt_backend in ('PyQt4', 'PySide'):
             if module_name == 'QtWidgets':
                 module_name = 'QtGui'
             elif module_name == 'QtWebKitWidgets':
                 module_name = 'QtWebKit'
+        if qt_backend == 'PySide' and module_name == 'Qt':
+            module_name = 'QtGui'
         found = imp.find_module(module_name, qt_module.__path__)
         return self
 
-    def load_module(self, name):  
+    def load_module(self, name):
         qt_backend = get_qt_backend()
         module_name = name.split('.')[-1]
         imp_module_name = module_name
@@ -82,6 +86,20 @@ class QtImporter(object):
                 imp_module_name = 'QtGui'
             elif module_name == 'QtWebKitWidgets':
                 imp_module_name = 'QtWebKit'
+        if imp_module_name == 'Qt' and qt_backend == 'PySide':
+            # PySide doesn't define the aggregating Qt module
+            psmods = []
+            base = name.split('.')[:-1]
+            for mod in ('QtCore', 'QtGui', 'phonon', 'QtNetwork', 'QtSvg',
+                        'QtOpenGL', 'QtTest', 'QtDeclarative', 'QtScript',
+                        'QtUiTools', 'QtScriptTools', 'QtWebKit', 'QtHelp',
+                        'QtSql', 'QtXml'):
+                try:
+                    psmods.append(self.load_module('.'.join(base + [mod])))
+                except ImportError:
+                    pass
+            patch_pyside_modules(psmods)
+            return sys.modules['.'.join([qt_backend, 'Qt'])]
         __import__('.'.join([qt_backend, imp_module_name]))
         module = sys.modules['.'.join([qt_backend, imp_module_name])]
         # fixes: #13432 - Ubuntu 14.04 LTS: Importing some modules
@@ -94,16 +112,16 @@ class QtImporter(object):
                     import sys, DLFCN
                     res = plugin_locals['getFilter_orig']()
                     sys.setdlopenflags(DLFCN.RTLD_NOW)
-                    
+
                     return res
-                    
+
                 import os
                 __import__('.'.join(['PyQt4', 'uic', 'objcreator']))
                 uic = sys.modules['.'.join([qt_backend, module_name])]
                 res = uic.objcreator.load_plugin_orig(plugin,
                                                       plugin_globals,
                                                       plugin_locals)
-                
+
                 # It seems that this function is sometimes called with a first
                 # argument of type File, sometimes of type str. Both cases
                 # should be handled by this switch.
@@ -114,11 +132,12 @@ class QtImporter(object):
                 if os.path.splitext(os.path.basename(filename))[0] == 'kde4':
                     # Replaces kde4 getFilter function
                     if ('getFilter_orig' not in plugin_locals):
-                        plugin_locals['getFilter_orig'] = plugin_locals['getFilter']
+                        plugin_locals['getFilter_orig'] \
+                            = plugin_locals['getFilter']
                         plugin_locals['getFilter'] = _safe_getFilter
-                    
+
                 return res
-            
+
             __import__('.'.join([qt_backend, module_name, 'objcreator']))
             uic = sys.modules['.'.join([qt_backend, module_name])]
             # Replaces the load_plugin function in objcreator
@@ -129,7 +148,7 @@ class QtImporter(object):
                 uic.objcreator.load_plugin_orig \
                     = uic.objcreator.load_plugin
                 uic.objcreator.load_plugin = _safe_load_plugin
-            
+
         sys.modules[name] = module
         if make_compatible_qt5:
             if imp_module_name == 'QtGui':
@@ -302,6 +321,18 @@ def patch_qt5_webkit_modules(QtWebKit, QtWebKitWidgets):
 def patch_qt4_modules(QtCore, QtGui):
     QtCore.QSortFilterProxyModel = QtGui.QSortFilterProxyModel
     QtCore.QItemSelectionModel = QtGui.QItemSelectionModel
+
+
+def patch_pyside_modules(modules):
+    if 'PySide.Qt' in sys.modules:
+        Qt = sys.modules['PySide.Qt']
+    else:
+        Qt = imp.new_module('PySide.Qt')
+        sys.modules['PySide.Qt'] = Qt
+    for mod in modules:
+        for key, item in six.iteritems(mod.__dict__):
+            if not key.startswith('__') and key not in Qt.__dict__:
+                setattr(Qt, key, item)
 
 
 def ensure_compatible_qt5():
