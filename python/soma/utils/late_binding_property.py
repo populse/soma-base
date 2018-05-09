@@ -7,6 +7,8 @@
 #
 
 
+from __future__ import print_function
+
 def update_meta(self, other):
     self.__name__ = other.__name__
     self.__doc__ = other.__doc__
@@ -25,18 +27,18 @@ class LateBindingProperty(property):
         >>> class C(object):
         ...
         ...     def getx(self):
-        ...         print 'C.getx'
+        ...         print('C.getx')
         ...         return self._x
         ...
         ...     def setx(self, x):
-        ...         print 'C.setx'
+        ...         print('C.setx')
         ...         self._x = x
         ...
         ...     x = LateBindingProperty(getx, setx)
         >>> class D(C):
         ...
         ...     def setx(self, x):
-        ...         print 'D.setx'
+        ...         print('D.setx')
         ...         super(D, self).setx(x)
         >>> c = C()
         >>> c.x = 1
