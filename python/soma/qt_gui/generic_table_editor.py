@@ -293,7 +293,7 @@ class GenericTableEditor(QWidget):
                         newval = from_re.sub(to_str, val)
                         self.setBufValFromStr(row, col, newval)
             self.buf_2_gui()
-        except Exception, e:
+        except Exception as e:
             QMessageBox.warning(self, "WARNING", str(e))
             return None
 
