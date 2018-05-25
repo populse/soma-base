@@ -167,11 +167,30 @@ def remove_query_string(path):
     '''
     return query_string_re.sub('', path)
 
+def parse_query_string(path):
+    '''
+    Parses the query string from a path and returns a dictionary.
+
+    Example
+    =======
+    '''
+    try:
+        from six.moves.urllib import parse as urlparse
+    except ImportError:
+        # some six versions do not provide six.moves.urllib (Ubuntu 12.04)
+        import urlparse
+        
+    url_parsed = urlparse.urlparse(path)
+    qs_parsed = urlparse.parse_qs(url_parsed.query)
+    
+    return dict([(k, v[0]) if isinstance(v, list) and len(v) == 1 else (k, v) \
+                 for k, v in six.iteritems(qs_parsed)])
+    
 
 class QueryStringParamUpdateMode:
     REPLACE = 0
     APPEND = 1
-
+    REMOVE = 2
 
 def update_query_string(
     path,
@@ -186,7 +205,7 @@ def update_query_string(
     path: string
           The path to update parameters within.
 
-    params: dict
+    params: dict|list
           A dictionnary that contains keys and parameters to set in the query
           string
 
@@ -306,7 +325,8 @@ def update_query_string(
                                     QueryStringParamUpdateMode.APPEND),))
 
     elif params_update_mode in (QueryStringParamUpdateMode.APPEND,
-                                QueryStringParamUpdateMode.REPLACE):
+                                QueryStringParamUpdateMode.REPLACE,
+                                QueryStringParamUpdateMode.REMOVE):
         # Update mode was specified for all parameters
         default_update_mode = params_update_mode
         params_update_mode = dict()
@@ -324,6 +344,10 @@ def update_query_string(
 
     url_parsed = urlparse.urlparse(path)
     url_params = urlparse.parse_qs(url_parsed.query)
+    
+    if isinstance(params, (list, tuple)):
+        params = dict([(p, '') for p in params])
+        
 
     # Update parameters dictionary
     for p, v in six.iteritems(params):
@@ -344,12 +368,17 @@ def update_query_string(
 
             else:
                 url_params.setdefault(p, list()).append(v)
-
+                
+        elif update_mode == QueryStringParamUpdateMode.REMOVE:
+            del url_params[p]
+            
         else:
             raise RuntimeError('params_update_mode is not specified correctly. %s is '
                                'not a valid value for parameter %s. Valid values are '
                                'either QueryStringParamUpdateMode.APPEND, either'
                                'QueryStringParamUpdateMode.REPLACE.' % (v, p))
+        
+        
     url_new = list(url_parsed)
     url_new[4] = urllib.urlencode(url_params, doseq=True)
 
