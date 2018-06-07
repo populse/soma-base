@@ -263,7 +263,11 @@ class Controller(six.with_metaclass(ControllerMeta, HasTraits)):
                 self.get(name)
             except TraitError:
                 # default value is invalid
-                setattr(self, name, Undefined)
+                try:
+                    setattr(self, name, Undefined)
+                except TraitError:
+                    # Undefined is invalid, too...
+                    pass
             self._user_traits[name] = trait_instance
 
         # Update/set the optional trait parameter
