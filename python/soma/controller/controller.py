@@ -16,6 +16,7 @@ logger = logging.getLogger(__name__)
 # Trait import
 from traits.api import HasTraits, Event, CTrait, Instance, Undefined, \
     TraitType, TraitError, Any, Set, TraitInstance, TraitCoerceType
+import traits.api as traits
 # Soma import
 from soma.sorted_dictionary import SortedDictionary, OrderedDict
 from soma.controller.trait_utils import _type_to_trait_id
@@ -237,6 +238,44 @@ class Controller(six.with_metaclass(ControllerMeta, HasTraits)):
         """
         return not isinstance(trait.handler, Event)
 
+
+    @staticmethod
+    def checked_trait(trait):
+        """ Check the trait and build a new one if needed.
+
+        This function mainly checks the default value of the given trait,
+        and tests in some ways whether it is valid ot not. If not, a new
+        trait is created to replace it.
+
+        For now it just checks that lists with a non-null minlen will actually
+        get a default value which is a list with this minimum size. Otherwise
+        it causes exceptions in the traits notification system at some point.
+
+        Parameters
+        ----------
+        trait: Trait instance to be checked
+
+        Returns
+        -------
+        new_trait: Trait instance
+            the returned trait may be the input one (trait), or a new one if
+            it had to be modified.
+        """
+        ut = getattr(trait, 'trait_type', trait)
+        if isinstance(ut, traits.List):
+            if ut.minlen != 0 and (not isinstance(ut.default, list)
+                                   or len(ut.default) < ut.minlen):
+                # default value is not OK, we have to build another one
+                if isinstance(ut.default, list):
+                    default = list(ut.default)
+                else:
+                    default = []
+                default += [ut.item_trait.default] * (ut.minlen - len(default))
+                trait = traits.List(ut.item_trait, default, minlen = ut.minlen,
+                                    maxlen=ut.maxlen)
+        return trait
+
+
     def add_trait(self, name, *trait):
         """ Add a new trait.
 
@@ -250,6 +289,9 @@ class Controller(six.with_metaclass(ControllerMeta, HasTraits)):
         # Debug message
         logger.debug("Adding trait '{0}'...".format(name))
 
+        # check trait default value inconsistencies
+        trait = (self.checked_trait(trait[0]), ) + trait[1:]
+
         # Inheritance: create the instance trait attribute
         super(Controller, self).add_trait(name, *trait)
 
@@ -258,16 +300,16 @@ class Controller(six.with_metaclass(ControllerMeta, HasTraits)):
         # to the class '_user_traits' attributes
         trait_instance = self.trait(name)
         if self.is_user_trait(trait_instance):
-            trait_instance.defaultvalue = trait_instance.default
-            try:
-                self.get(name)
-            except TraitError:
-                # default value is invalid
-                try:
-                    setattr(self, name, Undefined)
-                except TraitError:
-                    # Undefined is invalid, too...
-                    pass
+            #trait_instance.defaultvalue = trait_instance.default
+            #try:
+                #self.get(name)
+            #except TraitError:
+                ## default value is invalid
+                #try:
+                    #setattr(self, name, Undefined)
+                #except TraitError:
+                    ## Undefined is invalid, too...
+                    #pass
             self._user_traits[name] = trait_instance
 
         # Update/set the optional trait parameter
