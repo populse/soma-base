@@ -302,14 +302,14 @@ def update_query_string(
 
     # Convert params_update_mode to a dictionary that contains the update mode
     # for each parameter
-    if type(params_update_mode) in (types.ListType, types.TupleType):
+    if type(params_update_mode) in (list, tuple):
         # Update mode is specified using a list of parameter names
         default_update_mode = QueryStringParamUpdateMode.REPLACE
         params_update = params_update_mode
         params_update_mode = dict()
 
         for p in params_update:
-            if (type(p) in (types.ListType, types.TupleType)):
+            if (type(p) in (list, tuple)):
                 if (len(p) > 1):
                     params_update_mode[p[0]] = p[1]
                 elif(len(p) > 0):
@@ -318,7 +318,7 @@ def update_query_string(
             else:
                 params_update_mode[p] = QueryStringParamUpdateMode.APPEND
 
-    elif type(params_update_mode) in (types.StringType, types.UnicodeType):
+    elif isinstance(params_update_mode, six.string_types):
         # A parameter name was given directly
         default_update_mode = QueryStringParamUpdateMode.REPLACE
         params_update_mode = dict(((params_update_mode,
@@ -360,8 +360,8 @@ def update_query_string(
             url_params[p] = v
 
         elif update_mode == QueryStringParamUpdateMode.APPEND:
-            if type(v) in (types.ListType, types.TupleType):
-                if type(v) is types.TupleType:
+            if type(v) in (list, tuple):
+                if type(v) is tuple:
                     url_params[p] += list(v)
                 else:
                     url_params[p] += v
