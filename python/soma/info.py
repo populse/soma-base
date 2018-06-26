@@ -10,7 +10,7 @@ version_extra
 """
 version_major = 4
 version_minor = 6
-version_micro = 2
+version_micro = 3
 version_extra = ''
 _version_major = version_major
 _version_minor = version_minor
@@ -58,7 +58,7 @@ CLASSIFIERS = CLASSIFIERS
 AUTHOR = "CEA"
 AUTHOR_EMAIL = ""
 PLATFORMS = "OS Independent"
-ISRELEASE = _version_extra == ''
+ISRELEASE = version_extra == ''
 VERSION = __version__
 PROVIDES = ["soma-base"]
 REQUIRES = []
