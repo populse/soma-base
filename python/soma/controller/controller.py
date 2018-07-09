@@ -149,6 +149,10 @@ class Controller(six.with_metaclass(ControllerMeta, HasTraits)):
         # Create an empty trait
         trait = CTrait(0)
 
+        # we need a CTrait, not a TraitType
+        if isinstance(clone, TraitType):
+            clone = clone.as_ctrait()
+
         # Clone the input trait in the empty trait structure
         trait.clone(clone)
 
@@ -426,7 +430,7 @@ class Controller(six.with_metaclass(ControllerMeta, HasTraits)):
         """
         copied = self.__class__()
         for name, trait in six.iteritems(self.user_traits()):
-            copied.add_trait(name, trait)
+            copied.add_trait(name, self._clone_trait(trait))
             if with_values:
                 setattr(copied, name, getattr(self, name))
         return copied
@@ -465,15 +469,15 @@ class OpenKeyController(Controller):
     Usage:
 
     >>> dict_controller = OpenKeyController(value_trait=traits.Str())
-    >>> print dict_controller.user_traits().keys()
+    >>> print(dict_controller.user_traits().keys())
     []
     >>> dict_controller.my_item = 'bubulle'
-    >>> print dict_controller.user_traits().keys()
+    >>> print(dict_controller.user_traits().keys())
     ['my_item']
-    >>> print dict_controller.export_to_dict()
+    >>> print(dict_controller.export_to_dict())
     {'my_item': 'bubulle'}
     >>> del dict_controller.my_item
-    >>> print dict_controller.export_to_dict()
+    >>> print(dict_controller.export_to_dict())
     {}
     """
     _reserved_names = set(['trait_added'])
@@ -493,7 +497,8 @@ class OpenKeyController(Controller):
         if not name.startswith('_') and name not in self.__dict__ \
                 and name not in self.traits() \
                 and not name in OpenKeyController._reserved_names:
-            self.add_trait(name, self._value_trait)
+            cloned_trait = self._clone_trait(self._value_trait)
+            self.add_trait(name, cloned_trait)
         super(OpenKeyController, self).__setattr__(name, value)
 
     def __delattr__(self, name):
@@ -501,6 +506,28 @@ class OpenKeyController(Controller):
             self.remove_trait(name)
         else:
             super(OpenKeyController, self).__delattr__(name)
+
+    def copy(self, with_values=True):
+        """ Copy traits definitions to a new Controller object
+
+        Parameters
+        ----------
+        with_values: bool (optional, default: False)
+            if True, traits values will be copied, otherwise the defaut trait
+            value will be left in the copy.
+
+        Returns
+        -------
+        copied: Controller instance
+            the returned copy will have the same class as the copied object
+            (which may be a derived class from Controller). Traits definitions
+            will be copied. Traits values will only be copied if with_values is
+            True.
+        """
+        copied = super(OpenKeyController, self).copy(with_values=with_values)
+        super(OpenKeyController, copied).__setattr__('_value_trait',
+                                                     self._value_trait)
+        return copied
 
 
 class ControllerTrait(TraitType):

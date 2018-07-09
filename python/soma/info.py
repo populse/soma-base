@@ -58,7 +58,7 @@ CLASSIFIERS = CLASSIFIERS
 AUTHOR = "CEA"
 AUTHOR_EMAIL = ""
 PLATFORMS = "OS Independent"
-ISRELEASE = _version_extra == ''
+ISRELEASE = version_extra == ''
 VERSION = __version__
 PROVIDES = ["soma-base"]
 REQUIRES = []
