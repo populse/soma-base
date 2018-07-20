@@ -39,10 +39,15 @@
 '''
 
 try:
-    # It is necessary to first import zmq from the system if it is installed
-    # otherwise the one embeded with subprocess32 is loaded and it can lead
-    # to compatibility issue
-    import zmq
+    def __initialize_zmq():
+        # It is necessary to first import zmq from the system if it is installed
+        # otherwise the one embeded with subprocess32 is loaded and it can lead
+        # to compatibility issue
+        import zmq
+        
+    __initialize_zmq()
+    
+    del __initialize_zmq
     
 except ImportError:
     pass
@@ -50,9 +55,22 @@ except ImportError:
 try:
     # It is necessary to replace subprocess by subprocess32 to fix issue
     # in subprocess start
-    import subprocess32 as subprocess
-    import sys
-    sys.modules['subprocess'] = sys.modules['subprocess32']
+    # Import in current module all that is defined in subprocess module
+    from subprocess32 import *
+    
+    def __initialize_subprocess32():
+        import subprocess32
+        import sys
+        sys.modules['subprocess'] = sys.modules['subprocess32']
+    
+    __initialize_subprocess32()
+    del __initialize_subprocess32
     
 except ImportError:
-    import subprocess
+    from subprocess import *
+    
+    def __initialize_subprocess():
+        import subprocess
+    
+    __initialize_subprocess()
+    del __initialize_subprocess    

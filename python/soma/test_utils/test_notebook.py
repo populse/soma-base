@@ -3,7 +3,7 @@ import os
 import tempfile
 import re
 import sys
-import subprocess
+import soma.subprocess
 try:
     import nbformat
     from jupyter_core.command import main as main_jupyter
@@ -70,7 +70,7 @@ def notebook_run(path, timeout=60):
         try:
             # call _notebook_run as an external process because it will
             # sys.exit()
-            ret_code = subprocess.call(args)
+            ret_code = soma.subprocess.call(args)
 
             nb = nbformat.read(open(fout[1]), nbformat.current_nbformat)
         except Exception as e:
