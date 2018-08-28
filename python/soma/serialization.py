@@ -38,6 +38,21 @@ class JSONSerializable(object):
         '''
         raise NotImplementedError()
 
+def to_json(object):
+    '''
+    Return a JSON serialization of an object.
+    Standard types (None, bool, int, float, str, etc.) are using
+    json.dumps whereas other type of object must define a to_json
+    method returning the serialization.
+    '''
+    serializer = getattr(object, 'to_json', None)
+    if serializer is None:
+        if object is None:
+            return None
+        raise ValueError('Cannot serialize in JSON object of type {0}'.format(type(object)))
+    else:
+        return serializer()
+
 def from_json(json_serialization):
     '''
     Takes a JSON serialization object (typically created by a
@@ -61,7 +76,9 @@ def from_json(json_serialization):
     ``'catidb.data_models.catidb_3_4'`` would identify the *catidb_3_4*
     callable in the *catidb.data_models* module.
     '''
-    if isinstance(json_serialization, six.string_types):
+    if json_serialization is None:
+        return None
+    elif isinstance(json_serialization, six.string_types):
         callable = find_factory(json_serialization)
         return callable()
     elif isinstance(json_serialization, list):
