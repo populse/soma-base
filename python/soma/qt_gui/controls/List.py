@@ -169,6 +169,9 @@ class ListControlWidget(object):
                                                trait.handler.inner_traits()))
         inner_trait = trait.handler.inner_traits()[0]
 
+        if control_value is traits.Undefined:
+            control_value = []
+            
         # Create the list widget: a frame
         parent = get_ref(parent)
         frame = QtGui.QFrame(parent=parent)

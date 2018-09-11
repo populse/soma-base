@@ -507,7 +507,6 @@ class ControllerWidget(QtGui.QWidget):
         # Go through all the controller user traits
         skipped = set(['visible_groups'])
         for trait_name, trait in six.iteritems(selected_traits):
-
             if trait_name in skipped:
                 continue
             # Create the widget
@@ -590,8 +589,8 @@ class ControllerWidget(QtGui.QWidget):
                         control_labels.append(control_label)
 
         # Each trait has a hidden property. Take care of this information
-        hide = getattr(trait, "hidden", False)
-
+        hide = (getattr(trait, 'hidden', False) or getattr(trait, 'unused', False))
+        
         # Show/Hide the control and associated labels
         for control_instance in control_instances:
             control_instance.setVisible(not hide)
