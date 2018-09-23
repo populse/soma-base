@@ -1,24 +1,24 @@
 #!usr/bin/env python
 
 '''
-Run worker functions in remote processes.
+Run worker functions in separate processes.
 
-The use case is somewhat similar to what can be done using either :class:`queue.Queue <Queue.Queue>` and threads, or using :mod:`multiprocessing`. That is: run a number of independent job function, dispatched over a number of worker threads/processes.
+The use case is somewhat similar to what can be done using either :class:`queue.Queue <Queue.Queue>` and threads, or using :mod:`multiprocessing`. That is: run a number of independent job functions, dispatched over a number of worker threads/processes.
 
 The mpfork module is useful in cases the above methods cannot work:
 
 * threading in python is globally mainly inefficient because of the GIL.
 * :mod:`multiprocessing` makes heavy use of pickles to pass objects and parameters, and there are cases we are using objects which cannot be pickled, or which pickling generates heavy IO traffic (large data objects)
 
-The method here is based on the queue / thread schema, but uses fork() to actually execute the workers in a remote process. Only results are passed through pickles, so the worker return results must be picklable, but not the input arguments and objects.
+The method here is based on the queue / thread schema, but uses fork() to actually execute the workers in a separate process. Only results are passed through pickles, so the worker return results must be picklable, but not the input arguments and objects.
 
 Use:
 
 * allocate a :class:`Queue <Queue.Queue>`
 * allocate a results list with the exact size of the jobs number
-* allocate a set of worker threads (typically one per processor or core). The function allocate_workers() can do this for you.
+* allocate a set of worker threads (typically one per processor or core). The function :func:`allocate_workers` can do this for you.
 * fill the queue with jobs, each being a tuple (job_index, function, args, kwargs, results_list)
-* add a number of empty jobs (None) to the queue, one per allocated worker: this will be the marker for the end of processing in each worker thread.
+* add a number of empty jobs (None) to the queue, one per allocated worker: this will be the marker for the end of processing in each worker thread. It is necessary to explicitly add these empty jobs since an empty queue is not the signal for the end of processing: it can be re-filled at any time.
 * jobs run in workers
 * join the queue
 * join the worker threads
@@ -163,14 +163,19 @@ def allocate_workers(q, nworker=0, *args, **kwargs):
     q: :class:`Queue <Queue.Queue>` instance
         the jobs queue which will fed with jobs for processing
     nworker: int
-        number of worker threads (jobs which will run in parallel). A positive number (1, 2...) will be used as is, 0 means all available CPU cores (see `multithreading.cpu_count`), and a negative number means all CPU cores except this given number.
+        number of worker threads (jobs which will run in parallel). A positive
+        number (1, 2...) will be used as is, 0 means all available CPU cores
+        (see :func:`multiprocessing.cpu_count`), and a negative number means
+        all CPU cores except this given number.
     args, kwargs:
-        additional arguments will be pased to the jobs function(s) after individual jobs arguments: they are args common to all jobs (if any)
+        additional arguments will be pased to the jobs function(s) after
+        individual jobs arguments: they are args common to all jobs (if any)
 
     Returns
     -------
     workers: list
-        workers list, each is a `thread <threading.Thread>` instance running the worker loop function. Threads are already started (ie.
+        workers list, each is a :class:`thread <threading.Thread>` instance
+        running the worker loop function. Threads are already started (ie.
     '''
     if nworker == 0:
         nworker = multiprocessing.cpu_count()
