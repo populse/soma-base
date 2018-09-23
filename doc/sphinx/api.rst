@@ -132,6 +132,13 @@ SubModule: ``minf``
     :members:
 
 
+SubModule: ``mpfork``
+=====================
+
+.. automodule:: soma.mpfork
+    :members:
+
+
 SubModule: ``notification``
 ===========================
 
@@ -165,46 +172,46 @@ SubModule: ``qt_gui``
 .. automodule:: soma.qt_gui
     :members:
 
-SubModule: ``qt_backend``
-=========================
+SubModule: ``qt_gui.qt_backend``
+================================
 
 .. automodule:: soma.qt_gui.qt_backend
     :members:
 
-SubModule: ``qtThread``
-=======================
+SubModule: ``qt_gui.qtThread``
+==============================
 
 .. automodule:: soma.qt_gui.qtThread
     :members:
 
-SubModule: ``controller_widget``
-================================
+SubModule: ``qt_gui.controller_widget``
+=======================================
 
 .. automodule:: soma.qt_gui.controller_widget
     :members:
 
-SubModule: ``io``
-=================
+SubModule: ``qt_gui.io``
+========================
 
 .. automodule:: soma.qt_gui.io
     :members:
 
-SubModule: ``rangeSlider``
-==========================
+SubModule: ``qt_gui.rangeSlider``
+=================================
 
 .. automodule:: soma.qt_gui.rangeSlider
+    :members:
+
+SubModule: ``qt_gui.timered_widgets``
+=====================================
+
+.. automodule:: soma.qt_gui.timered_widgets
     :members:
 
 SubModule: ``safemkdir``
 ========================
 
 .. automodule:: soma.safemkdir
-    :members:
-
-SubModule: ``timered_widgets``
-==============================
-
-.. automodule:: soma.qt_gui.timered_widgets
     :members:
 
 SubModule: ``serialization``

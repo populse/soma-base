@@ -1,33 +1,20 @@
 #!usr/bin/env python
 
-from __future__ import print_function
-
-import multiprocessing
-import threading
-import queue
-import os
-import tempfile
-import sys
-try:
-    import cpickle as pickle
-except ImportError:
-    import pickle
-
 '''
 Run worker functions in remote processes.
 
-The use case is somewhat similar to what can be done using either :python:`queue.Queue` and threads, or using :python:`multiprocessing`. That is: run a number of independent job function, dispatched over a number of worker threads/processes.
+The use case is somewhat similar to what can be done using either :class:`queue.Queue <Queue.Queue>` and threads, or using :mod:`multiprocessing`. That is: run a number of independent job function, dispatched over a number of worker threads/processes.
 
 The mpfork module is useful in cases the above methods cannot work:
 
 * threading in python is globally mainly inefficient because of the GIL.
-* :python:`multiprocessing` makes heavy use of pickles to pass objects and parameters, and there are cases we are using objects which cannot be pickled, or which pickling generates heavy IO traffic (large data objects)
+* :mod:`multiprocessing` makes heavy use of pickles to pass objects and parameters, and there are cases we are using objects which cannot be pickled, or which pickling generates heavy IO traffic (large data objects)
 
 The method here is based on the queue / thread schema, but uses fork() to actually execute the workers in a remote process. Only results are passed through pickles, so the worker return results must be picklable, but not the input arguments and objects.
 
 Use:
 
-* allocate a queue.Queue
+* allocate a :class:`Queue <Queue.Queue>`
 * allocate a results list with the exact size of the jobs number
 * allocate a set of worker threads (typically one per processor or core). The function allocate_workers() can do this for you.
 * fill the queue with jobs, each being a tuple (job_index, function, args, kwargs, results_list)
@@ -64,6 +51,19 @@ In case of error, the job result will be an exception with stack information: (e
 
 Availability: Unix
 '''
+
+from __future__ import print_function
+
+import multiprocessing
+import threading
+import queue
+import os
+import tempfile
+import sys
+try:
+    import cpickle as pickle
+except ImportError:
+    import pickle
 
 def run_job(f, *args, **kwargs):
     ''' Internal function, runs the function in a remote process.
@@ -128,7 +128,7 @@ def worker(q, *args, **kwargs):
 
     .. warning::
         Here we are making use of fork() (Unix only) inside a thread. Some systems do not behave wel in this situation.
-        See python:`the os.fork() doc <os.fork>`
+        See :func:`the os.fork() doc <os.fork>`
     '''
     while True:
         item = q.get()
@@ -160,17 +160,17 @@ def allocate_workers(q, nworker=0, *args, **kwargs):
 
     Parameters
     ----------
-    q: python:`queue.Queue` instance
+    q: :class:`Queue <Queue.Queue>` instance
         the jobs queue which will fed with jobs for processing
     nworker: int
-        number of worker threads (jobs which will run in parallel). A positive number (1, 2...) will be used as is, 0 means all available CPU cores (see :python:`multithreading.cpu_count`), and a negative number means all CPU cores except this given number.
+        number of worker threads (jobs which will run in parallel). A positive number (1, 2...) will be used as is, 0 means all available CPU cores (see `multithreading.cpu_count`), and a negative number means all CPU cores except this given number.
     args, kwargs:
         additional arguments will be pased to the jobs function(s) after individual jobs arguments: they are args common to all jobs (if any)
 
     Returns
     -------
     workers: list
-        workers list, each is a :python:`thread <threading.Thread>` instance running the worker loop function. Threads are already started (ie.
+        workers list, each is a `thread <threading.Thread>` instance running the worker loop function. Threads are already started (ie.
     '''
     if nworker == 0:
         nworker = multiprocessing.cpu_count()
