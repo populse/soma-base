@@ -172,18 +172,6 @@ SubModule: ``qt_gui``
 .. automodule:: soma.qt_gui
     :members:
 
-SubModule: ``qt_gui.qt_backend``
-================================
-
-.. automodule:: soma.qt_gui.qt_backend
-    :members:
-
-SubModule: ``qt_gui.qtThread``
-==============================
-
-.. automodule:: soma.qt_gui.qtThread
-    :members:
-
 SubModule: ``qt_gui.controller_widget``
 =======================================
 
@@ -194,6 +182,18 @@ SubModule: ``qt_gui.io``
 ========================
 
 .. automodule:: soma.qt_gui.io
+    :members:
+
+SubModule: ``qt_gui.qt_backend``
+================================
+
+.. automodule:: soma.qt_gui.qt_backend
+    :members:
+
+SubModule: ``qt_gui.qtThread``
+==============================
+
+.. automodule:: soma.qt_gui.qtThread
     :members:
 
 SubModule: ``qt_gui.rangeSlider``
