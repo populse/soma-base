@@ -2,3 +2,6 @@
 
 Miscellaneous libs for the python environment of Populse / BrainVISA
 
+# Documentation
+
+Docs are currently on http://brainvisa.info/soma-base/sphinx/index.html
