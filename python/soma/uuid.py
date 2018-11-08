@@ -120,7 +120,11 @@ class Uuid(object):
         if isinstance(other, Uuid):
             return self.__uuid == other.__uuid
         elif isinstance(other, basestring):  # assume string-like object (str or unicode)
-            return self.__uuid == Uuid(other).__uuid
+            try:
+                uuid_other = Uuid(other)
+            except ValueError:
+                return False
+            return self.__uuid == uuid_other.__uuid
         else:
             return False
 
@@ -128,6 +132,10 @@ class Uuid(object):
         if isinstance(other, Uuid):
             return self.__uuid != other.__uuid
         elif isinstance(other, basestring):  # assume string-like object (str or unicode)
-            return self.__uuid != Uuid(other).__uuid
+            try:
+                uuid_other = Uuid(other)
+            except ValueError:
+                return True
+            return self.__uuid != uuid_other.__uuid
         else:
             return True
