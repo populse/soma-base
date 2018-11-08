@@ -66,13 +66,12 @@ PROVIDES = ["soma-base"]
 REQUIRES = [
     "six",
     "numpy",
+    "importlib;python_version<='2.6'"
 ]
-if sys.version_info[:2] <= [2, 6]:
-    REQUIRES.append("importlib")
 EXTRAS_REQUIRE = {
     "doc": ["sphinx>=%s" % SPHINX_MIN_VERSION],
     "crypto": ["pycrypto"],
     "controller": ["traits"],
-    "subprocess": ["subprocess32"],
+    "subprocess": ["subprocess32;python_version<'3.2'"],
     "test_utils": ["argparse"],
 }
