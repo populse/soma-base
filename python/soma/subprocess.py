@@ -47,7 +47,7 @@ import sys
 if sys.version_info[:2] >= (3, 2):
     # in python >= 3.2, subprocess32 is not needed as it is the builtin
     # subprocess module
-    from processes import *
+    from subprocess import *
 else:
     try:
         def __initialize_zmq():
