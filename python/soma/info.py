@@ -1,6 +1,5 @@
 """ Information module, containing version variables, plus some
 setuptools-related variables
-
 Attributes
 ----------
 version_major
@@ -8,6 +7,9 @@ version_minor
 version_micro
 version_extra
 """
+
+import sys
+
 version_major = 4
 version_minor = 7
 version_micro = 0
@@ -61,8 +63,16 @@ PLATFORMS = "OS Independent"
 ISRELEASE = version_extra == ''
 VERSION = __version__
 PROVIDES = ["soma-base"]
-REQUIRES = []
+REQUIRES = [
+    "six",
+    "numpy",
+]
+if sys.version_info[:2] <= [2, 6]:
+    REQUIRES.append("importlib")
 EXTRAS_REQUIRE = {
     "doc": ["sphinx>=%s" % SPHINX_MIN_VERSION],
-    "crypto": ["pycrypto"]
+    "crypto": ["pycrypto"],
+    "controller": ["traits"],
+    "subprocess": ["subprocess32"],
+    "test_utils": ["argparse"],
 }
