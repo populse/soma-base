@@ -44,7 +44,7 @@ available on the system.
 from __future__ import absolute_import
 import sys
 
-if sys.version_info[:2] >= [3, 2]:
+if sys.version_info[:2] >= (3, 2):
     # in python >= 3.2, subprocess32 is not needed as it is the builtin
     # subprocess module
     from processes import *
