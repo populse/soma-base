@@ -6,7 +6,7 @@ import shutil
 import os
 import tempfile
 from soma.sorted_dictionary import SortedDictionary
-
+import pickle
 
 
 class TestSortedDictionary(unittest.TestCase):
@@ -23,6 +23,8 @@ class TestSortedDictionary(unittest.TestCase):
 
         self.assertEqual(dict(d1), dict(d2))
         self.assertNotEqual(d1.keys(), d2.keys())
+        self.assertEqual(d1, dict(d1))
+        self.assertEqual(d1, SortedDictionary(dict(d1).items()))
 
         d1['titi'] = 'babar'
         d2['titi'] = 'bubur'
@@ -37,6 +39,15 @@ class TestSortedDictionary(unittest.TestCase):
         del d2['titi']
         self.assertEqual(dict(d1), dict(d2))
         self.assertEqual(d2.keys(), ['tutu', 'toto'])
+        p = pickle.dumps(d1)
+        p2 = pickle.loads(p)
+        self.assertTrue(isinstance(p2, SortedDictionary))
+        self.assertEqual(d1, p2)
+
+        d1.insert(1, 'babar', 'new item')
+        self.assertEqual(d1.keys(), ['toto', 'babar', 'tutu'])
+        self.assertRaises(KeyError, d1.insert, 2, 'babar', 'other')
+        self.assertEqual(d1.index('babar'), 1)
 
 
 def test():

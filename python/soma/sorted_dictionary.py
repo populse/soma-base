@@ -50,6 +50,7 @@ __docformat__ = "restructuredtext en"
 
 import sys
 import six
+import inspect
 from soma.undefined import Undefined
 
 
@@ -78,7 +79,10 @@ class SortedDictionary(dict):
         '''
         super(SortedDictionary, self).__init__()
         self.sortedKeys = []
-        if len(args) == 1 and isinstance(args[0], list):
+        if len(args) == 1 and isinstance(args[0], list) \
+                or inspect.isgenerator(args[0]) \
+                or (sys.version_info[0] >= 3
+                    and isinstance(args[0], type({}.items()))):
             elements = args[0]  # dict / OrderedDict compatibility
         else:
             elements = args
@@ -113,10 +117,15 @@ class SortedDictionary(dict):
         values: list
             sorted list of values
         '''
+        if sys.version_info[0] >= 3:
+            return self.itervalues()
         return [x for x in self.itervalues()]
 
     def __setitem__(self, key, value):
         if key not in self:
+            if 'sortedKeys' not in self.__dict__:
+                # this happens during picle.load() with python3
+                self.sortedKeys = []
             self.sortedKeys.append(key)
         super(SortedDictionary, self).__setitem__(key, value)
 
@@ -125,6 +134,8 @@ class SortedDictionary(dict):
         self.sortedKeys.remove(key)
 
     def __getstate__(self):
+        if sys.version_info[0] >= 3:
+            return list(self.items())
         return self.items()
 
     def __setstate__(self, state):
