@@ -79,10 +79,11 @@ class SortedDictionary(dict):
         '''
         super(SortedDictionary, self).__init__()
         self.sortedKeys = []
-        if len(args) == 1 and isinstance(args[0], list) \
-                or inspect.isgenerator(args[0]) \
+        if len(args) == 1 and (
+                isinstance(args[0], list)
+                or inspect.isgenerator(args[0])
                 or (sys.version_info[0] >= 3
-                    and isinstance(args[0], type({}.items()))):
+                    and isinstance(args[0], type({}.items())))):
             elements = args[0]  # dict / OrderedDict compatibility
         else:
             elements = args

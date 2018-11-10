@@ -12,6 +12,9 @@ import pickle
 class TestSortedDictionary(unittest.TestCase):
 
     def test_sorted_dictionary(self):
+        d0 = SortedDictionary()
+        self.assertEqual(dict(d0), {})
+
         d1 = SortedDictionary(
             ('titi', {'bubu': '50', 'turlute': 12}),
             ('toto', 'val"u\'e'),
