@@ -177,8 +177,7 @@ class TestController(unittest.TestCase):
                      "(['Int', 'Str'] - mandatory)",
                      "choice: an integer or a string "
                      "(['Int', 'Str'] - mandatory)"))
-        self.assertEqual(manhelp[1], "    mandatory)")
-        self.assertEqual(manhelp[2], "    No description.")
+        self.assertEqual(manhelp[-1], "    No description.")
 
 
     def test_trait(self):
