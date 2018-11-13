@@ -171,10 +171,12 @@ class TestController(unittest.TestCase):
         trait.ouptut = False
         trait.optional = False
         manhelp = get_trait_desc("choice", trait, None)
-        self.assertEqual(len(manhelp), 3)
-        self.assertEqual(
-            manhelp[0],
-            "choice: an integer (int or long) or a string (['Int', 'Str'] -")
+        desc = ' '.join([x.strip() for x in manhelp[:-1]])
+        self.assertTrue(
+            desc in ("choice: an integer (int or long) or a string "
+                     "(['Int', 'Str'] - mandatory)",
+                     "choice: an integer or a string "
+                     "(['Int', 'Str'] - mandatory)"))
         self.assertEqual(manhelp[1], "    mandatory)")
         self.assertEqual(manhelp[2], "    No description.")
 
