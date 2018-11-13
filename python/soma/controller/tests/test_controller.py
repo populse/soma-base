@@ -159,15 +159,12 @@ class TestController(unittest.TestCase):
         trait.ouptut = False
         trait.optional = False
         manhelp = get_trait_desc("blop", trait, None)
-        self.assertEqual(len(manhelp), 4)
+        desc = ' '.join([x.strip() for x in manhelp[:-1]])
         self.assertEqual(
-            manhelp[0],
-            "blop: a Blop or None")
-        self.assertEqual(
-            manhelp[1],
-            "    (['Instance_soma.controller.tests.test_controller.Blop'] -")
-        self.assertEqual(manhelp[2], "    mandatory)")
-        self.assertEqual(manhelp[3], "    No description.")
+            desc,
+            "blop: a Blop or None (['Instance_%s.Blop'] - mandatory)"
+            % Blop.__module__)
+        self.assertEqual(manhelp[-1], "    No description.")
 
     def test_trait_utils4(self):
         trait = traits.Either(traits.Int(47), traits.Str("vovo")).as_ctrait()
