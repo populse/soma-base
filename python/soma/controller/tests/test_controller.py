@@ -7,6 +7,9 @@ import os
 import tempfile
 from soma.controller import Controller, ControllerTrait, OpenKeyController
 import traits.api as traits
+from soma.controller.trait_utils import (
+    get_trait_desc, is_trait_value_defined, is_trait_pathname,
+    trait_ids)
 
 
 
@@ -72,7 +75,9 @@ class TestController(unittest.TestCase):
         class Car(Controller):
             wheels = traits.Str()
             engine = traits.Str()
-            driver = ControllerTrait(Driver())
+            driver = ControllerTrait(Driver(),
+                                     desc='the guy who would better take a '
+                                     'bus')
             problems = ControllerTrait(OpenKeyController(traits.Str()))
 
         my_car = Car()
@@ -113,6 +118,85 @@ class TestController(unittest.TestCase):
         del my_car.problems.fuel
         self.assertEqual(sorted(my_car.problems.user_traits().keys()),
                          ['exhaust', 'windshield'])
+
+        manhelp = get_trait_desc('driver', my_car.trait('driver'))
+        self.assertEqual(
+            manhelp[0],
+            "driver: a legal value (['ControllerTrait'] - mandatory)")
+        self.assertEqual(manhelp[1], "    the guy who would better take a bus")
+
+
+    def test_trait_utils1(self):
+        """ Method to test if we can build a string description for a trait.
+        """
+        trait = traits.CTrait(0)
+        trait.handler = traits.Float()
+        trait.ouptut = False
+        trait.optional = True
+        trait.desc = "bla"
+        manhelp = get_trait_desc("float_trait", trait, 5)
+        self.assertEqual(
+            manhelp[0],
+            "float_trait: a float (['Float'] - optional, default value: 5)")
+        self.assertEqual(manhelp[1], "    bla")
+
+    def test_trait_utils2(self):
+        trait = traits.CTrait(0)
+        trait.handler = traits.Float()
+        trait.ouptut = True
+        trait.optional = False
+        manhelp = get_trait_desc("float_trait", trait, 5)
+        self.assertEqual(
+            manhelp[0],
+            "float_trait: a float (['Float'] - mandatory, default value: 5)")
+        self.assertEqual(manhelp[1], "    No description.")
+
+    def test_trait_utils3(self):
+        class Blop(object):
+            pass
+        trait = traits.CTrait(0)
+        trait.handler = traits.Instance(Blop())
+        trait.ouptut = False
+        trait.optional = False
+        manhelp = get_trait_desc("blop", trait, None)
+        self.assertEqual(len(manhelp), 4)
+        self.assertEqual(
+            manhelp[0],
+            "blop: a Blop or None")
+        self.assertEqual(
+            manhelp[1],
+            "    (['Instance_soma.controller.tests.test_controller.Blop'] -")
+        self.assertEqual(manhelp[2], "    mandatory)")
+        self.assertEqual(manhelp[3], "    No description.")
+
+    def test_trait_utils4(self):
+        trait = traits.Either(traits.Int(47), traits.Str("vovo")).as_ctrait()
+        trait.ouptut = False
+        trait.optional = False
+        manhelp = get_trait_desc("choice", trait, None)
+        self.assertEqual(len(manhelp), 3)
+        self.assertEqual(
+            manhelp[0],
+            "choice: an integer (int or long) or a string (['Int', 'Str'] -")
+        self.assertEqual(manhelp[1], "    mandatory)")
+        self.assertEqual(manhelp[2], "    No description.")
+
+
+    def test_trait(self):
+        """ Method to test trait characterisitics: value, type.
+        """
+        self.assertTrue(is_trait_value_defined(5))
+        self.assertFalse(is_trait_value_defined(""))
+        self.assertFalse(is_trait_value_defined(None))
+        self.assertFalse(is_trait_value_defined(traits.Undefined))
+
+        trait = traits.CTrait(0)
+        trait.handler = traits.Float()
+        self.assertFalse(is_trait_pathname(trait))
+        for handler in [traits.File(), traits.Directory()]:
+            trait.handler = handler
+            self.assertTrue(is_trait_pathname(trait))
+
 
 
 
