@@ -16,9 +16,17 @@ class TestUndefined(unittest.TestCase):
             self._traits = sys.modules['traits']
         else:
             self._traits = None
+        if 'traits.api' in sys.modules:
+            self._traits_api = sys.modules['traits.api']
+        else:
+            self._traits_api = None
 
     def restore_traits(self):
         # fix / restore traits module
+        if self._traits_api is None:
+            del sys.modules['traits.api']
+        else:
+            sys.modules['traits.api'] = self._traits_api
         if self._traits is None:
             del sys.modules['traits']
         else:
@@ -31,6 +39,7 @@ class TestUndefined(unittest.TestCase):
 
     def test_undefined_builtin(self):
         sys.modules['traits'] = None
+        sys.modules['traits.api'] = None
         from soma import undefined
         reload(undefined)
         self.assertTrue(hasattr(undefined, 'Undefined'))
