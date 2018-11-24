@@ -54,16 +54,12 @@ from __future__ import print_function
 
 __docformat__ = "restructuredtext en"
 
-import sys
-if sys.version_info[0] < 3:
-    ModuleNotFoundError = ImportError
-
 try:
     # If possible, use _Undefined from traits
     from traits.api import Undefined
     # Undefined is also defined for backward compatibility
     undefined = Undefined
-except ModuleNotFoundError:
+except:
     undefined = None
 
 if undefined is None:
