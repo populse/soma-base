@@ -73,9 +73,9 @@ def htmlEscape(msg):
                                   if len(j) == 1])
         else:
             # htmlentitydefs is apparently encoded in iso-8859-1
-            # (defaultencoding ?)
+            # (*NOT* defaultencoding)
             # (and this is not specified in the source code)
-            encoding = sys.getdefaultencoding()
+            encoding = 'iso-8859-1'
             _htmlEscape = dict(
                 [(ord(j.decode(encoding)), u'&' + i.decode(encoding) + u';')
                  for i, j in six.iteritems(htmlentitydefs.entitydefs)
@@ -100,9 +100,9 @@ def lesserHtmlEscape(msg):
                                          u'ô', u'î', u'û', u'ù', u'ö', )])
         else:
             # htmlentitydefs is apparently encoded in iso-8859-1
-            # (defaultencoding ?)
+            # (*NOT* defaultencoding)
             # (and this is not specified in the source code)
-            encoding = sys.getdefaultencoding()
+            encoding = 'iso-8859-1'
             _lesserHtmlEscape = dict(
                 [(ord(j.decode(encoding)), u'&' + i.decode(encoding) + u';')
                  for i, j in six.iteritems(htmlentitydefs.entitydefs)

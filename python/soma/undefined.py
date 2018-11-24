@@ -63,13 +63,11 @@ try:
     from traits.api import Undefined
     # Undefined is also defined for backward compatibility
     undefined = Undefined
-    print('traits Undefined', file=sys.stderr)
 except ModuleNotFoundError:
     undefined = None
 
 if undefined is None:
     # _Undefined cannot be imported from traits, provides an implementation
-    print('builting Undefined', file=sys.stderr)
 
     from soma.singleton import Singleton
 
