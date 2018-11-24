@@ -72,10 +72,14 @@ def htmlEscape(msg):
                                   in six.iteritems(htmlentitydefs.entitydefs)
                                   if len(j) == 1])
         else:
-            _htmlEscape = dict([(ord(j.decode('iso-8859-1')), u'&' + i + u';')
-                              for i, j
-                                  in six.iteritems(htmlentitydefs.entitydefs)
-                                  if len(j) == 1])
+            # htmlentitydefs is apparently encoded in iso-8859-1
+            # (defaultencoding ?)
+            # (and this is not specified in the source code)
+            encoding = sys.getdefaultencoding()
+            _htmlEscape = dict(
+                [(ord(j.decode(encoding)), u'&' + i.decode(encoding) + u';')
+                 for i, j in six.iteritems(htmlentitydefs.entitydefs)
+                 if len(j) == 1])
     return unicode(msg).translate(_htmlEscape)
 
 
@@ -95,11 +99,14 @@ def lesserHtmlEscape(msg):
                                         (u'"', u'é', u'à', u'è', u'â', u'ê',
                                          u'ô', u'î', u'û', u'ù', u'ö', )])
         else:
-            _lesserHtmlEscape = dict([(ord(j.decode('iso-8859-1')), u'&' + i
-                                      + u';')
-                                    for i, j
-                                    in six.iteritems(htmlentitydefs.entitydefs)
-                                    if len(j) == 1 and j not in
-                                        (u'"', u'é', u'à', u'è', u'â', u'ê',
-                                         u'ô', u'î', u'û', u'ù', u'ö', )])
+            # htmlentitydefs is apparently encoded in iso-8859-1
+            # (defaultencoding ?)
+            # (and this is not specified in the source code)
+            encoding = sys.getdefaultencoding()
+            _lesserHtmlEscape = dict(
+                [(ord(j.decode(encoding)), u'&' + i.decode(encoding) + u';')
+                 for i, j in six.iteritems(htmlentitydefs.entitydefs)
+                 if len(j) == 1 and j.decode(encoding) not in
+                    (u'"', u'é', u'à', u'è', u'â', u'ê',
+                     u'ô', u'î', u'û', u'ù', u'ö', )])
     return unicode(msg).translate(_lesserHtmlEscape)
