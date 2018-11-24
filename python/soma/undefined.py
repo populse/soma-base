@@ -55,17 +55,21 @@ from __future__ import print_function
 __docformat__ = "restructuredtext en"
 
 import sys
+if sys.version_info[0] < 3:
+    ModuleNotFoundError = ImportError
 
 try:
     # If possible, use _Undefined from traits
     from traits.api import Undefined
     # Undefined is also defined for backward compatibility
     undefined = Undefined
-except ImportError:
+    print('traits Undefined', file=sys.stderr)
+except ModuleNotFoundError:
     undefined = None
 
 if undefined is None:
     # _Undefined cannot be imported from traits, provides an implementation
+    print('builting Undefined', file=sys.stderr)
 
     from soma.singleton import Singleton
 
