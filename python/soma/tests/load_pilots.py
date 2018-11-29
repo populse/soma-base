@@ -48,7 +48,7 @@ def load_pilots(root, path):
                 # An api exists, but it cannot be imported
                 logging.debug("Could not import {0}:"
                               "{1}".format(module_name, e))
-                return pilots
+                continue
 
             module = sys.modules[module_name]
 
