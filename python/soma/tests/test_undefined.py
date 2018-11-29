@@ -42,8 +42,6 @@ class TestUndefined(unittest.TestCase):
         sys.modules['traits.api'] = None
         from soma import undefined
         reload(undefined)
-        self.assertRaises(AttributeError,
-                          undefined.UndefinedClass.get_instance)
         self.assertTrue(hasattr(undefined, 'Undefined'))
         undef = undefined.Undefined
         self.assertTrue(isinstance(undef, undefined.UndefinedClass))
