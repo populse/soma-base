@@ -47,8 +47,8 @@ def untar(input_filename, extract_dir):
     """
     try:
         tar_ds = tarfile.open(input_filename)
-    except tarfile.TarError:
-        raise "%s is not a tar file" % (input_filename)
+    except (tarfile.TarError, EOFError):
+        raise OSError("%s is not a tar file" % (input_filename))
     tar_ds.extractall(path=extract_dir)
     tar_ds.close()
 
@@ -57,7 +57,7 @@ def unzip(input_filename, extract_dir):
     Extracts the input_filename archive to the extract_dir directory.
     """
     if not zipfile.is_zipfile(input_filename):
-        raise "%s is not a zip file" % (input_filename)
+        raise OSError("%s is not a zip file" % (input_filename))
     zip_ds = zipfile.ZipFile(input_filename)
     zip_ds.extractall(path=extract_dir)
     zip_ds.close()

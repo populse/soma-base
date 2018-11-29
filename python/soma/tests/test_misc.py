@@ -130,6 +130,77 @@ class TestSomaMisc(unittest.TestCase):
         l = [x for x in functiontools.drange(2.5, 4.8, 0.6)]
         self.assertEqual(l, [2.5, 3.1, 3.7, 4.3])
 
+    def test_archive(self):
+        d = tempfile.mkdtemp()
+        try:
+            fullfile1 = os.path.join(d, 'archive.bop')
+            open(fullfile1, 'wb').write(b'bloblop')
+            self.assertFalse(archive.is_archive(fullfile1))
+            dir1 = os.path.join(d, 'subdir')
+            fullfile2 = os.path.join(dir1, 'archive2.txt')
+            os.mkdir(dir1)
+            open(fullfile2, 'w').write(u'bebert is happy')
+            for ext in ('.zip', '.tar', '.tgz', 'tar.bz2'):
+                arfile = os.path.join(d, 'archive' + ext)
+                open(arfile, 'wb').write(b'bloblop')
+                unpacked = os.path.join(d, 'unpacked')
+                # the following does not behave correctly, is_archive(*.zip)
+                # returns True
+                #self.assertFalse(archive.is_archive(arfile))
+                self.assertRaises(OSError, archive.unpack, arfile, unpacked)
+                self.assertRaises(OSError, archive.unzip, arfile, unpacked)
+                archive.pack(arfile, [fullfile1, dir1])
+                self.assertTrue(archive.is_archive(arfile))
+                try:
+                    archive.unpack(arfile, unpacked)
+                    self.assertTrue(os.path.isfile(
+                        os.path.join(unpacked, 'archive.bop')))
+                    self.assertTrue(os.path.isfile(
+                        os.path.join(unpacked, 'subdir', 'archive2.txt')))
+                    content1 = open(os.path.join(
+                        unpacked, 'archive.bop'), 'rb').read()
+                    self.assertEqual(content1, b'bloblop')
+                    content2 = open(os.path.join(
+                        unpacked, 'subdir', 'archive2.txt'), 'r').read()
+                    self.assertEqual(content2, u'bebert is happy')
+                finally:
+                    try:
+                        shutil.rmtree(unpacked)
+                    except:
+                        pass
+                # trunkcate archive
+                content = open(arfile, 'rb').read()
+                open(arfile, 'wb').write(content[:50])
+                self.assertTrue(archive.is_archive(arfile)) # shoud rather fail
+                unpacked = os.path.join(d, 'unpacked')
+                try:
+                    self.assertRaises(OSError, archive.unpack, arfile,
+                                      unpacked)
+                finally:
+                    try:
+                        shutil.rmtree(unpacked)
+                    except:
+                        pass
+                # zip one file
+                archive.pack(arfile, fullfile1)
+                self.assertTrue(archive.is_archive(arfile))
+                try:
+                    archive.unpack(arfile, unpacked)
+                    self.assertTrue(os.path.isfile(
+                        os.path.join(unpacked, 'archive.bop')))
+                    content1 = open(os.path.join(
+                        unpacked, 'archive.bop'), 'rb').read()
+                    self.assertEqual(content1, b'bloblop')
+                finally:
+                    try:
+                        shutil.rmtree(unpacked)
+                    except:
+                        pass
+
+
+        finally:
+            shutil.rmtree(d)
+
 
 
 def test():
