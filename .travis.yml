@@ -27,6 +27,9 @@ install:
     - pip install numpy six
     - pip install traits
     - pip install argparse
+    - pip install pycrypto
+    # module queue
+    - pip install future
     - if [ ${TRAVIS_PYTHON_VERSION:0:1} == "2" ]; then pip install subprocess32; fi
     - if [ ${TRAVIS_PYTHON_VERSION:0:1} == "2" ]; then pip install importlib; fi
     - pip install codecov
