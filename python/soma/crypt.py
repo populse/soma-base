@@ -4,7 +4,7 @@ This module needs Crypto module.
 '''
 
 from Crypto.PublicKey import RSA
-from base64 import b64decode
+from base64 import b64decode, b64encode
 
 
 def generate_RSA(bits=2048):
@@ -25,10 +25,10 @@ def encrypt_RSA(public_key_loc, message):
     param: message String to be encrypted
     return base64 encoded encrypted string
     '''
-    key = open(public_key_loc, "r").read()
+    key = open(public_key_loc, "rb").read()
     rsakey = RSA.importKey(key)
     encrypted = rsakey.encrypt(message, None)[0]
-    return encrypted.encode('base64')
+    return b64encode(encrypted)
 
 
 def decrypt_RSA(private_key_loc, package):
@@ -37,7 +37,7 @@ def decrypt_RSA(private_key_loc, package):
     param: package String to be decrypted
     return decrypted string
     '''
-    key = open(private_key_loc, "r").read()
+    key = open(private_key_loc, "rb").read()
     rsakey = RSA.importKey(key)
     decrypted = rsakey.decrypt(b64decode(package))
     return decrypted
