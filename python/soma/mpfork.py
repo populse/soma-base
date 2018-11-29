@@ -86,7 +86,7 @@ def run_job(f, *args, **kwargs):
         if status != 0:
             os.unlink(out_file[1])
             raise RuntimeError('subprocess error: %d' % status)
-        result = pickle.load(open(out_file[1]))
+        result = pickle.load(open(out_file[1], 'rb'))
         os.unlink(out_file[1])
         # traceback objects cannot be pickled...
         #if isinstance(result, tuple) and len(result) == 3 \
@@ -109,7 +109,7 @@ def run_job(f, *args, **kwargs):
             result = e
         #print('write:', out_file[1], ':', result)
         try:
-            pickle.dump(result, open(out_file[1], 'w'), protocol=2)
+            pickle.dump(result, open(out_file[1], 'wb'), protocol=2)
         except Exception as e:
             print('pickle failed:', e, '\nfor object:', type(result))
     finally:
