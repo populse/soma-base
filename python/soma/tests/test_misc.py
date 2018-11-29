@@ -14,7 +14,10 @@ from soma import archive
 from soma import bufferandfile
 from soma import config
 from soma import controller
-from soma import crypt
+try:
+    from soma import crypt
+except ImportError:
+    pass # Crypto (pycrypto package) missing
 from soma import debug
 from soma import factory
 from soma import fom
