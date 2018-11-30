@@ -86,7 +86,7 @@ def run_job(f, *args, **kwargs):
         if status != 0:
             os.unlink(out_file[1])
             raise RuntimeError('subprocess error: %d' % status)
-        result = pickle.load(open(out_file[1]))
+        result = pickle.load(open(out_file[1], 'rb'))
         os.unlink(out_file[1])
         # traceback objects cannot be pickled...
         #if isinstance(result, tuple) and len(result) == 3 \
@@ -109,7 +109,7 @@ def run_job(f, *args, **kwargs):
             result = e
         #print('write:', out_file[1], ':', result)
         try:
-            pickle.dump(result, open(out_file[1], 'w'), protocol=2)
+            pickle.dump(result, open(out_file[1], 'wb'), protocol=2)
         except Exception as e:
             print('pickle failed:', e, '\nfor object:', type(result))
     finally:
@@ -189,45 +189,4 @@ def allocate_workers(q, nworker=0, *args, **kwargs):
         w.start()
         workers.append(w)
     return workers
-
-
-if __name__ == '__main__':
-    q = queue.Queue()
-    res = [None] * 10
-    workers = allocate_workers(q, 0)
-    print('workers:', len(workers))
-    for i in range(10):
-        if i == 8:
-            # this job should fail. Just to test...
-            q.put((i, sum, ((i, i)), {}, res))
-        else:
-            q.put((i, sum, ((i, i), ), {}, res))
-
-    # add as many empty jobs as the workers number to end them
-    for i in range(len(workers)):
-        q.put(None)
-
-    print('waiting')
-    sys.stdout.flush()
-    q.join()
-
-    print('closing threads')
-    sys.stdout.flush()
-    for w in workers:
-        w.join()
-    print('threads stopped.')
-
-    print('result:', res)
-
-    # check outputs
-    def is_exc(x):
-        return isinstance(x, Exception) \
-            or (isinstance(x, tuple) and len(x) == 3
-                and isinstance(x[1], Exception))
-
-    assert(is_exc(res[8]))
-    assert(len([x for x in res if is_exc(x)]) == 1)
-
-    print('seems to work well.')
-
 

@@ -294,11 +294,6 @@ SubModule: ``utils.functiontools``
 .. automodule:: soma.utils.functiontools
     :members:
 
-.SubModule: ``utils.late_binding_property``
--------------------------------------------
-.. automodule:: soma.utils.late_binding_property
-    :members:
-
 SubModule: ``utils.loader``
 ---------------------------
 .. automodule:: soma.utils.loader

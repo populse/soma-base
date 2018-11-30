@@ -10,6 +10,7 @@ import traits.api as traits
 from soma.controller.trait_utils import (
     get_trait_desc, is_trait_value_defined, is_trait_pathname,
     trait_ids)
+from soma.controller import factory
 
 
 

@@ -46,6 +46,8 @@ class TestUndefined(unittest.TestCase):
         undef = undefined.Undefined
         self.assertTrue(isinstance(undef, undefined.UndefinedClass))
         self.assertEqual(repr(undef), '<undefined>')
+        self.assertTrue(undefined.UndefinedClass.get_instance()
+                        is undefined.Undefined)
 
     def test_undefined_traits(self):
         self.restore_traits()
