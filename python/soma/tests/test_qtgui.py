@@ -7,7 +7,7 @@ import sys
 try:
     #from soma import qimage2ndarray
     from soma import qt_gui
-    #from soma import icon_factory
+    #from soma import icon_factory # never used
     from soma.qt_gui import controller_widget
     from soma.qt_gui import controls
     from soma.qt_gui import generic_table_editor

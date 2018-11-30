@@ -1,6 +1,11 @@
 
 from __future__ import print_function
 
+# obsolete modules which seem never to be used:
+#
+# icon_factory
+# utils.late_binding_property
+
 import unittest
 import os
 import sys
@@ -31,7 +36,7 @@ from soma import html
 try:
     from soma import qimage2ndarray
     from soma import qt_gui
-    from soma import icon_factory
+    #from soma import icon_factory # never used
 except ImportError:
     pass # PyQt not installed
 from soma import importer
