@@ -5,6 +5,7 @@ This module needs Crypto module.
 
 from Crypto.PublicKey import RSA
 from base64 import b64decode, b64encode
+import Crypto
 
 
 def generate_RSA(bits=2048):
@@ -13,7 +14,12 @@ def generate_RSA(bits=2048):
     param: bits The key length in bits
     Return private key and public key
     '''
-    new_key = RSA.generate(bits)
+    if [int(x) for x in Crypto.__version__.split('.')] < [2, 1]:
+        def gen_func(n):
+            return ''.join([chr(random.randrange(0, 256, 1)) for i in range(n)])
+        new_key = RSA.generate(bits, gen_func)
+    else:
+        new_key = RSA.generate(bits)
     public_key = new_key.publickey().exportKey("PEM")
     private_key = new_key.exportKey("PEM")
     return private_key, public_key
