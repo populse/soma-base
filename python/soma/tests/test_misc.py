@@ -23,7 +23,7 @@ try:
     from soma import crypt
     have_crypt = True
 except ImportError:
-    # Crypto (pycrypto package) missing
+    # Crypto (pycrypto package) missing or outdated
     have_crypt = False
 from soma import debug
 from soma import factory
