@@ -15,8 +15,10 @@ def generate_RSA(bits=2048):
     Return private key and public key
     '''
     if [int(x) for x in Crypto.__version__.split('.')] < [2, 1]:
+        import random
         def gen_func(n):
-            return ''.join([chr(random.randrange(0, 256, 1)) for i in range(n)])
+            return ''.join([chr(random.randrange(0, 256, 1))
+                            for i in range(n)])
         new_key = RSA.generate(bits, gen_func)
     else:
         new_key = RSA.generate(bits)
