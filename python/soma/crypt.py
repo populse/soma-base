@@ -7,6 +7,11 @@ from Crypto.PublicKey import RSA
 from base64 import b64decode, b64encode
 import Crypto
 
+if [int(x) for x in Crypto.__version__.split('.')] < [2, 1]:
+    # pyrypro <= 2.0.x is not suitable since it is missing needed functions
+    # such as exportKey() and importKey()
+    raise ImportError('Crypto module (pycrypto) is too old for soma.crypt')
+
 
 def generate_RSA(bits=2048):
     '''
@@ -15,8 +20,10 @@ def generate_RSA(bits=2048):
     Return private key and public key
     '''
     if [int(x) for x in Crypto.__version__.split('.')] < [2, 1]:
+        import random
         def gen_func(n):
-            return ''.join([chr(random.randrange(0, 256, 1)) for i in range(n)])
+            return ''.join([chr(random.randrange(0, 256, 1))
+                            for i in range(n)])
         new_key = RSA.generate(bits, gen_func)
     else:
         new_key = RSA.generate(bits)
