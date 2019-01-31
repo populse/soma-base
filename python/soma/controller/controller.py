@@ -22,28 +22,7 @@ from soma.sorted_dictionary import SortedDictionary, OrderedDict
 from soma.controller.trait_utils import _type_to_trait_id
 
 
-class ControllerMeta(HasTraits.__class__):
-
-    """ This metaclass allows for automatic registration of factories.
-    """
-    def __new__(mcs, name, bases, dictionary):
-        """ Method that can be used to define factories.
-
-        Parameters
-        ----------
-        mcls: meta class (mandatory)
-            a meta class.
-        name: str (mandatory)
-            the controller class name.
-        bases: tuple (mandatory)
-            the direct base classes.
-        attrs: dict (mandatory)
-            a dictionnary with the class attributes.
-        """
-        return super(ControllerMeta, mcs).__new__(mcs, name, bases, dictionary)
-
-
-class Controller(six.with_metaclass(ControllerMeta, HasTraits)):
+class Controller(HasTraits):
 
     """ A Controller contains some traits: attributes typing and observer
     (callback) pattern.
