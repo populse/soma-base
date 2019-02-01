@@ -25,7 +25,7 @@ before_install:
 
 install:
     - pip install numpy six
-    - pip install traits
+    - if [ ${TRAVIS_PYTHON_VERSION} == "2.6" ]; then pip install "traits==4.6.0"; else pip install traits ;fi
     - pip install argparse
     - pip install pycrypto
     - pip install pyyaml
