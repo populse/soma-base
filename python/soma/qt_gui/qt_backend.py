@@ -211,7 +211,7 @@ def set_qt_backend(backend=None, pyqt_api=1, compatible_qt5=None):
 
     More precisely this means:
     * If QT_API environement variable is not set, use PyQt4, with PyQt API v1
-    * if QT_API is set to "pyqt", use PyQt4, with PyQt API v2
+    * if QT_API is set to "pyqt" or "pyqt4", use PyQt4, with PyQt API v2
     * if QT_API is set to "pyside", use PySide
     * if QT_API is set to "pyqt5", use PyQt5
 
@@ -263,7 +263,7 @@ def set_qt_backend(backend=None, pyqt_api=1, compatible_qt5=None):
             qt_api = os.getenv('QT_API')
             if qt_api == 'pyqt5':
                 backend = 'PyQt5'
-            elif qt_api == 'pyqt':
+            elif qt_api in ('pyqt', 'pyqt4'):
                 backend = 'PyQt4'
                 pyqt_api = 2
             elif qt_api == 'pyside':
