@@ -80,8 +80,7 @@ class BufferAndFile(object):
         super(BufferAndFile, self).__init__()
         self.__buffer = ''
         self.__file = file_object
-        self.name = getattr(file_object, 'filename',
-                            getattr(file_object, 'name', '<unknown>'))
+        self.name = getattr(file_object, 'name', '<unknown>')
 
     def unread(self, string_value):
         '''
