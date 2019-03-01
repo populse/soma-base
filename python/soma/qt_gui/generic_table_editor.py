@@ -461,7 +461,7 @@ class GenericTableEditor(QWidget):
             self.header = QCheckBox('Header', self.widget)
             widgetLayout.addWidget(self.header)
             if self.fileStructure is not None \
-                    and self.fileStructure.has_key('header'):
+                    and 'header' in self.fileStructure:
                 header = self.fileStructure['header']
                 if header:
                     self.header.setChecked(True)
@@ -473,7 +473,7 @@ class GenericTableEditor(QWidget):
             self.quoted = QCheckBox('Quoted', self.widget)
             widgetLayout.addWidget(self.quoted)
             if self.fileStructure is not None \
-                    and self.fileStructure.has_key('quoted'):
+                    and 'quoted' in self.fileStructure:
                 self.quoted.setChecked(self.fileStructure['quoted'])
 
             # - Speparators
@@ -493,7 +493,7 @@ class GenericTableEditor(QWidget):
             self.separator.setEditable(True)
 
             if self.fileStructure is not None \
-                    and self.fileStructure.has_key('separator'):
+                    and 'separator' in self.fileStructure:
                 sep = self.fileStructure['separator']
                 if not sep:
                     sep = ''
@@ -525,13 +525,13 @@ class GenericTableEditor(QWidget):
                 nbCols = 0
 
             if self.fileStructure is not None \
-                    and self.fileStructure.has_key('header'):
+                    and 'header' in self.fileStructure:
                 header = self.fileStructure['header']
             else:
                 header = False
 
             if self.fileStructure is not None \
-                    and self.fileStructure.has_key('types'):
+                    and 'types' in self.fileStructure:
                 types = self.fileStructure['types']
             else:
                 types = None
