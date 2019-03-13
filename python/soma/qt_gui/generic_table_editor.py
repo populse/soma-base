@@ -37,6 +37,7 @@ from soma.qt_gui.qt_backend.QtGui import *
 from soma.qt_gui.qt_backend.QtCore import QSize
 import re
 import os
+import six
 
 
 class GenericTableEditor(QWidget):
@@ -285,8 +286,8 @@ class GenericTableEditor(QWidget):
             if not to_str:
                 return None
             for tSelec in self.gui_table.selectedRanges():
-                for row in xrange(tSelec.topRow(), tSelec.bottomRow() + 1):
-                    for col in xrange(tSelec.leftColumn(), tSelec.rightColumn() + 1):
+                for row in six.moves.xrange(tSelec.topRow(), tSelec.bottomRow() + 1):
+                    for col in six.moves.xrange(tSelec.leftColumn(), tSelec.rightColumn() + 1):
                         # regexp.sub(  	replacement, string
                         val = str(self.buf_table[row][col])
                         # if type(val)==types.StringType : val = str(val)
@@ -326,7 +327,7 @@ class GenericTableEditor(QWidget):
     def menu_addLine(self):
         nbline = QInputDialog.getInteger(self, 'Add line(s)',
                                          'Enter number line(s) to add',  1, 1, 2147483647, 1)[0]
-        for i in xrange(nbline):
+        for i in six.moves.xrange(nbline):
             self.buf_table.append([0] * len(self.numCols()))
         self.buf_2_gui()
 
@@ -343,14 +344,14 @@ class GenericTableEditor(QWidget):
     def getSelectedCols(self):
         ret = []
         for tSelec in self.gui_table.selectedRanges():
-            for col in xrange(tSelec.leftColumn(), tSelec.rightColumn() + 1):
+            for col in six.moves.xrange(tSelec.leftColumn(), tSelec.rightColumn() + 1):
                 ret.append(col)
         return ret
 
     def getSelectedRows(self):
         ret = []
         for tSelec in self.gui_table.selectedRanges():
-            for raw in xrange(tSelec.topRow(), tSelec.bottomRow() + 1):
+            for raw in six.moves.xrange(tSelec.topRow(), tSelec.bottomRow() + 1):
                 ret.append(raw)
         return ret
 
@@ -364,8 +365,8 @@ class GenericTableEditor(QWidget):
         selectedCells = []
         selectedCellsContent = []
         for s in self.gui_table.selectedRanges():
-            for row in xrange(s.topRow(), s.bottomRow() + 1):
-                for col in xrange(s.leftColumn(), s.rightColumn() + 1):
+            for row in six.moves.xrange(s.topRow(), s.bottomRow() + 1):
+                for col in six.moves.xrange(s.leftColumn(), s.rightColumn() + 1):
                     cell = [row, col]
                     if not cell in selectedCells:
                         selectedCells.append(cell)
@@ -546,7 +547,7 @@ class GenericTableEditor(QWidget):
                     if type:
                         self.setEditText(type)
 
-            for col in xrange(nbCols):  # self.fileStructure['nbCols']):
+            for col in six.moves.xrange(nbCols):  # self.fileStructure['nbCols']):
                 current = QWidget(columns)
                 columnsLayout.addWidget(current)
                 currentLayout = QVBoxLayout()
