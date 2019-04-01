@@ -138,6 +138,9 @@ class ThreadSafeSQLiteConnection(object):
         Delete the connection previously created for the current thread with
         get_connection()
         '''
+        if threading.currentThread is None:
+            # exiting, threading attributes have become None
+            return
         currentThread = threading.currentThread().getName()
         self._instanceLock.acquire()
         try:
@@ -166,6 +169,9 @@ class ThreadSafeSQLiteConnection(object):
         thread.
         '''
         if self.__args is not None:
+            if threading.currentThread is None:
+                # exiting, threading attributes have become None
+                return
             self.currentThreadCleanup()
             currentThread = threading.currentThread().getName()
             self._instanceLock.acquire()
