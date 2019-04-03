@@ -22,13 +22,6 @@ SubModule: ``archive``
     :members:
 
 
-SubModule: ``argparse``
-=======================
-
-.. automodule:: soma.argparse
-    :members:
-
-
 SubModule: ``bufferandfile``
 ============================
 
