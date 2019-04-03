@@ -28,7 +28,7 @@ install:
     - if [ ${TRAVIS_PYTHON_VERSION} == "2.6" ]; then pip install "traits==4.6.0"; else pip install traits ;fi
     - pip install argparse
     - pip install pycrypto
-    - pip install pyyaml
+    - if [ ${TRAVIS_PYTHON_VERSION} == "2.6" ]; then pip install 'pyyaml<5'; else pip install pyyaml; fi
     # module queue
     - pip install future
     - if [ ${TRAVIS_PYTHON_VERSION:0:1} == "2" ]; then pip install subprocess32; fi
