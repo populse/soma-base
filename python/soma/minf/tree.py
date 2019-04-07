@@ -442,17 +442,12 @@ class MinfExpander(object):
 
     def sequenceExpander(expander, minfNode, minfNodeIterator, target,
                          targetType, stop_on_error=True, exceptions=[]):
-        if sys.version_info[0] >= 3:
-            def next(it):
-                return it.__next__()
-        else:
-            def next(it):
-                return it.next()
-
         if target is None:
             result = []
         else:
             result = target
+            while len(result) != 0:
+                result.pop()
         if isinstance(targetType, Sequence) and targetType.elementType.mutable:
             length = minfNode.attributes.get('length')
             if length and len(result) < int(length):
@@ -473,8 +468,12 @@ class MinfExpander(object):
                     except StopIteration:
                         itTarget = None
                 if target is not None:
-                    expander.expand(minfNodeIterator, minfNode, target=target,
-                                    targetType=targetType.elementType, stop_on_error=stop_on_error, exceptions=exceptions)
+                    r = expander.expand(minfNodeIterator, minfNode,
+                                        target=target,
+                                        targetType=targetType.elementType,
+                                        stop_on_error=stop_on_error,
+                                        exceptions=exceptions)
+                    result.append(r)
                 else:
                     try:
                         result.append(
