@@ -531,7 +531,7 @@ class FileOrganizationModels(object):
                                 (repr(rule_pattern), repr(rule_attributes)))
                 rule_formats = rule_attributes.get('fom_formats', [])
                 if format:
-                    if format in ('fom_first', 'fom_prefered'):
+                    if format in ('fom_first', 'fom_preferred'):
                         if not rule_formats:
                             if debug:
                                 debug.debug(
@@ -900,7 +900,7 @@ class AttributesToPaths(object):
     Part of the FOM engine.
     '''
 
-    def __init__(self, foms, selection=None, directories={}, prefered_formats=set(), debug=None):
+    def __init__(self, foms, selection=None, directories={}, preferred_formats=set(), debug=None):
         self.foms = foms
         self.selection = selection or {}
         self.directories = directories
@@ -914,13 +914,13 @@ class AttributesToPaths(object):
         self.non_discriminant_attributes = set(
             i for i in self.all_attributes if not self.foms.attribute_definitions[i].get('discriminant', True))
         fom_format_index = self.all_attributes.index('fom_format')
-        sql = 'CREATE TABLE rules ( %s, _fom_first, _fom_prefered_format, _fom_rule )' % ','.join(repr('_' + str(i))
+        sql = 'CREATE TABLE rules ( %s, _fom_first, _fom_preferred_format, _fom_rule )' % ','.join(repr('_' + str(i))
                                 for i in self.all_attributes)
         if debug:
             debug.debug(sql)
         self._db.execute(sql)
         columns = ['_%s' %
-                   i for i in self.all_attributes + ('fom_first', 'fom_prefered_format')]
+                   i for i in self.all_attributes + ('fom_first', 'fom_preferred_format')]
         sql = 'CREATE INDEX rules_index ON rules (%s)' % ','.join(columns)
         self._db.execute(sql)
         for i in columns:
@@ -950,16 +950,16 @@ class AttributesToPaths(object):
             if fom_formats and 'fom_format' not in rule_attributes:
                 first = True
                 for format in fom_formats:
-                    if format in prefered_formats:
-                        prefered_format = format
+                    if format in preferred_formats:
+                        preferred_format = format
                         break
                 else:
-                    prefered_format = fom_formats[0]
+                    preferred_format = fom_formats[0]
                 sys.stdout.flush()
                 for format in fom_formats:
                     values[fom_format_index] = format
                     values[-3] = first
-                    values[-2] = bool(format == prefered_format)
+                    values[-2] = bool(format == preferred_format)
                     first = False
                     if debug:
                         debug.debug(sql_insert + ' ' + repr(values))
@@ -999,8 +999,8 @@ class AttributesToPaths(object):
                 selected_format = attributes.get('fom_format')
                 if selected_format == 'fom_first':
                     select.append('_fom_first = 1')
-                elif selected_format == 'fom_prefered':
-                    select.append('_fom_prefered_format = 1')
+                elif selected_format == 'fom_preferred':
+                    select.append('_fom_preferred_format = 1')
                 elif isinstance(value, list):
                     select.append('_' + attribute + " IN (%s)" %
                                   ','.join('?' for i in value))
@@ -1168,7 +1168,7 @@ if __name__ == '__main__':
     # logging.root.setLevel( logging.DEBUG )
     fom = app.fom_manager.load_foms('morphologist-brainvisa-pipeline-1.0')
     # atp = AttributesToPaths( fom, selection={ 'fom_process':'morphologistSimp.SimplifiedMorphologist' },
-                             # prefered_formats=set( ('NIFTI',) ),
+                             # preferred_formats=set( ('NIFTI',) ),
                              # debug=logging )
     # form='MINC'
     # form=','+'MESH'
@@ -1179,11 +1179,11 @@ if __name__ == '__main__':
     fomr = ['NIFTI', 'MESH']
     atp = AttributesToPaths(
         fom, selection={'fom_process': 'morphologistPipeline.HeadMesh'},
-        prefered_formats=fomr, directories=directories,
+        preferred_formats=fomr, directories=directories,
         debug=logging)
     d = {
         'protocol': u'subjects', 'analysis': 'default_analysis', 'fom_parameter': 'head_mesh',
-        'acquisition': 'default_acquisition', 'subject': u'002_S_0816_S18402_I40732', 'fom_format': 'fom_prefered'}
+        'acquisition': 'default_acquisition', 'subject': u'002_S_0816_S18402_I40732', 'fom_format': 'fom_preferred'}
     for p, a in atp.find_paths(d, debug=logging):
         print('->', repr(p), a)
     # for parameter in fom.patterns[ 'morphologistSimp.SimplifiedMorphologist' ]:
@@ -1193,6 +1193,6 @@ if __name__ == '__main__':
                                       #'subject': 's',
                                       #'analysis': 'p',
                                       #'acquisition': 'a',
-                                      #'fom_format': 'fom_prefered',
+                                      #'fom_format': 'fom_preferred',
                                 #} ):
         # print(' ', repr( p ), a)
