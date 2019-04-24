@@ -167,6 +167,31 @@ def remove_query_string(path):
     '''
     return query_string_re.sub('', path)
 
+
+def strict_urlparse(path):
+    '''
+    A "fixed" version of urlparse.urlparse() which preserves the case of the
+    drive letter in windows paths. The standard urlparse changes 'Z:/some/path'
+    to 'z:/some/path'
+    '''
+    try:
+        from six.moves.urllib import parse as urlparse
+    except ImportError:
+        # some six versions do not provide six.moves.urllib (Ubuntu 12.04)
+        import urlparse
+    url_parsed = urlparse.urlparse(path)
+    if len(url_parsed.scheme) == 1 and url_parsed.scheme >= 'a' \
+            and url_parsed.scheme <= 'z' and path[1] == ':' \
+              and path[0] == url_parsed.scheme.upper():
+        url_parsed = type(url_parsed)(
+            scheme=url_parsed.scheme,
+            netloc=url_parsed.netloc,
+            path=url_parsed.path,
+            params=url_parsed.params,
+            query=url_parsed.query,
+            fragment=url_parsed.fragment)
+    return url_parsed
+
 def parse_query_string(path):
     '''
     Parses the query string from a path and returns a dictionary.
@@ -342,7 +367,7 @@ def update_query_string(
             'either a list that contains parameter names, either'
             'QueryStringParamUpdateMode.')
 
-    url_parsed = urlparse.urlparse(path)
+    url_parsed = strict_urlparse(path)
     url_params = urlparse.parse_qs(url_parsed.query)
     
     if isinstance(params, (list, tuple)):
