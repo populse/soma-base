@@ -184,7 +184,7 @@ def strict_urlparse(path):
             and url_parsed.scheme <= 'z' and path[1] == ':' \
               and path[0] == url_parsed.scheme.upper():
         url_parsed = type(url_parsed)(
-            scheme=url_parsed.scheme,
+            scheme=url_parsed.scheme.upper(),
             netloc=url_parsed.netloc,
             path=url_parsed.path,
             params=url_parsed.params,
