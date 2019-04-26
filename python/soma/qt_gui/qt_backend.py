@@ -565,11 +565,18 @@ def getExistingDirectory(parent=None, caption='', directory='', options=None):
                 parent, caption, directory)[0]
 
 
-def init_matplotlib_backend():
+def init_matplotlib_backend(force=True):
     '''Initialize Matplotlib to use Qt, and the appropriate Qt/Python binding
     (PySide or PyQt) according to the configured/loaded toolkit.
     Moreover, the appropriate FigureCanvas type is set in the current module,
     and returned by this function.
+
+    Parameters
+    ----------
+    force: bool
+        if False, if the backend is already initialized with a different value,
+        then raise an exception. If True (the default), force the new
+        backend in matplotlib.
     '''
     try:
         import matplotlib
@@ -586,7 +593,7 @@ def init_matplotlib_backend():
         guiBackend = 'Qt4Agg'
         mpl_backend_mod = 'matplotlib.backends.backend_qt4agg'
     if 'matplotlib.backends' not in sys.modules:
-        matplotlib.use(guiBackend)
+        matplotlib.use(guiBackend, force=True)
     elif matplotlib.get_backend() != guiBackend:
         raise RuntimeError(
             'Mismatch between Qt version and matplotlib backend: '
