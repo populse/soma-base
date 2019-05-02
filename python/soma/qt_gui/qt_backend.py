@@ -737,3 +737,43 @@ def init_traitsui_handler():
         # Tell the traits notification handlers to use this UI handler
         set_ui_handler( ui_handler )
 
+def qimage_to_np(qimage):
+    '''
+    Utility function to transorm a Qt QImage into a numpy array suitable
+    for matplotlib imshow() for instance.
+    '''
+    import numpy as np
+    from . import Qt
+    w, h = qimage.width(), qimage.height()
+    if isinstance(qimage, Qt.QPixmap):
+        qimage = qimage.toImage()
+    aim = aim = np.array(qimage.bits().asarray(w * h * 4)).reshape((h, w,
+                                                                    4))
+    # TODO: handle different pixel formats
+    aim[:,:,0:3] = np.flip(aim[:,:,0:3], axis=2)
+    return aim
+
+def imshow_widget(widget, figure=None, show=False):
+    '''
+    Display a shapshot of a QWidget into a Matplotlib figure using
+    pylab.imshow(). This is useful to use the sphinx_gallery module for
+    documentation.
+    '''
+    from . import Qt
+    from matplotlib import pyplot
+    Qt.QApplication.instance().processEvents()
+    im = widget.grab()
+    aim = qimage_to_np(im)
+    plot = pyplot.imshow(aim, figure=figure)
+    if figure is not None:
+        axes = figure.axes()
+    else:
+        axes = pyplot.axes()
+    axes.get_xaxis().set_visible(False)
+    axes.get_yaxis().set_visible(False)
+    if show:
+        if figure is not None:
+            figure.show()
+        else:
+            pyplot.show()
+    return plot
