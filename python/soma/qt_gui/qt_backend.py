@@ -592,8 +592,8 @@ def init_matplotlib_backend(force=True):
     else:
         guiBackend = 'Qt4Agg'
         mpl_backend_mod = 'matplotlib.backends.backend_qt4agg'
-    if 'matplotlib.backends' not in sys.modules:
-        matplotlib.use(guiBackend, force=True)
+    if 'matplotlib.backends' not in sys.modules or force:
+        matplotlib.use(guiBackend, force=force)
     elif matplotlib.get_backend() != guiBackend:
         raise RuntimeError(
             'Mismatch between Qt version and matplotlib backend: '
