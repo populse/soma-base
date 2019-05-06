@@ -747,8 +747,7 @@ def qimage_to_np(qimage):
     w, h = qimage.width(), qimage.height()
     if isinstance(qimage, Qt.QPixmap):
         qimage = qimage.toImage()
-    aim = aim = np.array(qimage.bits().asarray(w * h * 4)).reshape((h, w,
-                                                                    4))
+    aim = aim = np.array(qimage.bits().asarray(w * h * 4)).reshape((h, w, 4))
     # TODO: handle different pixel formats
     aim[:,:,0:3] = np.flip(aim[:,:,0:3], axis=2)
     return aim
@@ -762,7 +761,10 @@ def imshow_widget(widget, figure=None, show=False):
     from . import Qt
     from matplotlib import pyplot
     Qt.QApplication.instance().processEvents()
-    im = widget.grab()
+    if Qt.QT_VERSION >= 0x050000:
+        im = widget.grab()  # Qt5 only
+    else:
+        im = Qt.QPixmap.grabWidget(widget)  # Qt4 only
     aim = qimage_to_np(im)
     plot = pyplot.imshow(aim, figure=figure)
     if figure is not None:
