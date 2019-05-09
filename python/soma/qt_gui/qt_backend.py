@@ -782,5 +782,5 @@ def imshow_widget(widget, figure=None, show=False):
         if figure is not None:
             figure.show()
         else:
-            pyplot.show()
+            pyplot.show(block=False)
     return plot
