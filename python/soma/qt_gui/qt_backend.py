@@ -576,8 +576,10 @@ def init_matplotlib_backend(force=True):
     force: bool
         if False, if the backend is already initialized with a different value,
         then raise an exception. If True (the default), force the new
-        backend in matplotlib.
+        backend in matplotlib. If matplotlib does not support the force
+        parameter, then the backend will not be forced.
     '''
+    import inspect
     try:
         import matplotlib
     except ImportError:
@@ -593,7 +595,10 @@ def init_matplotlib_backend(force=True):
         guiBackend = 'Qt4Agg'
         mpl_backend_mod = 'matplotlib.backends.backend_qt4agg'
     if 'matplotlib.backends' not in sys.modules or force:
-        matplotlib.use(guiBackend, force=force)
+        if 'force' in inspect.getargspec(matplotlib.use).args:
+            matplotlib.use(guiBackend, force=force)
+        else:
+            matplotlib.use(guiBackend)
     elif matplotlib.get_backend() != guiBackend:
         raise RuntimeError(
             'Mismatch between Qt version and matplotlib backend: '
