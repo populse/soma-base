@@ -752,7 +752,12 @@ def qimage_to_np(qimage):
     w, h = qimage.width(), qimage.height()
     if isinstance(qimage, Qt.QPixmap):
         qimage = qimage.toImage()
-    aim = aim = np.array(qimage.bits().asarray(w * h * 4)).reshape((h, w, 4))
+    # sip.voidptr (qimage.bits()) asarray method is only available
+    # in sip >= 4.15
+    #aim = aim = np.array(qimage.bits().asarray(w * h * 4)).reshape((h, w, 4))
+    b = qimage.bits()
+    b.setsize(w * h * 4)
+    aim = np.array(b).reshape((h, w, 4))
     # TODO: handle different pixel formats
     aim[:,:,0:3] = np.flip(aim[:,:,0:3], axis=2)
     return aim
