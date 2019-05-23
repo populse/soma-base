@@ -25,6 +25,7 @@ can be set to use a specific *virutalenv* install of *cubicweb*:
     env SOMA_VIRTUALENV=/path/to/virutalenv python /path/to/script.py
 '''
 
+import soma.importer
 import os
 
 venv = os.environ.get('SOMA_VIRTUALENV')
@@ -32,5 +33,5 @@ if venv:
     activate = os.path.join(venv, 'bin', 'activate_this.py')
     if os.path.exists(activate):
         # This is the way to activate a virtualenv from Python
-        execfile(activate, dict(__file__=activate))
+        soma.importer.execfile(activate, dict(__file__=activate))
     del activate
