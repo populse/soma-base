@@ -6,5 +6,8 @@
 # for details.
 #
 
-from .controller import Controller, OpenKeyController, ControllerTrait
+from .controller import (Controller, 
+                         OpenKeyController, 
+                         ControllerTrait, 
+                         controller_to_dict)
 from .trait_utils import trait_ids
