@@ -340,20 +340,11 @@ class Controller(HasTraits):
             use this type of mapping type to represent controllers. It should
             follow the mapping protocol API.
         """
-        state_dict = dict_class()
-        for trait_name, trait in six.iteritems(self.user_traits()):
-            if exclude_transient and trait.transient:
-                continue
-            value = getattr(self, trait_name)
-            if isinstance(value, Controller):
-                value = value.export_to_dict()
-            elif (exclude_undefined and value is Undefined) \
-                    or (exclude_none and value is None):
-                continue
-            if exclude_empty and (value == [] or value == {}):
-                continue
-            state_dict[trait_name] = value
-        return state_dict
+        return controller_to_dict(self, exclude_undefined=exclude_undefined,
+                                  exclude_transient=exclude_transient,
+                                  exclude_none=exclude_none,
+                                  exclude_empty=exclude_empty,
+                                  dict_class=dict_class)
 
     def import_from_dict(self, state_dict, clear=False):
         """ Set Controller variables from a dictionary. When setting values on
@@ -407,11 +398,17 @@ class Controller(HasTraits):
             will be copied. Traits values will only be copied if with_values is
             True.
         """
-        copied = self.__class__()
+        import copy
+
+        initargs = ()
+        if hasattr(self, '__getinitargs__'):
+            # if the Controller class is subclassed and needs init parameters
+            initargs = self.__getinitargs__()
+        copied = self.__class__(*initargs)
         for name, trait in six.iteritems(self.user_traits()):
             copied.add_trait(name, self._clone_trait(trait))
             if with_values:
-                setattr(copied, name, getattr(self, name))
+                setattr(copied, name, copy.deepcopy(getattr(self, name)))
         return copied
 
     def reorder_traits(self, traits_list):
@@ -570,3 +567,66 @@ class ControllerTrait(TraitType):
         if self.inner_trait:
             return (self.inner_trait, )
         return ()
+
+
+def controller_to_dict(item, exclude_undefined=False,
+                       exclude_transient=False,
+                       exclude_none=False,
+                       exclude_empty=False,
+                       dict_class=OrderedDict):
+    """
+    Convert an item to a Python value where controllers had been converted
+    to dictionary. It can recursively convert the values contained in a
+    Controller instances or a  dict instances. All other items are returned
+    untouched.
+
+    Parameters
+    ----------
+    exclude_undefined: bool (optional)
+        if set, do not export Undefined values
+    exclude_transient: bool (optional)
+        if set, do not export values whose trait is marked "transcient"
+    exclude_none: bool (optional)
+        if set, do not export None values
+    exclude_empty: bool (optional)
+        if set, do not export empty lists/dicts values
+    dict_class: class type (optional, default: soma.sorted_dictionary.OrderedDict)
+        use this type of mapping type to represent controllers. It should
+        follow the mapping protocol API.
+    """
+    if isinstance(item, Controller):
+        result = dict_class()
+        for name, trait in six.iteritems(item.user_traits()):
+            if exclude_transient and trait.transient:
+                continue
+            value = getattr(item, name)
+            if (exclude_undefined and value is Undefined) \
+                or (exclude_none and value is None):
+                continue
+            if exclude_empty and (value == [] or value == {}):
+                continue
+            value = controller_to_dict(value,
+                                       exclude_undefined=exclude_undefined,
+                                       exclude_transient=exclude_transient,
+                                       exclude_none=exclude_none,
+                                       exclude_empty=exclude_empty,
+                                       dict_class=dict_class)
+            result[name] = value
+    elif isinstance(item, dict):
+        result = dict_class()
+        for name, value in six.iteritems(item):
+            if (exclude_undefined and value is Undefined) \
+                or (exclude_none and value is None):
+                continue
+            if exclude_empty and (value == [] or value == {}):
+                continue
+            value = controller_to_dict(value,
+                                       exclude_undefined=exclude_undefined,
+                                       exclude_transient=exclude_transient,
+                                       exclude_none=exclude_none,
+                                       exclude_empty=exclude_empty,
+                                       dict_class=dict_class)
+            result[name] = value
+    else:
+        result = item
+    return result
