@@ -407,7 +407,6 @@ class Controller(HasTraits):
         copied = self.__class__(*initargs)
         for name, trait in six.iteritems(self.user_traits()):
             copied.add_trait(name, self._clone_trait(trait))
-            print(name, ':', self.trait(name).trait_type, '->', copied.trait(name).trait_type)
             if with_values:
                 setattr(copied, name, getattr(self, name))
         return copied
