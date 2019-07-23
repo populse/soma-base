@@ -407,8 +407,9 @@ class Controller(HasTraits):
         copied = self.__class__(*initargs)
         for name, trait in six.iteritems(self.user_traits()):
             copied.add_trait(name, self._clone_trait(trait))
+            print(name, ':', self.trait(name).trait_type, '->', copied.trait(name).trait_type)
             if with_values:
-                setattr(copied, name, copy.deepcopy(getattr(self, name)))
+                setattr(copied, name, getattr(self, name))
         return copied
 
     def reorder_traits(self, traits_list):
@@ -483,27 +484,31 @@ class OpenKeyController(Controller):
         else:
             super(OpenKeyController, self).__delattr__(name)
 
-    def copy(self, with_values=True):
-        """ Copy traits definitions to a new Controller object
+    def __getinitargs__(self):
+        return (self._value_trait, )
 
-        Parameters
-        ----------
-        with_values: bool (optional, default: False)
-            if True, traits values will be copied, otherwise the defaut trait
-            value will be left in the copy.
+    # this specialization does not do anything more than the base class does.
+    #def copy(self, with_values=True):
+        #""" Copy traits definitions to a new Controller object
 
-        Returns
-        -------
-        copied: Controller instance
-            the returned copy will have the same class as the copied object
-            (which may be a derived class from Controller). Traits definitions
-            will be copied. Traits values will only be copied if with_values is
-            True.
-        """
-        copied = super(OpenKeyController, self).copy(with_values=with_values)
-        super(OpenKeyController, copied).__setattr__('_value_trait',
-                                                     self._value_trait)
-        return copied
+        #Parameters
+        #----------
+        #with_values: bool (optional, default: False)
+            #if True, traits values will be copied, otherwise the defaut trait
+            #value will be left in the copy.
+
+        #Returns
+        #-------
+        #copied: Controller instance
+            #the returned copy will have the same class as the copied object
+            #(which may be a derived class from Controller). Traits definitions
+            #will be copied. Traits values will only be copied if with_values is
+            #True.
+        #"""
+        #copied = super(OpenKeyController, self).copy(with_values=with_values)
+        #super(OpenKeyController, copied).__setattr__('_value_trait',
+                                                     #self._value_trait)
+        #return copied
 
 
 class ControllerTrait(TraitType):
