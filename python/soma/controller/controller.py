@@ -398,11 +398,17 @@ class Controller(HasTraits):
             will be copied. Traits values will only be copied if with_values is
             True.
         """
-        copied = self.__class__()
+        import copy
+
+        initargs = ()
+        if hasattr(self, '__getinitargs__'):
+            # if the Controller class is subclassed and needs init parameters
+            initargs = self.__getinitargs__()
+        copied = self.__class__(*initargs)
         for name, trait in six.iteritems(self.user_traits()):
             copied.add_trait(name, self._clone_trait(trait))
             if with_values:
-                setattr(copied, name, getattr(self, name))
+                setattr(copied, name, copy.deepcopy(getattr(self, name)))
         return copied
 
     def reorder_traits(self, traits_list):
