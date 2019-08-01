@@ -1121,6 +1121,21 @@ class AttributesToPaths(object):
                     result.append(attribute)
         return result
 
+    def find_attributes_values(self, **selection):
+        result = {}
+        if self.rules:
+            for attribute in self.all_attributes:
+                sql = 'SELECT DISTINCT "%s" FROM rules' % ('_' + attribute)
+                if selection:
+                    sql += ' WHERE ' + \
+                        ' AND '.join('_' + i + ' = ?' for i in selection)
+                    values = list(self._db.execute(sql,
+                                                   list(selection.values())))
+                else:
+                    values = list(self._db.execute(sql))
+                result[attribute] = values
+        return result
+
     def _join_directory(self, path, rule_attributes, selection_attributes):
         attributes = selection_attributes.copy()
         attributes.update(rule_attributes)
@@ -1129,7 +1144,9 @@ class AttributesToPaths(object):
             directory = self.directories.get(fom_directory)
             if directory:
                 return (osp.join(directory, *path.split('/')), attributes)
+                #return (osp.join(directory, path), attributes)
         return (osp.join(*path.split('/')), attributes)
+        #return (path, attributes)
 
 
 def call_before_application_initialization(application):
