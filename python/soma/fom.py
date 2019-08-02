@@ -1,4 +1,152 @@
 # -*- coding: utf-8 -*-
+
+'''
+File Organization Model (FOM)
+=============================
+
+A FOM is a JSON file (dictionary) describing how to make filenames from a set of attributes.
+
+FOM definition
+--------------
+
+Ex::
+
+    {
+        "fom_name": "morphologist-auto-nonoverlap-1.0",
+
+        "fom_import": ["formats-brainvisa-1.0", "brainvisa-formats-3.2.0",
+                      "shared-brainvisa-1.0"],
+
+        "attribute_definitions" : {
+          "acquisition" : {"default_value" : "default_acquisition"},
+          "analysis" : {"default_value" : "default_analysis"},
+          "sulci_recognition_session" :  {"default_value" : "default_session"},
+          "graph_version": {"default_value": "3.1"},
+        },
+
+        "shared_patterns": {
+          "acquisition": "<center>/<subject>/t1mri/<acquisition>",
+          "analysis": "{acquisition}/<analysis>",
+          "recognition_analysis": "{analysis}/folds/<graph_version>/<sulci_recognition_session>_auto",
+        },
+
+        "processes" : {
+            "Morphologist" : {
+                "t1mri":
+                    [["input:{acquisition}/<subject>", "images"],
+                "imported_t1mri":
+                    [["output:{acquisition}/<subject>", "images"]],
+                "t1mri_referential":
+                    [["output:{acquisition}/registration/RawT1-<subject>_<acquisition>", "Referential"]],
+                "reoriented_t1mri":
+                    [["output:{acquisition}/<subject>", "images"]],
+                "t1mri_nobias":
+                    [["output:{analysis}/nobias_<subject>", "images" ]],
+                "split_brain":
+                    [["output:{analysis}/segmentation/voronoi_<subject>","images"]],
+                "left_graph":
+                    [["output:{analysis}/folds/<graph_version>/<side><subject>",
+                        "Graph and data",
+                        {"side": "L", "labelled": "No"}]],
+                "left_labelled_graph":
+                    [["output:{recognition_analysis}/<side><subject>_<sulci_recognition_session>_auto",
+                        "Graph and data", {"side": "L"}]],
+                "right_graph":
+                    [["output:{analysis}/folds/<graph_version>/<side><subject>",
+                        "Graph and data", {"side":"R","labelled":"No"}]],
+                "right_labelled_graph":
+                    [["output:{recognition_analysis}/<side><subject>_<sulci_recognition_session>_auto",
+                        "Graph and data", {"side": "R"}]],
+                "Talairach_transform":
+                    [["output:{acquisition}/registration/RawT1-<subject>_<acquisition>_TO_Talairach-ACPC",
+                        "Transformation matrix"]]
+            }
+        }
+    }
+
+The dictionary may contain:
+
+**fom_name**: string
+    identifier of the FOM model. Several FOMs may coexist under different
+    identifiers.
+
+**fom_import**: list
+    dependencies between FOMs. A Fom may import others to benefit from its
+    formats, patterns etc.
+
+**attribute_definitions**: dict
+    a dict of predefines attributes. It is generally used to define default
+    values for some attributes. Each attribute defined here is also a dict. In
+    this sub-dict, the key "default_value" provides the attribute default
+    value.
+
+    Attributes don't *need* to be defined here, they are automatically defined
+    as they are used in path patterns. But here we can assign them additional
+    information (typically default values).
+
+**shared_patterns**: dict
+    mapping of reusable patterns. Such patterns will be replaced with their
+    contents when used in the file paths patterns. To use such a pattern, place
+    it with brackets {} in file paths patterns::
+
+        "input:{acquisition}/<subject>"
+
+    here ``{aquisition}`` is the *shared pattern* "aquisition", and
+    ``<subject>`` is the *attribute* "subject"
+
+    A pattern definition may also use attributes between ``<attribute_name>``
+    quotes, and / or reuse other patterns between ``{pattern}`` curly brackets.
+
+**processes**: dict
+    dictionary of processes supported by the FOM, and path definitions for
+    their parameters. The dict is organized by process, then in each process a
+    sub-dict contains its parameters definitions. For a given parameter, a list
+    of the FOM rules is given: several rules are allowed.
+
+    Process names keys may be a fully qualified module/class name, or a short
+    identifier, or a "contextual" name: the name a process has in the context
+    of a pipeline.
+
+    A FOM rule is a list of 2 or 3 elements::
+
+        [patterrn, formats, attributes]
+
+    *pattern*: string
+        the FOM pattern for the file path of the given parameter. A pattern
+        starts with a directory identifier (``input``, ``output``,
+        ``shared``), followed by a semicolon (``:``), and a file pattern which
+        may contain attributes (``<attrib>``) and/or shared patterns
+        (``{pattern}``). Ex::
+
+            "input:{acquisition}/<subject>"
+
+    *formats*: string or list
+        name of a format, a formats list, or a list of allowed formats names.
+        The formats will rule the possible file extensions.
+
+    *attributes*: dict, optional
+        An optional dict assigning locally some attributes values. Ex::
+
+            {"side": "left"}
+
+        The attributes values here are used both to replace attributes values in the current file path pattern, and to select the matching rule when attributes values are given externally (hm, to be checked actually).
+
+A FOM file is a JSON file (actually a JSON/YAML extended file, to allow comments within it), which should be placed in a common directory where the FOM manager will look for it (``share/foms/``)
+
+How to use FOMS
+---------------
+
+At higher level, they are used for instance in `CAPSUL <http://brainvisa.info/capsul/>`_.
+
+At lower level, they are used through several classes:
+
+* :class:`FileOrganizationModelManager` manages a set of FOMs, looks for them in a search path, reads them.
+* :class:`FileOrganizationModels` represents a FOM rules set.
+* :class:`AttributesToPaths` is used to convert a set of attributes into filenames (which is the main use of FOMs).
+* :class:`PathToAttributes` performs the reverse operation: match attributes and determines their values from a given filename.
+
+'''
+
 from __future__ import absolute_import
 from __future__ import print_function
 
