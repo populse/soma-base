@@ -1296,6 +1296,48 @@ class AttributesToPaths(object):
         return (osp.join(*path.split('/')), attributes)
         #return (path, attributes)
 
+    def allowed_formats_for_parameter(self, process_name, param):
+        formats = []
+        for rule, attributes in self.rules:
+            if attributes.get('fom_process') == process_name \
+                    and attributes.get('fom_parameter') == param:
+                rformats = attributes.get('fom_formats', [])
+                for format in rformats:
+                    if format not in formats:
+                        formats.append(format)
+        return formats
+
+    def allowed_extensions_for_parameter(self, **kwargs):
+        '''
+        Either formats or (process_name and param) should be passed
+        kwargs
+        ------
+        formats: list of str
+            if provided only this parameter will be used
+        process_name: str
+        param: str
+        '''
+        if 'formats' in kwargs:
+            formats = list(kwargs['formats'])
+        elif 'process_name' in kwargs and 'param' in kwargs:
+            process_name = kwargs['process_name']
+            param = kwargs['param']
+            formats = self.allowed_formats_for_parameter(process_name, param)
+        else:
+            raise KeyError('Either formats or (process_name and param) should '
+                           'be passed')
+        exts = set()
+        while formats:
+            format = formats.pop(0)
+            if format not in self.foms.formats \
+                    and format in self.foms.format_lists:
+                formats += self.foms.format_lists[format]
+                continue
+            exts.add(self.foms.formats[format])
+
+        return sorted(exts)
+
+
 
 def call_before_application_initialization(application):
     try:
