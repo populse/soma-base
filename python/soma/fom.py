@@ -879,6 +879,9 @@ class PathToAttributes(object):
                 if count == len(splited_pattern):
                     if rule_formats:
                         for format in rule_formats:
+                            if format not in foms.formats:
+                                print('format "%s" not if FOM "%s"'
+                                      % (format, foms.fom_names))
                             extension = foms.formats[format]
                             d = rule_attributes.copy()
                             d['fom_format'] = format
