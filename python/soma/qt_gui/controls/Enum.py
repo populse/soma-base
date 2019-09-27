@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 from soma.qt_gui.qt_backend import QtGui, QtCore
 from soma.utils.functiontools import SomaPartial
 from soma.qt_gui.controller_widget import weak_proxy
+import traits.api as traits
 
 if sys.version_info[0] >= 3:
     unicode = str
@@ -197,7 +198,7 @@ class EnumControlWidget(object):
 
         # If the controller value is not empty, update the controller widget
         # associated control
-        if new_controller_value is not None:
+        if new_controller_value not in (None, traits.Undefined):
             control_instance.setCurrentIndex(
                 control_instance._choices.index(new_controller_value))
         logger.debug("'EnumControlWidget' has been updated with value "

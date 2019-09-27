@@ -162,12 +162,23 @@ class ListControlWidget(object):
         # Get the inner trait: expect only one inner trait
         # note: trait.inner_traits might be a method (ListInt) or a tuple
         # (List), whereas trait.handler.inner_trait is always a method
-        if len(trait.handler.inner_traits()) != 1:
+        if len(trait.handler.inner_traits()) == 1:
+            inner_trait = trait.handler.inner_traits()[0]
+        elif len(trait.handler.inner_traits()) == 0:
+            # maybe a generic list, or a compount trait
+            if hasattr(trait.handler, 'handlers') \
+                    and len(trait.handler.handlers) > 0 \
+                    and hasattr(trait.handler.handlers[0], 'inner_traits') \
+                    and len(trait.handler.handlers[0].inner_traits()) > 0:
+                inner_trait = trait.handler.handlers[0].inner_traits()[0]
+            else:
+                # can't determine type, fallback to string
+                inner_trait = traits.Str()
+        else:
             raise Exception(
                 "Expect only one inner trait in List control. Trait '{0}' "
                 "inner trait is '{1}'.".format(control_name,
                                                trait.handler.inner_traits()))
-        inner_trait = trait.handler.inner_traits()[0]
 
         if control_value is traits.Undefined:
             control_value = []
