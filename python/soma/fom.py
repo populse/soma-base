@@ -493,6 +493,9 @@ class FileOrganizationModelManager(object):
             self.find_foms()
         return self._cache.keys()
 
+    def clear_cache(self):
+        self._cache = None
+
     def load_foms(self, *names):
         if self._cache is None:
             self.find_foms()
