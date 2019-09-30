@@ -452,8 +452,12 @@ class FileOrganizationModelManager(object):
         '''Return a list of file organisation model (FOM) names.
         These FOMs can be loaded with load_foms. FOM files (or directories) are
         looked for in self.paths.'''
+        #print('*** find_foms ***')
+        #import time
+        #t0 = time.time()
         self._cache = {}
         for path in self.paths:
+            print('   ', path)
             if os.path.isdir(path):
                 for i in os.listdir(path):
                     full_path = osp.join(path, i)
@@ -477,6 +481,16 @@ class FileOrganizationModelManager(object):
                                     'file %s does not contain fom_name'
                                     % full_path)
                             self._cache[name] = full_path
+        #print('    find_foms done: %f s' % (time.time() - t0))
+        return self._cache.keys()
+
+    def fom_files(self):
+        '''Return a list of file organisation model (FOM) names, as in
+        :meth:`find_foms`, but does not clear and reload the cache.
+        These FOMs can be loaded with load_foms. FOM files (or directories) are
+        looked for in self.paths.'''
+        if not self._cache:
+            self.find_foms()
         return self._cache.keys()
 
     def load_foms(self, *names):
@@ -879,6 +893,9 @@ class PathToAttributes(object):
                 if count == len(splited_pattern):
                     if rule_formats:
                         for format in rule_formats:
+                            if format not in foms.formats:
+                                print('format "%s" not if FOM "%s"'
+                                      % (format, foms.fom_names))
                             extension = foms.formats[format]
                             d = rule_attributes.copy()
                             d['fom_format'] = format

@@ -24,6 +24,7 @@ from soma.sorted_dictionary import OrderedDict
 from soma.functiontools import SomaPartial
 import weakref
 from soma.utils.weak_proxy import get_ref, weak_proxy
+import traits.api as traits
 
 # Qt import
 try:
@@ -686,6 +687,11 @@ class ControllerWidget(QtGui.QWidget):
         # Call the search function that will map the trait type to the
         # corresponding control type
         control_class = self.get_control_class(trait)
+        # FIXME: for now we use a hack for compound/either traits, until
+        # we write a "real" GUI for them
+        if isinstance(trait.trait_type, (traits.TraitCompound, traits.Either)):
+            # compound trait: use the 1st
+            trait = trait.handler.handlers[0].as_ctrait()
         # Create the control instance and associated label
         if self.editable_labels:
             label_class = DeletableLineEdit
