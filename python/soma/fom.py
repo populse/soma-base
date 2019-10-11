@@ -457,7 +457,7 @@ class FileOrganizationModelManager(object):
         #t0 = time.time()
         self._cache = {}
         for path in self.paths:
-            print('   ', path)
+            # print('   ', path)
             if os.path.isdir(path):
                 for i in os.listdir(path):
                     full_path = osp.join(path, i)
