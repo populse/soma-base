@@ -4,4 +4,5 @@ Miscellaneous libs for the python environment of Populse / BrainVISA
 
 # Documentation
 
-Docs are currently on http://brainvisa.info/soma-base/sphinx/index.html
+* Docs of the git master branch: https://populse.github.io/soma-base/
+* Docs of the released versions are on http://brainvisa.info/soma-base/sphinx/index.html
