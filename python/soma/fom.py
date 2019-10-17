@@ -1335,7 +1335,9 @@ class AttributesToPaths(object):
         formats: list of str
             if provided only this parameter will be used
         process_name: str
+            name of the process
         param: str
+            name of the process parameter
         '''
         if 'formats' in kwargs:
             formats = list(kwargs['formats'])
