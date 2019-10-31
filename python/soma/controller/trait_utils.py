@@ -72,6 +72,13 @@ def get_trait_desc(trait_name, trait, def_val=None):
     # Get the trait type
     trait_id = trait_ids(trait)
 
+    if trait.output and isinstance(trait.trait_type,
+                                   (traits.api.File, traits.api.Directory)):
+        if trait.input_filename is False:
+            trait_id[0] += ' (filename: output)'
+        else:
+            trait_id[0] += ' (filename: input)'
+
     # Add the trait name (bold)
     manhelpstr = ["{0}".format(trait_name)]
 
@@ -90,8 +97,8 @@ def get_trait_desc(trait_name, trait, def_val=None):
     # Get the default parameter representation: trait type of default
     # value if specified
     line = "{0}".format(trait.info())
-    if not trait.output:
-        line += " ({0} - {1}{2})".format(trait_id, dtype, def_val)
+    #if not trait.output:
+    line += " ({0} - {1}{2})".format(trait_id, dtype, def_val)
 
     # Wrap the string properly
     manhelpstr = wrap(line, 70,

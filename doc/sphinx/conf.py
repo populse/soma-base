@@ -247,10 +247,7 @@ docpath = os.path.join( os.path.dirname( os.path.dirname( os.path.dirname( \
   soma.__file__ ) ) ), 'share', 'doc' )
 
 intersphinx_mapping = {
-  'somabase': ( os.path.join( docpath, 'soma-base-' + version + '/sphinx' ), None ),
-  'pyaims': ( os.path.join( docpath, 'pyaims-' + version + '/sphinx' ), None ),
-  'pyana': ( os.path.join( docpath, 'pyanatomist-' + version + '/sphinx' ), None ),
-  'python': ('http://docs.python.org/%d.%d' % sys.version_info[:2], None),
-  'traits': ('http://docs.enthought.com/traits', None),
+  'python': ('https://docs.python.org/%d.%d' % sys.version_info[:2], None),
+  'traits': ('https://docs.enthought.com/traits', None),
 }
 
