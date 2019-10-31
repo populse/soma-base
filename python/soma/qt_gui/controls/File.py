@@ -221,19 +221,22 @@ class FileControlWidget(object):
 
             # Get the control value
             new_trait_value = unicode(control_instance.path.text())
-
-            # Set the control value to the controller associated trait
-            setattr(controller_widget.controller, control_name,
-                    new_trait_value)
-            logger.debug(
-                "'FileControlWidget' associated controller trait '{0}' has "
-                "been updated with value '{1}'.".format(
-                    control_name, new_trait_value))
+            if new_trait_value != "<undefined>":
+                # Set the control value to the controller associated trait
+                setattr(controller_widget.controller, control_name,
+                        new_trait_value)
+                logger.debug(
+                    "'FileControlWidget' associated controller trait '{0}' has"
+                    " been updated with value '{1}'.".format(
+                        control_name, new_trait_value))
         elif reset_invalid_value:
             # invalid, reset GUI to older value
             old_trait_value = getattr(controller_widget.controller,
                                       control_name)
-            control_instance.path.setText(old_trait_value)
+            if isinstance(old_trait_value, str):
+                control_instance.path.setText(old_trait_value)
+            else:
+                control_instance.path.setText("<undefined>")
 
     @staticmethod
     def update_controller_widget(controller_widget, control_name,
