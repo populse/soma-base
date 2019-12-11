@@ -348,8 +348,11 @@ class ListControlWidget(object):
             new_trait_value += old_value[control_instance.max_items:]
 
         # Update the 'control_name' parent controller value
-        setattr(controller_widget.controller, control_name,
-                new_trait_value)
+        try:
+            setattr(controller_widget.controller, control_name,
+                    new_trait_value)
+        except Exception as e:
+            print(e, file=sys.stderr)
         logger.debug(
             "'ListControlWidget' associated controller trait '{0}' has "
             "been updated with value '{1}'.".format(
