@@ -7,6 +7,7 @@
 #
 
 # System import
+from __future__ import print_function
 import os
 import logging
 from functools import partial
