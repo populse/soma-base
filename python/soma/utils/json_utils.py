@@ -1,5 +1,6 @@
 
 from __future__ import print_function
+from soma.controller import Controller
 import six
 
 try:
@@ -23,7 +24,10 @@ def to_json(value):
         value = ['<set>'] + [to_json(x) for x in value]
     elif isinstance(value, list):
         value = [to_json(x) for x in value]
-    elif hasattr(value, 'items'):
+    elif isinstance(value, Controller):
+        value = to_json(value.export_to_dict())
+    elif getattr(value, 'items', None):
+        # (hasattr may answer True for HasTraits)
         new_value = {}
         for key, item in six.iteritems(value):
             new_value[key] = to_json(item)
