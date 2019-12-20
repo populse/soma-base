@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 # Trait import
 from traits.api import HasTraits, Event, CTrait, Instance, Undefined, \
-    TraitType, TraitError, Any, Set, TraitInstance, TraitCoerceType
+    TraitType, TraitError, Any, Set, TraitInstance, TraitCoerceType, Tuple
 import traits.api as traits
 # Soma import
 from soma.sorted_dictionary import SortedDictionary, OrderedDict
@@ -378,6 +378,8 @@ class Controller(HasTraits):
                 tr = self.trait(trait_name)
                 if tr and isinstance(tr.trait_type, Set):
                     setattr(self, trait_name, set(value))
+                elif tr and isinstance(tr.trait_type, Tuple):
+                    setattr(self, trait_name, tuple(value))
                 else:
                     setattr(self, trait_name, value)
 
@@ -633,4 +635,5 @@ def controller_to_dict(item, exclude_undefined=False,
             result[name] = value
     else:
         result = item
+
     return result
