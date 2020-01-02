@@ -375,7 +375,7 @@ class Controller(HasTraits):
                 controller.import_from_dict(value)
             else:
                 if value in (None, Undefined):
-                    # None / Undefined may be an acceptable value for many
+                    # None / Undefined may be an acceptable value for many
                     # traits types
                     setattr(self, trait_name, value)
                 else:
