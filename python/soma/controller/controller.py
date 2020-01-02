@@ -374,14 +374,19 @@ class Controller(HasTraits):
                     trait.trait_type.klass)
                 controller.import_from_dict(value)
             else:
-                # check trait type for conversions
-                tr = self.trait(trait_name)
-                if tr and isinstance(tr.trait_type, Set):
-                    setattr(self, trait_name, set(value))
-                elif tr and isinstance(tr.trait_type, Tuple):
-                    setattr(self, trait_name, tuple(value))
-                else:
+                if value in (None, Undefined):
+                    # None / Undefined may be an acceptable value for many
+                    # traits types
                     setattr(self, trait_name, value)
+                else:
+                    # check trait type for conversions
+                    tr = self.trait(trait_name)
+                    if tr and isinstance(tr.trait_type, Set):
+                        setattr(self, trait_name, set(value))
+                    elif tr and isinstance(tr.trait_type, Tuple):
+                        setattr(self, trait_name, tuple(value))
+                    else:
+                        setattr(self, trait_name, value)
 
     def copy(self, with_values=True):
         """ Copy traits definitions to a new Controller object
