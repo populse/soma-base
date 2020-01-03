@@ -39,3 +39,6 @@ controls["Instance"] = ControllerControlWidget
 controls["TraitInstance"] = ControllerControlWidget
 controls["ControllerTrait"] = ControllerControlWidget
 controls["Dict"] = DictControlWidget
+# nipype types
+controls["ImageFileSPM"] = FileControlWidget
+

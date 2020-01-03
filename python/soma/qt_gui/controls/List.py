@@ -183,6 +183,9 @@ class ListControlWidget(object):
 
         if control_value is traits.Undefined:
             control_value = []
+        elif not isinstance(control_value, (list, tuple)):
+            # in nipype MultiPath, single values are not in a list
+            control_value = [control_value]
             
         # Create the list widget: a frame
         parent = get_ref(parent)
@@ -411,6 +414,11 @@ class ListControlWidget(object):
 
             # Get the 'control_name' list value from the top list controller
             trait_value = getattr(controller_widget.controller, control_name)
+            if trait_value in (None, traits.Undefined):
+                trait_value = []
+            elif not isinstance(trait_value, (tuple, list)):
+                # nipype MultiPath may have one item outside of a list
+                trait_value = [trait_value]
 
             # Get the number of list elements in the controller associated
             # with the current list control

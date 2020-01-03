@@ -7,6 +7,8 @@
 #
 
 # System import
+from __future__ import print_function
+
 import os
 import logging
 from functools import partial
@@ -25,6 +27,7 @@ from soma.qt_gui.controller_widget import ControllerWidget, \
     ScrollControllerWidget, get_ref, weak_proxy
 
 from .List import ListControlWidget, ListController
+import traits.api as traits
 import weakref
 
 # Qt import
@@ -161,6 +164,11 @@ class OffscreenListControlWidget(object):
         frame.inner_trait = inner_trait
         frame.trait = trait
         frame.connected = False
+        if control_value is traits.Undefined:
+            control_value = []
+        elif not isinstance(control_value, (list, tuple)):
+            # in nipype MultiPath, single values are not in a list
+            control_value = [control_value]
         frame.control_value = control_value
         frame.trait_name = control_name
 
@@ -212,6 +220,12 @@ class OffscreenListControlWidget(object):
         widget.horizontalHeader().hide()
         widget.verticalHeader().hide()
         widget.max_items = OffscreenListControlWidget.max_items
+
+        if control_value is traits.Undefined:
+            control_value = []
+        elif not isinstance(control_value, (list, tuple)):
+            # in nipype MultiPath, single values are not in a list
+            control_value = [control_value]
 
         control_widget, control_label = ListControlWidget.create_widget(
             controller_widget, parent_frame.trait_name, control_value,
@@ -338,6 +352,11 @@ class OffscreenListControlWidget(object):
             keys = list(control_instance.controller.user_traits().keys())
             #n = len(control_instance.controller.user_traits())
             parent_value = getattr(controller_widget.controller, control_name)
+            if parent_value is traits.Undefined:
+                parent_value = []
+            elif not isinstance(parent_value, (list, tuple)):
+                # in nipype MultiPath, single values are not in a list
+                parent_value = [parent_value]
             n = len(parent_value)
             max_items = widget.max_items
             if max_items > 0:
@@ -350,17 +369,21 @@ class OffscreenListControlWidget(object):
                 m = n
                 widget.setColumnCount(n)
             for i in range(m):
-                items = widget.control_widget.controller_widget._controls[
-                    str(i)]
-                item = items[None][2]
-                if item not in owned_widgets:
-                    widget.setCellWidget(0, i, item)
-                if qt_backend.get_qt_backend() == 'PyQt5':
-                    widget.horizontalHeader().setSectionResizeMode(
-                        i, QtGui.QHeaderView.Stretch)
-                else:
-                    widget.horizontalHeader().setResizeMode(
-                        i, QtGui.QHeaderView.Stretch)
+                try:
+                    items = widget.control_widget.controller_widget._controls[
+                        str(i)]
+                    item = items[None][2]
+                    if item not in owned_widgets:
+                        widget.setCellWidget(0, i, item)
+                    if qt_backend.get_qt_backend() == 'PyQt5':
+                        widget.horizontalHeader().setSectionResizeMode(
+                            i, QtGui.QHeaderView.Stretch)
+                    else:
+                        widget.horizontalHeader().setResizeMode(
+                            i, QtGui.QHeaderView.Stretch)
+                except KeyError:
+                    print('KeyError in OffscreenListControlWidget', i)
+                    print('controls:', widget.control_widget.controller_widget._controls)
             if n > m:
                 label = QtGui.QLabel('...')
                 width = label.sizeHint().width()
