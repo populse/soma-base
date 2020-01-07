@@ -42,7 +42,7 @@ install:
     - pip install codecov
     # to test notebooks
     - if [ ${TRAVIS_PYTHON_VERSION} != "2.6" ]; then pip install jupyter nbconvert; fi
-    - if [[ "$TRAVIS_OS_NAME" = "linux" && "$TRAVIS_PYTHON_VERSION" == "3.5" ]]; then sudo apt-get install -y pandoc graphviz; pip install sphinx sphinx-gallery pandoc nbsphinx PyQt5; fi
+    - if [[ "$TRAVIS_OS_NAME" = "linux" && "$TRAVIS_PYTHON_VERSION" == "3.5" ]]; then sudo apt-get install -y pandoc graphviz; pip install sphinx sphinx-gallery pandoc nbsphinx "PyQt5<5.13"; fi
     - python setup.py install
     - export QT_API=pyqt5
     # build doc; set .nojekyll otherwise github.io doesn't copy dirs starting
