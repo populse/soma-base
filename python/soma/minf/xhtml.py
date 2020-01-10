@@ -143,10 +143,12 @@ class XHTML:
         io = StringIO()
         # when unicode string is written in a stream, default encoding is used
         # to encode it :
+        if sys.version_info[0] < 3:
+            html = html.encode('utf-8')
         io.write(
             '<?xml version="1.0" encoding="utf-8" ?>\n<' + minfTag + ' ' +
             expanderAttribute + '="minf_2.0">\n<' + xhtmlTag + '>' +
-            html.encode("utf-8") + '</' + xhtmlTag + '>\n</' + minfTag + '>')
+            html + '</' + xhtmlTag + '>\n</' + minfTag + '>')
         io.seek(0)
         return readMinf(io)[0]
     buildFromHTML = staticmethod(buildFromHTML)
