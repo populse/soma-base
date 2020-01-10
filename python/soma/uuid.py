@@ -97,6 +97,9 @@ class Uuid(object):
 
     if sys.version_info[0] >= 3:
         def __str__(self):
+            if not isinstance(self.__uuid, bytes):
+                # this should not happen, but has been seen in some places
+                self.__uuid = bytes(self.__uuid, encoding='utf-8')
             return (binascii.hexlify( self.__uuid[0:4] ) + b'-' + \
                 binascii.hexlify( self.__uuid[4:6] ) + b'-' + \
                 binascii.hexlify( self.__uuid[6:8] ) + b'-' + \
