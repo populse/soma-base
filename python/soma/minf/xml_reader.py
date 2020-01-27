@@ -224,10 +224,10 @@ class NumberXMLHandler(XMLHandler):
         stringValue = ''.join(self._stringValue)
         try:
             value = int(stringValue)
-        except:
+        except ValueError:
             try:
                 value = long(stringValue)
-            except:
+            except ValueError:
                 value = float(stringValue)
         parser._nodesToProduce.append(value)
         XMLHandler.endElement(self, parser, name)

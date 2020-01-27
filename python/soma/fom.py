@@ -168,7 +168,7 @@ except ImportError:
 try:
     from collections import OrderedDict
     isinstance_dict = lambda x: isinstance(x, dict)
-except:
+except ImportError:
     # It is necessary to keep this for compatibility with python 2.6.*
     from soma.sorted_dictionary import OrderedDict
     isinstance_dict = lambda x: isinstance(x, (dict, OrderedDict))

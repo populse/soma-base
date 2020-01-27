@@ -155,11 +155,11 @@ class Application(Singleton, Controller):
     @staticmethod
     def load_plugin_module(plugin_module):
         '''This method loads a plugin module. It imports the module without raising
-        an axception if it fails.'''
+        an exception if it fails.'''
         try:
             __import__(plugin_module, level=0)
             return sys.modules[plugin_module]
-        except:
+        except Exception:
             # Python 2.6 hack : print_last may fail here (maybe due to threads management)
             # traceback.print_last()
             exceptionType, exceptionValue, exceptionTraceback = sys.exc_info()

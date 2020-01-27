@@ -168,7 +168,7 @@ class TestSomaMisc(unittest.TestCase):
                 finally:
                     try:
                         shutil.rmtree(unpacked)
-                    except:
+                    except OSError:
                         pass
                 # trunkcate archive
                 content = open(arfile, 'rb').read()
@@ -181,7 +181,7 @@ class TestSomaMisc(unittest.TestCase):
                 finally:
                     try:
                         shutil.rmtree(unpacked)
-                    except:
+                    except OSError:
                         pass
                 # zip one file
                 archive.pack(arfile, fullfile1)
@@ -196,7 +196,7 @@ class TestSomaMisc(unittest.TestCase):
                 finally:
                     try:
                         shutil.rmtree(unpacked)
-                    except:
+                    except OSError:
                         pass
 
 

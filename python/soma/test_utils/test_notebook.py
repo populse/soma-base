@@ -83,7 +83,7 @@ def notebook_run(path, timeout=60):
     finally:
         try:
             os.unlink(fout[1])
-        except:
+        except OSError:
             pass
         os.chdir(old_cwd)
 

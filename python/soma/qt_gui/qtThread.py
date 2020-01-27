@@ -207,7 +207,7 @@ class QtThreadCall(singleton.Singleton, QObject):
                 semaphore._mainThreadActionResult = function(*args)
             else:
                 semaphore._mainThreadActionResult = function(*args, **kwargs)
-        except:
+        except:  # noqa: E722
             semaphore._mainThreadActionException = sys.exc_info()
         semaphore.release()
                           # release the semaphore to unblock the thread which
@@ -240,7 +240,7 @@ class QtThreadCall(singleton.Singleton, QObject):
                     function(*args)
                 else:
                     function(*args, **kwargs)
-            except:
+            except:  # noqa: E722
                 # Should call a customizable function here
                 raise
 

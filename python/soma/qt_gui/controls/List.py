@@ -881,7 +881,7 @@ class ListControlWidget(object):
                 try:
                     parsed = json.loads(text)
                     return parsed
-                except:
+                except Exception:
                     pass
             elif format == 'CSV':
                 try:
@@ -903,7 +903,7 @@ class ListControlWidget(object):
                             c.x = x
                             parsed.append(c.x)
                     return parsed
-                except:
+                except Exception:
                     pass
         # could not parse
         return None
