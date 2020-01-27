@@ -222,7 +222,7 @@ class NumberXMLHandler(XMLHandler):
 
     def endElement(self, parser, name):
         stringValue = ''.join(self._stringValue)
-        if sys.version_info >= 3:
+        if sys.version_info[0] >= 3:
             ttypes = (int, float)
         else:
             ttypes = (int, long, float)
