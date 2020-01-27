@@ -197,7 +197,7 @@ class SortedDictionary(dict):
         """
         try:
             i = self.sortedKeys.index(key)
-        except:
+        except Exception:
             i = -1
         return i
 

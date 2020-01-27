@@ -59,7 +59,7 @@ try:
     from traits.api import Undefined
     # Undefined is also defined for backward compatibility
     undefined = Undefined
-except:
+except ImportError:
     undefined = None
 
 if undefined is None:

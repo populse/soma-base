@@ -228,7 +228,7 @@ def iterateMinf(source, targets=None, stop_on_error=True, exceptions=[]):
                 try:
                     import numpy
                     d = {'nan': numpy.nan}
-                except:
+                except Exception:
                     d = {'nan': None}
                 try:
                     six.exec_(source.read().replace("\r\n", "\n"), d)

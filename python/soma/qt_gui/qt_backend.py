@@ -664,7 +664,7 @@ def init_traitsui_handler():
             # a crash. Then use the code taken from traitsui.qt4.toolkit
             # in a qt-independent manner
             raise ImportError('traitsui doesn\'t provide a PyQt5 backend')
-    except:
+    except Exception:
         # copy of the code from traitsui.qt4.toolkit
 
         from traits.trait_notifiers import set_ui_handler

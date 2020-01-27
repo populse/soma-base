@@ -19,7 +19,7 @@ class TestFOM(unittest.TestCase):
         try:
             shutil.rmtree(self.work_dir)
             #pass
-        except:
+        except OSError:
             pass
 
     def test_fom(self):

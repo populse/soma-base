@@ -199,13 +199,13 @@ class SomaTestCase(BaseSomaTestCase):
         if cls.test_mode == ref_mode:
             try:
                 os.makedirs(cls.private_ref_data_dir())
-            except:
+            except OSError:
                 pass
             cls.setUpClass_ref_mode()
         else:
             try:
                 os.makedirs(cls.private_run_data_dir())
-            except:
+            except OSError:
                 pass
             cls.setUpClass_run_mode()
 
