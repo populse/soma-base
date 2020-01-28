@@ -222,13 +222,18 @@ class NumberXMLHandler(XMLHandler):
 
     def endElement(self, parser, name):
         stringValue = ''.join(self._stringValue)
-        try:
-            value = int(stringValue)
-        except ValueError:
+        if sys.version_info[0] >= 3:
+            ttypes = (int, float)
+        else:
+            ttypes = (int, long, float)
+        for ttype in ttypes:
             try:
-                value = long(stringValue)
+                value = ttype(stringValue)
+                break
             except ValueError:
-                value = float(stringValue)
+                pass
+        else:
+            raise
         parser._nodesToProduce.append(value)
         XMLHandler.endElement(self, parser, name)
 
