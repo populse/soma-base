@@ -204,11 +204,13 @@ def iterateMinf(source, targets=None, stop_on_error=True, exceptions=[]):
         try_encodings = [None]
 
     for encoding in try_encodings:
+        opened_source_file = None
         if not hasattr(initial_source, 'readline'):
             if sys.version_info[0] >= 3:
-                source = BufferAndFile(open(initial_source, encoding=encoding))
+                opened_source_file = open(initial_source, encoding=encoding)
             else:
-                source = BufferAndFile(open(initial_source))
+                opened_source_file = open(initial_source)
+            source = BufferAndFile(opened_source_file)
         elif not isinstance(source, BufferAndFile):
             source.seek(0)
             source = BufferAndFile(source)
@@ -281,6 +283,9 @@ def iterateMinf(source, targets=None, stop_on_error=True, exceptions=[]):
             if encoding == try_encodings[-1]:
                 raise
             continue
+        finally:
+            if opened_source_file is not None:
+                opened_source_file.close()
         break # no error, don't process next encoding
 
 #------------------------------------------------------------------------------
