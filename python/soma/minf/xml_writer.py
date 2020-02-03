@@ -102,6 +102,7 @@ class MinfXMLWriter(MinfWriter):
         if self.__file is not None:
             self.__file.flush()
             self._encodeAndWriteLine('</' + minfTag + '>')
+            self.__file.close()
             self.__file = None
 
     def write(self, value):
