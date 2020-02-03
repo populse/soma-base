@@ -31,6 +31,8 @@ class TestUUID(unittest.TestCase):
                           'blablah0-bouh-bidi-bada-popogugurbav')
         p = pickle.dumps(u1)
         self.assertEqual(u1, pickle.loads(p))
+        p = pickle.dumps(u1, 2)  # test Pickle protocol version 2
+        self.assertEqual(u1, pickle.loads(p))
         d = {u1: 'u1'}
         self.assertTrue(u1 in d)
         d[u1] = 'u1-bis'
