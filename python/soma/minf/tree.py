@@ -196,9 +196,17 @@ class MinfReducer(object):
             self.structureName = structureName
 
         def __call__(self, reducer, object):
-            getinitkwargs = getattr(object, '__getinitkwargs__', None)
+            getinitkwargs = ( getattr(object, '__getnewargs_ex__', None)
+                              or getattr(object, '__getinitkwargs__', None))
             if getinitkwargs is None:
-                args = object.__getinitargs__()
+                getinitargs = (getattr(object, '__getnewargs__', None)
+                               or getattr(object, '__getinitargs__', None))
+                if not getinitargs:
+                    raise TypeError(
+                        'Object of type {0} cannot be serialized by MinfReducer'
+                        .format(type(object))
+                    )
+                args = getinitargs()
                 kwargs = {}
             else:
                 args, kwargs = getinitkwargs()
