@@ -72,7 +72,7 @@ class MinfWriter(six.with_metaclass(RegisterMinfWriterClass, object)):
     the following methods:
       - L{__init__} to construct writer instances.
       - L{write} to write objects in minf file.
-      - L{close} to terminate writing and close the min file.
+      - L{close} to terminate writing.
     '''
 
     #: all classes derived from L{MinfWriter} are automatically stored in that
@@ -103,6 +103,7 @@ class MinfWriter(six.with_metaclass(RegisterMinfWriterClass, object)):
     def close(self):
         '''
         Close the writer, further calls to L{write} method will lead to an error.
+        The underlying file is NOT closed.
         '''
 
     def createWriter(destFile, format, reducer):
