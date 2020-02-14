@@ -45,7 +45,7 @@ _trait_cvt_table = {
 }
 
 
-def get_trait_desc(trait_name, trait, def_val=None):
+def get_trait_desc(trait_name, trait, def_val=None, use_wrap=True):
     """ Generate a trait string description of the form:
 
     [parameter name: type (default trait value) string help (description)]
@@ -60,6 +60,8 @@ def get_trait_desc(trait_name, trait, def_val=None):
         the trait default value
         If not in ['', None] add the default trait value to the trait
         string description.
+    use_wrap: bool (optional)
+        if True, use text wrapping to 70 columns
 
     Returns
     -------
@@ -101,17 +103,31 @@ def get_trait_desc(trait_name, trait, def_val=None):
     line += " ({0} - {1}{2})".format(trait_id, dtype, def_val)
 
     # Wrap the string properly
-    manhelpstr = wrap(line, 70,
-                      initial_indent=manhelpstr[0] + ": ",
-                      subsequent_indent="    ")
+    if use_wrap:
+        manhelpstr = wrap(line, 70,
+                          initial_indent=manhelpstr[0] + ": ",
+                          subsequent_indent="    ")
+    else:
+        manhelpstr = [manhelpstr[0] + ": " + line]
 
     # Add the trait description if specified
     if desc:
         for line in desc.split("\n"):
-            line = re.sub("\s+", " ", line)
-            manhelpstr += wrap(line, 70,
-                               initial_indent="    ",
-                               subsequent_indent="    ")
+            # line = re.sub("\s+", " ", line)
+            if use_wrap:
+                indent = ''
+                s = line.strip()
+                if s:
+                    # keep text indentation
+                    indent = line[:line.index(s[0])]
+                wline = wrap(line, 70, initial_indent="    ",
+                            subsequent_indent="    " + indent)
+                if len(wline) == 0:
+                    # don't skip empty lines
+                    wline = ['']
+            else:
+                wline = ['    ' + line]
+            manhelpstr += wline
     else:
         manhelpstr += wrap("No description.", 70,
                            initial_indent="    ",

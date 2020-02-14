@@ -92,7 +92,7 @@ class Uuid(object):
             except Exception:
                 raise ValueError("Invalid uuid string %s" % (repr(uuid), ))
 
-    def __getinitargs__(self):
+    def __getnewargs__(self):
         return (str(self), )
 
     if sys.version_info[0] >= 3:

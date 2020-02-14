@@ -112,38 +112,43 @@ def minfFormat(source):
       Input file name or file object. If it is a file name, it is
       opened with open(source).
     '''
-    if not hasattr(source, 'readline'):
-        source = BufferAndFile(open(source))
-    elif not isinstance(source, BufferAndFile):
-        source.seek(0)
-        source = BufferAndFile(source)
+    opened_source_file = None
+    try:
+        if not hasattr(source, 'readline'):
+            opened_source_file = open(source)
+            source = BufferAndFile(opened_source_file)
+        elif not isinstance(source, BufferAndFile):
+            source.seek(0)
+            source = BufferAndFile(source)
 
-    # Check first non white character to see if the minf file is XML or not
-    start = source.read(5)
-    if start == 'attri':
-        source.unread(start)
-        return ('python', None)
-    elif start != '<?xml':
-        # Try gzip compressed file
-        gzipSource = source.clone()
-        gzipSource.unread(start)
-        gunzipSource = gzip.GzipFile(source.name)
-        try:
-            start = gunzipSource.read(5)
-        except IOError:
-            start = ''
-        if start != '<?xml':
-            raise MinfError(_('Invalid minf file: %s') % (source.name, ))
-        source.change_file(gunzipSource)
-        source.unread(start)
-    else:
-        source.unread(start)
+        # Check first non white character to see if the minf file is XML or not
+        start = source.read(5)
+        if start == 'attri':
+            source.unread(start)
+            return ('python', None)
+        elif start != '<?xml':
+            # Try gzip compressed file
+            gzipSource = source.clone()
+            gzipSource.unread(start)
+            gunzipSource = gzip.GzipFile(source.name)
+            try:
+                start = gunzipSource.read(5)
+            except IOError:
+                start = ''
+            if start != '<?xml':
+                raise MinfError(_('Invalid minf file: %s') % (source.name, ))
+            source.change_file(gunzipSource)
+            source.unread(start)
+        else:
+            source.unread(start)
 
-    r = MinfReader.createReader('XML')
-    reduction, buffer = r.reduction(source)
-    source.unread(buffer)
-    return('XML', reduction)
-
+        r = MinfReader.createReader('XML')
+        reduction, buffer = r.reduction(source)
+        source.unread(buffer)
+        return('XML', reduction)
+    finally:
+        if opened_source_file is not None:
+            opened_source_file.close()
 
 #------------------------------------------------------------------------------
 def _setTarget(target, source):
@@ -204,11 +209,13 @@ def iterateMinf(source, targets=None, stop_on_error=True, exceptions=[]):
         try_encodings = [None]
 
     for encoding in try_encodings:
+        opened_source_file = None
         if not hasattr(initial_source, 'readline'):
             if sys.version_info[0] >= 3:
-                source = BufferAndFile(open(initial_source, encoding=encoding))
+                opened_source_file = open(initial_source, encoding=encoding)
             else:
-                source = BufferAndFile(open(initial_source))
+                opened_source_file = open(initial_source)
+            source = BufferAndFile(opened_source_file)
         elif not isinstance(source, BufferAndFile):
             source.seek(0)
             source = BufferAndFile(source)
@@ -281,6 +288,9 @@ def iterateMinf(source, targets=None, stop_on_error=True, exceptions=[]):
             if encoding == try_encodings[-1]:
                 raise
             continue
+        finally:
+            if opened_source_file is not None:
+                opened_source_file.close()
         break # no error, don't process next encoding
 
 #------------------------------------------------------------------------------
