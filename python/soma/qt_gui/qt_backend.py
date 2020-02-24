@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 #
 # Soma-base - Copyright (C) CEA, 2013
 # Distributed under the terms of the CeCILL-B license, as published by
@@ -42,7 +43,6 @@ import sys
 import os
 import imp
 import six
-from soma.utils.functiontools import partial
 
 
 # make qt_backend a fake module package, with Qt modules as sub-modules

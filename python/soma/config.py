@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 
 """ Config module that sets up version variable and finds the
 `BrainVISA <http://brainvisa.info>`_ `brainvisa-share` data directory.

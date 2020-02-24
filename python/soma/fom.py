@@ -1392,7 +1392,6 @@ if __name__ == '__main__':
     # process_completion( sys.argv[1], {'spm' : '/here/is/spm', 'shared' :
     # '/volatile/bouin/build/trunk/share/brainvisa-share-4.4' })
 
-    from pprint import pprint
     import logging
     # logging.root.setLevel( logging.DEBUG )
     fom = app.fom_manager.load_foms('morphologist-brainvisa-pipeline-1.0')
