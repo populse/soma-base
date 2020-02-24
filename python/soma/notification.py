@@ -1,4 +1,4 @@
-# -*- coding: iso-8859-1 -*-
+# -*- coding: utf-8 -*-
 
 #  This software and supporting documentation are distributed by
 #      Institut Federatif de Recherche 49
@@ -494,8 +494,7 @@ class ObservableAttributes(object):
                     if not value in checkedObjects:
                         value.restartAttributeNotification()
                 else:
-                    value._delayAttributeNotification(
-                        ignoreDoubles=ignoreDoubles)
+                    value._delayAttributeNotification()
 
         if not checkedObjects == None:
             checkedObjects.pop()

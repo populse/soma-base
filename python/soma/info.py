@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """ Information module, containing version variables, plus some
 setuptools-related variables
 Attributes

@@ -47,6 +47,7 @@ import fnmatch
 import glob
 import hashlib
 import re
+import shutil
 import six
 import sys
 
