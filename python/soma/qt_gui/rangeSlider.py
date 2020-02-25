@@ -32,6 +32,7 @@
 #   http://rsgalloway.github.com/qrangeslider
 # ------------------------------------------------------------------------
 
+from __future__ import absolute_import
 __author__ = "Ryan Galloway <ryan@rsgalloway.com>"
 __version__ = "0.1"
 

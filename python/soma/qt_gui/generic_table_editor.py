@@ -34,11 +34,13 @@
 # knowledge of the CeCILL license version 2 and that you accept its terms.
 
 from __future__ import print_function
+from __future__ import absolute_import
 from soma.qt_gui.qt_backend.QtGui import *
 from soma.qt_gui.qt_backend.QtCore import QSize
 import re
 import os
 import six
+from six.moves import range
 
 
 class GenericTableEditor(QWidget):

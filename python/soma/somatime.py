@@ -39,6 +39,7 @@ Utility classes and functions for time handling.
 * organization: NeuroSpin
 * license: CeCILL B (http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html)
 '''
+from __future__ import absolute_import
 __docformat__ = "restructuredtext en"
 
 from soma.translation import translate as _

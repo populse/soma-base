@@ -2,6 +2,7 @@
  
 from __future__ import print_function
 
+from __future__ import absolute_import
 import unittest
 import shutil
 import os
@@ -26,9 +27,9 @@ class TestSortedDictionary(unittest.TestCase):
             ('titi', {'bubu': '50', 'turlute': 12}))
 
         self.assertEqual(dict(d1), dict(d2))
-        self.assertNotEqual(d1.keys(), d2.keys())
+        self.assertNotEqual(list(d1.keys()), list(d2.keys()))
         self.assertEqual(d1, dict(d1))
-        self.assertEqual(d1, SortedDictionary(dict(d1).items()))
+        self.assertEqual(d1, SortedDictionary(list(dict(d1).items())))
 
         d1['titi'] = 'babar'
         d2['titi'] = 'bubur'
@@ -36,20 +37,20 @@ class TestSortedDictionary(unittest.TestCase):
         d2['titi'] = 'babar'
         self.assertEqual(dict(d1), dict(d2))
         d1['ababo'] = 43.65
-        self.assertEqual(d1.keys(), ['titi', 'toto', 'tutu', 'ababo'])
+        self.assertEqual(list(d1.keys()), ['titi', 'toto', 'tutu', 'ababo'])
 
         del d1['titi']
         del d1['ababo']
         del d2['titi']
         self.assertEqual(dict(d1), dict(d2))
-        self.assertEqual(d2.keys(), ['tutu', 'toto'])
+        self.assertEqual(list(d2.keys()), ['tutu', 'toto'])
         p = pickle.dumps(d1)
         p2 = pickle.loads(p)
         self.assertTrue(isinstance(p2, SortedDictionary))
         self.assertEqual(d1, p2)
 
         d1.insert(1, 'babar', 'new item')
-        self.assertEqual(d1.keys(), ['toto', 'babar', 'tutu'])
+        self.assertEqual(list(d1.keys()), ['toto', 'babar', 'tutu'])
         self.assertRaises(KeyError, d1.insert, 2, 'babar', 'other')
         self.assertEqual(d1.index('babar'), 1)
 

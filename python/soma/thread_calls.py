@@ -55,6 +55,7 @@ until the call is done and the result available).
 * organization: NeuroSpin
 * license: `CeCILL B <http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html>`_
 '''
+from __future__ import absolute_import
 __docformat__ = "restructuredtext en"
 
 import threading
@@ -149,7 +150,7 @@ class SingleThreadCalls:
             the result of the function call
         '''
         if threading.currentThread() is self._thread:
-            result = apply(function, args, kwargs)
+            result = function(*args, **kwargs)
         else:
             semaphore = threading.Semaphore(0)
             semaphore._result = None
@@ -202,7 +203,7 @@ class SingleThreadCalls:
             push() does not return anything.
         '''
         if threading.currentThread() is self._thread:
-            apply(function, args, kwargs)
+            function(*args, **kwargs)
         else:
             self._condition.acquire()
             try:

@@ -41,6 +41,8 @@ callbacks (*i.e* Python callables) that will all be called by a single
 * organization: NeuroSpin
 * license: `CeCILL B <http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html>`_
 '''
+from __future__ import absolute_import
+from six.moves import range
 __docformat__ = "restructuredtext en"
 
 
@@ -58,7 +60,7 @@ if sys.version_info[0] >= 3:
         return list(d.items())
 else:
     def items_list(d):
-        return d.items()
+        return list(d.items())
 
 #-------------------------------------------------------------------------
 
@@ -221,7 +223,7 @@ class VariableParametersNotifier(Notifier):
         '''
         Notifier.__init__(self, len(mainParameters))
         self.__parameters = {
-            len(mainParameters): range(len(mainParameters))
+            len(mainParameters): list(range(len(mainParameters)))
         }
         self.__min = len(mainParameters)
         self.__max = len(mainParameters)
@@ -271,7 +273,7 @@ class VariableParametersNotifier(Notifier):
         **todo:** documentation
         '''
 
-        for i in xrange(len(self._listeners)):
+        for i in range(len(self._listeners)):
             c = self._listeners[i]
             if ( isinstance( c, ReorderedCall ) and c._function == listener ) or \
                     c == listener:
@@ -934,7 +936,7 @@ class ObservableSortedDictionary(SortedDictionary):
         Removes all items from dictionary
         '''
         super(ObservableSortedDictionary, self).clear()
-        self.onChangeNotifier.notify(self.REMOVE_ACTION, self.values(), 0)
+        self.onChangeNotifier.notify(self.REMOVE_ACTION, list(self.values()), 0)
 
     def sort(self, key=None, reverse=False):
         """Sorts the dictionary using function *key* to compare keys.
@@ -947,7 +949,7 @@ class ObservableSortedDictionary(SortedDictionary):
             key function key->key
         """
         super(ObservableSortedDictionary, self).sort(key=key, reverse=reverse)
-        self.onChangeNotifier.notify(self.MODIFY_ACTION, self.values(), 0)
+        self.onChangeNotifier.notify(self.MODIFY_ACTION, list(self.values()), 0)
 
 
 #----------------------------------------------------------------------------
@@ -1053,7 +1055,7 @@ class EditableTree(ObservableAttributes, ObservableSortedDictionary):
         """
         # elements in the tuple must be serializable with minf, so the content
         # must be of type list
-        content = self.values()
+        content = list(self.values())
         return (self.name, self.id, self.modifiable, content, self.visible, self.enabled)
 
     def __str__(self):
@@ -1100,7 +1102,7 @@ class EditableTree(ObservableAttributes, ObservableSortedDictionary):
         for child in self.values():
             if not child.isLeaf():
                 child.removeEmptyBranches()
-                if child.values() == []:  # it isn't possible to remove an element during iteration on the list
+                if list(child.values()) == []:  # it isn't possible to remove an element during iteration on the list
                     toRemove.append(
                         child)  # so it's put on a remove list and will be removed from the tree outside the loop
         for item in toRemove:
@@ -1310,7 +1312,7 @@ class EditableTree(ObservableAttributes, ObservableSortedDictionary):
                 self.unamed = False
 
         def __getinitargs__(self):
-            content = self.values()
+            content = list(self.values())
             return (self.name, self.id, self.icon, self.tooltip, self.copyEnabled, self.modifiable, self.delEnabled, content, self.visible, self.enabled)
 
         def __reduce__(self):
@@ -1358,7 +1360,7 @@ class EditableTree(ObservableAttributes, ObservableSortedDictionary):
             for child in self.values():
                 if not child.isLeaf():
                     child.removeEmptyBranches()
-                    if child.values() == []:
+                    if list(child.values()) == []:
                         toRemove.append(child)
             for item in toRemove:
                 del self[item.id]

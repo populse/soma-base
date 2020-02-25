@@ -55,12 +55,14 @@ Availability: Unix
 
 from __future__ import print_function
 
+from __future__ import absolute_import
 import multiprocessing
 import threading
 import queue
 import os
 import tempfile
 import sys
+from six.moves import range
 try:
     import cpickle as pickle
 except ImportError:

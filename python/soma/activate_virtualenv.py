@@ -26,6 +26,7 @@ can be set to use a specific *virutalenv* install of *cubicweb*:
     env SOMA_VIRTUALENV=/path/to/virutalenv python /path/to/script.py
 '''
 
+from __future__ import absolute_import
 import soma.importer
 import os
 
