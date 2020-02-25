@@ -173,11 +173,7 @@ def strict_urlparse(path):
     drive letter in windows paths. The standard urlparse changes 'Z:/some/path'
     to 'z:/some/path'
     '''
-    try:
-        from six.moves.urllib import parse as urlparse
-    except ImportError:
-        # some six versions do not provide six.moves.urllib (Ubuntu 12.04)
-        import urlparse
+    from six.moves.urllib import parse as urlparse
     url_parsed = urlparse.urlparse(path)
     if len(url_parsed.scheme) == 1 and url_parsed.scheme >= 'a' \
             and url_parsed.scheme <= 'z' and path[1] == ':' \
@@ -198,11 +194,7 @@ def parse_query_string(path):
     Example
     =======
     '''
-    try:
-        from six.moves.urllib import parse as urlparse
-    except ImportError:
-        # some six versions do not provide six.moves.urllib (Ubuntu 12.04)
-        import urlparse
+    from six.moves.urllib import parse as urlparse
         
     url_parsed = urlparse.urlparse(path)
     qs_parsed = urlparse.parse_qs(url_parsed.query)
@@ -315,14 +307,8 @@ def update_query_string(
 
         '/dir1/file1?param1=val1&param1=newval1&param2=val2&param2=newval2&paramN=valN&param3=newval3'
     '''
-    try:
-        from six.moves.urllib import parse as urllib
-        urlparse = urllib
-    except ImportError:
-        # some six versions do not provide six.moves.urllib (Ubuntu 12.04)
-        import urllib
-        import urlparse
-    import types
+    from six.moves.urllib import parse as urllib
+    urlparse = urllib
 
     # Convert params_update_mode to a dictionary that contains the update mode
     # for each parameter
@@ -355,7 +341,7 @@ def update_query_string(
         default_update_mode = params_update_mode
         params_update_mode = dict()
 
-    elif type(params_update_mode) is types.DictionaryType:
+    elif type(params_update_mode) is dict:
         default_update_mode = QueryStringParamUpdateMode.REPLACE
 
     else:

@@ -70,9 +70,6 @@ from soma.minf.tree import createReducerAndExpander, registerClass, \
 from soma.undefined import Undefined
 defaultReducer = MinfReducer.defaultReducer
 
-if sys.version_info[0] >= 3:
-    unicode = str
-
 
 #------------------------------------------------------------------------------
 def minfFormat(source):
@@ -230,7 +227,7 @@ def iterateMinf(source, targets=None, stop_on_error=True, exceptions=[]):
                     return it.__next__()
             else:
                 def next(it):
-                    return it.next()
+                    return next(it)
 
             if start == 'attri':
                 try:
@@ -354,7 +351,7 @@ def writeMinf(destFile, args, format='XML', reducer=None):
     it = iter(args)
     if sys.version_info[0] <= 2:
         def next(it):
-            return it.next()
+            return next(it)
     else:
         def next(it):
             return it.__next__()
@@ -395,7 +392,7 @@ if sys.version_info[0] <= 2:
     minf_2_0_reducer.registerAtomType(long)
 minf_2_0_reducer.registerAtomType(float)
 minf_2_0_reducer.registerAtomType(str)
-minf_2_0_reducer.registerAtomType(unicode)
+minf_2_0_reducer.registerAtomType(six.text_type)
 minf_2_0_reducer.registerAtomType(XHTML)
 minf_2_0_reducer.registerClass(list, minf_2_0_reducer.sequenceReducer)
 minf_2_0_reducer.registerClass(tuple, minf_2_0_reducer.sequenceReducer)

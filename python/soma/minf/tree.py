@@ -288,7 +288,7 @@ class MinfReducer(object):
         if sys.version_info[0] >= 3:
             next(it)
         else:
-            it.next()
+            next(it)
         for key, sigItem in it:
             value = getattr(o, key, Undefined)
             if value is not Undefined \
@@ -421,7 +421,7 @@ class MinfExpander(object):
             if sys.version_info[0] >= 3:
                 minfNode = next(minfNodeIterator)
             else:
-                minfNode = minfNodeIterator.next()
+                minfNode = next(minfNodeIterator)
         if isinstance(minfNode, StartStructure):
             identifier = minfNode.identifier
             typeExpander = self.getTypeExpander(minfNode.type)

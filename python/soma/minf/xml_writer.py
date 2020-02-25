@@ -115,7 +115,7 @@ class MinfXMLWriter(MinfWriter):
             if sys.version_info[0] >= 3:
                 minfNode = next(minfNodeIterator)
             else:
-                minfNode = minfNodeIterator.next()
+                minfNode = next(minfNodeIterator)
         attributes = {}
         if name is not None:
             attributes[nameAttribute] = name
@@ -193,7 +193,7 @@ class MinfXMLWriter(MinfWriter):
                     self._encodeAndWriteLine(
                         '<' + falseTag + attributesXML + '/>', level)
             elif isinstance(minfNode, (int, float, long)):
-                self._encodeAndWriteLine('<' + numberTag + attributesXML + '>' + unicode(minfNode) + '</' +
+                self._encodeAndWriteLine('<' + numberTag + attributesXML + '>' + six.text_type(minfNode) + '</' +
                                          numberTag + '>', level)
             elif isinstance(minfNode, six.string_types):
 
