@@ -39,11 +39,13 @@ Utility classes and functions for Python callable.
 * organization: `NeuroSpin <http://www.neurospin.org>`_
 * license: `CeCILL B <http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html>`_
 '''
+from __future__ import absolute_import
+from six.moves import zip
 __docformat__ = "restructuredtext en"
 
 import inspect
 try:
-    from itertools import izip
+    
 except ImportError:
     # python3
     izip = zip
@@ -154,10 +156,10 @@ def getArgumentsSpecification(callable):
         args, varargs, varkw, defaults = getArgumentsSpecification(
             callable.func)
         if defaults:
-            d = dict(izip(reversed(args), reversed(defaults)))
+            d = dict(zip(reversed(args), reversed(defaults)))
         else:
             d = {}
-        d.update(izip(reversed(args), reversed(callable.args)))
+        d.update(zip(reversed(args), reversed(callable.args)))
         if callable.keywords:
             d.update(callable.keywords)
 

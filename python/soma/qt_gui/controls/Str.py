@@ -8,10 +8,12 @@
 #
 
 # System import
+from __future__ import absolute_import
 import logging
 from functools import partial
 import traits.api as traits
 import sys
+import six
 
 # Define the logger
 logger = logging.getLogger(__name__)
@@ -21,9 +23,6 @@ from soma.qt_gui.qt_backend import QtGui, QtCore
 from soma.utils.functiontools import SomaPartial
 from soma.qt_gui.timered_widgets import TimeredQLineEdit
 from soma.utils.weak_proxy import weak_proxy
-
-if sys.version_info[0] >= 3:
-    unicode = str
 
 
 class StrControlWidget(object):
@@ -190,7 +189,7 @@ class StrControlWidget(object):
         if StrControlWidget.is_valid(control_instance):
 
             # Get the control value
-            new_trait_value = unicode(control_instance.text())
+            new_trait_value = six.text_type(control_instance.text())
             if new_trait_value == "":
                 # WARNING: an empty string is always considered Undefined, here
                 new_trait_value = traits.Undefined
@@ -209,7 +208,7 @@ class StrControlWidget(object):
             if old_trait_value is traits.Undefined:
                 control_instance.setText("")
             else:
-                control_instance.setText(unicode(old_trait_value))
+                control_instance.setText(six.text_type(old_trait_value))
 
     @staticmethod
     def update_controller_widget(controller_widget, control_name,
@@ -239,7 +238,7 @@ class StrControlWidget(object):
         if new_controller_value is traits.Undefined:
             control_instance.setText("")
         else:
-            control_instance.setText(unicode(new_controller_value))
+            control_instance.setText(six.text_type(new_controller_value))
         logger.debug("'StrControlWidget' has been updated with value "
                      "'{0}'.".format(new_controller_value))
 

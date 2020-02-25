@@ -39,6 +39,7 @@ Some useful functions to manage file or directorie names.
 * organization: NeuroSpin
 * license: `CeCILL B <http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html>`_
 '''
+from __future__ import absolute_import
 __docformat__ = "restructuredtext en"
 
 import os
@@ -50,9 +51,6 @@ import re
 import shutil
 import six
 import sys
-
-if sys.version_info[0] >= 3:
-    basestring = str
 
 
 def split_path(path):
@@ -425,7 +423,7 @@ def find_in_path(file, path=None):
     '''
     if path is None:
         path = os.environ.get('PATH').split(os.pathsep)
-    elif isinstance(path, basestring):
+    elif isinstance(path, six.string_types):
         var = os.environ.get(path)
         if var is None:
             var = path

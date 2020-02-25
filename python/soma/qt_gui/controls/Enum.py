@@ -8,9 +8,11 @@
 #
 
 # System import
+from __future__ import absolute_import
 import logging
 from functools import partial
 import sys
+import six
 
 # Define the logger
 logger = logging.getLogger(__name__)
@@ -20,9 +22,6 @@ from soma.qt_gui.qt_backend import QtGui, QtCore
 from soma.utils.functiontools import SomaPartial
 from soma.qt_gui.controller_widget import weak_proxy
 import traits.api as traits
-
-if sys.version_info[0] >= 3:
-    unicode = str
 
 
 class EnumControlWidget(object):
@@ -120,7 +119,7 @@ class EnumControlWidget(object):
 
         # Set the enum list items to the widget
         for item in widget._choices:
-            widget.addItem(unicode(item))
+            widget.addItem(six.text_type(item))
 
         # Select the default value
         # If the default value is not in the enum list, pick the first item

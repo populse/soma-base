@@ -160,6 +160,7 @@ import pprint
 import sqlite3
 import json
 import six
+from six.moves import range
 try:
     import bz2
 except ImportError:
@@ -203,16 +204,6 @@ except ImportError:
     import json as json_reader
 
 from soma.path import split_path
-
-if sys.version_info[0] >= 3:
-    basestring = str
-    xrange = range
-    def items_list(d):
-        return list(d.items())
-else:
-    def items_list(d):
-        return d.items()
-
 
 def deep_update(update, original):
     '''
@@ -482,7 +473,7 @@ class FileOrganizationModelManager(object):
                                     % full_path)
                             self._cache[name] = full_path
         #print('    find_foms done: %f s' % (time.time() - t0))
-        return self._cache.keys()
+        return list(self._cache.keys())
 
     def fom_files(self):
         '''Return a list of file organisation model (FOM) names, as in
@@ -491,7 +482,7 @@ class FileOrganizationModelManager(object):
         looked for in self.paths.'''
         if not self._cache:
             self.find_foms()
-        return self._cache.keys()
+        return list(self._cache.keys())
 
     def clear_cache(self):
         self._cache = None
@@ -619,11 +610,11 @@ class FileOrganizationModels(object):
         self.format_lists.update(json_dict.get('format_lists', {}))
         self.shared_patterns.update(json_dict.get('shared_patterns', {}))
         if self.shared_patterns:
-            stack = items_list(self.shared_patterns)
+            stack = list(self.shared_patterns.items())
             while stack:
                 name, pattern = stack.pop()
                 if isinstance(pattern, list):
-                    if pattern and isinstance(pattern[0], basestring):
+                    if pattern and isinstance(pattern[0], six.string_types):
                         pattern[0] = self._expand_shared_pattern(pattern[0])
                     else:
                         for i in pattern:
@@ -652,7 +643,7 @@ class FileOrganizationModels(object):
                 process_dict = OrderedDict()
                 process_patterns[process] = process_dict
                 for parameter, rules in six.iteritems(parameters):
-                    if isinstance(rules, basestring):
+                    if isinstance(rules, six.string_types):
                         rules = self.shared_patterns[rules[1:-1]]
                     parameter_rules = []
                     process_dict[parameter] = parameter_rules
@@ -775,7 +766,7 @@ class FileOrganizationModels(object):
 
                     # Expand format_list
                     rule_formats = []
-                    if isinstance(format_list, basestring):
+                    if isinstance(format_list, six.string_types):
                         format_list = [format_list]
                     if format_list:
                         for format in format_list:
@@ -937,7 +928,7 @@ class PathToAttributes(object):
             print('  ' * indent + '{}', file=file, end=' ')
 
     def parse_directory(self, dirdict, single_match=False, all_unknown=False, log=None):
-        if isinstance(dirdict, basestring):
+        if isinstance(dirdict, six.string_types):
             dirdict = DirectoryAsDict.paths_to_dict(dirdict)
         return self._parse_directory(dirdict, [([], self.hierarchical_patterns, {})], single_match, all_unknown, log)
 
@@ -962,7 +953,7 @@ class PathToAttributes(object):
             for path, hierarchical_patterns, pattern_attributes in parsing_list:
                 if log:
                     log.debug('?? ' + name + ' ' + repr(
-                        pattern_attributes) + ' ' + repr(hierarchical_patterns.keys()))
+                        pattern_attributes) + ' ' + repr(list(hierarchical_patterns.keys())))
                 branch_matched = False
                 for pattern, rules_subpattern \
                         in six.iteritems(hierarchical_patterns):
@@ -1095,7 +1086,7 @@ class AttributesToPaths(object):
             sql = 'CREATE INDEX rules%s_index ON rules (%s)' % (i, i)
             self._db.execute(sql)
         sql_insert = 'INSERT INTO rules VALUES ( %s )' % ','.join(
-            '?' for i in xrange(len(self.all_attributes) + 3))
+            '?' for i in range(len(self.all_attributes) + 3))
         self.rules = []
         for pattern, rule_attributes in foms.selected_rules(self.selection, debug=debug):
             if debug:

@@ -51,6 +51,7 @@ can be imported from :py:mod:`soma.minf.api`:
 '''
 from __future__ import print_function
 
+from __future__ import absolute_import
 __docformat__ = "restructuredtext en"
 
 import gzip

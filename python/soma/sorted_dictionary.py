@@ -46,6 +46,7 @@ SortedDictionary if python version < 2.7.
 '''
 from __future__ import print_function
 
+from __future__ import absolute_import
 __docformat__ = "restructuredtext en"
 
 import sys

@@ -39,6 +39,8 @@ Writing of XML minf format.
 * organization: `NeuroSpin <http://www.neurospin.org>`_
 * license: `CeCILL B <http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html>`_
 '''
+from __future__ import absolute_import
+from six.moves import range
 __docformat__ = "restructuredtext en"
 
 import codecs
@@ -54,8 +56,6 @@ from soma.minf.error import MinfError
 from soma.undefined import Undefined
 import sys
 if sys.version_info[0] >= 3:
-    xrange = range
-    unicode = str
     long = int
     byte_type = bytes
 else:
@@ -68,7 +68,7 @@ from soma.minf.xml_tags import *
 
 #: Replacement table for characters that are not allowed in XML
 xml_replacement = dict([(eval('"\\x' + ('0' + hex(i)[2:])[-2:] + '"'), '')
-                       for i in xrange(32)])
+                       for i in range(32)])
 del xml_replacement['\x09']
 del xml_replacement['\x0a']
 del xml_replacement['\x0d']
@@ -141,7 +141,7 @@ class MinfXMLWriter(MinfWriter):
                 attributes[objectTypeAttribute] = minfNode.type
             if attributes:
                 attributes = ' ' + \
-                    ' '.join([n + '=' + xml_quoteattr(unicode(v))
+                    ' '.join([n + '=' + xml_quoteattr(six.text_type(v))
                              for n, v in six.iteritems(attributes)])
             else:
                 attributes = ''
@@ -178,7 +178,7 @@ class MinfXMLWriter(MinfWriter):
         else:
             if attributes:
                 attributesXML = ' ' + \
-                    ' '.join([n + '=' + xml_quoteattr(unicode(v))
+                    ' '.join([n + '=' + xml_quoteattr(six.text_type(v))
                              for n, v in six.iteritems(attributes)])
             else:
                 attributesXML = ''

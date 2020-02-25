@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from __future__ import absolute_import
 import json
 import os
 import collections
@@ -13,9 +14,6 @@ try:
 except ImportError:
     from enthought.traits.api import HasTraits, Str, Enum, Directory, File
 from soma.application import Application
-
-if sys.version_info[0] >= 3:
-    unicode = str
 
 
 class Study(Controller):
@@ -68,7 +66,7 @@ class Study(Controller):
             'output_fom', self.output_fom), ('shared_directory', self.shared_directory), ('spm_directory', self.spm_directory), ('format_image', self.format_image), ('format_mesh', self.format_mesh), ('process', self.process)])
         json_string = json.dumps(self.dico, indent=4, separators=(',', ': '))
         with open(os.path.join(self.output_directory, self.name_study + '.json'), 'w') as f:
-            f.write(unicode(json_string))
+            f.write(six.text_type(json_string))
 
     """Load and put on self.__dict__ OrderedDict"""
 
@@ -139,7 +137,7 @@ class Study(Controller):
         json_string = json.dumps(dico, indent=4, separators=(',', ': '))
 
         with open(os.path.join(directory, name_run + '.json'), 'w') as f:
-            f.write(unicode(json_string))
+            f.write(six.text_type(json_string))
 
         # To incremente compteur runs
         self.save()
