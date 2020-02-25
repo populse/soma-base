@@ -149,7 +149,7 @@ class SingleThreadCalls:
             the result of the function call
         '''
         if threading.currentThread() is self._thread:
-            result = apply(function, args, kwargs)
+            result = function(*args, **kwargs)
         else:
             semaphore = threading.Semaphore(0)
             semaphore._result = None
@@ -202,7 +202,7 @@ class SingleThreadCalls:
             push() does not return anything.
         '''
         if threading.currentThread() is self._thread:
-            apply(function, args, kwargs)
+            function(*args, **kwargs)
         else:
             self._condition.acquire()
             try:
