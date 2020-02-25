@@ -389,12 +389,11 @@ from soma.uuid import Uuid
 minf_2_0_reducer = MinfReducer('minf_2.0')
 minf_2_0_reducer.registerAtomType(None.__class__)
 minf_2_0_reducer.registerAtomType(bool)
-minf_2_0_reducer.registerAtomType(int)
-if sys.version_info[0] <= 2:
-    minf_2_0_reducer.registerAtomType(long)
+for t in six.integer_types:
+    minf_2_0_reducer.registerAtomType(t)
 minf_2_0_reducer.registerAtomType(float)
-minf_2_0_reducer.registerAtomType(str)
-minf_2_0_reducer.registerAtomType(unicode)
+for t in six.string_types:
+    minf_2_0_reducer.registerAtomType(t)
 minf_2_0_reducer.registerAtomType(XHTML)
 minf_2_0_reducer.registerClass(list, minf_2_0_reducer.sequenceReducer)
 minf_2_0_reducer.registerClass(tuple, minf_2_0_reducer.sequenceReducer)
