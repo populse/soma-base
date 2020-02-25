@@ -121,11 +121,17 @@ class TestSomaMisc(unittest.TestCase):
         self.assertEqual(functiontools.numberOfParameterRange(my_func), (4, 4))
 
         def other_func(x, y, z, t):
-            return  x + y + z + t
+            return x + y + z + t
+        
+        class TmpObject(object):
+            def meth(self, x, y, z, t):
+                return x + y + z + t
 
         self.assertTrue(functiontools.hasParameter(other_func, 'y'))
         self.assertFalse(functiontools.hasParameter(other_func, 'b'))
         self.assertTrue(functiontools.checkParameterCount(other_func, 4)
+                        is None)
+        self.assertTrue(functiontools.checkParameterCount(TmpObject().meth, 4)
                         is None)
         self.assertRaises(RuntimeError,
                           functiontools.checkParameterCount, other_func, 3)
