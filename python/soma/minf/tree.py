@@ -415,10 +415,7 @@ class MinfExpander(object):
     def expand(self, minfNodeIterator, minfNode=Undefined, target=None,
                targetType=Undefined, stop_on_error=True, exceptions=[]):
         if minfNode is Undefined:
-            if sys.version_info[0] >= 3:
-                minfNode = next(minfNodeIterator)
-            else:
-                minfNode = next(minfNodeIterator)
+            minfNode = next(minfNodeIterator)
         if isinstance(minfNode, StartStructure):
             identifier = minfNode.identifier
             typeExpander = self.getTypeExpander(minfNode.type)
