@@ -45,10 +45,6 @@ __docformat__ = "restructuredtext en"
 
 import inspect
 try:
-    
-except ImportError:
-    # python3
-    izip = zip
 
 
 #-------------------------------------------------------------------------
