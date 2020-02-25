@@ -392,8 +392,8 @@ minf_2_0_reducer.registerAtomType(bool)
 for t in six.integer_types:
     minf_2_0_reducer.registerAtomType(t)
 minf_2_0_reducer.registerAtomType(float)
-for t in six.string_types:
-    minf_2_0_reducer.registerAtomType(t)
+minf_2_0_reducer.registerAtomType(str)
+minf_2_0_reducer.registerAtomType(six.text_type)  # unicode in Python 2
 minf_2_0_reducer.registerAtomType(XHTML)
 minf_2_0_reducer.registerClass(list, minf_2_0_reducer.sequenceReducer)
 minf_2_0_reducer.registerClass(tuple, minf_2_0_reducer.sequenceReducer)
