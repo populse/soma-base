@@ -1,20 +1,19 @@
-sudo: false
+os: linux
+language: python
 
-matrix:
+jobs:
   include:
     - os: osx
       language: generic
-      name: python 2.7
+      name: MacOS, python 2.7
     - os: linux
       language: python
       name: python 2.7
-      python:
-        - 2.7
+      python: 2.7
     - os: linux
       language: python
       name: python 3.5
-      python:
-        - 3.5
+      python: 3.5
 
 before_install:
     # osx deps
@@ -34,9 +33,10 @@ install:
     - if [ ${TRAVIS_PYTHON_VERSION:0:1} == "2" ]; then pip install subprocess32; fi
     - if [ ${TRAVIS_PYTHON_VERSION:0:1} == "2" ]; then pip install importlib; fi
     - pip install codecov
-    # run code quality checks
-    - pip install pre-commit
-    - pre-commit run --all-files
+    # run code quality checks (skip them on Mac OS because Python 3 is not
+    # available there)
+    - if [[ $TRAVIS_OS_NAME == linux ]]; then pip install pre-commit; fi
+    - if [[ $TRAVIS_OS_NAME == linux ]]; then pre-commit run --all-files; fi
     # to test notebooks
     - if [ ${TRAVIS_PYTHON_VERSION} != "2.6" ]; then pip install jupyter nbconvert; fi
     - if [[ "$TRAVIS_OS_NAME" = "linux" && "$TRAVIS_PYTHON_VERSION" == "3.5" ]]; then sudo apt-get install -y pandoc graphviz; pip install sphinx sphinx-gallery pandoc nbsphinx "PyQt5<5.13"; fi
@@ -56,9 +56,9 @@ after_success:
 deploy:
   provider: pages
   skip_cleanup: true
-  github_token: $GITHUB_ACCESS_TOKEN
-  target-branch: gh-pages
-  local-dir: doc/build/html
+  token: $GITHUB_ACCESS_TOKEN
+  target_branch: gh-pages
+  local_dir: doc/build/html
   on:
     branch: master
     condition: $PUSH_DOC_TO_GH_PAGES == yes && $TRAVIS_OS_NAME == linux && $TRAVIS_PYTHON_VERSION == 3.5

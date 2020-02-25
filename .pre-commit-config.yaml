@@ -8,6 +8,7 @@ repos:
     -   id: check-merge-conflict
     -   id: check-symlinks
     -   id: check-xml
+    -   id: check-yaml
     -   id: debug-statements
     -   id: fix-encoding-pragma
     -   id: check-added-large-files
