@@ -222,12 +222,6 @@ def iterateMinf(source, targets=None, stop_on_error=True, exceptions=[]):
             # Check first non white character to see if the minf file is XML or not
             start = source.read(5)
             source.unread(start)
-            if sys.version_info[0] >= 3:
-                def next(it):
-                    return it.__next__()
-            else:
-                def next(it):
-                    return next(it)
 
             if start == 'attri':
                 try:
@@ -301,8 +295,8 @@ def readMinf(source, targets=None, stop_on_error=True, exceptions=[]):
 
     see: :func`iterateMinf`
     '''
-    return tuple(iterateMinf(source, targets=targets, 
-                             stop_on_error=stop_on_error, 
+    return tuple(iterateMinf(source, targets=targets,
+                             stop_on_error=stop_on_error,
                              exceptions=exceptions))
 
 
@@ -349,12 +343,6 @@ def writeMinf(destFile, args, format='XML', reducer=None):
       see :func:`createMinfWriter`
     '''
     it = iter(args)
-    if sys.version_info[0] <= 2:
-        def next(it):
-            return next(it)
-    else:
-        def next(it):
-            return it.__next__()
     try:
         firstItem = next(it)
     except StopIteration:

@@ -285,10 +285,7 @@ class MinfReducer(object):
 
     def hasSignatureNonDefaultValues(o):
         it = six.iteritems(o.signature)
-        if sys.version_info[0] >= 3:
-            next(it)
-        else:
-            next(it)
+        next(it)
         for key, sigItem in it:
             value = getattr(o, key, Undefined)
             if value is not Undefined \

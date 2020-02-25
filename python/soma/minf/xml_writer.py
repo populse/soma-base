@@ -113,10 +113,7 @@ class MinfXMLWriter(MinfWriter):
 
     def _write(self, minfNodeIterator, minfNode, level, name):
         if minfNode is Undefined:
-            if sys.version_info[0] >= 3:
-                minfNode = next(minfNodeIterator)
-            else:
-                minfNode = next(minfNodeIterator)
+            minfNode = next(minfNodeIterator)
         attributes = {}
         if name is not None:
             attributes[nameAttribute] = name
