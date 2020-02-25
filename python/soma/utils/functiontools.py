@@ -44,12 +44,9 @@ from six.moves import zip
 __docformat__ = "restructuredtext en"
 
 import inspect
-try:
-
 
 #-------------------------------------------------------------------------
 from soma.translation import translate as _
-
 
 #-------------------------------------------------------------------------
 class Empty(object):
