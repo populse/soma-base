@@ -42,25 +42,16 @@ callbacks (*i.e* Python callables) that will all be called by a single
 * license: `CeCILL B <http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html>`_
 '''
 from __future__ import absolute_import
-from six.moves import range
 __docformat__ = "restructuredtext en"
 
-
 import six
+from six.moves import range
 import sys
 
 from soma.translation import translate as _
 from soma.functiontools import checkParameterCount, numberOfParameterRange
 from soma.undefined import Undefined
 from soma.sorted_dictionary import SortedDictionary
-
-if sys.version_info[0] >= 3:
-    xrange = range
-    def items_list(d):
-        return list(d.items())
-else:
-    def items_list(d):
-        return list(d.items())
 
 #-------------------------------------------------------------------------
 
@@ -873,7 +864,7 @@ class ObservableSortedDictionary(SortedDictionary):
             arg content to pass to the __init__ method for creating a copy of
             this object
         """
-        content = items_list(self)
+        content = list(self.items())
         return (content)
 
     def addListener(self, listener):

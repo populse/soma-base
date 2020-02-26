@@ -68,11 +68,7 @@ from soma.minf.xhtml import XHTML
 # This module only contains a definition of XML tags and attributes.
 # It is designed to allow "import *".
 from soma.minf.xml_tags import *
-if sys.version_info[0] >= 3:
-    # python3
-    from io import StringIO
-else:
-    from cStringIO import StringIO
+from io import StringIO
 
 #------------------------------------------------------------------------------
 
@@ -224,10 +220,7 @@ class NumberXMLHandler(XMLHandler):
 
     def endElement(self, parser, name):
         stringValue = ''.join(self._stringValue)
-        if sys.version_info[0] >= 3:
-            ttypes = (int, float)
-        else:
-            ttypes = (int, long, float)
+        ttypes = six.integer_types + (float,)
         for ttype in ttypes:
             try:
                 value = ttype(stringValue)

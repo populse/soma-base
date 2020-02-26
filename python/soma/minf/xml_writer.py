@@ -45,7 +45,6 @@ __docformat__ = "restructuredtext en"
 import codecs
 import six
 from six.moves import range
-from past.builtins import long
 from xml.sax.saxutils import quoteattr as xml_quoteattr
 from xml.sax.saxutils import escape as xml_escape
 from soma.translation import translate as _
@@ -56,11 +55,6 @@ from soma.minf.tree import minfStructure, listStructure, dictStructure, \
 from soma.minf.error import MinfError
 from soma.undefined import Undefined
 import sys
-if sys.version_info[0] >= 3:
-    long = int
-    byte_type = bytes
-else:
-    byte_type = str
 
 
 # This module only contains a definition of XML tags and attributes.
@@ -190,12 +184,12 @@ class MinfXMLWriter(MinfWriter):
                 else:
                     self._encodeAndWriteLine(
                         '<' + falseTag + attributesXML + '/>', level)
-            elif isinstance(minfNode, (int, float, long)):
+            elif isinstance(minfNode, (float,) + six.integer_types):
                 self._encodeAndWriteLine('<' + numberTag + attributesXML + '>' + six.text_type(minfNode) + '</' +
                                          numberTag + '>', level)
             elif isinstance(minfNode, six.string_types):
 
-                if type(minfNode) is byte_type:
+                if type(minfNode) is six.binary_type:
                     try:
                         minfNode = minfNode.decode("utf-8")
                     except UnicodeDecodeError:
