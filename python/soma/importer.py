@@ -90,7 +90,7 @@ class ExtendedImporter(Singleton):
         elif moduleName.startswith('.'):
             moduleName = locals['__name__'] + moduleName
 
-        package = locals['__package__']
+        package = locals['__package__'] or locals['__name__']
 
         # Import the module
         # Note : Pyro overloads __import__ method and usual keyword 'level' of
@@ -379,4 +379,3 @@ def execfile(filename, globals=None, locals=None):
     fopts = {'encoding': 'utf-8'} if sys.version_info[0] >= 3 else {}
     with open(filename, **fopts) as f:
         six.exec_(f, globals, locals)
-
