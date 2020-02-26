@@ -2,6 +2,7 @@
 
 from __future__ import print_function
 
+from __future__ import absolute_import
 import unittest
 import shutil
 import os
@@ -23,15 +24,15 @@ class TestController(unittest.TestCase):
         c1.add_trait('bozo', traits.Int(12))
         self.assertEqual(c1.gogo, '')
         self.assertEqual(c1.bozo, 12)
-        self.assertEqual(c1.user_traits().keys(), ['gogo', 'bozo'])
+        self.assertEqual(list(c1.user_traits().keys()), ['gogo', 'bozo'])
         c1.gogo = 'blop krok'
         self.assertEqual(c1.gogo, 'blop krok')
         d = c1.export_to_dict()
         self.assertEqual(d, {'gogo': 'blop krok', 'bozo': 12})
         c1.reorder_traits(['bozo', 'gogo'])
-        self.assertEqual(c1.user_traits().keys(), ['bozo', 'gogo'])
+        self.assertEqual(list(c1.user_traits().keys()), ['bozo', 'gogo'])
         c1.reorder_traits(['gogo', 'bozo'])
-        self.assertEqual(c1.user_traits().keys(), ['gogo', 'bozo'])
+        self.assertEqual(list(c1.user_traits().keys()), ['gogo', 'bozo'])
 
     def test_controller2(self):
         class Zuzur(Controller):

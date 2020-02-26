@@ -38,6 +38,7 @@ appropriate Qt backend, so that the use of the backend selection is more
 transparent.
 '''
 
+from __future__ import absolute_import
 import logging
 import sys
 import os
@@ -614,7 +615,7 @@ def init_matplotlib_backend(force=True):
             'matplotlib uses ' + matplotlib.get_backend() + ' but '
             + guiBackend + ' is required.')
     if qt_backend == 'PySide':
-        if 'backend.qt4' in matplotlib.rcParams.keys():
+        if 'backend.qt4' in list(matplotlib.rcParams.keys()):
             matplotlib.rcParams['backend.qt4'] = 'PySide'
         else:
             raise RuntimeError("Could not use Matplotlib, the backend using "
@@ -624,7 +625,7 @@ def init_matplotlib_backend(force=True):
             rc_key = 'backend.qt5'
         else:
             rc_key = 'backend.qt4'
-        if rc_key in matplotlib.rcParams.keys():
+        if rc_key in list(matplotlib.rcParams.keys()):
             matplotlib.rcParams[rc_key] = qt_backend
         else:
             # older versions of matplotlib used only PyQt4.

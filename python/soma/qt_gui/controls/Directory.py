@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from __future__ import absolute_import
 import os
 import sys
 import logging
@@ -6,9 +7,7 @@ import logging
 from soma.qt_gui.qt_backend import QtGui, QtCore
 from soma.qt_gui import qt_backend
 from .File import FileControlWidget
-
-if sys.version_info[0] >= 3:
-    unicode = str
+import six
 
 
 class DirectoryControlWidget(FileControlWidget):
@@ -87,7 +86,7 @@ class DirectoryControlWidget(FileControlWidget):
         # Get the current directory
         current_control_value = os.path.join(os.getcwd(), os.pardir)
         if DirectoryControlWidget.is_valid(control_instance):
-            current_control_value = unicode(control_instance.path.text())
+            current_control_value = six.text_type(control_instance.path.text())
 
         # Create a dialogue to select a directory
         folder = qt_backend.getExistingDirectory(
@@ -96,4 +95,4 @@ class DirectoryControlWidget(FileControlWidget):
                 | QtGui.QFileDialog.DontUseNativeDialog)
 
         # Set the selected directory to the path sub control
-        control_instance.path.setText(unicode(folder))
+        control_instance.path.setText(six.text_type(folder))

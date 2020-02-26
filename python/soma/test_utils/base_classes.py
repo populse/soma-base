@@ -15,6 +15,7 @@ is done by modifying attributes at the class level (so that setUpClass can
 know in which mode it is).
 """
 
+from __future__ import absolute_import
 import os
 import argparse
 

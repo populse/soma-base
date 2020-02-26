@@ -39,6 +39,8 @@ Reading of XML minf format.
 * organization: `NeuroSpin <http://www.neurospin.org>`_
 * license: `CeCILL B <http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html>`_
 '''
+from __future__ import absolute_import
+import six
 __docformat__ = "restructuredtext en"
 
 import sys
@@ -47,6 +49,7 @@ import operator
 import codecs
 import types
 import gzip
+from past.builtins import long
 from xml.sax.saxutils import quoteattr as xml_quoteattr
 from xml.sax.saxutils import escape as xml_escape
 from xml.sax import make_parser
@@ -65,12 +68,7 @@ from soma.minf.xhtml import XHTML
 # This module only contains a definition of XML tags and attributes.
 # It is designed to allow "import *".
 from soma.minf.xml_tags import *
-if sys.version_info[0] >= 3:
-    # python3
-    from io import StringIO
-    unicode = str
-else:
-    from cStringIO import StringIO
+from io import StringIO
 
 #------------------------------------------------------------------------------
 
@@ -91,18 +89,18 @@ class MinfXMLReader(MinfReader, ErrorHandler):
 
         def startElement(self, name, attrs):
             # Convert to builtin Python types
-            name = unicode(name)
-            attrs = dict([(unicode(i[0]), unicode(i[1]))
+            name = six.text_type(name)
+            attrs = dict([(six.text_type(i[0]), six.text_type(i[1]))
                          for i in attrs.items()])
             self.parser._stack.append(name)
             self.parser._handler.startElement(self.parser, name, attrs)
 
         def endElement(self, name):
-            self.parser._handler.endElement(self.parser, unicode(name))
+            self.parser._handler.endElement(self.parser, six.text_type(name))
             self.parser._stack.pop()
 
         def characters(self, content):
-            self.parser._handler.characters(self.parser, unicode(content))
+            self.parser._handler.characters(self.parser, six.text_type(content))
 
     def reduction(self, source):
         self._nodesToProduce = []
@@ -159,7 +157,7 @@ class MinfXMLReader(MinfReader, ErrorHandler):
 
     def fatalError(self, error):
         raise MinfError(_('XML parse error: %s') %
-                       (unicode(error), ) + ' (stack = ' +
+                       (six.text_type(error), ) + ' (stack = ' +
                         ','.join(['"' + i + '"' for i in self._stack]) + ')')
 
     def checkNoMoreAttributes(self, attributes):
@@ -222,10 +220,7 @@ class NumberXMLHandler(XMLHandler):
 
     def endElement(self, parser, name):
         stringValue = ''.join(self._stringValue)
-        if sys.version_info[0] >= 3:
-            ttypes = (int, float)
-        else:
-            ttypes = (int, long, float)
+        ttypes = six.integer_types + (float,)
         for ttype in ttypes:
             try:
                 value = ttype(stringValue)

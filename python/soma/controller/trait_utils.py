@@ -8,6 +8,7 @@
 #
 
 # System import
+from __future__ import absolute_import
 import sys
 import types
 from textwrap import wrap
@@ -22,14 +23,10 @@ logger = logging.getLogger(__name__)
 # Trait import
 import traits.api
 
-if sys.version_info[0] >= 3:
-    unicode = str
-
-
 # Global parameters
 _type_to_trait_id = {
     int: "Int",
-    unicode: "Unicode",
+    six.text_type: "Unicode",
     str: "Str",
     float: "Float"
 }

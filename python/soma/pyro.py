@@ -39,6 +39,7 @@ This module provides the class ThreadSafeProxy.
 * organization: NeuroSpin
 * license: `CeCILL B <http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html>`_
 '''
+from __future__ import absolute_import
 __docformat__ = "restructuredtext en"
 
 import inspect
