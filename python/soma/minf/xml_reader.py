@@ -49,7 +49,6 @@ import operator
 import codecs
 import types
 import gzip
-from past.builtins import long
 from xml.sax.saxutils import quoteattr as xml_quoteattr
 from xml.sax.saxutils import escape as xml_escape
 from xml.sax import make_parser

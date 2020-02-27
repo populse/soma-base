@@ -54,7 +54,6 @@ from __future__ import absolute_import
 __docformat__ = "restructuredtext en"
 
 import gzip
-from past.builtins import long
 import six
 import sys
 
