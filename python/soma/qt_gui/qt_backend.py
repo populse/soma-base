@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 #
 # Soma-base - Copyright (C) CEA, 2013
 # Distributed under the terms of the CeCILL-B license, as published by
@@ -37,12 +38,12 @@ appropriate Qt backend, so that the use of the backend selection is more
 transparent.
 '''
 
+from __future__ import absolute_import
 import logging
 import sys
 import os
 import imp
 import six
-from soma.utils.functiontools import partial
 
 
 # make qt_backend a fake module package, with Qt modules as sub-modules
@@ -433,11 +434,13 @@ def import_qt_submodule(submodule):
 
 
 def _iconset(self, prop):
+    from . import QtGui
     return QtGui.QIcon(os.path.join(self._basedirectory,
                                     prop.text).replace("\\", "\\\\"))
 
 
 def _pixmap(self, prop):
+    from . import QtGui
     return QtGui.QPixmap(os.path.join(self._basedirectory,
                                       prop.text).replace("\\", "\\\\"))
 
@@ -452,6 +455,7 @@ def loadUi(ui_file, *args, **kwargs):
     current working directory therefore if this directory is not the one
     containing the ui file, icons cannot be loaded.
     '''
+    from . import QtGui
     if get_qt_backend() in ('PyQt4', 'PyQt5'):
         # the problem is corrected in version > 4.7.2,
         from . import QtCore
@@ -501,6 +505,8 @@ def loadUiType(uifile, from_imports=False):
 def getOpenFileName(parent=None, caption='', directory='', filter='',
                     selectedFilter=None, options=0):
     '''PyQt4 / PySide compatible call to QFileDialog.getOpenFileName'''
+    set_qt_backend(compatible_qt5=True)
+    from . import QtGui
     if get_qt_backend() in('PyQt4', 'PyQt5'):
         kwargs = {}
         # kwargs are used because passing None or '' as selectedFilter
@@ -526,6 +532,8 @@ def getOpenFileName(parent=None, caption='', directory='', filter='',
 def getSaveFileName(parent=None, caption='', directory='', filter='',
                     selectedFilter=None, options=0):
     '''PyQt4 / PySide compatible call to QFileDialog.getSaveFileName'''
+    set_qt_backend(compatible_qt5=True)
+    from . import QtGui
     if get_qt_backend() in ('PyQt4', 'PyQt5'):
         kwargs = {}
         # kwargs are used because passing None or '' as selectedFilter
@@ -549,6 +557,8 @@ def getSaveFileName(parent=None, caption='', directory='', filter='',
 
 def getExistingDirectory(parent=None, caption='', directory='', options=None):
     '''PyQt4 / PySide compatible call to QFileDialog.getExistingDirectory'''
+    set_qt_backend(compatible_qt5=True)
+    from . import QtGui
     if get_qt_backend() in ('PyQt4', 'PyQt5'):
         kwargs = {}
         if options is not None:
@@ -605,7 +615,7 @@ def init_matplotlib_backend(force=True):
             'matplotlib uses ' + matplotlib.get_backend() + ' but '
             + guiBackend + ' is required.')
     if qt_backend == 'PySide':
-        if 'backend.qt4' in matplotlib.rcParams.keys():
+        if 'backend.qt4' in list(matplotlib.rcParams.keys()):
             matplotlib.rcParams['backend.qt4'] = 'PySide'
         else:
             raise RuntimeError("Could not use Matplotlib, the backend using "
@@ -615,7 +625,7 @@ def init_matplotlib_backend(force=True):
             rc_key = 'backend.qt5'
         else:
             rc_key = 'backend.qt4'
-        if rc_key in matplotlib.rcParams.keys():
+        if rc_key in list(matplotlib.rcParams.keys()):
             matplotlib.rcParams[rc_key] = qt_backend
         else:
             # older versions of matplotlib used only PyQt4.
@@ -653,6 +663,7 @@ def init_traitsui_handler():
     we cannot change it easily.
     '''
     global traits_ui_handler_initialized
+    from . import QtCore, QtGui
     if traits_ui_handler_initialized:
         return # already done
 

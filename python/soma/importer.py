@@ -1,4 +1,4 @@
-# -*- coding: iso-8859-1 -*-
+# -*- coding: utf-8 -*-
 
 #  This software and supporting documentation are distributed by
 #      Institut Federatif de Recherche 49
@@ -39,6 +39,7 @@ Utility classes and functions for Python import and sip namespace renaming.
 * organization: NeuroSpin
 * license: `CeCILL B <http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html>`_
 '''
+from __future__ import absolute_import
 __docformat__ = "restructuredtext en"
 
 import sys
@@ -89,7 +90,7 @@ class ExtendedImporter(Singleton):
         elif moduleName.startswith('.'):
             moduleName = locals['__name__'] + moduleName
 
-        package = locals['__package__']
+        package = locals['__package__'] or locals['__name__']
 
         # Import the module
         # Note : Pyro overloads __import__ method and usual keyword 'level' of
@@ -378,4 +379,3 @@ def execfile(filename, globals=None, locals=None):
     fopts = {'encoding': 'utf-8'} if sys.version_info[0] >= 3 else {}
     with open(filename, **fopts) as f:
         six.exec_(f, globals, locals)
-

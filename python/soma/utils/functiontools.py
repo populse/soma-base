@@ -39,19 +39,15 @@ Utility classes and functions for Python callable.
 * organization: `NeuroSpin <http://www.neurospin.org>`_
 * license: `CeCILL B <http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html>`_
 '''
+from __future__ import absolute_import
+from six.moves import zip
+import six
 __docformat__ = "restructuredtext en"
 
 import inspect
-try:
-    from itertools import izip
-except ImportError:
-    # python3
-    izip = zip
-
 
 #-------------------------------------------------------------------------
 from soma.translation import translate as _
-
 
 #-------------------------------------------------------------------------
 class Empty(object):
@@ -154,10 +150,10 @@ def getArgumentsSpecification(callable):
         args, varargs, varkw, defaults = getArgumentsSpecification(
             callable.func)
         if defaults:
-            d = dict(izip(reversed(args), reversed(defaults)))
+            d = dict(zip(reversed(args), reversed(defaults)))
         else:
             d = {}
-        d.update(izip(reversed(args), reversed(callable.args)))
+        d.update(zip(reversed(args), reversed(callable.args)))
         if callable.keywords:
             d.update(callable.keywords)
 
@@ -195,7 +191,7 @@ def getCallableString(callable):
     if inspect.isfunction(callable):
         name = _('function %s') % (callable.__name__, )
     elif inspect.ismethod(callable):
-        name = _('method %s') % (callable.im_class.__name__ + '.' +
+        name = _('method %s') % (six.get_method_self(callable).__class__.__name__ + '.' +
                                  callable.__name__, )
     elif inspect.isclass(callable):
         name = _('class %s') % (callable.__name__, )

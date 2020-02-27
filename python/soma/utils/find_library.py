@@ -1,8 +1,10 @@
+# -*- coding: utf-8 -*-
 ''' replacement for :func:`ctypes.util.find_library`.
 Provides a better version of :func:`find_library`, and allows to patch the
 :mod:`ctypes` module to use our version: see :func:`patch_ctypes_find_library`.
 '''
 
+from __future__ import absolute_import
 import os
 import sys
 import ctypes.util

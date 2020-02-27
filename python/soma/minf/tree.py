@@ -41,6 +41,8 @@ A minf tree is always accessed via an iterator on its content. This content is c
 * organization: `NeuroSpin <http://www.neurospin.org>`_
 * license: `CeCILL B <http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html>`_
 '''
+from __future__ import absolute_import
+from six.moves import range
 __docformat__ = "restructuredtext en"
 
 import types
@@ -56,10 +58,6 @@ except ImportError:
         pass
     class Sequence(object):
         pass
-
-if sys.version_info[0] >= 3:
-    xrange = range
-    unicode = str
 
 #: Type name of a minf structure.
 #: @see: L{StartStructure}
@@ -124,7 +122,7 @@ class StartStructure(object):
             l = ['identifier="' + self.identifier + '"']
         else:
             l = []
-        l += [unicode(i) + '="' + unicode(j) +
+        l += [six.text_type(i) + '="' + six.text_type(j) +
               '"' for i, j in six.iteritems(self.attributes)]
         return '<' + self.type + ' ' + ', '.join(l) + '>'
 
@@ -287,10 +285,7 @@ class MinfReducer(object):
 
     def hasSignatureNonDefaultValues(o):
         it = six.iteritems(o.signature)
-        if sys.version_info[0] >= 3:
-            next(it)
-        else:
-            it.next()
+        next(it)
         for key, sigItem in it:
             value = getattr(o, key, Undefined)
             if value is not Undefined \
@@ -420,10 +415,7 @@ class MinfExpander(object):
     def expand(self, minfNodeIterator, minfNode=Undefined, target=None,
                targetType=Undefined, stop_on_error=True, exceptions=[]):
         if minfNode is Undefined:
-            if sys.version_info[0] >= 3:
-                minfNode = next(minfNodeIterator)
-            else:
-                minfNode = minfNodeIterator.next()
+            minfNode = next(minfNodeIterator)
         if isinstance(minfNode, StartStructure):
             identifier = minfNode.identifier
             typeExpander = self.getTypeExpander(minfNode.type)
@@ -460,7 +452,7 @@ class MinfExpander(object):
             length = minfNode.attributes.get('length')
             if length and len(result) < int(length):
                 result += [targetType.elementType.createValue()
-                           for i in xrange(int(length) - len(result))]
+                           for i in range(int(length) - len(result))]
         itTarget = iter(result)
         for minfNode in minfNodeIterator:
             if isinstance(minfNode, EndStructure):

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 #
 # SOMA - Copyright (C) CEA, 201
 # Distributed under the terms of the CeCILL-B license, as published by
@@ -7,11 +8,13 @@
 #
 
 # System import
+from __future__ import absolute_import
 import logging
 import os
 from functools import partial
 import traits.api as traits
 import sys
+import six
 
 # Define the logger
 logger = logging.getLogger(__name__)
@@ -22,9 +25,6 @@ from soma.qt_gui import qt_backend
 from soma.utils.functiontools import SomaPartial
 from soma.qt_gui.timered_widgets import TimeredQLineEdit
 from soma.qt_gui.controller_widget import get_ref, weak_proxy
-
-if sys.version_info[0] >= 3:
-    unicode = str
 
 
 class FileControlWidget(object):
@@ -220,7 +220,7 @@ class FileControlWidget(object):
         if control_class.is_valid(control_instance):
 
             # Get the control value
-            new_trait_value = unicode(control_instance.path.text())
+            new_trait_value = six.text_type(control_instance.path.text())
             if new_trait_value != "<undefined>":
                 # Set the control value to the controller associated trait
                 setattr(controller_widget.controller, control_name,
@@ -263,7 +263,7 @@ class FileControlWidget(object):
             controller_widget.controller, control_name, "")
 
         # Set the trait value to the string control
-        control_instance.path.setText(unicode(new_controller_value))
+        control_instance.path.setText(six.text_type(new_controller_value))
         logger.debug("'FileControlWidget' has been updated with value "
                      "'{0}'.".format(new_controller_value))
 
@@ -387,7 +387,7 @@ class FileControlWidget(object):
         # Get the current file path
         current_control_value = os.getcwd()
         if FileControlWidget.is_valid(control_instance):
-            current_control_value = unicode(control_instance.path.text())
+            current_control_value = six.text_type(control_instance.path.text())
 
         # get widget via a __self__ in a method, because control_instance may
         # be a weakproxy.
@@ -403,4 +403,4 @@ class FileControlWidget(object):
                 QtGui.QFileDialog.DontUseNativeDialog)
 
         # Set the selected file path to the path sub control
-        control_instance.path.setText(unicode(fname))
+        control_instance.path.setText(six.text_type(fname))

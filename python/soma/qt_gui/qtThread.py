@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 #  This software and supporting documentation are distributed by
 #      Institut Federatif de Recherche 49
 #      CEA/NeuroSpin, Batiment 145,
@@ -41,6 +42,7 @@ It enables to do thread safe calls because all tasks sent are executed in the sa
 """
 from __future__ import print_function
 
+from __future__ import absolute_import
 __docformat__ = "restructuredtext en"
 
 import sys

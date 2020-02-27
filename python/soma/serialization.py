@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+from __future__ import absolute_import
 import sys
 import six
 
@@ -97,7 +99,7 @@ def from_json(json_serialization):
         elif len(json_serialization) == 1:
             callable = find_factory(json_serialization[0])
             return callable()
-    raise ValueError('Object is not a valid JSON serialization: %s' % repr(json_object))
+    raise ValueError('Object is not a valid JSON serialization: %s' % repr(json_serialization))
 
 
 def find_factory(reference):

@@ -1,14 +1,16 @@
+# -*- coding: utf-8 -*-
 from __future__ import division, absolute_import, print_function
 
 import sys, re, inspect, textwrap, pydoc
 import sphinx
 import collections
 from .docscrape import NumpyDocString, FunctionDoc, ClassDoc
+import six
 
 if sys.version_info[0] >= 3:
     sixu = lambda s: s
 else:
-    sixu = lambda s: unicode(s, 'unicode_escape')
+    sixu = lambda s: six.text_type(s, 'unicode_escape')
 
 
 class SphinxDocString(NumpyDocString):

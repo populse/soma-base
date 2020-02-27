@@ -1,4 +1,4 @@
-# -*- coding: iso-8859-1 -*-
+# -*- coding: utf-8 -*-
 
 #  This software and supporting documentation are distributed by
 #      Institut Federatif de Recherche 49
@@ -39,15 +39,14 @@ Universal unique identifier.
 - organization: NeuroSpin
 - license: `CeCILL B <http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html>`_
 '''
+from __future__ import absolute_import
+import six
 __docformat__ = "epytext en"
 
 import struct
 import random
 import binascii
 import sys
-
-if sys.version_info[0] >= 3:
-    basestring = str
 
 #-------------------------------------------------------------------------
 
@@ -122,7 +121,7 @@ class Uuid(object):
     def __eq__(self, other):
         if isinstance(other, Uuid):
             return self.__uuid == other.__uuid
-        elif isinstance(other, basestring):  # assume string-like object (str or unicode)
+        elif isinstance(other, six.string_types):  # assume string-like object (str or unicode)
             try:
                 uuid_other = Uuid(other)
             except ValueError:
@@ -134,7 +133,7 @@ class Uuid(object):
     def __ne__(self, other):
         if isinstance(other, Uuid):
             return self.__uuid != other.__uuid
-        elif isinstance(other, basestring):  # assume string-like object (str or unicode)
+        elif isinstance(other, six.string_types):  # assume string-like object (str or unicode)
             try:
                 uuid_other = Uuid(other)
             except ValueError:

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 #
 # SOMA - Copyright (C) CEA, 2015
 # Distributed under the terms of the CeCILL-B license, as published by
@@ -7,6 +8,7 @@
 #
 
 # System import
+from __future__ import absolute_import
 import logging
 import os
 import six

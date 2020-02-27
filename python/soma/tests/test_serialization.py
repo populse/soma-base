@@ -1,6 +1,8 @@
+# -*- coding: utf-8 -*-
  
 from __future__ import print_function
 
+from __future__ import absolute_import
 import sys
 import unittest
 import json
@@ -12,9 +14,6 @@ class TestSerializable(JSONSerializable):
         self.a = a
         self.b = b
         
-    def __cmp__(self, other):
-        return cmp((self.a, self.b), (other.a, other.b))
-
     # python3 does not support __cmp__()
     def __eq__(self, other):
         return self.a == other.a and self.b == other.b

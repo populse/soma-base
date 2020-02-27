@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 #
 # SOMA - Copyright (C) CEA, 2015
 # Distributed under the terms of the CeCILL-B license, as published by
@@ -7,10 +8,12 @@
 #
 
 # System import
+from __future__ import absolute_import
 import re
 import logging
 import sys
 import traits.api as traits
+import six
 
 # Define the logger
 logger = logging.getLogger(__name__)
@@ -18,9 +21,6 @@ logger = logging.getLogger(__name__)
 # Soma import
 from soma.qt_gui.qt_backend import QtCore
 from .Str import StrControlWidget
-
-if sys.version_info[0] >= 3:
-    unicode = str
 
 
 class IntControlWidget(StrControlWidget):
@@ -52,9 +52,9 @@ class IntControlWidget(StrControlWidget):
         # Get the control current value: format the int string
         # Valid int strings are: +1, -1, 1
         control_text = control_instance.text()
-        if type(control_text) not in (str, unicode):
+        if type(control_text) not in (str, six.text_type):
             # old QString with PyQt API v1
-            control_text = unicode(control_text)
+            control_text = six.text_type(control_text)
         control_value = re.sub("^([-+])", "", control_text, count=1)
 
         # If the control value contains only digits, the control is valid and
@@ -126,7 +126,7 @@ class IntControlWidget(StrControlWidget):
             if old_trait_value is traits.Undefined:
                 control_instance.setText("")
             else:
-                control_instance.setText(unicode(old_trait_value))
+                control_instance.setText(six.text_type(old_trait_value))
 
     @staticmethod
     def update_controller_widget(controller_widget, control_name,
@@ -156,6 +156,6 @@ class IntControlWidget(StrControlWidget):
         if new_controller_value is traits.Undefined:
             control_instance.setText("")
         else:
-            control_instance.setText(unicode(new_controller_value))
+            control_instance.setText(six.text_type(new_controller_value))
         logger.debug("'IntControlWidget' has been updated with value "
                      "'{0}'.".format(new_controller_value))

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 #  This software and supporting documentation are distributed by
 #      Institut Federatif de Recherche 49
 #      CEA/NeuroSpin, Batiment 145,
@@ -35,6 +36,7 @@ Utils for socket communication
 """
 from __future__ import print_function
 
+from __future__ import absolute_import
 import threading
 import socket
 try:
@@ -42,7 +44,7 @@ try:
     import queue
 except ImportError:
     # python 2
-    import Queue as queue
+    import six.moves.queue as queue
 import errno
 import time
 import sys

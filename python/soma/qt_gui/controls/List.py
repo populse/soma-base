@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 #
 # SOMA - Copyright (C) CEA, 2015
 # Distributed under the terms of the CeCILL-B license, as published by
@@ -8,10 +9,12 @@
 
 # System import
 from __future__ import print_function
+from __future__ import absolute_import
 import os
 import logging
 from functools import partial
 import six
+from six.moves import range
 
 # Define the logger
 logger = logging.getLogger(__name__)

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """ Information module, containing version variables, plus some
 setuptools-related variables
 Attributes
@@ -8,6 +9,7 @@ version_micro
 version_extra
 """
 
+from __future__ import absolute_import
 import sys
 
 version_major = 4

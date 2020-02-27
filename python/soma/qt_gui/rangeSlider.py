@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # ---------------------------------------------------------------------------------------------
 # Copyright (c) 2011-2012, Ryan Galloway (ryan@rsgalloway.com)
 #
@@ -31,6 +32,7 @@
 #   http://rsgalloway.github.com/qrangeslider
 # ------------------------------------------------------------------------
 
+from __future__ import absolute_import
 __author__ = "Ryan Galloway <ryan@rsgalloway.com>"
 __version__ = "0.1"
 

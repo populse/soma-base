@@ -1,11 +1,14 @@
+# -*- coding: utf-8 -*-
 '''
 Functions to manage private/public keys encryption.
 This module needs Crypto module.
 '''
 
+from __future__ import absolute_import
 from Crypto.PublicKey import RSA
 from base64 import b64decode, b64encode
 import Crypto
+from six.moves import range
 
 if [int(x) for x in Crypto.__version__.split('.')] < [2, 1]:
     # pyrypro <= 2.0.x is not suitable since it is missing needed functions

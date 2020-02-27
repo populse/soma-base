@@ -50,7 +50,7 @@ can be imported from :py:mod:`soma.minf.api`:
 * license: `CeCILL B <http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html>`_
 '''
 from __future__ import print_function
-
+from __future__ import absolute_import
 __docformat__ = "restructuredtext en"
 
 import gzip
@@ -68,9 +68,6 @@ from soma.minf.tree import createReducerAndExpander, registerClass, \
     listStructure, dictStructure
 from soma.undefined import Undefined
 defaultReducer = MinfReducer.defaultReducer
-
-if sys.version_info[0] >= 3:
-    unicode = str
 
 
 #------------------------------------------------------------------------------
@@ -224,12 +221,6 @@ def iterateMinf(source, targets=None, stop_on_error=True, exceptions=[]):
             # Check first non white character to see if the minf file is XML or not
             start = source.read(5)
             source.unread(start)
-            if sys.version_info[0] >= 3:
-                def next(it):
-                    return it.__next__()
-            else:
-                def next(it):
-                    return it.next()
 
             if start == 'attri':
                 try:
@@ -303,8 +294,8 @@ def readMinf(source, targets=None, stop_on_error=True, exceptions=[]):
 
     see: :func`iterateMinf`
     '''
-    return tuple(iterateMinf(source, targets=targets, 
-                             stop_on_error=stop_on_error, 
+    return tuple(iterateMinf(source, targets=targets,
+                             stop_on_error=stop_on_error,
                              exceptions=exceptions))
 
 
@@ -351,12 +342,6 @@ def writeMinf(destFile, args, format='XML', reducer=None):
       see :func:`createMinfWriter`
     '''
     it = iter(args)
-    if sys.version_info[0] <= 2:
-        def next(it):
-            return it.next()
-    else:
-        def next(it):
-            return it.__next__()
     try:
         firstItem = next(it)
     except StopIteration:
@@ -389,12 +374,11 @@ from soma.uuid import Uuid
 minf_2_0_reducer = MinfReducer('minf_2.0')
 minf_2_0_reducer.registerAtomType(None.__class__)
 minf_2_0_reducer.registerAtomType(bool)
-minf_2_0_reducer.registerAtomType(int)
-if sys.version_info[0] <= 2:
-    minf_2_0_reducer.registerAtomType(long)
+for t in six.integer_types:
+    minf_2_0_reducer.registerAtomType(t)
 minf_2_0_reducer.registerAtomType(float)
 minf_2_0_reducer.registerAtomType(str)
-minf_2_0_reducer.registerAtomType(unicode)
+minf_2_0_reducer.registerAtomType(six.text_type)  # unicode in Python 2
 minf_2_0_reducer.registerAtomType(XHTML)
 minf_2_0_reducer.registerClass(list, minf_2_0_reducer.sequenceReducer)
 minf_2_0_reducer.registerClass(tuple, minf_2_0_reducer.sequenceReducer)

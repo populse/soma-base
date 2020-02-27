@@ -39,18 +39,11 @@ Utility functions for HTML format.
 * organization: NeuroSpin
 * license: `CeCILL B <http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html>`_
 '''
+from __future__ import absolute_import
 __docformat__ = "restructuredtext en"
 
-try:
-    import htmlentitydefs
-except ImportError:
-    # python3
-    import html.entities as htmlentitydefs
 import six
 import sys
-
-if sys.version_info[0] >= 3:
-    unicode = str
 
 #------------------------------------------------------------------------------
 #: mapping of charaters to be escaped for HTML
@@ -69,7 +62,7 @@ def htmlEscape(msg):
         if sys.version_info[0] >= 3:
             _htmlEscape = dict([(ord(j), u'&' + i + u';')
                               for i, j
-                                  in six.iteritems(htmlentitydefs.entitydefs)
+                                  in six.iteritems(six.moves.html_entities.entitydefs)
                                   if len(j) == 1])
         else:
             # htmlentitydefs is apparently encoded in iso-8859-1
@@ -78,9 +71,9 @@ def htmlEscape(msg):
             encoding = 'iso-8859-1'
             _htmlEscape = dict(
                 [(ord(j.decode(encoding)), u'&' + i.decode(encoding) + u';')
-                 for i, j in six.iteritems(htmlentitydefs.entitydefs)
+                 for i, j in six.iteritems(six.moves.html_entities.entitydefs)
                  if len(j) == 1])
-    return unicode(msg).translate(_htmlEscape)
+    return six.text_type(msg).translate(_htmlEscape)
 
 
 def lesserHtmlEscape(msg):
@@ -94,7 +87,7 @@ def lesserHtmlEscape(msg):
         if sys.version_info[0] >= 3:
             _lesserHtmlEscape = dict([(ord(j), u'&' + i + u';')
                                     for i, j
-                                    in six.iteritems(htmlentitydefs.entitydefs)
+                                    in six.iteritems(six.moves.html_entities.entitydefs)
                                     if len(j) == 1 and j not in
                                         (u'"', u'é', u'à', u'è', u'â', u'ê',
                                          u'ô', u'î', u'û', u'ù', u'ö', )])
@@ -105,8 +98,8 @@ def lesserHtmlEscape(msg):
             encoding = 'iso-8859-1'
             _lesserHtmlEscape = dict(
                 [(ord(j.decode(encoding)), u'&' + i.decode(encoding) + u';')
-                 for i, j in six.iteritems(htmlentitydefs.entitydefs)
+                 for i, j in six.iteritems(six.moves.html_entities.entitydefs)
                  if len(j) == 1 and j.decode(encoding) not in
                     (u'"', u'é', u'à', u'è', u'â', u'ê',
                      u'ô', u'î', u'û', u'ù', u'ö', )])
-    return unicode(msg).translate(_lesserHtmlEscape)
+    return six.text_type(msg).translate(_lesserHtmlEscape)
