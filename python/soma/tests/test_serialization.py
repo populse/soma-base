@@ -56,15 +56,12 @@ class TestJSONSerialization(unittest.TestCase):
         self.assertEqual(x, y)
 
     def test_serialization_failure(self):
-        # The following assert structure is not working
-        # on Python 2.6
-        if sys.version_info[:2] > (2,6):
-            with self.assertRaises(ValueError):
-                from_json('missing_dot')
-            with self.assertRaises(ValueError):
-                from_json('invalid.module.name')
-            with self.assertRaises(ValueError):
-                from_json('soma.tests.test_serialization.not_existing')
+        with self.assertRaises(ValueError):
+            from_json('missing_dot')
+        with self.assertRaises(ValueError):
+            from_json('invalid.module.name')
+        with self.assertRaises(ValueError):
+            from_json('soma.tests.test_serialization.not_existing')
 
 def test():
     suite = unittest.TestLoader().loadTestsFromTestCase(TestJSONSerialization)
