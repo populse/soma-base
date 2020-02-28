@@ -166,13 +166,8 @@ try:
 except ImportError:
     bz2 = None
 
-try:
-    from collections import OrderedDict
-    isinstance_dict = lambda x: isinstance(x, dict)
-except ImportError:
-    # It is necessary to keep this for compatibility with python 2.6.*
-    from soma.sorted_dictionary import OrderedDict
-    isinstance_dict = lambda x: isinstance(x, (dict, OrderedDict))
+from collections import OrderedDict
+
 
 try:
     import yaml
@@ -213,7 +208,7 @@ def deep_update(update, original):
     for key, value in six.iteritems(original):
         if not key in update:
             update[key] = value
-        elif isinstance_dict(value):
+        elif isinstance(value, dict):
             deep_update(update[key], value)
         elif value != update[key]:
             raise ValueError('In deep_update, for key %s, cannot merge %s and %s' %
@@ -563,7 +558,7 @@ class FileOrganizationModels(object):
             return pattern
 
     def import_file(self, file_or_dict, foms_manager=None):
-        if not isinstance_dict(file_or_dict):
+        if not isinstance(file_or_dict, dict):
             json_dict = read_json(file_or_dict)
         else:
             json_dict = file_or_dict
@@ -742,7 +737,7 @@ class FileOrganizationModels(object):
                 attributes[key_attribute] = key
                 self.attribute_definitions[key_attribute].setdefault(
                     'values', set()).add(key)
-            if isinstance_dict(value):
+            if isinstance(value, dict):
                 self._expand_json_patterns(
                     value, parent.setdefault(key, OrderedDict()), attributes)
             else:
@@ -801,7 +796,7 @@ class FileOrganizationModels(object):
 
     def _parse_patterns(self, patterns, dest_patterns):
         for key, value in six.iteritems(patterns):
-            if isinstance_dict(value):
+            if isinstance(value, dict):
                 self._parse_patterns(
                     value, dest_patterns.setdefault(key, OrderedDict()))
             else:

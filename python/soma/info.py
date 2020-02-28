@@ -68,7 +68,6 @@ PROVIDES = ["soma-base"]
 REQUIRES = [
     "six",
     "numpy",
-    "importlib;python_version<='2.6'"
 ]
 EXTRAS_REQUIRE = {
     "doc": ["sphinx>=%s" % SPHINX_MIN_VERSION],
