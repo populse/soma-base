@@ -62,7 +62,7 @@ from xml.sax.saxutils import quoteattr as xml_quoteattr
 #------------------------------------------------------------------------------
 
 
-class XHTML:
+class XHTML(object):
 
     '''
     Instances of L{XHTML} contains the structure of an XHTML tree and can be used

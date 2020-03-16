@@ -172,7 +172,7 @@ from collections import OrderedDict
 try:
     import yaml
 
-    class json_reader:
+    class json_reader(object):
 
         '''
         This class has a single static method load that loads an
