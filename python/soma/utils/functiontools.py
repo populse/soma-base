@@ -59,14 +59,11 @@ class Empty(object):
 class SomaPartial(object):
 
     '''
-    Python 2.5 introduced a very useful function: :py:func:`functools.partial`,
-    this is an implementation that is compatible with Python 2.3 (if
-    functools.partial exists, it is used directly).
+    This is a reimplementation of :py:func:`functools.partial`, which adds
+    compatibility with the :py:mod:`traits` module.
 
-    functools.partial allow to create a new function from an existing
-    function by setting values to some arguments. The new function
-    will be callable with less parameters. See Python 2.5 documentation
-    for more information.
+    See the documentation of :py:func:`functools.partial` for details:
+    https://docs.python.org/library/functools.html#functools.partial
 
     Example::
 
