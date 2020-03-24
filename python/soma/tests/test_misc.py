@@ -67,9 +67,6 @@ from soma import utils
 from soma import uuid
 
 
-if sys.version_info[0] < 3:
-    bytes = str
-
 class TestSomaMisc(unittest.TestCase):
 
     def test_singleton(self):
