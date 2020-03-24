@@ -66,7 +66,7 @@ ISRELEASE = version_extra == ''
 VERSION = __version__
 PROVIDES = ["soma-base"]
 REQUIRES = [
-    "six",
+    "six ~= 1.12",
     "numpy",
 ]
 EXTRAS_REQUIRE = {
