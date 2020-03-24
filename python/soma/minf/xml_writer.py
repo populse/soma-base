@@ -213,8 +213,7 @@ class MinfXMLWriter(MinfWriter):
         else:
             indent = self.indentString * (self.level + level)
             nl = '\n'
-        if sys.version_info[0] >= 3 and isinstance(line, bytes):
-            line = line.decode('utf8')
+        line = six.ensure_text(line, 'utf8')
         try:
             self.__file.write(indent + line + nl)
         except TypeError:

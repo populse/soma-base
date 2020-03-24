@@ -74,11 +74,7 @@ def notebook_run(path, timeout=60):
             # sys.exit()
             ret_code = soma.subprocess.call(args)
 
-            if sys.version_info[0] >= 3:
-                nb = nbformat.read(open(fout[1], encoding='utf-8'),
-                                   nbformat.current_nbformat)
-            else:
-                nb = nbformat.read(open(fout[1]), nbformat.current_nbformat)
+            nb = nbformat.read(fout[1], nbformat.current_nbformat)
         except Exception as e:
             print('EXCEPTION:', e)
             return None, [e]

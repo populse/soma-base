@@ -31,10 +31,7 @@ import json
 import csv
 import sys
 
-if sys.version_info[0] >= 3:
-    from io import StringIO
-else:
-    from cStringIO import StringIO
+from six.moves import cStringIO as StringIO
 
 # Qt import
 try:

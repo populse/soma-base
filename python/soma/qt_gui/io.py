@@ -39,15 +39,12 @@ from __future__ import print_function
 from __future__ import absolute_import
 import threading
 import socket
-try:
-    # python 3
-    import queue
-except ImportError:
-    # python 2
-    import six.moves.queue as queue
 import errno
 import time
 import sys
+
+import six
+import six.moves.queue as queue
 
 from soma.qt_gui.qt_backend.QtCore import QObject, QSocketNotifier
 
@@ -314,10 +311,7 @@ class Socket(QObject):
                 else:
                     raise IOError(
                         errno.EPIPE, 'socket communication interrupted')
-        if sys.version_info[0] >= 3:
-            return msg.decode()
-        else:
-            return msg
+        return six.ensure_str(msg)
 
     def readMessage(self, timeout=30):
         """

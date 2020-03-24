@@ -328,7 +328,7 @@ class MinfReducer(object):
 
         @returns: string or None
         '''
-        if isinstance(value, type) or (sys.version_info[0] <= 2 and type(value) is types.ClassType):
+        if isinstance(value, six.class_types):
             # value is a class
             cls = value
         else:
