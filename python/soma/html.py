@@ -88,8 +88,9 @@ def lesserHtmlEscape(msg):
             codepoint: u'&' + name + u';'
             for codepoint, name
             in six.iteritems(six.moves.html_entities.codepoint2name)
-            if six.unichr(codepoint) not in ('"', 'é', 'à', 'è', 'â', 'ê',
-                                             'ô', 'î', 'û', 'ù', 'ö', )
+            if six.unichr(codepoint) not in (u'"', u'é', u'à', u'è', u'â',
+                                             u'ê', u'ô', u'î', u'û', u'ù',
+                                             u'ö', )
         }
     msg = six.ensure_text(msg)
     return msg.translate(_lesserHtmlEscape)
