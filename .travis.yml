@@ -23,7 +23,7 @@ before_install:
 
 install:
     - python --version
-    - pip install numpy six
+    - pip install numpy 'six>=1.13'
     - pip install traits
     - pip install argparse
     - pip install pycrypto
