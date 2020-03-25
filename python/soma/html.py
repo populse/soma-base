@@ -69,6 +69,10 @@ def htmlEscape(msg):
             for codepoint, name
             in six.iteritems(six.moves.html_entities.codepoint2name)
         }
+    if not isinstance(msg, six.string_types):
+        # htmlEscape is sometimes used on non-string types (as print) like
+        # tuples or dicts
+        msg = str(msg)
     msg = six.ensure_text(msg)
     return msg.translate(_htmlEscape)
 
