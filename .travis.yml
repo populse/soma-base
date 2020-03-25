@@ -38,7 +38,7 @@ install:
     - if [[ $TRAVIS_OS_NAME == linux ]]; then pip install pre-commit; fi
     - if [[ $TRAVIS_OS_NAME == linux ]]; then pre-commit run --all-files; fi
     # to test notebooks
-    - if [ ${TRAVIS_PYTHON_VERSION} != "2.6" ]; then pip install jupyter nbconvert; fi
+    - pip install jupyter nbconvert
     - if [[ "$TRAVIS_OS_NAME" = "linux" && "$TRAVIS_PYTHON_VERSION" == "3.5" ]]; then sudo apt-get install -y pandoc graphviz; pip install sphinx sphinx-gallery pandoc nbsphinx "PyQt5<5.13"; fi
     - python setup.py install
     - export QT_API=pyqt5

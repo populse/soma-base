@@ -49,10 +49,13 @@ from __future__ import print_function
 from __future__ import absolute_import
 __docformat__ = "restructuredtext en"
 
+from collections import OrderedDict
 import sys
 import six
 import inspect
 from soma.undefined import Undefined
+
+from six.moves import collections_abc
 
 
 class SortedDictionary(dict):
@@ -83,8 +86,7 @@ class SortedDictionary(dict):
         if len(args) == 1 and (
                 isinstance(args[0], list)
                 or inspect.isgenerator(args[0])
-                or (sys.version_info[0] >= 3
-                    and isinstance(args[0], type({}.items())))):
+                or (isinstance(args[0], collections_abc.ItemsView))):
             elements = args[0]  # dict / OrderedDict compatibility
         else:
             elements = args
@@ -107,10 +109,10 @@ class SortedDictionary(dict):
         list
             sorted list of (key, value) pairs
         '''
-        if sys.version_info[0] >= 3:
-            return self.iteritems()
+        if six.PY2:
+            return list(self.iteritems())
         else:
-            return [x for x in self.iteritems()]
+            return self.iteritems()
 
     def values(self):
         '''
@@ -119,14 +121,15 @@ class SortedDictionary(dict):
         values: list
             sorted list of values
         '''
-        if sys.version_info[0] >= 3:
+        if six.PY2:
+            return list(self.itervalues())
+        else:
             return self.itervalues()
-        return [x for x in self.itervalues()]
 
     def __setitem__(self, key, value):
         if key not in self:
             if 'sortedKeys' not in self.__dict__:
-                # this happens during picle.load() with python3
+                # this happens during pickle.load() with python3
                 self.sortedKeys = []
             self.sortedKeys.append(key)
         super(SortedDictionary, self).__setitem__(key, value)
@@ -136,9 +139,7 @@ class SortedDictionary(dict):
         self.sortedKeys.remove(key)
 
     def __getstate__(self):
-        if sys.version_info[0] >= 3:
-            return list(self.items())
-        return self.items()
+        return list(self.items())
 
     def __setstate__(self, state):
         SortedDictionary.__init__(self, *state)
@@ -271,21 +272,3 @@ class SortedDictionary(dict):
         copied = self.__class__()
         copied.update(self)
         return copied
-
-
-if sys.version_info[0:2] >= (2, 7):
-    # with python >= 2.7, use the standard collections.OrderedDict
-
-    from collections import OrderedDict
-
-else:
-
-    class OrderedDict(SortedDictionary):
-
-        '''
-        OrderedDict is fully compatible with Python 2.7 collections.OrderedDict.
-        It is a SordedDictionary with a modified constructor API.
-        '''
-
-        def __init__(self, args=()):
-            super(OrderedDict, self).__init__(*args)

@@ -51,55 +51,46 @@ _htmlEscape = None
 _lesserHtmlEscape = None
 
 
+# ylep 2020-03-24: now that UTF-8 is everywhere, shouldn't we just replace
+# HTML-unsafe characters (&<>"') and leave the rest untouched? (i.e. what the
+# standard library function html.escape does in Python 3.2 and later).
+
 def htmlEscape(msg):
-    """
-    Replace special characters in the message by their correponding html entity.
+    """Replace special characters by their correponding html entity.
+
+    All characters that have a corresponding named HTML entity are replaced.
 
     - returns: *unicode*
     """
     global _htmlEscape
     if _htmlEscape is None:
-        if sys.version_info[0] >= 3:
-            _htmlEscape = dict([(ord(j), u'&' + i + u';')
-                              for i, j
-                                  in six.iteritems(six.moves.html_entities.entitydefs)
-                                  if len(j) == 1])
-        else:
-            # htmlentitydefs is apparently encoded in iso-8859-1
-            # (*NOT* defaultencoding)
-            # (and this is not specified in the source code)
-            encoding = 'iso-8859-1'
-            _htmlEscape = dict(
-                [(ord(j.decode(encoding)), u'&' + i.decode(encoding) + u';')
-                 for i, j in six.iteritems(six.moves.html_entities.entitydefs)
-                 if len(j) == 1])
-    return six.text_type(msg).translate(_htmlEscape)
+        _htmlEscape = {
+            codepoint: u'&' + name + u';'
+            for codepoint, name
+            in six.iteritems(six.moves.html_entities.codepoint2name)
+        }
+    msg = six.ensure_text(msg)
+    return msg.translate(_htmlEscape)
 
 
 def lesserHtmlEscape(msg):
-    """
-    Replace special characters in the message by their correponding html entity.
+    """Replace special characters by their correponding html entity.
+
+    All characters that have a corresponding named HTML entity are replaced,
+    except accented characters commonly used in French text (éàèâêôîûàö) and
+    the double-quote character (").
 
     - returns: *unicode*
     """
     global _lesserHtmlEscape
     if _lesserHtmlEscape is None:
-        if sys.version_info[0] >= 3:
-            _lesserHtmlEscape = dict([(ord(j), u'&' + i + u';')
-                                    for i, j
-                                    in six.iteritems(six.moves.html_entities.entitydefs)
-                                    if len(j) == 1 and j not in
-                                        (u'"', u'é', u'à', u'è', u'â', u'ê',
-                                         u'ô', u'î', u'û', u'ù', u'ö', )])
-        else:
-            # htmlentitydefs is apparently encoded in iso-8859-1
-            # (*NOT* defaultencoding)
-            # (and this is not specified in the source code)
-            encoding = 'iso-8859-1'
-            _lesserHtmlEscape = dict(
-                [(ord(j.decode(encoding)), u'&' + i.decode(encoding) + u';')
-                 for i, j in six.iteritems(six.moves.html_entities.entitydefs)
-                 if len(j) == 1 and j.decode(encoding) not in
-                    (u'"', u'é', u'à', u'è', u'â', u'ê',
-                     u'ô', u'î', u'û', u'ù', u'ö', )])
-    return six.text_type(msg).translate(_lesserHtmlEscape)
+        _lesserHtmlEscape = {
+            codepoint: u'&' + name + u';'
+            for codepoint, name
+            in six.iteritems(six.moves.html_entities.codepoint2name)
+            if six.unichr(codepoint) not in (u'"', u'é', u'à', u'è', u'â',
+                                             u'ê', u'ô', u'î', u'û', u'ù',
+                                             u'ö', )
+        }
+    msg = six.ensure_text(msg)
+    return msg.translate(_lesserHtmlEscape)

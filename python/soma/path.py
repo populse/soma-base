@@ -203,7 +203,7 @@ def parse_query_string(path):
                  for k, v in six.iteritems(qs_parsed)])
     
 
-class QueryStringParamUpdateMode:
+class QueryStringParamUpdateMode(object):
     REPLACE = 0
     APPEND = 1
     REMOVE = 2

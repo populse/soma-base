@@ -62,7 +62,7 @@ from xml.sax.saxutils import quoteattr as xml_quoteattr
 #------------------------------------------------------------------------------
 
 
-class XHTML:
+class XHTML(object):
 
     '''
     Instances of L{XHTML} contains the structure of an XHTML tree and can be used
@@ -140,8 +140,7 @@ class XHTML:
         io = StringIO()
         # when unicode string is written in a stream, default encoding is used
         # to encode it :
-        if sys.version_info[0] < 3:
-            html = html.encode('utf-8')
+        html = six.ensure_str(html, 'utf-8')
         io.write(
             '<?xml version="1.0" encoding="utf-8" ?>\n<' + minfTag + ' ' +
             expanderAttribute + '="minf_2.0">\n<' + xhtmlTag + '>' +

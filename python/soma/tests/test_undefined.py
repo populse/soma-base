@@ -6,8 +6,8 @@ from __future__ import absolute_import
 import unittest
 import os
 import sys
-if sys.version_info[0] >= 3:
-    from importlib import reload
+
+from six.moves import reload_module
 
 
 class TestUndefined(unittest.TestCase):
@@ -37,13 +37,13 @@ class TestUndefined(unittest.TestCase):
     def tearDown(self):
         self.restore_traits()
         from soma import undefined
-        reload(undefined)
+        reload_module(undefined)
 
     def test_undefined_builtin(self):
         sys.modules['traits'] = None
         sys.modules['traits.api'] = None
         from soma import undefined
-        reload(undefined)
+        reload_module(undefined)
         self.assertTrue(hasattr(undefined, 'Undefined'))
         undef = undefined.Undefined
         self.assertTrue(isinstance(undef, undefined.UndefinedClass))
@@ -56,7 +56,7 @@ class TestUndefined(unittest.TestCase):
         from soma import undefined
         from traits import trait_base
         import traits.api as traits
-        reload(undefined)
+        reload_module(undefined)
         self.assertTrue(hasattr(undefined, 'Undefined'))
         undef = undefined.Undefined
         self.assertTrue(isinstance(undef, trait_base._Undefined))

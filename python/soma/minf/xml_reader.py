@@ -166,7 +166,7 @@ class MinfXMLReader(MinfReader, ErrorHandler):
 
 
 #------------------------------------------------------------------------------
-class XMLHandler:
+class XMLHandler(object):
 
     def __init__(self, parser, parent, name, attributes):
         self.parent = parent

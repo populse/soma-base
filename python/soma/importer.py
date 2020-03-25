@@ -125,7 +125,7 @@ class ExtendedImporter(Singleton):
             extendedModule.applyRules()
 
 
-class ExtendedModule:
+class ExtendedModule(object):
 
     '''
     Register a series of rules to apply during the import process of the
@@ -189,7 +189,7 @@ class ExtendedModule:
                 handler.__call__(self, referedModule)
 
 
-class GenericHandlers:
+class GenericHandlers(object):
 
     '''
     Static generic handlers used as import rules.
@@ -286,7 +286,7 @@ class GenericHandlers:
             del locals[key]
 
 
-class ExtendedImporterHelper:
+class ExtendedImporterHelper(object):
 
     '''
     Static methods declared to help extended import process.
@@ -376,6 +376,6 @@ def execfile(filename, globals=None, locals=None):
     six.exec_() needs an open file, hence this wrapper for convenience.
     Files are open with UTF-8 encoding on python3.
     '''
-    fopts = {'encoding': 'utf-8'} if sys.version_info[0] >= 3 else {}
+    fopts = {} if six.PY2 else {'encoding': 'utf-8'}
     with open(filename, **fopts) as f:
         six.exec_(f, globals, locals)

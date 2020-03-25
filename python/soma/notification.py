@@ -56,7 +56,7 @@ from soma.sorted_dictionary import SortedDictionary
 #-------------------------------------------------------------------------
 
 
-class Notifier:
+class Notifier(object):
 
     '''
     Register a series of functions (or Notifier instances) which are all called

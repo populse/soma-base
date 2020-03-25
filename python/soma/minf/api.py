@@ -195,7 +195,7 @@ def iterateMinf(source, targets=None, stop_on_error=True, exceptions=[]):
 
     initial_source = source
 
-    if sys.version_info[0] >= 3 and not hasattr(initial_source, 'readline'):
+    if not hasattr(initial_source, 'readline') and not six.PY2:
         # in python3 the encoding of a file should be specified when opening
         # it: it cannot be changed afterwards. So in python3 we cannot read
         # the encoding within the file (for instance in a XML file).
@@ -208,10 +208,10 @@ def iterateMinf(source, targets=None, stop_on_error=True, exceptions=[]):
     for encoding in try_encodings:
         opened_source_file = None
         if not hasattr(initial_source, 'readline'):
-            if sys.version_info[0] >= 3:
-                opened_source_file = open(initial_source, encoding=encoding)
-            else:
+            if six.PY2:
                 opened_source_file = open(initial_source)
+            else:
+                opened_source_file = open(initial_source, encoding=encoding)
             source = BufferAndFile(opened_source_file)
         elif not isinstance(source, BufferAndFile):
             source.seek(0)

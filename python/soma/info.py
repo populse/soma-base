@@ -66,9 +66,8 @@ ISRELEASE = version_extra == ''
 VERSION = __version__
 PROVIDES = ["soma-base"]
 REQUIRES = [
-    "six",
+    "six ~= 1.13",
     "numpy",
-    "importlib;python_version<='2.6'"
 ]
 EXTRAS_REQUIRE = {
     "doc": ["sphinx>=%s" % SPHINX_MIN_VERSION],

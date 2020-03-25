@@ -85,6 +85,7 @@ class Uuid(object):
                                       random.randrange(2 ** 64 - 1))
         else:
             try:
+                uuid = six.ensure_binary(uuid, encoding='ascii')
                 self.__uuid = binascii.unhexlify(uuid[0:8] + uuid[9:13] +
                                                  uuid[14:18] + uuid[19:23] +
                                                  uuid[24:36])
@@ -94,23 +95,21 @@ class Uuid(object):
     def __getnewargs__(self):
         return (str(self), )
 
-    if sys.version_info[0] >= 3:
-        def __str__(self):
-            if not isinstance(self.__uuid, bytes):
-                # this should not happen, but has been seen in some places
-                self.__uuid = bytes(self.__uuid, encoding='utf-8')
-            return (binascii.hexlify( self.__uuid[0:4] ) + b'-' + \
-                binascii.hexlify( self.__uuid[4:6] ) + b'-' + \
-                binascii.hexlify( self.__uuid[6:8] ) + b'-' + \
-                binascii.hexlify( self.__uuid[8:10] ) + b'-' + \
-                binascii.hexlify(self.__uuid[10:16])).decode()
-    else:
-        def __str__(self):
-            return binascii.hexlify( self.__uuid[0:4] ) + '-' + \
-                binascii.hexlify( self.__uuid[4:6] ) + '-' + \
-                binascii.hexlify( self.__uuid[6:8] ) + '-' + \
-                binascii.hexlify( self.__uuid[8:10] ) + '-' + \
-                binascii.hexlify(self.__uuid[10:16])
+    def __str__(self):
+        if not isinstance(self.__uuid, bytes):
+            # this should not happen, but has been seen in some places
+            import warnings
+            warnings.warn('soma.uuid.Uuid: self.__uuid is not of type bytes, '
+                          'but {0}. This is not supposed to happen.'
+                          .format(type(self.__uuid)))
+            self.__uuid = bytes(self.__uuid, encoding='utf-8')
+        return six.ensure_str(
+            binascii.hexlify(self.__uuid[0:4]) + b'-' +
+            binascii.hexlify(self.__uuid[4:6]) + b'-' +
+            binascii.hexlify(self.__uuid[6:8]) + b'-' +
+            binascii.hexlify(self.__uuid[8:10]) + b'-' +
+            binascii.hexlify(self.__uuid[10:16])
+        )
 
     def __repr__(self):
         return repr(str(self))
