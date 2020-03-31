@@ -616,22 +616,16 @@ def init_matplotlib_backend(force=True):
             + guiBackend + ' is required.')
     if qt_backend == 'PySide':
         if 'backend.qt4' in list(matplotlib.rcParams.keys()):
+            # some versions (>=1.1, <3) of matplotlib have this rcParams setting
             matplotlib.rcParams['backend.qt4'] = 'PySide'
-        else:
-            raise RuntimeError("Could not use Matplotlib, the backend using "
-                               "PySide is missing.")
     else:
         if qt_backend == 'PyQt5':
             rc_key = 'backend.qt5'
         else:
             rc_key = 'backend.qt4'
         if rc_key in list(matplotlib.rcParams.keys()):
+            # some versions (>=1.1, <3) of matplotlib have this rcParams setting
             matplotlib.rcParams[rc_key] = qt_backend
-        else:
-            # older versions of matplotlib used only PyQt4.
-            if mpl_ver >= [1, 1]:
-                raise RuntimeError("Could not use Matplotlib, the backend "
-                                   "using PyQt4 is missing.")
     __import__(mpl_backend_mod)
     backend_mod = sys.modules[mpl_backend_mod]
     FigureCanvas = backend_mod.FigureCanvasQTAgg
