@@ -46,10 +46,6 @@ from soma import notification
 from soma import path
 from soma import pipeline
 from soma import plugins
-try:
-    from soma import pyro
-except ImportError:
-    pass # Pyro not installed
 from soma import safemkdir
 from soma import sandbox
 from soma import serialization
