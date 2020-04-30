@@ -146,13 +146,6 @@ SubModule: ``path``
     :members:
 
 
-SubModule: ``pyro``
-===================
-
-.. automodule:: soma.pyro
-    :members:
-
-
 SubModule: ``qimage2ndarray``
 =============================
 

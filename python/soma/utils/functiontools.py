@@ -45,6 +45,8 @@ import six
 __docformat__ = "restructuredtext en"
 
 import inspect
+# handle deprecation of getargspec in python3
+getfullargspec = getattr(inspect, 'getfullargspec', 'getargspec')
 
 #-------------------------------------------------------------------------
 from soma.translation import translate as _
@@ -132,9 +134,9 @@ def getArgumentsSpecification(callable):
         n-tuple of the default values of the last *n* arguments.
     '''
     if inspect.isfunction(callable):
-        return inspect.getargspec(callable)
+        return getfullargspec(callable)[:4]
     elif inspect.ismethod(callable):
-        args, varargs, varkw, defaults = inspect.getargspec(callable)
+        args, varargs, varkw, defaults = getfullargspec(callable)[:4]
         args = args[1:]  # ignore the first "self" parameter
         return args, varargs, varkw, defaults
     elif inspect.isclass(callable):
