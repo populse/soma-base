@@ -221,7 +221,8 @@ def read_json(file_name):
     appropriate a warning about yaml not being installed.
     '''
     try:
-        return json_reader.load(open(file_name, 'r'), object_pairs_hook=OrderedDict)
+        with open(file_name, 'r') as f:
+            return json_reader.load(f, object_pairs_hook=OrderedDict)
     except ValueError as e:
         if json_reader.__name__ != 'yaml':
             extra_msg = ' Check your python installation, and perhaps un a "pip install PyYAML" or "easy_install PyYAML"'
@@ -237,7 +238,8 @@ class DirectoryAsDict(object):
         if osp.isdir(directory):
             return super(DirectoryAsDict, cls).__new__(cls, directory, cache)
         else:
-            return json.load(open(directory))
+            with open(directory) as f:
+                return json.load(f)
 
     def __init__(self, directory, cache=None):
         self.directory = directory
@@ -395,21 +397,22 @@ class DirectoriesCache(object):
             f = bz2.BZ2File(path, 'w')
         else:
             f = open(path, 'w')
-        json.dump(self.directories, f)
+        with f:
+            json.dump(self.directories, f)
 
     @classmethod
     def load(cls, path):
         result = cls()
         if bz2:
             try:
-                f = bz2.BZ2File(path, 'r')
-                result.directories = json.load(f)
+                with bz2.BZ2File(path, 'r') as f:
+                    result.directories = json.load(f)
             except IOError:
-                f = open(path, 'r')
-                result.directories = json.load(f)
+                with open(path, 'r') as f:
+                    result.directories = json.load(f)
         else:
-            f = open(path, 'r')
-            result.directories = json.load(f)
+            with open(path, 'r') as f:
+                result.directories = json.load(f)
         return result
 
 
