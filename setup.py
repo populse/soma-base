@@ -24,5 +24,6 @@ setup(
     package_dir = {'': python_dir},
     packages=find_packages(python_dir),
     platforms=release_info["PLATFORMS"],
+    install_requires=release_info["REQUIRES"],
     extras_require = release_info["EXTRAS_REQUIRE"],
 )
