@@ -228,7 +228,8 @@ def trait_ids(trait, modules=set()):
         for sub_trait in handler.handlers:
             if not isinstance(sub_trait, (traits.api.TraitType,
                                           traits.api.TraitInstance,
-                                          traits.api.TraitCoerceType)):
+                                          traits.api.TraitCoerceType,
+                                          traits.api.TraitHandler)):
                 sub_trait = sub_trait()
             trait_description.extend(trait_ids(sub_trait, modules))
         return trait_description
