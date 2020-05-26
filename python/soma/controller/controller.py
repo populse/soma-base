@@ -659,7 +659,7 @@ try:
                 return list(obj) # {'__class__': 'traits.TraitSetObject',
                         #'items': list(obj)}
             if not isinstance(obj, Controller):
-                return super().default(obj)
+                return super(JsonControllerEncoder, self).default(obj)
             d = obj.export_to_dict(exclude_undefined=True,
                 exclude_transient=True,
                 exclude_none=True,
@@ -676,7 +676,8 @@ try:
                 self._old_object_hook = kwargs['object_hook']
                 kwargs = {k: v for k, v in kwargs.items()
                           if k != 'object_hook'}
-            super().__init__(*args, object_hook=self.obj_hook, **kwargs)
+            super(JsonControllerDecoder, self).__init__(
+                *args, object_hook=self.obj_hook, **kwargs)
 
         def obj_hook(self, obj):
             if self._old_object_hook is not None:
