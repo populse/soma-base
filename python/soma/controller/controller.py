@@ -646,3 +646,64 @@ def controller_to_dict(item, exclude_undefined=False,
         result = item
 
     return result
+
+
+try:
+    import json
+
+    class JsonControllerEncoder(json.JSONEncoder):
+        def default(self, obj):
+            if obj is Undefined:
+                return {'__class__': '<undefined>'}
+            if isinstance(obj, traits.TraitSetObject):
+                return list(obj) # {'__class__': 'traits.TraitSetObject',
+                        #'items': list(obj)}
+            if not isinstance(obj, Controller):
+                return super().default(obj)
+            d = obj.export_to_dict(exclude_undefined=True,
+                exclude_transient=True,
+                exclude_none=True,
+                exclude_empty=True,
+                dict_class=OrderedDict)
+            d['__class__'] = obj.__class__.__name__
+            return d
+
+    class JsonControllerDecoder(json.JSONDecoder):
+        def __init__(self, *args, **kwargs):
+            # install a new object_hoook.
+            self._old_object_hook = None
+            if 'object_hook' in kwargs:
+                self._old_object_hook = kwargs['object_hook']
+                kwargs = {k: v for k, v in kwargs.items()
+                          if k != 'object_hook'}
+            super().__init__(*args, object_hook=self.obj_hook, **kwargs)
+
+        def obj_hook(self, obj):
+            if self._old_object_hook is not None:
+                obj = self._old_object_hook(obj)
+            if isinstance(obj, dict) and '__class__' in obj:
+                c = obj['__class__']
+                if c == '<undefined>':
+                    return Undefined
+                # Controller objects are decoded as dicts, without the
+                # __class__ item, because we cannot rebuild their traits in
+                # the general case. They should be converted later by
+                # import_from_dict()
+                d = {k: v for k, v in obj.items() if k != '__class__'}
+                return d
+                #controller = Controller()  ## FIXME instantiate __Class__
+                #controller.import_from_dict(d)
+                #return controller
+            return obj
+
+    if type(json._default_encoder) is json.JSONEncoder \
+            or json._default_encoder.__class__.__name__ \
+                == 'JsonControllerEncoder':
+        json._default_encoder = JsonControllerEncoder()
+    if type(json._default_decoder) is json.JSONDecoder \
+            or json._default_decoder.__class__.__name__ \
+                == 'JsonControllerDecoder':
+        json._default_decoder = JsonControllerDecoder()
+
+except ImportError:
+    pass
