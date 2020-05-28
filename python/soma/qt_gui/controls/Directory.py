@@ -7,6 +7,7 @@ import logging
 from soma.qt_gui.qt_backend import QtGui, QtCore
 from soma.qt_gui import qt_backend
 from .File import FileControlWidget
+import traits.api as traits
 import six
 
 
@@ -37,31 +38,40 @@ class DirectoryControlWidget(FileControlWidget):
         control_palette = control_instance.path.palette()
 
         # Get the control current value
-        control_value = control_instance.path.text()
+        control_value = control_instance.path.value()
+
+        color = QtCore.Qt.white
+        red = QtGui.QColor(255, 220, 220)
+        yellow = QtGui.QColor(255, 255, 200)
 
         # If the control value contains a file, the control is valid and the
         # backgound color of the control is white
         is_valid = False
-        if os.path.isdir(control_value) \
-                or (control_instance.output and control_value != ""):
-            control_palette.setColor(
-                control_instance.path.backgroundRole(), QtCore.Qt.white)
+        if control_value is traits.Undefined:
+            # Undefined is an exception: allow to reset it (File instances,
+            # even mandatory, are initialized with Undefined value)
             is_valid = True
-
-        # If the control value is optional, the control is valid and the
-        # backgound color of the control is yellow
-        elif control_instance.optional is True and control_value == "":
-            control_palette.setColor(
-                control_instance.path.backgroundRole(), QtCore.Qt.yellow)
-            is_valid = True
-
-        # If the control value is empty, the control is not valid and the
-        # backgound color of the control is red
+            if not control_instance.optional:
+                color = red
         else:
-            control_palette.setColor(
-                control_instance.path.backgroundRole(), QtCore.Qt.red)
+
+            if os.path.isdir(control_value) \
+                    or (control_instance.output and control_value != ""):
+                is_valid = True
+
+            # If the control value is optional, the control is valid and the
+            # backgound color of the control is yellow
+            elif control_instance.optional is True and control_value == "":
+                color = yellow
+                is_valid = True
+
+            # If the control value is empty, the control is not valid and the
+            # backgound color of the control is red
+            else:
+                color = red
 
         # Set the new palette to the control instance
+        control_palette.setColor(control_instance.path.backgroundRole(), color)
         control_instance.path.setPalette(control_palette)
 
         return is_valid

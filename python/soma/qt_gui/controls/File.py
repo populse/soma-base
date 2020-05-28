@@ -54,31 +54,42 @@ class FileControlWidget(object):
         control_palette = control_instance.path.palette()
 
         # Get the control current value
-        control_value = control_instance.path.text()
+        control_value = control_instance.path.value()
+
+        color = QtCore.Qt.white
+        red = QtGui.QColor(255, 220, 220)
+        yellow = QtGui.QColor(255, 255, 200)
 
         # If the control value contains a file, the control is valid and the
         # backgound color of the control is white
         is_valid = False
-        if os.path.isfile(control_value) \
-                or (control_instance.output and control_value != ""):
-            control_palette.setColor(
-                control_instance.path.backgroundRole(), QtCore.Qt.white)
+        if control_value is traits.Undefined:
+            # Undefined is an exception: allow to reset it (File instances,
+            # even mandatory, are initialized with Undefined value)
             is_valid = True
-
-        # If the control value is optional, the control is valid and the
-        # backgound color of the control is yellow
-        elif control_instance.optional is True and control_value == "":
-            control_palette.setColor(
-                control_instance.path.backgroundRole(), QtCore.Qt.yellow)
-            is_valid = True
-
-        # If the control value is empty, the control is not valid and the
-        # backgound color of the control is red
+            if not control_instance.optional:
+                color = red
         else:
-            control_palette.setColor(
-                control_instance.path.backgroundRole(), QtCore.Qt.red)
+
+            if (os.path.isfile(control_value)
+                    or (control_instance.output and control_value != "")):
+                is_valid = True
+
+            # If the control value is optional, the control is valid and the
+            # backgound color of the control is yellow
+            elif control_instance.optional \
+                    and control_value in ("", ):
+                color = yellow
+                is_valid = True
+
+            # If the control value is empty, the control is not valid and the
+            # backgound color of the control is red
+            else:
+                if not control_instance.optional:
+                    color = red
 
         # Set the new palette to the control instance
+        control_palette.setColor(control_instance.path.backgroundRole(), color)
         control_instance.path.setPalette(control_palette)
 
         return is_valid
@@ -155,7 +166,9 @@ class FileControlWidget(object):
         layout.setContentsMargins(0, 0, 0, 0)
         widget.setLayout(layout)
         # Create a widget to print the file path
-        path = TimeredQLineEdit(widget)
+        path = TimeredQLineEdit(widget, predefined_values=[traits.Undefined])
+        if hasattr(path, 'setClearButtonEnabled'):
+            path.setClearButtonEnabled(True)
         layout.addWidget(path)
         widget.path = path
         # Create a browse button
@@ -220,15 +233,15 @@ class FileControlWidget(object):
         if control_class.is_valid(control_instance):
 
             # Get the control value
-            new_trait_value = six.text_type(control_instance.path.text())
-            if new_trait_value != "<undefined>":
-                # Set the control value to the controller associated trait
-                setattr(controller_widget.controller, control_name,
-                        new_trait_value)
-                logger.debug(
-                    "'FileControlWidget' associated controller trait '{0}' has"
-                    " been updated with value '{1}'.".format(
-                        control_name, new_trait_value))
+            new_trait_value = six.text_type(control_instance.path.value())
+            #if new_trait_value is not traits.Undefined:
+            # Set the control value to the controller associated trait
+            setattr(controller_widget.controller, control_name,
+                    new_trait_value)
+            logger.debug(
+                "'FileControlWidget' associated controller trait '{0}' has"
+                " been updated with value '{1}'.".format(
+                    control_name, new_trait_value))
         elif reset_invalid_value:
             # invalid, reset GUI to older value
             old_trait_value = getattr(controller_widget.controller,
@@ -387,7 +400,8 @@ class FileControlWidget(object):
         # Get the current file path
         current_control_value = os.getcwd()
         if FileControlWidget.is_valid(control_instance):
-            current_control_value = six.text_type(control_instance.path.text())
+            current_control_value \
+                = six.text_type(control_instance.path.text())
 
         # get widget via a __self__ in a method, because control_instance may
         # be a weakproxy.

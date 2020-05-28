@@ -52,30 +52,33 @@ class StrControlWidget(object):
         control_palette = control_instance.palette()
 
         # Get the control current value
-        control_value = control_instance.text()
+        control_value = control_instance.value()
+
+        color = QtCore.Qt.white
+        red = QtGui.QColor(255, 220, 220)
+        yellow = QtGui.QColor(255, 255, 200)
 
         # If the control value is not empty, the control is valid and the
         # backgound color of the control is white
         is_valid = False
-        if control_value != "":
-            control_palette.setColor(
-                control_instance.backgroundRole(), QtCore.Qt.white)
-            is_valid = True
 
-        # If the control value is optional, the control is valid and the
-        # backgound color of the control is yellow
-        elif control_instance.optional is True:
-            control_palette.setColor(
-                control_instance.backgroundRole(), QtCore.Qt.yellow)
-            is_valid = True
+        if control_value in ('', None, traits.Undefined):
+            if control_instance.optional:
+                # If the control value is optional, the control is valid and
+                # the backgound color of the control is yellow
+                color = yellow
+                is_valid = True
+            else:
+                color = red
+                if control_value != '':
+                    # allow to reset value
+                    is_valid = True
 
-        # If the control value is empty, the control is not valid and the
-        # backgound color of the control is red
         else:
-            control_palette.setColor(
-                control_instance.backgroundRole(), QtCore.Qt.red)
+            is_valid = True
 
         # Set the new palette to the control instance
+        control_palette.setColor(control_instance.backgroundRole(), color)
         control_instance.setPalette(control_palette)
 
         return is_valid
@@ -144,7 +147,9 @@ class StrControlWidget(object):
             associated label: QLabel)
         """
         # Create the widget that will be used to fill a string
-        widget = TimeredQLineEdit(parent)
+        widget = TimeredQLineEdit(parent, predefined_values=[traits.Undefined])
+        if hasattr(widget, 'setClearButtonEnabled'):
+            widget.setClearButtonEnabled(True)
 
         # Add a widget parameter to tell us if the widget is already connected
         widget.connected = False
@@ -189,10 +194,9 @@ class StrControlWidget(object):
         if StrControlWidget.is_valid(control_instance):
 
             # Get the control value
-            new_trait_value = six.text_type(control_instance.text())
-            if new_trait_value == "":
-                # WARNING: an empty string is always considered Undefined, here
-                new_trait_value = traits.Undefined
+            new_trait_value = control_instance.value()
+            if new_trait_value not in (traits.Undefined, None):
+                new_trait_value = six.text_type(new_trait_value)
 
             # Set the control value to the controller associated trait
             setattr(controller_widget.controller, control_name,
@@ -205,10 +209,7 @@ class StrControlWidget(object):
             # invalid, reset GUI to older value
             old_trait_value = getattr(controller_widget.controller,
                                       control_name)
-            if old_trait_value is traits.Undefined:
-                control_instance.setText("")
-            else:
-                control_instance.setText(six.text_type(old_trait_value))
+            control_instance.set_value(old_trait_value)
 
     @staticmethod
     def update_controller_widget(controller_widget, control_name,

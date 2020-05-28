@@ -382,8 +382,11 @@ class ControllerWidget(QtGui.QWidget):
                         = control
 
                     # Call the current control specific disconnection method
-                    control_class.disconnect(self, control_name,
-                                             control_instance)
+                    try:
+                        control_class.disconnect(self, control_name,
+                                                 control_instance)
+                    except Exception:
+                        pass  # probably something already deleted
 
             # Update the connection status
             self.connected = False
