@@ -49,7 +49,7 @@ class ScrollControllerWidget(Qt.QScrollArea):
 
     def __init__(self, controller, parent=None, name=None, live=False,
                  hide_labels=False, select_controls=None,
-                 disable_controller_widget=False):
+                 disable_controller_widget=False, override_control_types=None):
         """ Method to initilaize the ScrollControllerWidget class.
 
         Parameters
@@ -73,6 +73,9 @@ class ScrollControllerWidget(Qt.QScrollArea):
             are 'inputs' or 'outputs'.
         disable_controller_widget: bool (optional, default False)
             if True disable the controller widget.
+        override_control_types: dict (optional)
+            if given, this is a "factory" dict assigning new controller editor
+            types to some traits types.
         """
         # Inheritance
         super(ScrollControllerWidget, self).__init__(parent)
@@ -87,7 +90,8 @@ class ScrollControllerWidget(Qt.QScrollArea):
 
         # Create the controller widget
         self.controller_widget = ControllerWidget(
-            controller, parent, name, live, hide_labels, select_controls)
+            controller, parent, name, live, hide_labels, select_controls,
+            override_control_types=override_control_types)
         self.controller_widget.layout().setContentsMargins(2, 2, 2, 2)
         self.controller_widget.setSizePolicy(QtGui.QSizePolicy.Expanding,
                                              QtGui.QSizePolicy.Preferred)
@@ -145,7 +149,7 @@ class ControllerWidget(QtGui.QWidget):
 
     def __init__(self, controller, parent=None, name=None, live=False,
                  hide_labels=False, select_controls=None,
-                 editable_labels=False):
+                 editable_labels=False, override_control_types=None):
         """ Method to initilaize the ControllerWidget class.
 
         Parameters
@@ -170,9 +174,17 @@ class ControllerWidget(QtGui.QWidget):
         editable_labels: bool (optional, default False)
             if True, labels (trait keys) may be edited by the user, their
             modification will trigger a signal.
+        override_control_types: dict (optional)
+            if given, this is a "factory" dict assigning new controller editor
+            types to some traits types.
         """
         # Inheritance
         super(ControllerWidget, self).__init__(parent)
+
+        if override_control_types:
+            # copy dict
+            self._defined_controls = dict(self.__class__._defined_controls)
+            self._defined_controls.update(override_control_types)
 
         QtCore.QResource.registerResource(os.path.join(os.path.dirname(
             os.path.dirname(__file__)), 'resources', 'widgets_icons.rcc'))
@@ -842,11 +854,7 @@ class ControllerWidget(QtGui.QWidget):
                 show = False
             self._set_group_visibility(group, show)
 
-    #
-    # Class Methods
-    #
-    @classmethod
-    def get_control_class(cls, trait):
+    def get_control_class(self, trait):
         """ Find the control associated with the input trait.
 
         The mapping is defined in the global class parameter
@@ -854,8 +862,6 @@ class ControllerWidget(QtGui.QWidget):
 
         Parameters
         ----------
-        cls: ControllerWidget (mandatory)
-            a ControllerWidget class
         trait: Trait (mandatory)
             a trait item
 
@@ -884,7 +890,7 @@ class ControllerWidget(QtGui.QWidget):
                 trait_id = trait_id.split("_")[0]
 
                 # Try to get the control class
-                control_class = cls._defined_controls.get(trait_id)
+                control_class = self._defined_controls.get(trait_id)
 
                 # Stop when we have a match
                 if control_class is not None:
