@@ -19,7 +19,7 @@ import six
 logger = logging.getLogger(__name__)
 
 # Soma import
-from soma.qt_gui.qt_backend import QtCore
+from soma.qt_gui.qt_backend import QtCore, QtGui
 from .Str import StrControlWidget
 
 
@@ -58,6 +58,9 @@ class FloatControlWidget(StrControlWidget):
         control_value = control_text.replace(".", "", 1)
         control_value = re.sub("^([-+])", "", control_value, count=1)
 
+        red = QtGui.QColor(255, 220, 220)
+        yellow = QtGui.QColor(255, 255, 200)
+
         # If the control value contains only digits, the control is valid and
         # the backgound color of the control is white
         is_valid = False
@@ -69,15 +72,13 @@ class FloatControlWidget(StrControlWidget):
         # If the control value is optional, the control is valid and the
         # backgound color of the control is yellow
         elif control_instance.optional is True and control_value == "":
-            control_palette.setColor(
-                control_instance.backgroundRole(), QtCore.Qt.yellow)
+            control_palette.setColor(control_instance.backgroundRole(), yellow)
             is_valid = True
 
         # If the control value is empty, the control is not valid and the
         # backgound color of the control is red
         else:
-            control_palette.setColor(
-                control_instance.backgroundRole(), QtCore.Qt.red)
+            control_palette.setColor(control_instance.backgroundRole(), red)
 
         # Set the new palette to the control instance
         control_instance.setPalette(control_palette)

@@ -230,19 +230,23 @@ class FileControlWidget(object):
         if not control_groups:
             return
         control_class = next(iter(control_groups.values()))[1]
+        fail = False
         if control_class.is_valid(control_instance):
 
             # Get the control value
             new_trait_value = six.text_type(control_instance.path.value())
             #if new_trait_value is not traits.Undefined:
             # Set the control value to the controller associated trait
-            setattr(controller_widget.controller, control_name,
-                    new_trait_value)
+            try:
+                setattr(controller_widget.controller, control_name,
+                        new_trait_value)
+            except traits.TraitError:
+                fail = True
             logger.debug(
                 "'FileControlWidget' associated controller trait '{0}' has"
                 " been updated with value '{1}'.".format(
                     control_name, new_trait_value))
-        elif reset_invalid_value:
+        if fail and reset_invalid_value:
             # invalid, reset GUI to older value
             old_trait_value = getattr(controller_widget.controller,
                                       control_name)

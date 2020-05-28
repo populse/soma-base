@@ -7,6 +7,7 @@ import logging
 from soma.qt_gui.qt_backend import QtGui, QtCore
 from soma.qt_gui import qt_backend
 from .File import FileControlWidget
+from soma.utils.weak_proxy import get_ref
 import traits.api as traits
 import six
 
@@ -100,7 +101,7 @@ class DirectoryControlWidget(FileControlWidget):
 
         # Create a dialogue to select a directory
         folder = qt_backend.getExistingDirectory(
-            control_instance, "Open directory", current_control_value,
+            get_ref(control_instance), "Open directory", current_control_value,
             QtGui.QFileDialog.ShowDirsOnly
                 | QtGui.QFileDialog.DontUseNativeDialog)
 
