@@ -19,7 +19,7 @@ import six
 logger = logging.getLogger(__name__)
 
 # Soma import
-from soma.qt_gui.qt_backend import QtCore
+from soma.qt_gui.qt_backend import QtCore, QtGui
 from .Str import StrControlWidget
 
 
@@ -76,8 +76,8 @@ class FloatControlWidget(StrControlWidget):
         # If the control value is empty, the control is not valid and the
         # backgound color of the control is red
         else:
-            control_palette.setColor(
-                control_instance.backgroundRole(), QtCore.Qt.red)
+            red = QtGui.QColor(255, 220, 220)
+            control_palette.setColor(control_instance.backgroundRole(), red)
 
         # Set the new palette to the control instance
         control_instance.setPalette(control_palette)
