@@ -136,8 +136,8 @@ class OffscreenListControlWidget(object):
         if len(trait.handler.inner_traits()) != 1:
             raise Exception(
                 "Expect only one inner trait in List control. Trait '{0}' "
-                "inner trait is '{1}'.".format(control_name,
-                                               trait.handler.inner_traits()))
+                "inner trait is '{1}'.".format(
+                    control_name, trait.handler.inner_traits()))
         inner_trait = trait.handler.inner_traits()[0]
 
         # Create the widget

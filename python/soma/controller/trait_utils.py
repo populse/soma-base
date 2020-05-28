@@ -35,11 +35,14 @@ _type_to_trait_id = {
 _trait_cvt_table = {
     "InputMultiPath_TraitCompound": "List",
     "InputMultiPath": "List",
+    "InputMultiObject": "List",
     "MultiPath": "List",
     "Dict_Str_Str": "DictStrStr",
     "OutputMultiPath_TraitCompound": "List",
     "OutputMultiPath": "List",
-    "OutputList": "List"
+    "OutputMultiObject": "List",
+    "OutputList": "List",
+    "ImageFileSPM": "File",
 }
 
 
@@ -243,6 +246,8 @@ def trait_ids(trait, modules=set()):
         return [main_id + "_" + inner_id]
 
     elif main_id == "TraitInstance":
+        if handler.aClass is type(traits.api.Undefined):
+            return ['Undefined']
         inner_id = handler.aClass.__name__
         mod = handler.aClass.__module__
         if mod not in ("__builtin__", "__builtins__"):

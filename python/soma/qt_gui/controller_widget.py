@@ -178,6 +178,10 @@ class ControllerWidget(QtGui.QWidget):
             os.path.dirname(__file__)), 'resources', 'widgets_icons.rcc'))
 
         # Class parameters
+        if controller is None:
+            raise ValueError('null controller')
+        if controller is traits.Undefined:
+            raise ValueError('undefined controller')
         self.controller = controller
         self.live = live
         self.hide_labels = hide_labels
@@ -864,21 +868,37 @@ class ControllerWidget(QtGui.QWidget):
         # Initilaize the output variable
         control_class = None
 
-        # Go through the trait string description: can have multiple element
-        # when either trait is used
-        # Todo:: we actualy need to create all the controls and let the user
-        # choose which one he wants to fill.
-        for trait_id in trait_ids(trait):
+        todo = [trait]
+        done = set()
+        while todo:
+            trait = todo.pop(0)
+            done.add(trait)
 
-            # Recursive construction: consider only the top level
-            trait_id = trait_id.split("_")[0]
+            # Go through the trait string description: can have multiple
+            # element when either trait is used
+            # Todo:: we actualy need to create all the controls and let the
+            # user choose which one he wants to fill.
+            for trait_id in trait_ids(trait):
 
-            # Try to get the control class
-            control_class = cls._defined_controls.get(trait_id)
+                # Recursive construction: consider only the top level
+                trait_id = trait_id.split("_")[0]
 
-            # Stop when we have a match
+                # Try to get the control class
+                control_class = cls._defined_controls.get(trait_id)
+
+                # Stop when we have a match
+                if control_class is not None:
+                    break
+
             if control_class is not None:
                 break
+
+            # not found: look in superclasses
+            bases = trait.trait_type.__class__.__bases__ \
+                + trait.__class__.__bases__
+            for base in bases:
+                if issubclass(base, traits.TraitType):
+                    todo.append(base())
 
         return control_class
 
