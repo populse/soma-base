@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 # Soma import
 from soma.qt_gui.qt_backend import QtGui, QtCore
 from soma.utils.functiontools import SomaPartial
-from soma.qt_gui.controller_widget import weak_proxy
+from soma.utils.weak_proxy import weak_proxy
 import traits.api as traits
 
 

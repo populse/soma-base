@@ -549,9 +549,6 @@ class OffscreenListControlWidget(object):
         #hlayout = QtGui.QHBoxLayout()
         #layout.addLayout(hlayout)
 
-        old_class = ControllerWidget._defined_controls['List']
-        ControllerWidget._defined_controls['List'] = ListControlWidget
-
         temp_controller = Controller()
         temp_controller.add_trait(
             control_instance.trait_name,
@@ -564,11 +561,12 @@ class OffscreenListControlWidget(object):
                         control_instance.trait_name)
 
         setattr(temp_controller, control_instance.trait_name, value)
+        control_types = dict(controller_widget._defined_controls)
+        control_types['List'] = ListControlWidget
         temp_controller_widget = ScrollControllerWidget(
-            temp_controller, live=True)
+            temp_controller, live=True, override_control_types=control_types)
 
         layout.addWidget(temp_controller_widget)
-        ControllerWidget._defined_controls['List'] = old_class
 
         hlayout2 = QtGui.QHBoxLayout()
         layout.addLayout(hlayout2)

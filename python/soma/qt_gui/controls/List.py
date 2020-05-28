@@ -268,8 +268,9 @@ class ListControlWidget(object):
             setattr(controller, str(cnt), inner_control_values)
 
         # Create the associated controller widget
-        controller_widget = ControllerWidget(controller, parent=frame,
-                                             live=True)
+        controller_widget = ControllerWidget(
+            controller, parent=frame, live=True,
+            override_control_types=parent._defined_controls)
         controller_widget.setObjectName('inner_controller')
         controller_widget.setStyleSheet(
             'ControllerWidget#inner_controller { padding: 0px; }')
