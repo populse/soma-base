@@ -45,6 +45,7 @@ from __future__ import absolute_import
 __docformat__ = "restructuredtext en"
 
 from soma.qt_gui.qt_backend import QtCore, QtGui, Qt
+from soma.qt_gui.predef_lineedit import QPredefLineEdit
 import weakref
 
 #-------------------------------------------------------------------------
@@ -147,7 +148,7 @@ class QLineEditModificationTimer(QtCore.QObject):
 
 
 #-------------------------------------------------------------------------
-class TimeredQLineEdit(Qt.QLineEdit):
+class TimeredQLineEdit(QPredefLineEdit):
 
     '''
     Create a QLineEdit instance that has an private attribute
@@ -169,9 +170,9 @@ class TimeredQLineEdit(Qt.QLineEdit):
         '''
         timerInterval = kwargs.pop('timerInterval', None)
         if kwargs:
-            Qt.QLineEdit.__init__(self, *args, **kwargs)
+            super(TimeredQLineEdit, self).__init__(*args, **kwargs)
         else:
-            Qt.QLineEdit.__init__(self, *args)
+            super(TimeredQLineEdit, self).__init__(*args)
         self.__timer = QLineEditModificationTimer(self,
                                                   timerInterval=timerInterval)
         self.__timer.userModification.connect(self.userModification)
