@@ -261,6 +261,11 @@ class ControllerControlWidget(object):
             the instance of the controller widget control we want to
             synchronize with the controller
         """
+        try:
+            was_connected = control_instance.connected
+        except ReferenceError:
+            # widget deleted in the meantime
+            return
         # One callback has not been removed properly
         control_instance.controller_widget.update_controller_widget()
 

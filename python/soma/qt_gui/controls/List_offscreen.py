@@ -334,7 +334,11 @@ class OffscreenListControlWidget(object):
         if control_name in controller_widget.controller.user_traits():
 
             # Get the list widget current connection status
-            was_connected = control_instance.connected
+            try:
+                was_connected = control_instance.connected
+            except ReferenceError:
+                # widget deleted in the meantime
+                return
 
             # Disconnect the list controller and the inner list controller
             cls.disconnect(controller_widget, control_name, control_instance)
@@ -549,13 +553,10 @@ class OffscreenListControlWidget(object):
         #hlayout = QtGui.QHBoxLayout()
         #layout.addLayout(hlayout)
 
-        old_class = ControllerWidget._defined_controls['List']
-        ControllerWidget._defined_controls['List'] = ListControlWidget
-
         temp_controller = Controller()
-        temp_controller.add_trait(
-            control_instance.trait_name,
-            controller_widget.controller.trait(control_instance.trait_name))
+        trait = control_instance.trait
+
+        temp_controller.add_trait(control_instance.trait_name, trait)
         if temp_controller.trait(control_instance.trait_name).groups \
                 is not None:
             temp_controller.trait(control_instance.trait_name).groups = None
@@ -563,12 +564,17 @@ class OffscreenListControlWidget(object):
         value = getattr(controller_widget.controller,
                         control_instance.trait_name)
 
-        setattr(temp_controller, control_instance.trait_name, value)
+        try:
+            setattr(temp_controller, control_instance.trait_name, value)
+        except Exception:
+            # invalid value - don't prevent using the GUI
+            pass
+        control_types = dict(controller_widget._defined_controls)
+        control_types['List'] = ListControlWidget
         temp_controller_widget = ScrollControllerWidget(
-            temp_controller, live=True)
+            temp_controller, live=True, override_control_types=control_types)
 
         layout.addWidget(temp_controller_widget)
-        ControllerWidget._defined_controls['List'] = old_class
 
         hlayout2 = QtGui.QHBoxLayout()
         layout.addLayout(hlayout2)

@@ -150,6 +150,11 @@ class FloatControlWidget(StrControlWidget):
             the instance of the controller widget control we want to
             synchronize with the controller
         """
+        try:
+            was_connected = control_instance.connected
+        except ReferenceError:
+            # widget deleted in the meantime
+            return
         # Get the trait value
         new_controller_value = getattr(
             controller_widget.controller, control_name, traits.Undefined)
