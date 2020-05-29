@@ -14,6 +14,7 @@ from .Int import IntControlWidget
 from .Enum import EnumControlWidget
 from .List import ListControlWidget
 from .List_offscreen import OffscreenListControlWidget
+from .List_File_offscreen import OffscreenListFileControlWidget
 from .Bool import BoolControlWidget
 from .File import FileControlWidget
 from .Directory import DirectoryControlWidget
@@ -42,6 +43,7 @@ controls["TraitInstance"] = ControllerControlWidget
 controls["ControllerTrait"] = ControllerControlWidget
 controls["Dict"] = DictControlWidget
 controls["Compound"] = CompoundControlWidget
+controls["List_File"] = OffscreenListFileControlWidget
 # nipype types
 controls["ImageFileSPM"] = FileControlWidget
 

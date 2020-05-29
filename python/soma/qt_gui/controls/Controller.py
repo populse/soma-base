@@ -262,7 +262,7 @@ class ControllerControlWidget(object):
             synchronize with the controller
         """
         try:
-            was_connected = control_instance.connected
+            test = control_instance.controller_widget
         except ReferenceError:
             # widget deleted in the meantime
             return

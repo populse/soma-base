@@ -194,7 +194,7 @@ class EnumControlWidget(object):
         """
         # Get the controller trait value
         try:
-            was_connected = control_instance.connected
+            test = control_instance.setCurrentIndex
         except ReferenceError:
             # widget deleted in the meantime
             return
