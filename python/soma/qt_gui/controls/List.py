@@ -403,6 +403,11 @@ class ListControlWidget(object):
             the instance of the controller widget control we want to
             synchronize with the controller
         """
+        try:
+            was_connected = control_instance.connected
+        except ReferenceError:
+            # widget deleted in the meantime
+            return
         # One callback has not been removed properly
         if control_name in controller_widget.controller.user_traits():
 
@@ -792,7 +797,8 @@ class ListControlWidget(object):
 
             # Get, unpack and delete the control item
             control_groups \
-                = control_instance.controller_widget._controls[trait_name]
+                = control_instance.controller_widget._controls.get(trait_name,
+                                                                   {})
             for group, control in six.iteritems(control_groups):
                 (inner_trait, inner_control_class, inner_control_instance,
                 inner_control_label) = control

@@ -122,7 +122,7 @@ class StrControlWidget(object):
 
     @staticmethod
     def create_widget(parent, control_name, control_value, trait,
-                      label_class=False):
+                      label_class=None):
         """ Method to create the string widget.
 
         Parameters
@@ -231,6 +231,11 @@ class StrControlWidget(object):
             the instance of the controller widget control we want to
             synchronize with the controller
         """
+        try:
+            was_connected = control_instance.connected
+        except ReferenceError:
+            # widget deleted in the meantime
+            return
         # Get the trait value
         new_controller_value = getattr(
             controller_widget.controller, control_name, traits.Undefined)

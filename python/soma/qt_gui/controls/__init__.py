@@ -19,6 +19,7 @@ from .File import FileControlWidget
 from .Directory import DirectoryControlWidget
 from .Dict import DictControlWidget
 from .Controller import ControllerControlWidget
+from .Compound import CompoundControlWidget
 
 # Define a structure that will contain the mapping between the string trait
 # descriptions and the associated control classes
@@ -40,6 +41,7 @@ controls["Instance"] = ControllerControlWidget
 controls["TraitInstance"] = ControllerControlWidget
 controls["ControllerTrait"] = ControllerControlWidget
 controls["Dict"] = DictControlWidget
+controls["Compound"] = CompoundControlWidget
 # nipype types
 controls["ImageFileSPM"] = FileControlWidget
 

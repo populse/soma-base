@@ -708,11 +708,11 @@ class ControllerWidget(QtGui.QWidget):
         # Call the search function that will map the trait type to the
         # corresponding control type
         control_class = self.get_control_class(trait)
-        # FIXME: for now we use a hack for compound/either traits, until
-        # we write a "real" GUI for them
-        if isinstance(trait.trait_type, (traits.TraitCompound, traits.Either)):
-            # compound trait: use the 1st
-            trait = trait.handler.handlers[0].as_ctrait()
+        ## FIXME: for now we use a hack for compound/either traits, until
+        ## we write a "real" GUI for them
+        #if isinstance(trait.trait_type, (traits.TraitCompound, traits.Either)):
+            ## compound trait: use the 1st
+            #trait = trait.handler.handlers[0].as_ctrait()
         # Create the control instance and associated label
         if self.editable_labels:
             label_class = DeletableLineEdit
@@ -880,24 +880,26 @@ class ControllerWidget(QtGui.QWidget):
             trait = todo.pop(0)
             done.add(trait)
 
-            # Go through the trait string description: can have multiple
-            # element when either trait is used
-            # Todo:: we actualy need to create all the controls and let the
-            # user choose which one he wants to fill.
-            for trait_id in trait_ids(trait):
+            trait_id = None
+            ids = trait_ids(trait)
+            if len(ids) >= 2:
+                trait_id = 'Compound'
+            elif len(ids) == 1:
+                trait_id = ids[0]
 
-                # Recursive construction: consider only the top level
-                trait_id = trait_id.split("_")[0]
-
-                # Try to get the control class
+            if trait_id is not None:
                 control_class = self._defined_controls.get(trait_id)
+                # Recursive construction: consider only the top level
+                while control_class is None:
+                    split_id = trait_id.rsplit("_", 1)
+                    if len(split_id) == 1:
+                        break
+                    trait_id = split_id[0]
+                    # Try to get the control class
+                    control_class = self._defined_controls.get(trait_id)
 
-                # Stop when we have a match
                 if control_class is not None:
                     break
-
-            if control_class is not None:
-                break
 
             # not found: look in superclasses
             bases = trait.trait_type.__class__.__bases__ \

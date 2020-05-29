@@ -334,7 +334,11 @@ class OffscreenListControlWidget(object):
         if control_name in controller_widget.controller.user_traits():
 
             # Get the list widget current connection status
-            was_connected = control_instance.connected
+            try:
+                was_connected = control_instance.connected
+            except ReferenceError:
+                # widget deleted in the meantime
+                return
 
             # Disconnect the list controller and the inner list controller
             cls.disconnect(controller_widget, control_name, control_instance)
@@ -550,9 +554,9 @@ class OffscreenListControlWidget(object):
         #layout.addLayout(hlayout)
 
         temp_controller = Controller()
-        temp_controller.add_trait(
-            control_instance.trait_name,
-            controller_widget.controller.trait(control_instance.trait_name))
+        trait = control_instance.trait
+
+        temp_controller.add_trait(control_instance.trait_name, trait)
         if temp_controller.trait(control_instance.trait_name).groups \
                 is not None:
             temp_controller.trait(control_instance.trait_name).groups = None
@@ -560,7 +564,11 @@ class OffscreenListControlWidget(object):
         value = getattr(controller_widget.controller,
                         control_instance.trait_name)
 
-        setattr(temp_controller, control_instance.trait_name, value)
+        try:
+            setattr(temp_controller, control_instance.trait_name, value)
+        except Exception:
+            # invalid value - don't prevent using the GUI
+            pass
         control_types = dict(controller_widget._defined_controls)
         control_types['List'] = ListControlWidget
         temp_controller_widget = ScrollControllerWidget(

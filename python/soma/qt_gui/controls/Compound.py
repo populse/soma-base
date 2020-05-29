@@ -18,15 +18,16 @@ import six
 logger = logging.getLogger(__name__)
 
 # Soma import
-from soma.qt_gui.qt_backend import QtGui, QtCore
+from soma.qt_gui.qt_backend import Qt
 from soma.utils.functiontools import SomaPartial
 from soma.utils.weak_proxy import weak_proxy
+from soma.controller.trait_utils import trait_ids
 import traits.api as traits
 
 
-class EnumControlWidget(object):
+class CompoundControlWidget(object):
 
-    """ Control to select a value from a list.
+    """ Control to select a value from compound/either traits.
     """
 
     @staticmethod
@@ -35,14 +36,14 @@ class EnumControlWidget(object):
 
         Parameters
         ----------
-        control_instance: QComboBox (mandatory)
+        control_instance: QWidget (mandatory)
             the control widget we want to validate
 
         Returns
         -------
         out: bool
-            always True since the control value is always valid
         """
+        # nothing to do here since we delegate to another control widget.
         return True
 
     @classmethod
@@ -63,10 +64,6 @@ class EnumControlWidget(object):
         # Execute manually the first time the control check method
         widget_callback()
 
-        # When a qt 'editTextChanged' signal is emited, check if the new
-        # user value is correct
-        control_instance.editTextChanged.connect(widget_callback)
-
     @staticmethod
     def add_callback(callback, control_instance):
         """ Method to add a callback to the control instance when a 'editTextChanged'
@@ -80,12 +77,13 @@ class EnumControlWidget(object):
         control_instance: QComboBox (mandatory)
             the control widget we want to validate
         """
-        control_instance.editTextChanged.connect(callback)
+        # nothing to do here since we delegate to another control widget.
+        pass
 
     @staticmethod
     def create_widget(parent, control_name, control_value, trait,
                       label_class=None):
-        """ Method to create the widget.
+        """ Create the widget.
 
         Parameters
         ----------
@@ -109,38 +107,116 @@ class EnumControlWidget(object):
             associated label: QLabel)
         """
         # Create the widget that will be used to select a value
-        widget = QtGui.QComboBox(parent)
+        widget = Qt.QWidget(parent)
 
-        # Save the possible choices
-        widget._choices = trait.handler.values
+        # we have a combobox for the trait type, and one of the control types
+        # implementations depending on it
+
+        layout = Qt.QVBoxLayout()
+        widget.setLayout(layout)
+        widget.type_combo = Qt.QComboBox()
+        hlayout = Qt.QHBoxLayout()
+        #layout.addLayout(hlayout)
+        lwidget = Qt.QWidget()
+        lwidget.setLayout(hlayout)
+        hlayout.addWidget(Qt.QLabel('Compound type:'))
+        hlayout.addWidget(widget.type_combo)
+        widget.header_widget = lwidget
+
+        # get compound types
+        types = trait_ids(trait)
+        for t in types:
+            widget.type_combo.addItem(t)
+        widget.type_combo.setCurrentIndex(0)
+
+        widget.current_type_id = 0
+        widget.compound_widget = None
+        widget.trait = trait  # we need to access it later
+        widget.trait_name = control_name
+        widget.compound_label = None
+        CompoundControlWidget.create_compound_widget(widget)
+
+        widget.type_combo.currentIndexChanged.connect(
+            partial(CompoundControlWidget.change_type_index, widget))
 
         # Add a parameter to tell us if the widget is optional
         widget.optional = trait.optional
-
-        # Set the enum list items to the widget
-        for item in widget._choices:
-            widget.addItem(six.text_type(item))
-
-        # Select the default value
-        # If the default value is not in the enum list, pick the first item
-        # of the enum list
-        if control_value not in widget._choices:
-            widget.setCurrentIndex(0)
-        else:
-            widget.setCurrentIndex(widget._choices.index(control_value))
 
         # Create the label associated with the enum widget
         control_label = trait.label
         if control_label is None:
             control_label = control_name
         if label_class is None:
-            label_class = QtGui.QLabel
+            label_class = Qt.QLabel
         if control_label is not None:
-            label = label_class(control_label, parent)
+            label = (label_class(control_label, parent), lwidget)
         else:
-            label = None
+            label = lwidget
 
         return (widget, label)
+
+    @staticmethod
+    def create_compound_widget(widget):
+        control_widget = widget.parent()
+
+        if widget.compound_widget is not None:
+            # disconnect it
+            try:
+                widget.compound_class.disconnect(
+                    control_widget, widget.trait_name, widget.compound_widget)
+            except Exception:
+                pass  # probably something already deleted
+            del widget.compound_class
+
+            lay_item = widget.layout().takeAt(0)
+            w = lay_item.widget()
+            w.deleteLater()
+            del w
+            del lay_item
+
+            if widget.compound_label:
+                if isinstance(widget.compound_label, (tuple, list)):
+                    for l in widget.compound_label:
+                        l.deleteLater()
+                else:
+                    widget.compound_label.deleteLater()
+        widget.compound_label = None
+
+        trait = widget.trait
+        thandler = trait.handler.handlers[widget.current_type_id]
+        control_class = control_widget.get_control_class(thandler)
+        # Create the control instance and associated label
+        control_instance, control_label = control_class.create_widget(
+            control_widget, widget.trait_name,
+            getattr(control_widget.controller, widget.trait_name),
+            thandler.as_ctrait())
+        if isinstance(control_label, (tuple, list)):
+            if len(control_label) != 0:
+                control_label[0].deleteLater() # del only label
+                control_label = control_label[1:]
+                layout = widget.header_widget.layout()
+                for l in control_label:
+                    layout.addWidget(l)
+                if control_label:
+                    widget.compound_label = control_label
+        else:
+            control_label.deleteLater()
+        del control_label
+        control_class.is_valid(control_instance)
+        control_class.update_controller_widget(
+            control_widget, widget.trait_name, control_instance)
+        control_class.connect(control_widget, widget.trait_name,
+                              control_instance)
+
+        widget.compound_widget = control_instance
+        widget.compound_class = control_class
+        widget.layout().addWidget(control_instance)
+
+    @staticmethod
+    def change_type_index(widget, index):
+        if index != widget.current_type_id:
+            widget.current_type_id = index
+            CompoundControlWidget.create_compound_widget(widget)
 
     @staticmethod
     def update_controller(controller_widget, control_name,
@@ -162,15 +238,8 @@ class EnumControlWidget(object):
             the instance of the controller widget control we want to
             synchronize with the controller
         """
-        if EnumControlWidget.is_valid(control_instance):
-            new_trait_value = control_instance._choices[
-                control_instance.currentIndex()]
-            setattr(controller_widget.controller, control_name,
-                    new_trait_value)
-            logger.debug(
-                "'EnumControlWidget' associated controller trait '{0}' "
-                " has been updated with value '{1}'.".format(
-                    control_name, new_trait_value))
+        # nothing to do here since we delegate to another control widget.
+        pass
 
     @staticmethod
     def update_controller_widget(controller_widget, control_name,
@@ -188,25 +257,37 @@ class EnumControlWidget(object):
         control_name: str(mandatory)
             the name of the controller widget control we want to synchronize
             with the controller
-        control_instance: StrControlWidget (mandatory)
+        control_instance: CompoundControlWidget (mandatory)
             the instance of the controller widget control we want to
             synchronize with the controller
         """
-        # Get the controller trait value
         try:
-            was_connected = control_instance.connected
+            trait_types = control_instance.trait.handler.handlers
         except ReferenceError:
             # widget deleted in the meantime
             return
+        # Get the controller trait value
         new_controller_value = getattr(
             controller_widget.controller, control_name, None)
 
-        # If the controller value is not empty, update the controller widget
-        # associated control
-        if new_controller_value not in (None, traits.Undefined):
-            control_instance.setCurrentIndex(
-                control_instance._choices.index(new_controller_value))
-        logger.debug("'EnumControlWidget' has been updated with value "
+        # if the value type has changed, select the appropriate type in
+        # compound
+        for i, trait in enumerate(trait_types):
+            # create a custom object with same traits
+            temp = traits.HasTraits()
+            ctrait = trait.as_ctrait()
+            tname = 'param'
+            temp.add_trait(tname, ctrait)
+            try:
+                setattr(temp, tname, new_controller_value)
+                # OK we have found a working one
+                if i != control_instance.current_type_id:
+                    control_instance.type_combo.setCurrentIndex(i)
+                break
+            except Exception as e:
+                pass
+
+        logger.debug("'CompoundControlWidget' has been updated with value "
                      "'{0}'.".format(new_controller_value))
 
     @classmethod
@@ -227,17 +308,6 @@ class EnumControlWidget(object):
             the instance of the controller widget control we want to
             synchronize with the controller
         """
-        # Update one element of the controller.
-        # Hook: function that will be called to update a specific
-        # controller trait when an 'activated' qt signal is emited
-        widget_hook = partial(cls.update_controller,
-                              weak_proxy(controller_widget),
-                              control_name, weak_proxy(control_instance))
-
-        # When a qt 'activated' signal is emited, update the
-        # 'control_name' controller trait value
-        control_instance.activated.connect(widget_hook)
-
         # Update one element of the controller widget.
         # Hook: function that will be called to update the specific widget
         # when a trait event is detected.
@@ -251,9 +321,8 @@ class EnumControlWidget(object):
             controller_hook, name=control_name, dispatch='ui')
 
         # Store the trait - control connection we just build
-        control_instance._controller_connections = (
-            widget_hook, controller_hook)
-        logger.debug("Add 'Enum' connection: {0}.".format(
+        control_instance._controller_connections = (controller_hook, )
+        logger.debug("Add 'Compound' connection: {0}.".format(
             control_instance._controller_connections))
 
     @staticmethod
