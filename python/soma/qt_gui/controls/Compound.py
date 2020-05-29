@@ -342,16 +342,11 @@ class CompoundControlWidget(object):
             synchronize with the controller
         """
         # Get the stored widget and controller hooks
-        (widget_hook,
-         controller_hook) = control_instance._controller_connections
+        controller_hook = control_instance._controller_connections[0]
 
         # Remove the controller hook from the 'control_name' trait
         controller_widget.controller.on_trait_change(
             controller_hook, name=control_name, remove=True)
-
-        # Remove the widget hook associated with the qt 'activated'
-        # signal
-        control_instance.activated.disconnect(widget_hook)
 
         # Delete the trait - control connection we just remove
         del control_instance._controller_connections
