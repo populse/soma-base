@@ -202,6 +202,7 @@ class FileControlWidget(object):
             label = label_class(control_label, parent)
         else:
             label = None
+        widget.trait = trait
 
         return (widget, label)
 
@@ -415,6 +416,14 @@ class FileControlWidget(object):
         # get widget via a __self__ in a method, because control_instance may
         # be a weakproxy.
         widget = control_instance.__repr__.__self__
+        ext = []
+        trait = control_instance.trait
+        if trait.allowed_extensions:
+            ext = trait.allowed_extensions
+        if trait.extensions:
+            ext = trait.extensions
+        ext = ['*%s' % e for e in ext]
+        ext = ' '.join(ext)
         # Create a dialog to select a file
         if control_instance.output:
             fname = qt_backend.getSaveFileName(

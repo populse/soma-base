@@ -171,7 +171,6 @@ class OffscreenListControlWidget(object):
         elif not isinstance(control_value, (list, tuple)):
             # in nipype MultiPath, single values are not in a list
             control_value = [control_value]
-        frame.control_value = control_value
         frame.trait_name = control_name
 
         # Create the label associated with the list widget
@@ -571,6 +570,7 @@ class OffscreenListControlWidget(object):
             pass
         control_types = dict(controller_widget._defined_controls)
         control_types['List'] = ListControlWidget
+        control_types['List_File'] = ListControlWidget
         temp_controller_widget = ScrollControllerWidget(
             temp_controller, live=True, override_control_types=control_types)
 

@@ -150,7 +150,7 @@ class IntControlWidget(StrControlWidget):
             synchronize with the controller
         """
         try:
-            was_connected = control_instance.connected
+            test = control_instance.setText
         except ReferenceError:
             # widget deleted in the meantime
             return
