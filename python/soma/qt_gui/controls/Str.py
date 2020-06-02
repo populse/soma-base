@@ -241,10 +241,7 @@ class StrControlWidget(object):
             controller_widget.controller, control_name, traits.Undefined)
 
         # Set the trait value to the string control
-        if new_controller_value is traits.Undefined:
-            control_instance.setText("")
-        else:
-            control_instance.setText(six.text_type(new_controller_value))
+        control_instance.set_value(new_controller_value)
         logger.debug("'StrControlWidget' has been updated with value "
                      "'{0}'.".format(new_controller_value))
 

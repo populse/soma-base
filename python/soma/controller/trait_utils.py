@@ -28,6 +28,7 @@ _type_to_trait_id = {
     int: "Int",
     six.text_type: "Unicode",
     str: "Str",
+    bytes: "Bytes",
     float: "Float"
 }
 # In order to convert nipype special traits, we define a dict of
@@ -248,9 +249,12 @@ def trait_ids(trait, modules=set()):
     elif main_id == "TraitInstance":
         if handler.aClass is type(traits.api.Undefined):
             return ['Undefined']
+        inner_id2 = _type_to_trait_id.get(handler.aClass)
+        if inner_id2:
+            return [inner_id2]
         inner_id = handler.aClass.__name__
         mod = handler.aClass.__module__
-        if mod not in ("__builtin__", "__builtins__"):
+        if mod not in ("__builtin__", "__builtins__", "builtins"):
             modules.add(mod)
             inner_id = '.'.join((mod, inner_id))
         return [main_id + "_" + inner_id]

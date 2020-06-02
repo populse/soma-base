@@ -161,7 +161,8 @@ class ControllerControlWidget(object):
         resize_button.setFixedSize(30, 22)
 
         editable_labels = False
-        if trait.handler.inner_traits():
+        handler = getattr(trait, 'handler', trait)
+        if handler.inner_traits():
             editable_labels = True
             frame.inner_trait = trait.handler.inner_traits()[0]
 

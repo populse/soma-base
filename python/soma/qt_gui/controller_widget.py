@@ -9,8 +9,10 @@
 
 # System import
 from __future__ import absolute_import
+from __future__ import print_function
 import logging
 import os
+import sys
 import six
 
 # Define the logger
@@ -805,12 +807,18 @@ class ControllerWidget(QtGui.QWidget):
         control_labels = []
         for group_name, control in six.iteritems(control_groups):
             control_labels += control[3]
+        key = None
         for control_label in control_labels:
-            key = str(control_label.text())
-            was_connected = self.connected
-            if was_connected:
-                self.disconnect()
-            self.disconnect_keys()
+            if hasattr(control_label, 'text'):
+                key = str(control_label.text())
+                was_connected = self.connected
+                if was_connected:
+                    self.disconnect()
+                self.disconnect_keys()
+
+        if key is None:
+            print('Modified dict key widget cannot be found', file=sys.stderr)
+            return
 
         controller = self.controller
         trait = controller.trait(old_key)

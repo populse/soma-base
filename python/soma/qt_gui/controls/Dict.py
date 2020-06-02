@@ -25,6 +25,7 @@ from soma.controller import trait_ids
 from soma.controller import Controller
 from soma.sorted_dictionary import OrderedDict
 from soma.qt_gui.controller_widget import ControllerWidget, weak_proxy
+import traits.api as traits
 
 # Qt import
 try:
@@ -258,8 +259,12 @@ class DictControlWidget(object):
             for name in control_instance.controller.user_traits()])
 
         # Update the 'control_name' parent controller value
-        setattr(controller_widget.controller, control_name,
-                new_trait_value)
+        try:
+            setattr(controller_widget.controller, control_name,
+                    new_trait_value)
+        except (traits.TraitError, TypeError):
+            print('invalid value set in dict %s:' % control_name,
+                  new_trait_value)
         logger.debug(
             "'DictControlWidget' associated controller trait '{0}' has "
             "been updated with value '{1}'.".format(

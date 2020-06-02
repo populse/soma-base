@@ -9,6 +9,7 @@
 
 # Soma import
 from .Str import StrControlWidget
+from .Bytes import BytesControlWidget
 from .Float import FloatControlWidget
 from .Int import IntControlWidget
 from .Enum import EnumControlWidget
@@ -29,6 +30,7 @@ controls = {}
 # Register all control class
 controls["Str"] = StrControlWidget
 controls["Unicode"] = StrControlWidget
+controls["Bytes"] = BytesControlWidget
 controls["String"] = StrControlWidget
 controls["Any"] = StrControlWidget
 controls["Float"] = FloatControlWidget
