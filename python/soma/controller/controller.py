@@ -83,11 +83,17 @@ class Controller(HasTraits):
         # with definition ordered trait name. These names will correspond
         # to user trait sorted dictionary keys
         if class_traits:
-            sorted_names = sorted(
-                (getattr(trait, "order", ""), name)
-                for name, trait in six.iteritems(class_traits)
-                if self.is_user_trait(trait))
-            sorted_names = [sorted_name[1] for sorted_name in sorted_names]
+            
+            sorted_names = []
+            for name, trait in six.iteritems(class_traits):
+                if self.is_user_trait(trait):
+                    if getattr(trait, 'order', None):
+                        # Only if trait.order exists AND trait.order is no None
+                        sorted_names.append((getattr(trait, 'order'), name))
+                    else:
+                        sorted_names.append((-1, name))
+                    
+            sorted_names = [sorted_name[1] for sorted_name in sorted(sorted_names)]
 
             # Go through all trait names that have been ordered
             for name in sorted_names:
