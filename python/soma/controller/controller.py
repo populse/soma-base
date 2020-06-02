@@ -11,6 +11,7 @@
 from __future__ import absolute_import
 import logging
 import six
+import sys
 
 # Define the logger
 logger = logging.getLogger(__name__)
@@ -281,6 +282,21 @@ class Controller(HasTraits):
 
         # Inheritance: create the instance trait attribute
         super(Controller, self).add_trait(name, *trait)
+        # validate default value, or try to set another one
+        new_trait = self.trait(name)
+        if not isinstance(new_trait.trait_type, traits.Event):
+            values = (getattr(self, name), traits.Undefined, None, '', 0)
+            for value in values:
+                try:
+                    new_trait.validate(self, name, value)
+                    setattr(self, name, value)
+                    break  # OK
+                except (traits.TraitError, TypeError):
+                    pass
+            #else:
+                ## should it be silent ?
+                #print('value %s is invalid for %s.%s'
+                      #% (repr(values[0]), repr(self), name), file=sys.stderr)
 
         # Get the trait instance and if it is a user trait load the traits
         # to get it direcly from the instance (as a property) and add it
