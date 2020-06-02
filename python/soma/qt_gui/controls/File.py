@@ -424,14 +424,16 @@ class FileControlWidget(object):
             ext = trait.extensions
         ext = ['*%s' % e for e in ext]
         ext = ' '.join(ext)
+        if ext:
+            ext += ';; All files (*)'
         # Create a dialog to select a file
         if control_instance.output:
             fname = qt_backend.getSaveFileName(
-                widget, "Output file", current_control_value, "",
+                widget, "Output file", current_control_value, ext,
                 None, QtGui.QFileDialog.DontUseNativeDialog)
         else:
             fname = qt_backend.getOpenFileName(
-                widget, "Open file", current_control_value, "", None,
+                widget, "Open file", current_control_value, ext, None,
                 QtGui.QFileDialog.DontUseNativeDialog)
 
         # Set the selected file path to the path sub control

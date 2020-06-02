@@ -88,6 +88,8 @@ class OffscreenListFileControlWidget(OffscreenListControlWidget):
             ext = trait.extensions
         ext = ['*%s' % e for e in ext]
         ext = ' '.join(ext)
+        if ext:
+            ext += ';; All files (*)'
         # Create a dialog to select a file
         if control_instance.trait.output:
             fname = qt_backend.getSaveFileName(
