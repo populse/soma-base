@@ -481,10 +481,10 @@ def update_hash_from_directory(directory, hash):
     '''
     for root, dirs, files in sorted(os.walk(directory)):
         for file in sorted(files):
-            hash.update(file)
-            hash.update(open(os.path.join(root, file)).read())
+            hash.update(file.encode('utf-8'))
+            hash.update(open(os.path.join(root, file), 'rb').read())
         for dir in sorted(dirs):
-            hash.update(dir)
+            hash.update(dir.encode('utf-8'))
             update_hash_from_directory(os.path.join(root, dir), hash)
 
 
@@ -497,7 +497,7 @@ def path_hash(path, hash=None):
     if os.path.isdir(path):
         update_hash_from_directory(path, hash)
     else:
-        hash.update(open(path).read())
+        hash.update(open(path, 'rb').read())
     return hash.hexdigest()
 
 
