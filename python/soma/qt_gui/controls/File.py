@@ -167,8 +167,9 @@ class FileControlWidget(object):
         widget.setLayout(layout)
         # Create a widget to print the file path
         path = TimeredQLineEdit(widget, predefined_values=[traits.Undefined])
-        if hasattr(path, 'setClearButtonEnabled'):
-            path.setClearButtonEnabled(True)
+        # this takes too much space...
+        #if hasattr(path, 'setClearButtonEnabled'):
+            #path.setClearButtonEnabled(True)
         layout.addWidget(path)
         widget.path = path
         # Create a browse button

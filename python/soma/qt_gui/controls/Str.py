@@ -148,8 +148,9 @@ class StrControlWidget(object):
         """
         # Create the widget that will be used to fill a string
         widget = TimeredQLineEdit(parent, predefined_values=[traits.Undefined])
-        if hasattr(widget, 'setClearButtonEnabled'):
-            widget.setClearButtonEnabled(True)
+        # this takes too much space on some GUI contexts
+        #if hasattr(widget, 'setClearButtonEnabled'):
+            #widget.setClearButtonEnabled(True)
 
         # Add a widget parameter to tell us if the widget is already connected
         widget.connected = False
