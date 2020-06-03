@@ -29,6 +29,7 @@ from soma.functiontools import SomaPartial
 import weakref
 from soma.utils.weak_proxy import get_ref, weak_proxy
 import traits.api as traits
+import inspect
 
 # Qt import
 try:
@@ -925,9 +926,23 @@ class ControllerWidget(QtGui.QWidget):
                 + trait.__class__.__bases__
             for base in bases:
                 if issubclass(base, traits.TraitType):
-                    todo.append(base())
+                    trait = self._instantiate_trait(base)
+                    todo.append(trait)
+
+        if control_class is None:
+            # fallback to a label displaying "this value cannot be seen/edited"
+            control_class = self._defined_controls.get('unknown')
+
+        if inspect.isfunction(control_class):
+            # the function may instantiate a specialized type dynamically
+            control_class = control_class(trait)
 
         return control_class
+
+    def _instantiate_trait(self, trait_type):
+        if issubclass(trait_type, traits.BaseRange):
+            return trait_type(0)
+        return trait_type()
 
 
 from soma.qt_gui.controls import controls

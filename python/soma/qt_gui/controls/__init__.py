@@ -22,10 +22,25 @@ from .Directory import DirectoryControlWidget
 from .Dict import DictControlWidget
 from .Controller import ControllerControlWidget
 from .Compound import CompoundControlWidget
+from .non_editable import NonEditableControlWidget
+
+import sys
 
 # Define a structure that will contain the mapping between the string trait
 # descriptions and the associated control classes
 controls = {}
+
+
+def range_editor(trait):
+    t = type(trait.default)
+    if t is int:
+        return IntControlWidget
+    if sys.version_info[0] >= 3:
+        long = int  # this is only a trick to fool flake8
+    elif t is long:
+        return IntControlWidget
+    return FloatControlWidget
+
 
 # Register all control class
 controls["Str"] = StrControlWidget
@@ -46,6 +61,8 @@ controls["ControllerTrait"] = ControllerControlWidget
 controls["Dict"] = DictControlWidget
 controls["Compound"] = CompoundControlWidget
 controls["List_File"] = OffscreenListFileControlWidget
+controls["Range"] = range_editor
+controls["unknown"] = NonEditableControlWidget
 # nipype types
 controls["ImageFileSPM"] = FileControlWidget
 
