@@ -63,6 +63,7 @@ controls["Compound"] = CompoundControlWidget
 controls["List_File"] = OffscreenListFileControlWidget
 controls["Range"] = range_editor
 controls["unknown"] = NonEditableControlWidget
+controls["Undefined"] = NonEditableControlWidget
 # nipype types
 controls["ImageFileSPM"] = FileControlWidget
 

@@ -94,9 +94,7 @@ class NonEditableControlWidget(object):
         widget.setEnabled(False)
 
         # Create the label associated with the string widget
-        control_label = trait.label
-        if control_label is None:
-            control_label = control_name
+        control_label = getattr(trait, 'label', control_name)
         if label_class is None:
             label_class = Qt.QLabel
         if control_label is not None:

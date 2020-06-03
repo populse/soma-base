@@ -259,8 +259,14 @@ def trait_ids(trait, modules=set()):
             inner_id = '.'.join((mod, inner_id))
         return [main_id + "_" + inner_id]
 
+    elif handler is type(traits.api.Undefined):
+        return ['Undefined']
+
     # Default case
     else:
+        if not hasattr(handler, 'inner_traits'):
+            return [main_id]
+
         # FIXME may recurse indefinitely if the trait is recursive
         inner_id = '_'.join((trait_ids(i, modules)[0]
                              for i in handler.inner_traits()))
