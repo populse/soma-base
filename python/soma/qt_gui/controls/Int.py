@@ -9,6 +9,7 @@
 
 # System import
 from __future__ import absolute_import
+from __future__ import print_function
 import re
 import logging
 import sys
@@ -114,13 +115,18 @@ class IntControlWidget(StrControlWidget):
                 new_trait_value = int(control_instance.text())
 
             # Set the control value to the controller associated trait
-            setattr(controller_widget.controller, control_name,
-                    new_trait_value)
-            logger.debug(
-                "'IntControlWidget' associated controller trait '{0}' "
-                "has been updated with value '{1}'.".format(
-                    control_name, new_trait_value))
-        elif reset_invalid_value:
+            try:
+                setattr(controller_widget.controller, control_name,
+                        new_trait_value)
+                logger.debug(
+                    "'IntControlWidget' associated controller trait '{0}' "
+                    "has been updated with value '{1}'.".format(
+                        control_name, new_trait_value))
+                return
+            except traits.TraitError as e:
+                print(e, file=sys.stderr)
+
+        if reset_invalid_value:
             # invalid, reset GUI to older value
             old_trait_value = getattr(controller_widget.controller,
                                       control_name)
