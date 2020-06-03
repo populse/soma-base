@@ -122,7 +122,7 @@ class StrControlWidget(object):
 
     @staticmethod
     def create_widget(parent, control_name, control_value, trait,
-                      label_class=None):
+                      label_class=None, user_data=None):
         """ Method to create the string widget.
 
         Parameters
@@ -300,8 +300,8 @@ class StrControlWidget(object):
             # Store the trait - control connection we just build
             control_instance._controller_connections = (
                 widget_hook, widget_hook2, controller_hook)
-            logger.debug("Add 'String' connection: {0}.".format(
-                control_instance._controller_connections))
+            logger.debug("Add 'String' connection: {0} / {1}.".format(
+                control_name, control_instance))
 
             # Update the control connection status
             control_instance.connected = True

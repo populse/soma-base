@@ -82,7 +82,7 @@ class CompoundControlWidget(object):
 
     @staticmethod
     def create_widget(parent, control_name, control_value, trait,
-                      label_class=None):
+                      label_class=None, user_data=None):
         """ Create the widget.
 
         Parameters
@@ -122,6 +122,7 @@ class CompoundControlWidget(object):
         hlayout.addWidget(Qt.QLabel('Compound type:'))
         hlayout.addWidget(widget.type_combo)
         widget.header_widget = lwidget
+        widget.user_data = user_data
 
         # get compound types
         types = trait_ids(trait)
@@ -224,7 +225,7 @@ class CompoundControlWidget(object):
         control_instance, control_label = control_class.create_widget(
             control_widget, widget.trait_name,
             getattr(control_widget.controller, widget.trait_name),
-            ttype)
+            ttype, user_data=widget.user_data)
         if isinstance(control_label, (tuple, list)):
             if len(control_label) != 0:
                 control_label[0].deleteLater() # del only label
@@ -357,8 +358,8 @@ class CompoundControlWidget(object):
 
         # Store the trait - control connection we just build
         control_instance._controller_connections = (controller_hook, )
-        logger.debug("Add 'Compound' connection: {0}.".format(
-            control_instance._controller_connections))
+        logger.debug("Add 'Compound' connection: {0} / {1}".format(
+            control_name, control_instance))
 
     @staticmethod
     def disconnect(controller_widget, control_name, control_instance):

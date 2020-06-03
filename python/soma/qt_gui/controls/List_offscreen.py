@@ -106,7 +106,7 @@ class OffscreenListControlWidget(object):
 
     @staticmethod
     def create_widget(parent, control_name, control_value, trait,
-                      label_class=None):
+                      label_class=None, user_data=None):
         """ Method to create the list widget.
 
         Parameters
@@ -143,6 +143,7 @@ class OffscreenListControlWidget(object):
         # Create the widget
         frame = QtGui.QFrame()
         frame.setFrameShape(QtGui.QFrame.StyledPanel)
+        frame.user_data = user_data
         layout = QtGui.QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         frame.setLayout(layout)
@@ -231,7 +232,7 @@ class OffscreenListControlWidget(object):
         control_widget, control_label = ListControlWidget.create_widget(
             controller_widget, parent_frame.trait_name, control_value,
             parent_frame.trait, parent_frame.label_class,
-            max_items=widget.max_items)
+            max_items=widget.max_items, user_data=parent_frame.user_data)
 
         control_label[0].deleteLater()
         control_label[1].deleteLater()
@@ -572,7 +573,8 @@ class OffscreenListControlWidget(object):
         control_types['List'] = ListControlWidget
         control_types['List_File'] = ListControlWidget
         temp_controller_widget = ScrollControllerWidget(
-            temp_controller, live=True, override_control_types=control_types)
+            temp_controller, live=True, override_control_types=control_types,
+            user_data=control_instance.user_data)
 
         layout.addWidget(temp_controller_widget)
 

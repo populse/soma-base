@@ -133,7 +133,7 @@ class FileControlWidget(object):
 
     @staticmethod
     def create_widget(parent, control_name, control_value, trait,
-                      label_class=None):
+                      label_class=None, user_data=None):
         """ Method to create the file widget.
 
         Parameters

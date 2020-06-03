@@ -134,7 +134,7 @@ class ListControlWidget(object):
 
     @staticmethod
     def create_widget(parent, control_name, control_value, trait,
-                      label_class=None, max_items=0):
+                      label_class=None, max_items=0, user_data=None):
         """ Method to create the list widget.
 
         Parameters
@@ -270,7 +270,8 @@ class ListControlWidget(object):
         # Create the associated controller widget
         controller_widget = ControllerWidget(
             controller, parent=frame, live=True,
-            override_control_types=parent._defined_controls)
+            override_control_types=parent._defined_controls,
+            user_data=user_data)
         controller_widget.setObjectName('inner_controller')
         controller_widget.setStyleSheet(
             'ControllerWidget#inner_controller { padding: 0px; }')

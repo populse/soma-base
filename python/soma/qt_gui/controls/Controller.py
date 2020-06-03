@@ -113,7 +113,7 @@ class ControllerControlWidget(object):
 
     @staticmethod
     def create_widget(parent, control_name, control_value, trait,
-                      label_class=None):
+                      label_class=None, user_data=None):
         """ Method to create the controller widget.
 
         Parameters
@@ -159,6 +159,7 @@ class ControllerControlWidget(object):
             QtGui.QIcon.Normal, QtGui.QIcon.Off)
         resize_button.setIcon(icon)
         resize_button.setFixedSize(30, 22)
+        frame.user_data = user_data
 
         editable_labels = False
         handler = getattr(trait, 'handler', trait)
@@ -186,7 +187,8 @@ class ControllerControlWidget(object):
         # Create the associated controller widget
         controller_widget = ControllerWidget(control_value, parent=frame,
                                              live=True,
-                                             editable_labels=editable_labels)
+                                             editable_labels=editable_labels,
+                                             user_data=user_data)
 
         # Store some parameters in the list widget
         frame.trait = trait

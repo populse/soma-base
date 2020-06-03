@@ -124,7 +124,7 @@ class DictControlWidget(object):
 
     @staticmethod
     def create_widget(parent, control_name, control_value, trait,
-                      label_class=None):
+                      label_class=None, user_data=None):
         """ Method to create the dict widget.
 
         Parameters
@@ -161,6 +161,7 @@ class DictControlWidget(object):
         # Create the dict widget: a frame
         frame = QtGui.QFrame(parent=parent)
         frame.setFrameShape(QtGui.QFrame.StyledPanel)
+        frame.user_data = user_data
 
         # Create tools to interact with the dict widget: expand or collapse -
         # add a dict item - remove a dict item
@@ -195,7 +196,8 @@ class DictControlWidget(object):
 
         # Create the associated controller widget
         controller_widget = ControllerWidget(controller, parent=frame,
-                                             live=True, editable_labels=True)
+                                             live=True, editable_labels=True,
+                                             user_data=user_data)
 
         # Store some parameters in the dict widget
         frame.inner_trait = inner_trait

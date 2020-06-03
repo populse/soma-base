@@ -51,7 +51,8 @@ class ScrollControllerWidget(Qt.QScrollArea):
 
     def __init__(self, controller, parent=None, name=None, live=False,
                  hide_labels=False, select_controls=None,
-                 disable_controller_widget=False, override_control_types=None):
+                 disable_controller_widget=False, override_control_types=None,
+                 user_data=None):
         """ Method to initilaize the ScrollControllerWidget class.
 
         Parameters
@@ -78,9 +79,14 @@ class ScrollControllerWidget(Qt.QScrollArea):
         override_control_types: dict (optional)
             if given, this is a "factory" dict assigning new controller editor
             types to some traits types.
+        user_data: any type (optional)
+            optional user data that can be accessed by individual control
+            editors
         """
         # Inheritance
         super(ScrollControllerWidget, self).__init__(parent)
+
+        self.user_data = user_data
 
         # Allow the application to resize the scroll area items
         self.setWidgetResizable(True)
@@ -93,7 +99,7 @@ class ScrollControllerWidget(Qt.QScrollArea):
         # Create the controller widget
         self.controller_widget = ControllerWidget(
             controller, parent, name, live, hide_labels, select_controls,
-            override_control_types=override_control_types)
+            override_control_types=override_control_types, user_data=user_data)
         self.controller_widget.layout().setContentsMargins(2, 2, 2, 2)
         self.controller_widget.setSizePolicy(QtGui.QSizePolicy.Expanding,
                                              QtGui.QSizePolicy.Preferred)
@@ -151,7 +157,8 @@ class ControllerWidget(QtGui.QWidget):
 
     def __init__(self, controller, parent=None, name=None, live=False,
                  hide_labels=False, select_controls=None,
-                 editable_labels=False, override_control_types=None):
+                 editable_labels=False, override_control_types=None,
+                 user_data=None):
         """ Method to initilaize the ControllerWidget class.
 
         Parameters
@@ -179,6 +186,9 @@ class ControllerWidget(QtGui.QWidget):
         override_control_types: dict (optional)
             if given, this is a "factory" dict assigning new controller editor
             types to some traits types.
+        user_data: any type (optional)
+            optional user data that can be accessed by individual control
+            editors
         """
         # Inheritance
         super(ControllerWidget, self).__init__(parent)
@@ -211,6 +221,7 @@ class ControllerWidget(QtGui.QWidget):
         self._controls = {}
         self._keys_connections = {}
         self.editable_labels = editable_labels
+        self.user_data = user_data
 
         # If possilbe, set the widget name
         if name:
@@ -722,7 +733,7 @@ class ControllerWidget(QtGui.QWidget):
             label_class = QtGui.QLabel
         control_instance, control_label = control_class.create_widget(
             self, trait_name, getattr(self.controller, trait_name),
-            trait, label_class)
+            trait, label_class, user_data=self.user_data)
         control_class.is_valid(control_instance)
 
         # If the trait contains a description, insert a tool tip to the
