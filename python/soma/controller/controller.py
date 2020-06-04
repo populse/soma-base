@@ -11,6 +11,7 @@
 from __future__ import absolute_import
 import logging
 import six
+import sys
 
 # Define the logger
 logger = logging.getLogger(__name__)
@@ -83,11 +84,17 @@ class Controller(HasTraits):
         # with definition ordered trait name. These names will correspond
         # to user trait sorted dictionary keys
         if class_traits:
-            sorted_names = sorted(
-                (getattr(trait, "order", ""), name)
-                for name, trait in six.iteritems(class_traits)
-                if self.is_user_trait(trait))
-            sorted_names = [sorted_name[1] for sorted_name in sorted_names]
+            
+            sorted_names = []
+            for name, trait in six.iteritems(class_traits):
+                if self.is_user_trait(trait):
+                    if getattr(trait, 'order', None):
+                        # Only if trait.order exists AND trait.order is no None
+                        sorted_names.append((getattr(trait, 'order'), name))
+                    else:
+                        sorted_names.append((-1, name))
+                    
+            sorted_names = [sorted_name[1] for sorted_name in sorted(sorted_names)]
 
             # Go through all trait names that have been ordered
             for name in sorted_names:
@@ -301,6 +308,25 @@ class Controller(HasTraits):
 
         # Update/set the optional trait parameter
         self._propagate_optional_parameter(trait_instance)
+
+        # validate default value, or try to set another one
+        new_trait = self.trait(name)
+        if not isinstance(new_trait.trait_type, traits.Event):
+            values = (getattr(self, name), traits.Undefined, None, '', 0)
+            for value in values:
+                try:
+                    # validate() doesn't accept Undefined values when the
+                    # "real" trait does. so we must really setattr()
+                    #new_trait.validate(self, name, value)
+                    setattr(self, name, value)
+                    break  # OK
+                except (traits.TraitError, TypeError) as e:
+                    pass
+            #else:
+                ## should it be silent ?
+                #print('value %s is invalid for %s.%s'
+                      #% (repr(values[0]), repr(self), name), file=sys.stderr)
+
         self.user_traits_changed = True
 
     def remove_trait(self, name):

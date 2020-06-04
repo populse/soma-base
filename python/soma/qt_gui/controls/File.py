@@ -72,7 +72,9 @@ class FileControlWidget(object):
         else:
 
             if (os.path.isfile(control_value)
-                    or (control_instance.output and control_value != "")):
+                    or (control_instance.output and control_value != "")
+                    or (control_instance.trait.handler.exists is False
+                        and control_value != "")):
                 is_valid = True
 
             # If the control value is optional, the control is valid and the
@@ -133,7 +135,7 @@ class FileControlWidget(object):
 
     @staticmethod
     def create_widget(parent, control_name, control_value, trait,
-                      label_class=None):
+                      label_class=None, user_data=None):
         """ Method to create the file widget.
 
         Parameters
@@ -167,8 +169,9 @@ class FileControlWidget(object):
         widget.setLayout(layout)
         # Create a widget to print the file path
         path = TimeredQLineEdit(widget, predefined_values=[traits.Undefined])
-        if hasattr(path, 'setClearButtonEnabled'):
-            path.setClearButtonEnabled(True)
+        # this takes too much space...
+        #if hasattr(path, 'setClearButtonEnabled'):
+            #path.setClearButtonEnabled(True)
         layout.addWidget(path)
         widget.path = path
         # Create a browse button
@@ -427,7 +430,8 @@ class FileControlWidget(object):
         if ext:
             ext += ';; All files (*)'
         # Create a dialog to select a file
-        if control_instance.output:
+        if control_instance.output \
+                or control_instance.trait.handler.exists is False:
             fname = qt_backend.getSaveFileName(
                 widget, "Output file", current_control_value, ext,
                 None, QtGui.QFileDialog.DontUseNativeDialog)

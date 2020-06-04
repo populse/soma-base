@@ -21,7 +21,7 @@ class OffscreenListFileControlWidget(OffscreenListControlWidget):
 
     @staticmethod
     def create_widget(parent, control_name, control_value, trait,
-                      label_class=None):
+                      label_class=None, user_data=None):
         """ Method to create the list widget.
 
         Parameters
@@ -47,7 +47,7 @@ class OffscreenListFileControlWidget(OffscreenListControlWidget):
         """
         widget, labels = OffscreenListControlWidget.create_widget(
             parent, control_name, control_value, trait,
-            label_class=label_class)
+            label_class=label_class, user_data=user_data)
 
         button = Qt.QPushButton("...", widget)
         button.setObjectName('files_button')

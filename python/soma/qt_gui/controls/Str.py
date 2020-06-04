@@ -122,7 +122,7 @@ class StrControlWidget(object):
 
     @staticmethod
     def create_widget(parent, control_name, control_value, trait,
-                      label_class=None):
+                      label_class=None, user_data=None):
         """ Method to create the string widget.
 
         Parameters
@@ -148,8 +148,9 @@ class StrControlWidget(object):
         """
         # Create the widget that will be used to fill a string
         widget = TimeredQLineEdit(parent, predefined_values=[traits.Undefined])
-        if hasattr(widget, 'setClearButtonEnabled'):
-            widget.setClearButtonEnabled(True)
+        # this takes too much space on some GUI contexts
+        #if hasattr(widget, 'setClearButtonEnabled'):
+            #widget.setClearButtonEnabled(True)
 
         # Add a widget parameter to tell us if the widget is already connected
         widget.connected = False
@@ -241,10 +242,7 @@ class StrControlWidget(object):
             controller_widget.controller, control_name, traits.Undefined)
 
         # Set the trait value to the string control
-        if new_controller_value is traits.Undefined:
-            control_instance.setText("")
-        else:
-            control_instance.setText(six.text_type(new_controller_value))
+        control_instance.set_value(new_controller_value)
         logger.debug("'StrControlWidget' has been updated with value "
                      "'{0}'.".format(new_controller_value))
 
@@ -303,8 +301,8 @@ class StrControlWidget(object):
             # Store the trait - control connection we just build
             control_instance._controller_connections = (
                 widget_hook, widget_hook2, controller_hook)
-            logger.debug("Add 'String' connection: {0}.".format(
-                control_instance._controller_connections))
+            logger.debug("Add 'String' connection: {0} / {1}.".format(
+                control_name, control_instance))
 
             # Update the control connection status
             control_instance.connected = True

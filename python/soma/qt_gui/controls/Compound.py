@@ -82,7 +82,7 @@ class CompoundControlWidget(object):
 
     @staticmethod
     def create_widget(parent, control_name, control_value, trait,
-                      label_class=None):
+                      label_class=None, user_data=None):
         """ Create the widget.
 
         Parameters
@@ -122,6 +122,7 @@ class CompoundControlWidget(object):
         hlayout.addWidget(Qt.QLabel('Compound type:'))
         hlayout.addWidget(widget.type_combo)
         widget.header_widget = lwidget
+        widget.user_data = user_data
 
         # get compound types
         types = trait_ids(trait)
@@ -156,8 +157,41 @@ class CompoundControlWidget(object):
         return (widget, label)
 
     @staticmethod
+    def as_ctrait(thandler):
+        if hasattr(thandler, 'as_ctrait'):
+            return thandler.as_ctrait()
+
+        if hasattr(thandler, 'aType'):
+            ttype = thandler.aType
+        elif hasattr(thandler, 'aClass'):
+            ttype = thandler.aClass
+        else:
+            ttype = thandler
+
+        if isinstance(ttype, type):
+            if ttype.__name__ == 'str':
+                ttype = traits.Str()
+            elif ttype.__name__ == 'bytes':
+                ttype = traits.Bytes()
+            elif ttype.__name__ == 'unicode':
+                ttype = traits.Unicode()
+            #else:
+                #ttype = ttype()
+
+        if hasattr(ttype, 'as_ctrait'):
+            ttype = ttype.as_ctrait()
+
+        return ttype
+
+    @staticmethod
     def create_compound_widget(widget):
         control_widget = widget.parent()
+        #while control_widget \
+                #and not hasattr(control_widget, 'get_control_class') \
+                #and not hasattr(control_widget, 'controller_widget'):
+            #control_widget = control_widget.parent()
+        if hasattr(control_widget, 'controller_widget'):
+            control_widget = control_widget.controller_widget
 
         if widget.compound_widget is not None:
             # disconnect it
@@ -184,12 +218,14 @@ class CompoundControlWidget(object):
 
         trait = widget.trait
         thandler = trait.handler.handlers[widget.current_type_id]
-        control_class = control_widget.get_control_class(thandler)
+        ttype = CompoundControlWidget.as_ctrait(thandler)
         # Create the control instance and associated label
+        control_class = control_widget.get_control_class(ttype)
+
         control_instance, control_label = control_class.create_widget(
             control_widget, widget.trait_name,
             getattr(control_widget.controller, widget.trait_name),
-            thandler.as_ctrait())
+            ttype, user_data=widget.user_data)
         if isinstance(control_label, (tuple, list)):
             if len(control_label) != 0:
                 control_label[0].deleteLater() # del only label
@@ -275,7 +311,7 @@ class CompoundControlWidget(object):
         for i, trait in enumerate(trait_types):
             # create a custom object with same traits
             temp = traits.HasTraits()
-            ctrait = trait.as_ctrait()
+            ctrait = CompoundControlWidget.as_ctrait(trait)
             tname = 'param'
             temp.add_trait(tname, ctrait)
             try:
@@ -322,8 +358,8 @@ class CompoundControlWidget(object):
 
         # Store the trait - control connection we just build
         control_instance._controller_connections = (controller_hook, )
-        logger.debug("Add 'Compound' connection: {0}.".format(
-            control_instance._controller_connections))
+        logger.debug("Add 'Compound' connection: {0} / {1}".format(
+            control_name, control_instance))
 
     @staticmethod
     def disconnect(controller_widget, control_name, control_instance):

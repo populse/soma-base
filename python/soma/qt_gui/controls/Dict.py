@@ -25,6 +25,7 @@ from soma.controller import trait_ids
 from soma.controller import Controller
 from soma.sorted_dictionary import OrderedDict
 from soma.qt_gui.controller_widget import ControllerWidget, weak_proxy
+import traits.api as traits
 
 # Qt import
 try:
@@ -123,7 +124,7 @@ class DictControlWidget(object):
 
     @staticmethod
     def create_widget(parent, control_name, control_value, trait,
-                      label_class=None):
+                      label_class=None, user_data=None):
         """ Method to create the dict widget.
 
         Parameters
@@ -160,6 +161,7 @@ class DictControlWidget(object):
         # Create the dict widget: a frame
         frame = QtGui.QFrame(parent=parent)
         frame.setFrameShape(QtGui.QFrame.StyledPanel)
+        frame.user_data = user_data
 
         # Create tools to interact with the dict widget: expand or collapse -
         # add a dict item - remove a dict item
@@ -194,7 +196,8 @@ class DictControlWidget(object):
 
         # Create the associated controller widget
         controller_widget = ControllerWidget(controller, parent=frame,
-                                             live=True, editable_labels=True)
+                                             live=True, editable_labels=True,
+                                             user_data=user_data)
 
         # Store some parameters in the dict widget
         frame.inner_trait = inner_trait
@@ -258,8 +261,12 @@ class DictControlWidget(object):
             for name in control_instance.controller.user_traits()])
 
         # Update the 'control_name' parent controller value
-        setattr(controller_widget.controller, control_name,
-                new_trait_value)
+        try:
+            setattr(controller_widget.controller, control_name,
+                    new_trait_value)
+        except (traits.TraitError, TypeError):
+            print('invalid value set in dict %s:' % control_name,
+                  new_trait_value)
         logger.debug(
             "'DictControlWidget' associated controller trait '{0}' has "
             "been updated with value '{1}'.".format(

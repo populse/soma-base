@@ -9,8 +9,10 @@
 
 # System import
 from __future__ import absolute_import
+from __future__ import print_function
 import logging
 import os
+import sys
 import six
 
 # Define the logger
@@ -27,6 +29,7 @@ from soma.functiontools import SomaPartial
 import weakref
 from soma.utils.weak_proxy import get_ref, weak_proxy
 import traits.api as traits
+import inspect
 
 # Qt import
 try:
@@ -49,7 +52,8 @@ class ScrollControllerWidget(Qt.QScrollArea):
 
     def __init__(self, controller, parent=None, name=None, live=False,
                  hide_labels=False, select_controls=None,
-                 disable_controller_widget=False, override_control_types=None):
+                 disable_controller_widget=False, override_control_types=None,
+                 user_data=None):
         """ Method to initilaize the ScrollControllerWidget class.
 
         Parameters
@@ -76,9 +80,14 @@ class ScrollControllerWidget(Qt.QScrollArea):
         override_control_types: dict (optional)
             if given, this is a "factory" dict assigning new controller editor
             types to some traits types.
+        user_data: any type (optional)
+            optional user data that can be accessed by individual control
+            editors
         """
         # Inheritance
         super(ScrollControllerWidget, self).__init__(parent)
+
+        self.user_data = user_data
 
         # Allow the application to resize the scroll area items
         self.setWidgetResizable(True)
@@ -91,7 +100,7 @@ class ScrollControllerWidget(Qt.QScrollArea):
         # Create the controller widget
         self.controller_widget = ControllerWidget(
             controller, parent, name, live, hide_labels, select_controls,
-            override_control_types=override_control_types)
+            override_control_types=override_control_types, user_data=user_data)
         self.controller_widget.layout().setContentsMargins(2, 2, 2, 2)
         self.controller_widget.setSizePolicy(QtGui.QSizePolicy.Expanding,
                                              QtGui.QSizePolicy.Preferred)
@@ -149,7 +158,8 @@ class ControllerWidget(QtGui.QWidget):
 
     def __init__(self, controller, parent=None, name=None, live=False,
                  hide_labels=False, select_controls=None,
-                 editable_labels=False, override_control_types=None):
+                 editable_labels=False, override_control_types=None,
+                 user_data=None):
         """ Method to initilaize the ControllerWidget class.
 
         Parameters
@@ -177,6 +187,9 @@ class ControllerWidget(QtGui.QWidget):
         override_control_types: dict (optional)
             if given, this is a "factory" dict assigning new controller editor
             types to some traits types.
+        user_data: any type (optional)
+            optional user data that can be accessed by individual control
+            editors
         """
         # Inheritance
         super(ControllerWidget, self).__init__(parent)
@@ -209,6 +222,7 @@ class ControllerWidget(QtGui.QWidget):
         self._controls = {}
         self._keys_connections = {}
         self.editable_labels = editable_labels
+        self.user_data = user_data
 
         # If possilbe, set the widget name
         if name:
@@ -720,7 +734,7 @@ class ControllerWidget(QtGui.QWidget):
             label_class = QtGui.QLabel
         control_instance, control_label = control_class.create_widget(
             self, trait_name, getattr(self.controller, trait_name),
-            trait, label_class)
+            trait, label_class, user_data=self.user_data)
         control_class.is_valid(control_instance)
 
         # If the trait contains a description, insert a tool tip to the
@@ -805,12 +819,18 @@ class ControllerWidget(QtGui.QWidget):
         control_labels = []
         for group_name, control in six.iteritems(control_groups):
             control_labels += control[3]
+        key = None
         for control_label in control_labels:
-            key = str(control_label.text())
-            was_connected = self.connected
-            if was_connected:
-                self.disconnect()
-            self.disconnect_keys()
+            if hasattr(control_label, 'text'):
+                key = str(control_label.text())
+                was_connected = self.connected
+                if was_connected:
+                    self.disconnect()
+                self.disconnect_keys()
+
+        if key is None:
+            print('Modified dict key widget cannot be found', file=sys.stderr)
+            return
 
         controller = self.controller
         trait = controller.trait(old_key)
@@ -906,9 +926,23 @@ class ControllerWidget(QtGui.QWidget):
                 + trait.__class__.__bases__
             for base in bases:
                 if issubclass(base, traits.TraitType):
-                    todo.append(base())
+                    trait = self._instantiate_trait(base)
+                    todo.append(trait)
+
+        if control_class is None:
+            # fallback to a label displaying "this value cannot be seen/edited"
+            control_class = self._defined_controls.get('unknown')
+
+        if inspect.isfunction(control_class):
+            # the function may instantiate a specialized type dynamically
+            control_class = control_class(trait)
 
         return control_class
+
+    def _instantiate_trait(self, trait_type):
+        if issubclass(trait_type, traits.BaseRange):
+            return trait_type(0)
+        return trait_type()
 
 
 from soma.qt_gui.controls import controls
