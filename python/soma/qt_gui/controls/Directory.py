@@ -57,7 +57,9 @@ class DirectoryControlWidget(FileControlWidget):
         else:
 
             if os.path.isdir(control_value) \
-                    or (control_instance.output and control_value != ""):
+                    or (control_instance.output and control_value != "") \
+                    or (control_instance.trait.handler.exists is False
+                        and control_value != ""):
                 is_valid = True
 
             # If the control value is optional, the control is valid and the
@@ -99,7 +101,7 @@ class DirectoryControlWidget(FileControlWidget):
         if DirectoryControlWidget.is_valid(control_instance):
             current_control_value = six.text_type(control_instance.path.text())
 
-        # Create a dialogue to select a directory
+        # Create a dialog to select a directory
         folder = qt_backend.getExistingDirectory(
             get_ref(control_instance), "Open directory", current_control_value,
             QtGui.QFileDialog.ShowDirsOnly

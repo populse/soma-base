@@ -72,7 +72,9 @@ class FileControlWidget(object):
         else:
 
             if (os.path.isfile(control_value)
-                    or (control_instance.output and control_value != "")):
+                    or (control_instance.output and control_value != "")
+                    or (control_instance.trait.handler.exists is False
+                        and control_value != "")):
                 is_valid = True
 
             # If the control value is optional, the control is valid and the
@@ -428,7 +430,8 @@ class FileControlWidget(object):
         if ext:
             ext += ';; All files (*)'
         # Create a dialog to select a file
-        if control_instance.output:
+        if control_instance.output \
+                or control_instance.trait.handler.exists is False:
             fname = qt_backend.getSaveFileName(
                 widget, "Output file", current_control_value, ext,
                 None, QtGui.QFileDialog.DontUseNativeDialog)
