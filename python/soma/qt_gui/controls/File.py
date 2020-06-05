@@ -191,6 +191,7 @@ class FileControlWidget(object):
 
         # Set a callback on the browse button
         control_class = parent.get_control_class(trait)
+        widget.control_class = control_class
         browse_hook = partial(control_class.onBrowseClicked,
                               weak_proxy(widget))
         widget.browse.clicked.connect(browse_hook)
@@ -230,11 +231,8 @@ class FileControlWidget(object):
             synchronize with the controller
         """
         # Update the controller only if the control is valid
-        control_groups = controller_widget._controls[control_name]
-        if not control_groups:
-            return
-        control_class = next(iter(control_groups.values()))[1]
-        fail = False
+        control_class = control_instance.control_class
+        fail = True
         if control_class.is_valid(control_instance):
 
             # Get the control value
@@ -244,8 +242,9 @@ class FileControlWidget(object):
             try:
                 setattr(controller_widget.controller, control_name,
                         new_trait_value)
+                fail = False
             except traits.TraitError:
-                fail = True
+                pass
             logger.debug(
                 "'FileControlWidget' associated controller trait '{0}' has"
                 " been updated with value '{1}'.".format(
