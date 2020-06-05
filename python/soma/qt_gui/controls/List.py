@@ -404,6 +404,13 @@ class ListControlWidget(object):
             the instance of the controller widget control we want to
             synchronize with the controller
         """
+        # there are 2 Controller instances here:
+        # * controller_widget.controller is the "official" edited controller,
+        #   which contains a trait "control_name" with a list value
+        # * control_instance.controller is a proxy Controller built here
+        #   that represents the list items: elements keys are indexes.
+        #   This controller has another widget (for list items):
+        #   control_instance.controller_widget.
         try:
             was_connected = control_instance.connected
         except ReferenceError:
@@ -658,10 +665,6 @@ class ListControlWidget(object):
         control_instance.controller.add_trait(
             trait_name, control_instance.inner_trait)
 
-        # Create the associated control
-        control_instance.controller_widget.create_control(
-            trait_name, control_instance.inner_trait)
-
         # Update the list controller
         if hasattr(control_instance, '_controller_connections'):
             control_instance._controller_connections[0]()
@@ -669,67 +672,6 @@ class ListControlWidget(object):
         # control_instance.controller_widget.update_controller_widget()
         logger.debug("Add 'ListControlWidget' '{0}' new trait "
                      "callback.".format(trait_name))
-
-    @staticmethod
-    def delete_one_row(control_instance, index_to_remove):
-        """ Delete a two columns row if a widget is found in column two
-
-        Parameters
-        ----------
-        control_instance: QFrame (mandatory)
-            the instance of the controller widget control we want to
-            synchronize with the controller
-        index_to_remove: int (mandatory)
-            the row index we want to delete from the widget
-
-        Returns
-        -------
-        is_deleted: bool
-            True if a widget has been found and the row has been deledted,
-            False otherwise
-        widget: QWidget
-            the widget that has been deleted. If 'is_deleted' is False return
-            None
-        """
-        # Initilaize the output
-        is_deleted = False
-
-        # Try to get the widget item in column two
-        widget_item = (
-            control_instance.controller_widget._grid_layout.itemAtPosition(
-                index_to_remove, 1))
-
-        # If a widget has been found, remove the current line
-        if widget_item is not None:
-
-            # Remove the widget
-            widget = widget_item.widget()
-            control_instance.controller_widget._grid_layout.removeItem(
-                widget_item)
-            widget.deleteLater()
-
-            # Try to get the widget label in column one
-            label_item = (
-                control_instance.controller_widget._grid_layout.itemAtPosition(
-                    index_to_remove, 0))
-
-            # If a label has been found, remove it
-            if label_item is not None:
-
-                # Remove the label
-                label = label_item.widget()
-                control_instance.controller_widget._grid_layout.removeItem(
-                    label_item)
-                label.deleteLater()
-
-            # Update the output
-            is_deleted = True
-
-        # No widget found
-        else:
-            widget = None
-
-        return is_deleted, widget
 
     @staticmethod
     def delete_list_item(controller_widget, control_name, control_instance):
@@ -747,75 +689,22 @@ class ListControlWidget(object):
             synchronize with the controller
         """
         # Delete the last inserted control
-        last_row = (
-            control_instance.controller_widget._grid_layout.rowCount())
-        nb_of_items = control_instance.controller_widget._grid_layout.count()
-        item_found = False
-        index_to_remove = last_row - 1
+        print('delete_list_item', controller_widget, control_name, control_instance)
 
-        # If the list contain at least one widget
-        if nb_of_items > 0:
+        # inner controller for list items
+        controller = control_instance.controller
+        print(controller.export_to_dict())
+        keys = controller.user_traits().keys()
+        print(keys)
+        keys = sorted([int(k) for k in keys])
+        if not keys:
+            print('no element to remove')
+            return
 
-            # While the last inserted widget has not been found
-            while index_to_remove >= 0 and not item_found:
+        last_key = str(keys[-1])
+        controller.remove_trait(last_key)
 
-                # Try to remove the 'index_to_remove' control row
-                item_found, widget = ListControlWidget.delete_one_row(
-                    control_instance, index_to_remove)
-
-                # If a list control has been deleted, remove the associated
-                # tools
-                if hasattr(widget, "controller"):
-
-                    # Remove the list control extra tools row
-                    ListControlWidget.delete_one_row(
-                        control_instance, index_to_remove - 1)
-
-                # Get the trait name that has just been deleted from the
-                # controller widget
-                if item_found:
-                    trait_name = str(index_to_remove - 1)
-
-                # Increment
-                index_to_remove -= 1
-
-        # No more control to delete
-        else:
-            logger.debug(
-                "No more control to delete in '{0}'.".format(control_instance))
-
-        # If one list control item has been deleted
-        if item_found:
-
-            # If the inner control is a list, convert the control index
-            # Indeed, two elements are inserted for a list item
-            # (tools + widget)
-            if trait_ids(control_instance.inner_trait)[0].startswith("List_"):
-                trait_name = str((int(trait_name) + 1) / 2 - 1)
-
-            # Remove the trait from the controller
-            control_instance.controller.remove_trait(trait_name)
-
-            # Get, unpack and delete the control item
-            control_groups \
-                = control_instance.controller_widget._controls.get(trait_name,
-                                                                   {})
-            for group, control in six.iteritems(control_groups):
-                (inner_trait, inner_control_class, inner_control_instance,
-                inner_control_label) = control
-                del(control_instance.controller_widget._controls[trait_name])
-
-                # Disconnect the removed control
-                inner_control_class.disconnect(
-                    controller_widget, trait_name, inner_control_instance)
-
-            # Update the list controller
-            if hasattr(control_instance, '_controller_connections'):
-                control_instance._controller_connections[0]()
-            logger.debug("Remove 'ListControlWidget' '{0}' controller and "
-                         "trait item.".format(trait_name))
-
-        control_instance.controller_widget._grid_layout.update()
+        # notification will update the controller GUI.
 
     @staticmethod
     def expand_or_collapse(control_instance, resize_button):

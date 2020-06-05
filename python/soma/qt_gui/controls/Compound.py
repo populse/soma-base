@@ -130,11 +130,16 @@ class CompoundControlWidget(object):
             widget.type_combo.addItem(t)
         widget.type_combo.setCurrentIndex(0)
 
-        widget.current_type_id = 0
         widget.compound_widget = None
         widget.trait = trait  # we need to access it later
         widget.trait_name = control_name
         widget.compound_label = None
+
+        type_id = CompoundControlWidget.type_id_for(trait.handler.handlers,
+                                                    control_value)
+        widget.current_type_id = type_id
+        widget.type_combo.setCurrentIndex(type_id)
+
         CompoundControlWidget.create_compound_widget(widget)
 
         widget.type_combo.currentIndexChanged.connect(
@@ -186,10 +191,10 @@ class CompoundControlWidget(object):
     @staticmethod
     def create_compound_widget(widget):
         control_widget = widget.parent()
-        #while control_widget \
-                #and not hasattr(control_widget, 'get_control_class') \
-                #and not hasattr(control_widget, 'controller_widget'):
-            #control_widget = control_widget.parent()
+        while control_widget \
+                and not hasattr(control_widget, 'get_control_class') \
+                and not hasattr(control_widget, 'controller_widget'):
+            control_widget = control_widget.parent()
         if hasattr(control_widget, 'controller_widget'):
             control_widget = control_widget.controller_widget
 
@@ -238,15 +243,16 @@ class CompoundControlWidget(object):
         else:
             control_label.deleteLater()
         del control_label
+
+        widget.compound_widget = control_instance
+        widget.compound_class = control_class
+        widget.layout().addWidget(control_instance)
+
         control_class.is_valid(control_instance)
         control_class.update_controller_widget(
             control_widget, widget.trait_name, control_instance)
         control_class.connect(control_widget, widget.trait_name,
                               control_instance)
-
-        widget.compound_widget = control_instance
-        widget.compound_class = control_class
-        widget.layout().addWidget(control_instance)
 
     @staticmethod
     def change_type_index(widget, index):
@@ -302,29 +308,41 @@ class CompoundControlWidget(object):
         except ReferenceError:
             # widget deleted in the meantime
             return
+        if not hasattr(controller_widget.controller, control_name):
+            return  # probably deleting this item
         # Get the controller trait value
         new_controller_value = getattr(
             controller_widget.controller, control_name, None)
 
         # if the value type has changed, select the appropriate type in
         # compound
-        for i, trait in enumerate(trait_types):
+        type_id = CompoundControlWidget.type_id_for(trait_types,
+                                                    new_controller_value)
+        if type_id != control_instance.current_type_id:
+            control_instance.type_combo.setCurrentIndex(type_id)
+
+        logger.debug("'CompoundControlWidget' has been updated with value "
+                     "'{0}'.".format(new_controller_value))
+
+    @staticmethod
+    def type_id_for(handlers, value):
+        i = 0
+        for i, trait in enumerate(handlers):
             # create a custom object with same traits
             temp = traits.HasTraits()
             ctrait = CompoundControlWidget.as_ctrait(trait)
             tname = 'param'
             temp.add_trait(tname, ctrait)
             try:
-                setattr(temp, tname, new_controller_value)
+                setattr(temp, tname, value)
                 # OK we have found a working one
-                if i != control_instance.current_type_id:
-                    control_instance.type_combo.setCurrentIndex(i)
-                break
+                return i
             except Exception as e:
                 pass
-
-        logger.debug("'CompoundControlWidget' has been updated with value "
-                     "'{0}'.".format(new_controller_value))
+        else:
+            # should not happen
+            print('problem in type_id_for:', handlers, value)
+            return 0
 
     @classmethod
     def connect(cls, controller_widget, control_name, control_instance):

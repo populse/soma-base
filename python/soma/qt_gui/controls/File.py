@@ -69,6 +69,7 @@ class FileControlWidget(object):
             is_valid = True
             if not control_instance.optional:
                 color = red
+                #print('red undefined: valid')
         else:
 
             if (os.path.isfile(control_value)
@@ -89,6 +90,7 @@ class FileControlWidget(object):
             else:
                 if not control_instance.optional:
                     color = red
+                    #print('red: invalid', repr(control_value))
 
         # Set the new palette to the control instance
         control_palette.setColor(control_instance.path.backgroundRole(), color)
@@ -236,14 +238,15 @@ class FileControlWidget(object):
         if control_class.is_valid(control_instance):
 
             # Get the control value
-            new_trait_value = six.text_type(control_instance.path.value())
+            new_trait_value = control_instance.path.value()
             #if new_trait_value is not traits.Undefined:
             # Set the control value to the controller associated trait
             try:
                 setattr(controller_widget.controller, control_name,
                         new_trait_value)
                 fail = False
-            except traits.TraitError:
+            except traits.TraitError as e:
+                print(e)
                 pass
             logger.debug(
                 "'FileControlWidget' associated controller trait '{0}' has"
@@ -253,10 +256,7 @@ class FileControlWidget(object):
             # invalid, reset GUI to older value
             old_trait_value = getattr(controller_widget.controller,
                                       control_name)
-            if isinstance(old_trait_value, str):
-                control_instance.path.setText(old_trait_value)
-            else:
-                control_instance.path.setText("<undefined>")
+            control_instance.path.set_value(old_trait_value)
 
     @staticmethod
     def update_controller_widget(controller_widget, control_name,
