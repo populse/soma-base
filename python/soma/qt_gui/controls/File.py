@@ -69,6 +69,7 @@ class FileControlWidget(object):
             is_valid = True
             if not control_instance.optional:
                 color = red
+                #print('red undefined: valid')
         else:
 
             if (os.path.isfile(control_value)
@@ -89,6 +90,7 @@ class FileControlWidget(object):
             else:
                 if not control_instance.optional:
                     color = red
+                    #print('red: invalid', repr(control_value))
 
         # Set the new palette to the control instance
         control_palette.setColor(control_instance.path.backgroundRole(), color)
@@ -191,6 +193,7 @@ class FileControlWidget(object):
 
         # Set a callback on the browse button
         control_class = parent.get_control_class(trait)
+        widget.control_class = control_class
         browse_hook = partial(control_class.onBrowseClicked,
                               weak_proxy(widget))
         widget.browse.clicked.connect(browse_hook)
@@ -230,22 +233,21 @@ class FileControlWidget(object):
             synchronize with the controller
         """
         # Update the controller only if the control is valid
-        control_groups = controller_widget._controls[control_name]
-        if not control_groups:
-            return
-        control_class = next(iter(control_groups.values()))[1]
-        fail = False
+        control_class = control_instance.control_class
+        fail = True
         if control_class.is_valid(control_instance):
 
             # Get the control value
-            new_trait_value = six.text_type(control_instance.path.value())
+            new_trait_value = control_instance.path.value()
             #if new_trait_value is not traits.Undefined:
             # Set the control value to the controller associated trait
             try:
                 setattr(controller_widget.controller, control_name,
                         new_trait_value)
-            except traits.TraitError:
-                fail = True
+                fail = False
+            except traits.TraitError as e:
+                print(e)
+                pass
             logger.debug(
                 "'FileControlWidget' associated controller trait '{0}' has"
                 " been updated with value '{1}'.".format(
@@ -254,10 +256,7 @@ class FileControlWidget(object):
             # invalid, reset GUI to older value
             old_trait_value = getattr(controller_widget.controller,
                                       control_name)
-            if isinstance(old_trait_value, str):
-                control_instance.path.setText(old_trait_value)
-            else:
-                control_instance.path.setText("<undefined>")
+            control_instance.path.set_value(old_trait_value)
 
     @staticmethod
     def update_controller_widget(controller_widget, control_name,

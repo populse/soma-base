@@ -30,6 +30,7 @@ import weakref
 from soma.utils.weak_proxy import get_ref, weak_proxy
 import traits.api as traits
 import inspect
+import sip
 
 # Qt import
 try:
@@ -631,7 +632,8 @@ class ControllerWidget(QtGui.QWidget):
         for control_instance in control_instances:
             control_instance.setVisible(not hide)
         for label in control_labels:
-            label.setVisible(not hide)
+            if not sip.isdeleted(label):  # sometimes happens...
+                label.setVisible(not hide)
 
         ## Show the control and associated labels
         #else:

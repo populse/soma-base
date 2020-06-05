@@ -336,7 +336,8 @@ class OffscreenListControlWidget(object):
             # Get the list widget current connection status
             try:
                 was_connected = control_instance.connected
-            except ReferenceError:
+                test = control_instance.control_widget.layout
+            except (ReferenceError, RuntimeError):
                 # widget deleted in the meantime
                 return
 
