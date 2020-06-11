@@ -284,3 +284,29 @@ def trait_ids(trait, modules=set()):
             return [main_id + "_" + inner_desc for inner_desc in inner_ids]
         else:
             return [main_id]
+
+def relax_exists_constrain(trait):
+    """ Relax the exist constrain of a trait
+
+    Parameters
+    ----------
+    trait: trait
+        a trait that will be relaxed from the exist constrain
+    """
+    # If we have a single trait, just modify the 'exists' contrain
+    # if specified
+    if hasattr(trait.handler, "exists"):
+        trait.handler.exists = False
+
+    # If we have a selector, call the 'relax_exists_constrain' on each
+    # selector inner components.
+    main_id = trait.handler.__class__.__name__
+    if main_id == "TraitCompound":
+        for sub_trait in trait.handler.handlers:
+            sub_c_trait = traits.api.CTrait(0)
+            sub_c_trait.handler = sub_trait
+            relax_exists_constrain(sub_c_trait)
+    elif len(trait.inner_traits) > 0:
+        for sub_c_trait in trait.inner_traits:
+            relax_exists_constrain(sub_c_trait)
+
