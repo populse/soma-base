@@ -285,6 +285,18 @@ def trait_ids(trait, modules=set()):
         else:
             return [main_id]
 
+def is_file_trait(trait, allow_dir=False, only_dirs=False):
+    """
+    Tells if the given trait is a File (and/or dict) or may be a file (for a
+    compound trait)
+    """
+    ids = trait_ids(trait)
+    if not only_dirs and 'File' in ids:
+        return True
+    if allow_dir and 'Directory' in ids:
+        return True
+    return False
+
 def relax_exists_constrain(trait):
     """ Relax the exist constrain of a trait
 
