@@ -331,86 +331,90 @@ class OffscreenListControlWidget(object):
             the instance of the controller widget control we want to
             synchronize with the controller
         """
-        if control_name in controller_widget.controller.user_traits():
-
-            # Get the list widget current connection status
-            try:
-                was_connected = control_instance.connected
-                test = control_instance.control_widget.layout
-            except (ReferenceError, RuntimeError):
-                # widget deleted in the meantime
+        try:
+            if control_name not in controller_widget.controller.user_traits():
                 return
+        except ReferenceError:
+            return
 
-            # Disconnect the list controller and the inner list controller
-            cls.disconnect(controller_widget, control_name, control_instance)
-            control_instance.controller_widget.disconnect()
+        # Get the list widget current connection status
+        try:
+            was_connected = control_instance.connected
+            test = control_instance.control_widget.layout
+        except (ReferenceError, RuntimeError):
+            # widget deleted in the meantime
+            return
 
-            widget = control_instance.control_widget
-            clayout = widget.control_widget.layout()
-            owned_widgets = set()
-            parent = widget
-            for i in range(widget.columnCount()):
-                w = widget.cellWidget(0, i)
-                if w is not None:
-                    parent = w.parentWidget()
-                    owned_widgets.add(w)
-            ListControlWidget.update_controller_widget(
-                controller_widget, control_name, widget.control_widget)
-            keys = list(control_instance.controller.user_traits().keys())
-            #n = len(control_instance.controller.user_traits())
-            parent_value = getattr(controller_widget.controller, control_name)
-            if parent_value is traits.Undefined:
-                parent_value = []
-            elif not isinstance(parent_value, (list, tuple)):
-                # in nipype MultiPath, single values are not in a list
-                parent_value = [parent_value]
-            n = len(parent_value)
-            max_items = widget.max_items
-            if max_items > 0:
-                m = min(max_items, n)
-                if n > max_items:
-                    widget.setColumnCount(m + 1)
-                else:
-                    widget.setColumnCount(n)
+        # Disconnect the list controller and the inner list controller
+        cls.disconnect(controller_widget, control_name, control_instance)
+        control_instance.controller_widget.disconnect()
+
+        widget = control_instance.control_widget
+        clayout = widget.control_widget.layout()
+        owned_widgets = set()
+        parent = widget
+        for i in range(widget.columnCount()):
+            w = widget.cellWidget(0, i)
+            if w is not None:
+                parent = w.parentWidget()
+                owned_widgets.add(w)
+        ListControlWidget.update_controller_widget(
+            controller_widget, control_name, widget.control_widget)
+        keys = list(control_instance.controller.user_traits().keys())
+        #n = len(control_instance.controller.user_traits())
+        parent_value = getattr(controller_widget.controller, control_name)
+        if parent_value is traits.Undefined:
+            parent_value = []
+        elif not isinstance(parent_value, (list, tuple)):
+            # in nipype MultiPath, single values are not in a list
+            parent_value = [parent_value]
+        n = len(parent_value)
+        max_items = widget.max_items
+        if max_items > 0:
+            m = min(max_items, n)
+            if n > max_items:
+                widget.setColumnCount(m + 1)
             else:
-                m = n
                 widget.setColumnCount(n)
-            for i in range(m):
-                try:
-                    items = widget.control_widget.controller_widget._controls[
-                        str(i)]
-                    item = items[None][2]
-                    if item not in owned_widgets:
-                        widget.setCellWidget(0, i, item)
-                    if qt_backend.get_qt_backend() == 'PyQt5':
-                        widget.horizontalHeader().setSectionResizeMode(
-                            i, QtGui.QHeaderView.Stretch)
-                    else:
-                        widget.horizontalHeader().setResizeMode(
-                            i, QtGui.QHeaderView.Stretch)
-                except KeyError:
-                    print('KeyError in OffscreenListControlWidget', i)
-                    print('controls:', widget.control_widget.controller_widget._controls)
-            if n > m:
-                label = QtGui.QLabel('...')
-                width = label.sizeHint().width()
-                widget.setCellWidget(0, max_items, QtGui.QLabel('...'))
+        else:
+            m = n
+            widget.setColumnCount(n)
+        for i in range(m):
+            try:
+                items = widget.control_widget.controller_widget._controls[
+                    str(i)]
+                item = items[None][2]
+                if item not in owned_widgets:
+                    widget.setCellWidget(0, i, item)
                 if qt_backend.get_qt_backend() == 'PyQt5':
                     widget.horizontalHeader().setSectionResizeMode(
-                        max_items, QtGui.QHeaderView.Fixed)
+                        i, QtGui.QHeaderView.Stretch)
                 else:
                     widget.horizontalHeader().setResizeMode(
-                        max_items, QtGui.QHeaderView.Fixed)
-                widget.horizontalHeader().resizeSection(max_items, width)
+                        i, QtGui.QHeaderView.Stretch)
+            except KeyError:
+                print('KeyError in OffscreenListControlWidget', i)
+                print('controls:', widget.control_widget.controller_widget._controls)
+        if n > m:
+            label = QtGui.QLabel('...')
+            width = label.sizeHint().width()
+            widget.setCellWidget(0, max_items, QtGui.QLabel('...'))
+            if qt_backend.get_qt_backend() == 'PyQt5':
+                widget.horizontalHeader().setSectionResizeMode(
+                    max_items, QtGui.QHeaderView.Fixed)
+            else:
+                widget.horizontalHeader().setResizeMode(
+                    max_items, QtGui.QHeaderView.Fixed)
+            widget.horizontalHeader().resizeSection(max_items, width)
 
-            widget.resizeRowToContents(0)
-            height = widget.rowHeight(0) \
-                + sum(widget.getContentsMargins()[1:4:2])
-            widget.setFixedHeight(height)
+        widget.resizeRowToContents(0)
+        height = widget.rowHeight(0) \
+            + sum(widget.getContentsMargins()[1:4:2])
+        widget.setFixedHeight(height)
 
-            # Restore the previous list controller connection status
-            if was_connected:
-                cls.connect(controller_widget, control_name, control_instance)
+        # Restore the previous list controller connection status
+        if was_connected:
+            cls.connect(controller_widget, control_name, control_instance)
 
     @classmethod
     def connect(cls, controller_widget, control_name, control_instance):
