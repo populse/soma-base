@@ -43,12 +43,19 @@ import weakref
 def get_ref(obj):
     ''' Get a regular reference to an object, whether it is already a regular
     reference, a weak reference, or a weak proxy which holds an access to the
-    original reference (built using :func:`weak_proxy`)
+    original reference (built using :func:`weak_proxy`).
+    In case of a weak proxy not built using :func:`weak_proxy`, we try to get
+    the ``self`` from a bound method of the object, namely
+    ``obj.__init__.__self__``, if it exists.
     '''
     if isinstance(obj, weakref.ReferenceType):
         return obj()
-    elif isinstance(obj, weakref.ProxyTypes) and hasattr(obj, '_weakref'):
-        return obj._weakref()
+    elif isinstance(obj, weakref.ProxyTypes):
+        if hasattr(obj, '_weakref'):
+            return obj._weakref()
+        elif hasattr(obj, '__init__'):
+            # try to get the 'self' of a bound method
+            return obj.__init__.__self__
     return obj
 
 
