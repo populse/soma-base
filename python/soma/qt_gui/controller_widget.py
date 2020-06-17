@@ -54,7 +54,7 @@ class ScrollControllerWidget(Qt.QScrollArea):
     def __init__(self, controller, parent=None, name=None, live=False,
                  hide_labels=False, select_controls=None,
                  disable_controller_widget=False, override_control_types=None,
-                 user_data=None):
+                 user_data=None, userlevel=0):
         """ Method to initilaize the ScrollControllerWidget class.
 
         Parameters
@@ -84,6 +84,8 @@ class ScrollControllerWidget(Qt.QScrollArea):
         user_data: any type (optional)
             optional user data that can be accessed by individual control
             editors
+        userlevel: int
+            the current user level: some traits may be marked with a non-zero userlevel, and will only be visible if the ControllerWidget userlevel is more than (or equal) the trait level.
         """
         # Inheritance
         super(ScrollControllerWidget, self).__init__(parent)
@@ -101,7 +103,8 @@ class ScrollControllerWidget(Qt.QScrollArea):
         # Create the controller widget
         self.controller_widget = ControllerWidget(
             controller, parent, name, live, hide_labels, select_controls,
-            override_control_types=override_control_types, user_data=user_data)
+            override_control_types=override_control_types, user_data=user_data,
+            userlevel=userlevel)
         self.controller_widget.layout().setContentsMargins(2, 2, 2, 2)
         self.controller_widget.setSizePolicy(QtGui.QSizePolicy.Expanding,
                                              QtGui.QSizePolicy.Preferred)
@@ -115,6 +118,17 @@ class ScrollControllerWidget(Qt.QScrollArea):
     def __del__(self):
         # disconnect underlying ControllerWidget so that it can be deleted.
         self.controller_widget.disconnect()
+
+    @property
+    def userlevel(self):
+        if hasattr(self, 'controller_widget'):
+            return self.controller_widget.userlevel
+        return 0
+
+    @userlevel.setter
+    def userlevel(self, value):
+        if hasattr(self, 'controller_widget'):
+            self.controller_widget.userlevel = value
 
 
 class DeletableLineEdit(QtGui.QWidget):
@@ -160,7 +174,7 @@ class ControllerWidget(QtGui.QWidget):
     def __init__(self, controller, parent=None, name=None, live=False,
                  hide_labels=False, select_controls=None,
                  editable_labels=False, override_control_types=None,
-                 user_data=None):
+                 user_data=None, userlevel=0):
         """ Method to initilaize the ControllerWidget class.
 
         Parameters
@@ -191,9 +205,13 @@ class ControllerWidget(QtGui.QWidget):
         user_data: any type (optional)
             optional user data that can be accessed by individual control
             editors
+        userlevel: int
+            the current user level: some traits may be marked with a non-zero userlevel, and will only be visible if the ControllerWidget userlevel is more than (or equal) the trait level.
         """
         # Inheritance
         super(ControllerWidget, self).__init__(parent)
+
+        self._userlevel = userlevel
 
         if override_control_types:
             # copy dict
@@ -291,6 +309,15 @@ class ControllerWidget(QtGui.QWidget):
                     break
 
         return valid
+
+    @property
+    def userlevel(self):
+        return self._userlevel
+
+    @userlevel.setter
+    def userlevel(self, value):
+        self._userlevel = value
+        self.update_controls()
 
     def update_controller(self):
         """ Update the controller.
@@ -617,7 +644,7 @@ class ControllerWidget(QtGui.QWidget):
         # contained in the private '_controls' class parameter
         else:
             for group, control in six.iteritems(control_groups):
-                trait, control_class, control_instance, control_label = control
+                _, _, control_instance, control_label = control
                 control_instances.append(control_instance)
                 if control_label:
                     if isinstance(control_label, tuple):
@@ -626,7 +653,10 @@ class ControllerWidget(QtGui.QWidget):
                         control_labels.append(control_label)
 
         # Each trait has a hidden property. Take care of this information
-        hide = (getattr(trait, 'hidden', False) or getattr(trait, 'unused', False))
+        hide = (getattr(trait, 'hidden', False)
+                or getattr(trait, 'unused', False)
+                or (getattr(trait, 'userlevel', 0) is not None
+                    and trait.userlevel > self.userlevel))
         
         # Show/Hide the control and associated labels
         for control_instance in control_instances:
