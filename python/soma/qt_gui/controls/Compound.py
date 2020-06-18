@@ -396,6 +396,8 @@ class CompoundControlWidget(object):
             synchronize with the controller
         """
         # Get the stored widget and controller hooks
+        if not hasattr(control_instance, '_controller_connections'):
+            return
         controller_hook = control_instance._controller_connections[0]
 
         # Remove the controller hook from the 'control_name' trait
