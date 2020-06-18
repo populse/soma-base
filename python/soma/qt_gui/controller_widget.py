@@ -657,20 +657,13 @@ class ControllerWidget(QtGui.QWidget):
                 or getattr(trait, 'unused', False)
                 or (getattr(trait, 'userlevel', 0) is not None
                     and trait.userlevel > self.userlevel))
-        
+
         # Show/Hide the control and associated labels
         for control_instance in control_instances:
             control_instance.setVisible(not hide)
         for label in control_labels:
             if not sip.isdeleted(label):  # sometimes happens...
                 label.setVisible(not hide)
-
-        ## Show the control and associated labels
-        #else:
-            #for control_instance in control_instances:
-                #control_instance.show()
-            #for label in control_labels:
-                #label.show()
 
     def _create_group_widget(self, group):
         group_widget = QtGui.QGroupBox()
