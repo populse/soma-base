@@ -767,7 +767,13 @@ class ControllerWidget(QtGui.QWidget):
         tooltip = ""
         if trait.desc:
             tooltip = "<b>" + trait_name + ":</b> " + trait.desc
-        control_instance.setToolTip(tooltip)
+        if control_label:
+            if isinstance(control_label, tuple):
+                control_label[0].setToolTip(tooltip)
+            else:
+                control_label.setToolTip(tooltip)
+        else:
+            control_instance.setToolTip(tooltip)
 
         # Get the last empty row in the grid layout
         # Trick: If the grid layout is empty check the element 0
