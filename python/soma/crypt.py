@@ -8,6 +8,7 @@ from __future__ import absolute_import
 from Crypto.PublicKey import RSA
 from base64 import b64decode, b64encode
 import Crypto
+import six
 from six.moves import range
 
 if [int(x) for x in Crypto.__version__.split('.')] < [2, 1]:
@@ -43,6 +44,8 @@ def encrypt_RSA(public_key_loc, message):
     '''
     key = open(public_key_loc, "rb").read()
     rsakey = RSA.importKey(key)
+    if not isinstance(message, six.binary_type):
+        message = message.encode()
     encrypted = rsakey.encrypt(message, None)[0]
     return b64encode(encrypted)
 
