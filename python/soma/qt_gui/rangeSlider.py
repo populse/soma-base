@@ -479,7 +479,7 @@ class QRangeSlider(QtGui.QWidget, Ui_Form):
 
         if index == self._SPLIT_START:
             _lockWidth(self._tail)
-            if v >= self.end():
+            if self.end() and v >= self.end():
                 return
 
             offset = -20
