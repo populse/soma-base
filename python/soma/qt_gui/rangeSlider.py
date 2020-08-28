@@ -131,7 +131,7 @@ class Ui_Form(object):
 
     def retranslateUi(self, Form):
         Form.setWindowTitle(QtGui.QApplication.translate(
-            "QRangeSlider", "QRangeSlider", None, QtGui.QApplication.UnicodeUTF8))
+            "QRangeSlider", "QRangeSlider", None))
 
 
 class Element(QtGui.QGroupBox):
