@@ -131,7 +131,7 @@ class Ui_Form(object):
 
     def retranslateUi(self, Form):
         Form.setWindowTitle(QtGui.QApplication.translate(
-            "QRangeSlider", "QRangeSlider", None, QtGui.QApplication.UnicodeUTF8))
+            "QRangeSlider", "QRangeSlider", None))
 
 
 class Element(QtGui.QGroupBox):
@@ -479,7 +479,7 @@ class QRangeSlider(QtGui.QWidget, Ui_Form):
 
         if index == self._SPLIT_START:
             _lockWidth(self._tail)
-            if v >= self.end():
+            if self.end() and v >= self.end():
                 return
 
             offset = -20
