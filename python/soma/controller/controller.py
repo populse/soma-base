@@ -312,7 +312,10 @@ class Controller(HasTraits):
         # validate default value, or try to set another one
         new_trait = self.trait(name)
         if not isinstance(new_trait.trait_type, traits.Event):
-            values = (getattr(self, name), traits.Undefined, None, '', 0)
+            try:
+                values = (getattr(self, name), traits.Undefined, None, '', 0)
+            except TraitError:
+                values = (traits.Undefined, None, '', 0)
             for value in values:
                 try:
                     # validate() doesn't accept Undefined values when the

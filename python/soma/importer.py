@@ -209,6 +209,10 @@ class GenericHandlers(object):
             refered module object to get objects to move from.
         '''
 
+        # during this whole function we should avoid tu use
+        # getattr(mobject, something) (directly or indirectly) because it
+        # breaks things in sip imports later.
+
         # Get module names
         newName = extendedModule.__name__
 
@@ -216,16 +220,17 @@ class GenericHandlers(object):
         locals = extendedModule.locals
 
         # Get the old object in module
-        object = ExtendedImporterHelper.getModuleObject(
+        mobject = ExtendedImporterHelper.getModuleObject(
             referedModule, namespace)
 
-        if object is not None:
+        if mobject is not None:
 
             # Changes child objects locals declaration
-            for childName in object.__dict__.keys():
+            for childName \
+                    in object.__getattribute__(mobject, '__dict__').keys():
                 # in sip >= 4.8, obj.__dict__[key] and getattr(obj, key)
                 # do *not* return the same thing for functions !
-                childObject = getattr(object, childName)
+                childObject = object.__getattribute__(mobject, childName)
                 if not childName.startswith("__"):
 
                     locals[childName] = childObject
@@ -234,26 +239,56 @@ class GenericHandlers(object):
             stack = []
             done = []
             for (childName, childObject) in six.iteritems(locals):
-                if not childName.startswith("__") \
-                    and hasattr( childObject, '__module__' ) \
-                        and childObject.__module__ == referedModule.__name__:
-                    stack.append(childObject)
-            while stack:
-                childObject = stack.pop(0)
-                done.append(childObject)
-                if hasattr( childObject, '__name__' ) \
-                    and hasattr( childObject, '__module__' ) \
-                        and childObject.__module__ == referedModule.__name__:
+                if not childName.startswith("__"):
                     try:
-                        childObject.__module__ = newName
-                        if hasattr(childObject, '__dict__'):
-                            for x in childObject.__dict__.keys():
-                                y = getattr(childObject, x)
-                                if not x.startswith( '__' ) \
-                                        and y not in stack and y not in done:
-                                    stack.append(y)
-                    except Exception as e:
-                        del e
+                        mod = object.__getattribute__(childObject,
+                                                      '__module__')
+                        if mod == referedModule.__name__:
+                            stack.append(childObject)
+                    except AttributeError:
+                        pass
+
+            return
+            # don't set new module on object. sip classes don't really like
+            # it and messes up some symbols imports later.
+            #import sip
+
+            #while stack:
+                #childObject = stack.pop(0)
+                #done.append(childObject)
+                #try:
+                    #mod = object.__getattribute__(childObject, '__module__')
+                #except AttributeError:
+                    #continue
+                #try:
+                    ##print(childObject)
+                    #if isinstance(childObject, sip.wrappertype):
+                        #print('sip set module', childObject, newName)
+                        #sip.wrappertype.__setattr__(childObject, '__module__', newName)
+                    #else:
+                        #object.__setattr__(childObject, '__module__', newName)
+                #except Exception as e:
+                    #print(childObject, e)
+                    ##print(object.__getattribute__(childObject, '__name__'))
+                    ##import sip
+                    ##try:
+                        ###sip.wrappertype.__setattr__(childObject, '__module__',
+                                                    ###newName)
+                    ##except Exception as e:
+                        ##print('error2:', e)
+                    ##pass
+                #try:
+                    #d = object.__getattribute__(childObject, '__dict__')
+                #except AttributeError:
+                    #continue
+                #for x in d.keys():
+                    #try:
+                        #y = object.__getattribute__(childObject, x)
+                        #if not x.startswith( '__' ) \
+                                #and y not in stack and y not in done:
+                            #stack.append(y)
+                    #except AttributeError:
+                        #pass
 
     # Declare a function to delete non generics Reader/Writer objects
     @staticmethod
@@ -313,62 +348,19 @@ class ExtendedImporterHelper(object):
         # Split the name of the object
         # but keep the 1st element unsplit like the module name
         # if needed.
-        mname = None
-        if name.startswith(module.__name__):
-            mname = module.__name__
-        else:
-            mname = module.__name__.split('.')[-1]
-            if not name.startswith(mname):
-                mname = None
-        if mname is not None:
-            listName = [module.__name__]
-            if len(name) > len(mname):
-                listName = tuple(listName
-                                 + name[len(mname) + 1:].split('.'))
-            else:
-                listName = tuple(listName)
-        else:
-            listName = tuple(name.split('.'))
+        if name == '':
+            return module
 
-        # Get the object that is matching the rule in the tree
-        return ExtendedImporterHelper.getMatchingObject(module, listName)
-
-    @staticmethod
-    def getMatchingObject(object, listName, level=0):
-        '''
-        This static method is used to get an object contained in another object.
-
-        Parameters
-        ----------
-        object: module
-            object to get objects from.
-        listName: list
-            complete name including name hierarchy split in list.
-
-        Returns
-        -------
-        object:
-            Object found in the hierarchy or None if no object was found.
-        '''
-        result = None
-
-        name = getattr(object, '__name__', None)
-
-        if level < (len(listName) - 1):
-            if (listName[level] == name):
-                if(hasattr(object, '__dict__')):
-                    for child in object.__dict__.values():
-                        # Recursive call to go through the hierarchy
-                        result = ExtendedImporterHelper.getMatchingObject(
-                            child, listName, level + 1)
-
-                        if (result is not None):
-                            break
-        elif level == (len(listName) - 1):
-            if (listName[level] == name):
-                result = object
-
-        return result
+        names = name.split('.')
+        if not hasattr(module, names[0]) and module.__name__.split('.')[-1] == names[0]:
+            names = names[1:]
+        obj = module
+        while names:
+            mname = names.pop(0)
+            if not hasattr(obj, mname):
+                return None
+            obj = getattr(obj, mname)
+        return obj
 
 
 def execfile(filename, globals=None, locals=None):
