@@ -52,6 +52,12 @@ from soma.functiontools import partial
 from soma.singleton import Singleton
 
 
+# list of namespace objects that should not be patched to avoid a side effect
+# in sip imported namespaces: we must not access their attributes during
+# imports.
+__namespaces__ = ['soma', 'aims', 'carto', 'anatomist']
+
+
 class ExtendedImporter(Singleton):
 
     '''
@@ -248,47 +254,34 @@ class GenericHandlers(object):
                     except AttributeError:
                         pass
 
-            return
-            # don't set new module on object. sip classes don't really like
-            # it and messes up some symbols imports later.
-            #import sip
+            # set new module on objects
 
-            #while stack:
-                #childObject = stack.pop(0)
-                #done.append(childObject)
-                #try:
-                    #mod = object.__getattribute__(childObject, '__module__')
-                #except AttributeError:
-                    #continue
-                #try:
-                    ##print(childObject)
-                    #if isinstance(childObject, sip.wrappertype):
-                        #print('sip set module', childObject, newName)
-                        #sip.wrappertype.__setattr__(childObject, '__module__', newName)
-                    #else:
-                        #object.__setattr__(childObject, '__module__', newName)
-                #except Exception as e:
-                    #print(childObject, e)
-                    ##print(object.__getattribute__(childObject, '__name__'))
-                    ##import sip
-                    ##try:
-                        ###sip.wrappertype.__setattr__(childObject, '__module__',
-                                                    ###newName)
-                    ##except Exception as e:
-                        ##print('error2:', e)
-                    ##pass
-                #try:
-                    #d = object.__getattribute__(childObject, '__dict__')
-                #except AttributeError:
-                    #continue
-                #for x in d.keys():
-                    #try:
-                        #y = object.__getattribute__(childObject, x)
-                        #if not x.startswith( '__' ) \
-                                #and y not in stack and y not in done:
-                            #stack.append(y)
-                    #except AttributeError:
-                        #pass
+            while stack:
+                childObject = stack.pop(0)
+                done.append(childObject)
+                try:
+                    name = object.__getattribute__(childObject, '__name__')
+                    mod = object.__getattribute__(childObject, '__module__')
+                except AttributeError:
+                    continue
+                try:
+                    # skip namespace objects
+                    if name not in __namespaces__:
+                        childObject.__module__ = newName
+                except Exception as e:
+                    pass
+                try:
+                    d = object.__getattribute__(childObject, '__dict__')
+                except AttributeError:
+                    continue
+                for x in d.keys():
+                    try:
+                        y = object.__getattribute__(childObject, x)
+                        if not x.startswith( '__' ) \
+                                and y not in stack and y not in done:
+                            stack.append(y)
+                    except AttributeError:
+                        pass
 
     # Declare a function to delete non generics Reader/Writer objects
     @staticmethod
