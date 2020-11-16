@@ -114,18 +114,16 @@ class IntControlWidget(StrControlWidget):
             else:
                 new_trait_value = int(control_instance.text())
 
-            lock = False
+            protected = controller_widget.controller.is_parameter_protected(
+                control_name)
             # value is manually modified: protect it
             if getattr(controller_widget.controller, control_name) \
                     != new_trait_value:
-                lock = True
+                controller_widget.controller.protect_parameter(control_name)
             # Set the control value to the controller associated trait
             try:
                 setattr(controller_widget.controller, control_name,
                         new_trait_value)
-                if lock:
-                    controller_widget.controller.protect_parameter(
-                        control_name)
                 logger.debug(
                     "'IntControlWidget' associated controller trait '{0}' "
                     "has been updated with value '{1}'.".format(
@@ -133,6 +131,9 @@ class IntControlWidget(StrControlWidget):
                 return
             except traits.TraitError as e:
                 print(e, file=sys.stderr)
+                if not protected:
+                    controller_widget.controller.unprotect_parameter(
+                        control_name)
 
         if reset_invalid_value:
             # invalid, reset GUI to older value

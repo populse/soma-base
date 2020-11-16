@@ -353,19 +353,20 @@ class ListControlWidget(object):
             old_value = getattr(controller_widget.controller, control_name)
             new_trait_value += old_value[control_instance.max_items:]
 
-        lock = False
+        protected = controller_widget.controller.is_parameter_protected(
+            control_name)
         # value is manually modified: protect it
         if getattr(controller_widget.controller, control_name) \
                 != new_trait_value:
-            lock = True
+            controller_widget.controller.protect_parameter(control_name)
         # Update the 'control_name' parent controller value
         try:
             setattr(controller_widget.controller, control_name,
                     new_trait_value)
-            if lock:
-                controller_widget.controller.protect_parameter(control_name)
         except Exception as e:
             print(e, file=sys.stderr)
+            if not protected:
+                controller_widget.controller.unprotect_parameter(control_name)
         logger.debug(
             "'ListControlWidget' associated controller trait '{0}' has "
             "been updated with value '{1}'.".format(

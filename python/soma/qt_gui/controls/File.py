@@ -238,24 +238,26 @@ class FileControlWidget(object):
         if control_class.is_valid(control_instance):
 
             # Get the control value
-            new_trait_value = control_instance.path.value()
             #if new_trait_value is not traits.Undefined:
-            lock = False
+            new_trait_value = control_instance.path.value()
+            protected = controller_widget.controller.is_parameter_protected(
+                control_name)
             # value is manually modified: protect it
             if getattr(controller_widget.controller, control_name) \
                     != new_trait_value:
-                lock = True
+                controller_widget.controller.protect_parameter(control_name)
             # Set the control value to the controller associated trait
             try:
                 setattr(controller_widget.controller, control_name,
                         new_trait_value)
                 fail = False
-                if lock:
-                    controller_widget.controller.protect_parameter(
-                        control_name)
             except traits.TraitError as e:
                 print(e)
-                pass
+                if not protected:
+                    # resgtore protected state after abortion
+                    controller_widget.controller.unprotect_parameter(
+                        control_name)
+
             logger.debug(
                 "'FileControlWidget' associated controller trait '{0}' has"
                 " been updated with value '{1}'.".format(
