@@ -398,6 +398,10 @@ class Controller(HasTraits):
                     delattr(self, trait_name)
         for trait_name, value in six.iteritems(state_dict):
             trait = self.trait(trait_name)
+            if trait_name == 'protected_parameters' and trait is None:
+                HasTraits.add_trait(self, 'protected_parameters',
+                                    traits.List(traits.Str(), default=[]))
+                trait = self.trait('protected_parameters')
             if trait is None and not isinstance(self, OpenKeyController):
                 raise KeyError(
                     "item %s is not a trait in the Controller" % trait_name)
@@ -449,6 +453,13 @@ class Controller(HasTraits):
             copied.add_trait(name, self._clone_trait(trait))
             if with_values:
                 setattr(copied, name, getattr(self, name))
+        if self.trait('protected_parameters'):
+            trait = self.trait('protected_parameters')
+            HasTraits.add_trait(copied, 'protected_parameters',
+                                self._clone_trait(trait))
+            if with_values:
+                setattr(copied, 'protected_parameters',
+                        getattr(self, 'protected_parameters'))
         return copied
 
     def reorder_traits(self, traits_list):
@@ -473,6 +484,49 @@ class Controller(HasTraits):
             if t not in done:
                 new_traits.append(t)
         self._user_traits.sortedKeys = new_traits
+
+    def protect_parameter(self, param, state=True):
+        """ Protect the named parameter.
+
+        Protecting is not a real lock, it just marks the parameter a list of
+        "protected" parameters. This is typically used to mark values that have
+        been set manually by the user (using the ControllerWidget for instance)
+        and that should not be later modified by automatic parameters tweaking
+        (such as completion systems).
+
+        Protected parameters are listed in an additional trait,
+        "protected_parameters".
+
+        If the "state" parameter is False, then we will unprotect it
+        (calling unprotect_parameter())
+        """
+        if not state:
+            return self.unprotect_parameter(param)
+        if not self.trait('protected_parameters'):
+            # add a 'protected_parameters' trait bypassing the
+            # Controller.add_trait mechanism (it will not be a "user_trait")
+            HasTraits.add_trait(self, 'protected_parameters',
+                                traits.List(traits.Str(), default=[]))
+            #self.locked_parameters = []
+        protected = set(self.protected_parameters)
+        protected.update([param])
+        self.protected_parameters = sorted(protected)
+
+    def unprotect_parameter(self, param):
+        """ Unprotect the named parameter
+        """
+        if self.trait('protected_parameters'):
+            try:
+                self.protected_parameters.remove(param)
+            except ValueError:
+                pass  # it was not protected.
+
+    def is_parameter_protected(self, param):
+        """ Tells whether the given parameter is protected or not
+        """
+        if not self.trait('protected_parameters'):
+            return False
+        return param in self.protected_parameters
 
 
 class OpenKeyController(Controller):
@@ -656,6 +710,8 @@ def controller_to_dict(item, exclude_undefined=False,
                                        exclude_empty=exclude_empty,
                                        dict_class=dict_class)
             result[name] = value
+        if item.trait('protected_parameters'):
+            result['protected_parameters'] = item.protected_parameters
     elif isinstance(item, dict):
         result = dict_class()
         for name, value in six.iteritems(item):

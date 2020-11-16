@@ -115,10 +115,18 @@ class FloatControlWidget(StrControlWidget):
             else:
                 new_trait_value = float(control_instance.text())
 
+            lock = False
+            # value is manually modified: protect it
+            if getattr(controller_widget.controller, control_name) \
+                    != new_trait_value:
+                lock = True
             # Set the control value to the controller associated trait
             try:
                 setattr(controller_widget.controller, control_name,
                         new_trait_value)
+                if lock:
+                    controller_widget.controller.protect_parameter(
+                        control_name)
                 logger.debug(
                     "'FloatControlWidget' associated controller trait '{0}' "
                     "has been updated with value '{1}'.".format(

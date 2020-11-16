@@ -353,10 +353,17 @@ class ListControlWidget(object):
             old_value = getattr(controller_widget.controller, control_name)
             new_trait_value += old_value[control_instance.max_items:]
 
+        lock = False
+        # value is manually modified: protect it
+        if getattr(controller_widget.controller, control_name) \
+                != new_trait_value:
+            lock = True
         # Update the 'control_name' parent controller value
         try:
             setattr(controller_widget.controller, control_name,
                     new_trait_value)
+            if lock:
+                controller_widget.controller.protect_parameter(control_name)
         except Exception as e:
             print(e, file=sys.stderr)
         logger.debug(

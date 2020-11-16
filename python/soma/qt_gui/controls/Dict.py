@@ -260,10 +260,17 @@ class DictControlWidget(object):
             (name, getattr(control_instance.controller, name))
             for name in control_instance.controller.user_traits()])
 
+        lock = False
+        # value is manually modified: protect it
+        if getattr(controller_widget.controller, control_name) \
+                != new_trait_value:
+            lock = True
         # Update the 'control_name' parent controller value
         try:
             setattr(controller_widget.controller, control_name,
                     new_trait_value)
+            if lock:
+                controller_widget.controller.protect_parameter(control_name)
         except (traits.TraitError, TypeError):
             print('invalid value set in dict %s:' % control_name,
                   new_trait_value)

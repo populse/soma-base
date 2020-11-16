@@ -165,6 +165,10 @@ class EnumControlWidget(object):
         if EnumControlWidget.is_valid(control_instance):
             new_trait_value = control_instance._choices[
                 control_instance.currentIndex()]
+            # value is manually modified: protect it
+            if getattr(controller_widget.controller, control_name) \
+                    != new_trait_value:
+                controller_widget.controller.protect_parameter(control_name)
             setattr(controller_widget.controller, control_name,
                     new_trait_value)
             logger.debug(
