@@ -697,13 +697,11 @@ class ListControlWidget(object):
             synchronize with the controller
         """
         # Delete the last inserted control
-        print('delete_list_item', controller_widget, control_name, control_instance)
+        #print('delete_list_item', controller_widget, control_name, control_instance)
 
         # inner controller for list items
         controller = control_instance.controller
-        print(controller.export_to_dict())
         keys = controller.user_traits().keys()
-        print(keys)
         keys = sorted([int(k) for k in keys])
         if not keys:
             print('no element to remove')
@@ -712,6 +710,9 @@ class ListControlWidget(object):
         last_key = str(keys[-1])
         controller.remove_trait(last_key)
 
+        # Update the list controller
+        if hasattr(control_instance, '_controller_connections'):
+            control_instance._controller_connections[0]()
         # notification will update the controller GUI.
 
     @staticmethod
