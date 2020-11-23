@@ -151,6 +151,10 @@ class BoolControlWidget(object):
             # Get the control value
             new_trait_value = bool(control_instance.isChecked())
 
+            # value is manually modified: protect it
+            if getattr(controller_widget.controller, control_name) \
+                    != new_trait_value:
+                controller_widget.controller.protect_parameter(control_name)
             # Set the control value to the controller associated trait
             setattr(controller_widget.controller, control_name,
                     new_trait_value)

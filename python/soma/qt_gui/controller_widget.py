@@ -638,6 +638,11 @@ class ControllerWidget(QtGui.QWidget):
                         control_label[0].setTextInteractionFlags(
                             QtCore.Qt.TextSelectableByKeyboard |
                             QtCore.Qt.TextSelectableByMouse)
+                    control_label[0].setContextMenuPolicy(
+                        Qt.Qt.CustomContextMenu)
+                    control_label[0].customContextMenuRequested.connect(
+                        partial(self._label_context_menu,
+                                weakref.ref(control_label[0]), trait_name))
 
         # Otherwise, the control associated with the current trait name is
         # already inserted in the grid layout, just unpack the values
@@ -764,9 +769,13 @@ class ControllerWidget(QtGui.QWidget):
 
         # If the trait contains a description, insert a tool tip to the
         # control instance
-        tooltip = ""
+        type_name = type(trait.trait_type).__name__.split('.')[-1]
+        #protected = ''
+        #if self.controller.is_parameter_protected(trait_name):
+            #protected = ' - modified'
+        tooltip = "<b>%s</b> (%s)" % (trait_name, type_name)
         if trait.desc:
-            tooltip = "<b>" + trait_name + ":</b> " + trait.desc
+            tooltip += "<b>:</b> " + trait.desc
         if control_label:
             if isinstance(control_label, tuple):
                 control_label[0].setToolTip(tooltip)
@@ -974,6 +983,18 @@ class ControllerWidget(QtGui.QWidget):
         if issubclass(trait_type, traits.BaseRange):
             return trait_type(0)
         return trait_type()
+
+    def _label_context_menu(self, widget, control_name, pos):
+        menu = Qt.QMenu(control_name, None)
+        protect = menu.addAction('%s modified' % control_name)
+        protect.setCheckable(True)
+        protected = self.controller.is_parameter_protected(control_name)
+        protect.setChecked(protected)
+
+        menu.exec_(widget().mapToGlobal(pos))
+        if protect.isChecked() != protected:
+            self.controller.protect_parameter(control_name,
+                                              protect.isChecked())
 
 
 from soma.qt_gui.controls import controls

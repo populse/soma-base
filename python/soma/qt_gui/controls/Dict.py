@@ -260,6 +260,12 @@ class DictControlWidget(object):
             (name, getattr(control_instance.controller, name))
             for name in control_instance.controller.user_traits()])
 
+        protected = controller_widget.controller.is_parameter_protected(
+            control_name)
+        # value is manually modified: protect it
+        if getattr(controller_widget.controller, control_name) \
+                != new_trait_value:
+            controller_widget.controller.protect_parameter(control_name)
         # Update the 'control_name' parent controller value
         try:
             setattr(controller_widget.controller, control_name,
@@ -267,6 +273,8 @@ class DictControlWidget(object):
         except (traits.TraitError, TypeError):
             print('invalid value set in dict %s:' % control_name,
                   new_trait_value)
+            if not protected:
+                controller_widget.controller.unprotect_parameter(control_name)
         logger.debug(
             "'DictControlWidget' associated controller trait '{0}' has "
             "been updated with value '{1}'.".format(

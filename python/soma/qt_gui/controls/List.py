@@ -353,12 +353,20 @@ class ListControlWidget(object):
             old_value = getattr(controller_widget.controller, control_name)
             new_trait_value += old_value[control_instance.max_items:]
 
+        protected = controller_widget.controller.is_parameter_protected(
+            control_name)
+        # value is manually modified: protect it
+        if getattr(controller_widget.controller, control_name) \
+                != new_trait_value:
+            controller_widget.controller.protect_parameter(control_name)
         # Update the 'control_name' parent controller value
         try:
             setattr(controller_widget.controller, control_name,
                     new_trait_value)
         except Exception as e:
             print(e, file=sys.stderr)
+            if not protected:
+                controller_widget.controller.unprotect_parameter(control_name)
         logger.debug(
             "'ListControlWidget' associated controller trait '{0}' has "
             "been updated with value '{1}'.".format(
@@ -689,13 +697,11 @@ class ListControlWidget(object):
             synchronize with the controller
         """
         # Delete the last inserted control
-        print('delete_list_item', controller_widget, control_name, control_instance)
+        #print('delete_list_item', controller_widget, control_name, control_instance)
 
         # inner controller for list items
         controller = control_instance.controller
-        print(controller.export_to_dict())
         keys = controller.user_traits().keys()
-        print(keys)
         keys = sorted([int(k) for k in keys])
         if not keys:
             print('no element to remove')
@@ -704,6 +710,9 @@ class ListControlWidget(object):
         last_key = str(keys[-1])
         controller.remove_trait(last_key)
 
+        # Update the list controller
+        if hasattr(control_instance, '_controller_connections'):
+            control_instance._controller_connections[0]()
         # notification will update the controller GUI.
 
     @staticmethod
