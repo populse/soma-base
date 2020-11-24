@@ -400,7 +400,8 @@ class Controller(HasTraits):
             trait = self.trait(trait_name)
             if trait_name == 'protected_parameters' and trait is None:
                 HasTraits.add_trait(self, 'protected_parameters',
-                                    traits.List(traits.Str(), default=[]))
+                                    traits.List(traits.Str(), default=[],
+                                                hidden=True))
                 trait = self.trait('protected_parameters')
             if trait is None and not isinstance(self, OpenKeyController):
                 raise KeyError(
@@ -506,7 +507,8 @@ class Controller(HasTraits):
             # add a 'protected_parameters' trait bypassing the
             # Controller.add_trait mechanism (it will not be a "user_trait")
             HasTraits.add_trait(self, 'protected_parameters',
-                                traits.List(traits.Str(), default=[]))
+                                traits.List(traits.Str(), default=[],
+                                            hidden=True))
             #self.locked_parameters = []
         protected = set(self.protected_parameters)
         protected.update([param])
