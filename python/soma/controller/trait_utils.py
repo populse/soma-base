@@ -291,9 +291,9 @@ def is_file_trait(trait, allow_dir=False, only_dirs=False):
     compound trait)
     """
     ids = trait_ids(trait)
-    if not only_dirs and 'File' in ids:
+    if not only_dirs and any(['File' in x for x in ids]):
         return True
-    if allow_dir and 'Directory' in ids:
+    if allow_dir and any(['Directory' in x for x in ids]):
         return True
     return False
 
