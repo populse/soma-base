@@ -353,6 +353,9 @@ class ListControlWidget(object):
             old_value = getattr(controller_widget.controller, control_name)
             new_trait_value += old_value[control_instance.max_items:]
 
+        updating = getattr(controller_widget, '_updating', False)
+        controller_widget._updating = True
+
         protected = controller_widget.controller.is_parameter_protected(
             control_name)
         # value is manually modified: protect it
@@ -367,6 +370,8 @@ class ListControlWidget(object):
             print(e, file=sys.stderr)
             if not protected:
                 controller_widget.controller.unprotect_parameter(control_name)
+
+        controller_widget._updating = updating
         logger.debug(
             "'ListControlWidget' associated controller trait '{0}' has "
             "been updated with value '{1}'.".format(
@@ -424,6 +429,10 @@ class ListControlWidget(object):
         except ReferenceError:
             # widget deleted in the meantime
             return
+        if getattr(controller_widget, '_updating', False):
+            return
+        controller_widget._updating = True
+
         # One callback has not been removed properly
         if control_name in controller_widget.controller.user_traits():
 
@@ -502,10 +511,16 @@ class ListControlWidget(object):
                 cls.connect(controller_widget, control_name, control_instance)
 
         else:
-            logger.error("oups")
+            logger.error("oups: control_name %s not in list controller "
+              "traits: %s"
+              % (control_name,
+                 repr(list(
+                    controller_widget.controller.user_traits().keys()))))
             # print cls, controller_widget, control_name, control_instance
             # print control_instance.controller
             # print control_instance.controller.user_traits()
+
+        controller_widget._updating = False
 
     @classmethod
     def connect(cls, controller_widget, control_name, control_instance):
@@ -672,6 +687,10 @@ class ListControlWidget(object):
         # Add the new trait to the inner list controller
         control_instance.controller.add_trait(
             trait_name, control_instance.inner_trait)
+        control_instance._updating = True
+        setattr(control_instance.controller, trait_name,
+                control_instance.inner_trait.default)
+        control_instance._updating = False
 
         # Update the list controller
         if hasattr(control_instance, '_controller_connections'):

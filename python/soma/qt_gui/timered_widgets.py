@@ -100,7 +100,8 @@ class QLineEditModificationTimer(QtCore.QObject):
     def close(self):
         self.stop()
         self.qLineEdit.textChanged.disconnect(self._userModification)
-        # self.qLineEdit.lostFocus.disconnect(self._noMoreUserModification)
+        # emit a last signal if modifs have been done
+        self.qLineEdit.lostFocus.disconnect(self._noMoreUserModification)
         self.qLineEdit.editingFinished.disconnect(self._noMoreUserModification)
         self.__timer.timeout.disconnect(self.modificationTimeout)
 
@@ -192,3 +193,7 @@ class TimeredQLineEdit(QPredefLineEdit):
     def close(self):
         self.__timer.close()
         super(TimeredQLineEdit, self).close()
+
+    def set_value(self, value):
+        super(TimeredQLineEdit, self).set_value(value)
+        self.userModification.emit()

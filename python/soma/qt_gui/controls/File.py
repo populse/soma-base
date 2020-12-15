@@ -248,6 +248,8 @@ class FileControlWidget(object):
                 controller_widget.controller.protect_parameter(control_name)
             # Set the control value to the controller associated trait
             try:
+                if new_trait_value not in (None, traits.Undefined):
+                    new_trait_value = six.text_type(new_trait_value)
                 setattr(controller_widget.controller, control_name,
                         new_trait_value)
                 fail = False
@@ -450,4 +452,4 @@ class FileControlWidget(object):
                 QtGui.QFileDialog.DontUseNativeDialog)
 
         # Set the selected file path to the path sub control
-        control_instance.path.setText(six.text_type(fname))
+        control_instance.path.set_value(six.text_type(fname))
