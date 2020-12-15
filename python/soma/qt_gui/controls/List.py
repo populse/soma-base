@@ -762,7 +762,10 @@ class ListControlWidget(object):
                     widget.format_c.currentText(),
                     widget.separator_c.currentText(), elem_trait)
                 if value is not None:
-                    setattr(parent_controller, control_name, value)
+                    try:
+                        setattr(parent_controller, control_name, value)
+                    except Exception as e:
+                        print(e)
                     done = True
                 else:
                     r = QtGui.QMessageBox.warning(
