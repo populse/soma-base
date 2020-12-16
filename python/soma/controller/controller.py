@@ -477,7 +477,7 @@ class Controller(HasTraits):
         former_traits = set(self._user_traits.sortedKeys)
         for t in traits_list:
             if t not in former_traits:
-                raise ValueError("parameter %s is not is Controller traits."
+                raise ValueError("parameter %s is not in Controller traits."
                                  % t)
         new_traits = list(traits_list)
         done = set(new_traits)
