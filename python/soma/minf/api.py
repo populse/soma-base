@@ -112,7 +112,11 @@ def minfFormat(source):
     opened_source_file = None
     try:
         if not hasattr(source, 'readline'):
-            opened_source_file = open(source)
+            if six.PY2:
+                opened_source_file = open(source)
+            else:
+                opened_source_file = open(source, encoding='UTF-8')
+                
             source = BufferAndFile(opened_source_file)
         elif not isinstance(source, BufferAndFile):
             source.seek(0)
