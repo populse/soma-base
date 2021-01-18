@@ -858,7 +858,11 @@ class ControllerWidget(QtGui.QWidget):
         control_groups = self._controls[old_key]
         control_labels = []
         for group_name, control in six.iteritems(control_groups):
-            control_labels += control[3]
+            print('group_name:', group_name, ', control:', control)
+            if isinstance(control[3], list):
+                control_labels += control[3]
+            else:
+                control_labels.append(control[3])
         key = None
         for control_label in control_labels:
             if hasattr(control_label, 'text'):
@@ -873,6 +877,7 @@ class ControllerWidget(QtGui.QWidget):
             return
 
         controller = self.controller
+        print('add trait on:', controller)
         trait = controller.trait(old_key)
         controller.add_trait(key, trait)
         setattr(controller, key, getattr(controller, old_key))

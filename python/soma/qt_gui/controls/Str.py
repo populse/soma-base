@@ -200,8 +200,9 @@ class StrControlWidget(object):
                 new_trait_value = six.text_type(new_trait_value)
 
             # value is manually modified: protect it
-            if getattr(controller_widget.controller, control_name) \
-                    != new_trait_value:
+            if (hasattr(controller_widget.controller, control_name)
+                    and getattr(controller_widget.controller, control_name)
+                        != new_trait_value):
                 controller_widget.controller.protect_parameter(control_name)
             # Set the control value to the controller associated trait
             setattr(controller_widget.controller, control_name,
