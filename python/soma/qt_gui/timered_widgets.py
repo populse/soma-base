@@ -93,7 +93,6 @@ class QLineEditModificationTimer(QtCore.QObject):
         self.__timer.setSingleShot(True)
         self.__internalModification = False
         self.qLineEdit.textChanged.connect(self._userModification)
-        # self.qLineEdit.lostFocus.connect(self._noMoreUserModification)
         self.qLineEdit.editingFinished.connect(self._noMoreUserModification)
         self.__timer.timeout.connect(self.modificationTimeout)
 
@@ -101,7 +100,6 @@ class QLineEditModificationTimer(QtCore.QObject):
         self.stop()
         self.qLineEdit.textChanged.disconnect(self._userModification)
         # emit a last signal if modifs have been done
-        self.qLineEdit.lostFocus.disconnect(self._noMoreUserModification)
         self.qLineEdit.editingFinished.disconnect(self._noMoreUserModification)
         self.__timer.timeout.disconnect(self.modificationTimeout)
 
