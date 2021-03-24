@@ -13,7 +13,7 @@ from __future__ import absolute_import
 import sys
 
 version_major = 5
-version_minor = 0
+version_minor = 1
 version_micro = 0
 version_extra = ''
 _version_major = version_major
