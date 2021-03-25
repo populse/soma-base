@@ -64,8 +64,8 @@ class SomaTestLoader(unittest.TestLoader):
             'BRAINVISA_TEST_RUN_DATA_DIR'
         )
         if args['test_mode'] == run_mode and not args['base_run_data_dir']:
-            msg = "test_run_data_dir must be set in environment when using " \
-                "'run' mode"
+            msg = ("BRAINVISA_TEST_RUN_DATA_DIR must be set in environment "
+                   "when using 'run' mode")
             raise ValueError(msg)
         return args
 
