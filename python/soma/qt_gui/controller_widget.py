@@ -557,12 +557,12 @@ class ControllerWidget(QtGui.QWidget):
             selected_traits = dict(
                 (trait_name, trait)
                 for trait_name, trait in six.iteritems(all_traits)
-                if trait.output == False)
+                if not trait.output)
         elif self.select_controls == "outputs":
             selected_traits = dict(
                 (trait_name, trait)
                 for trait_name, trait in six.iteritems(all_traits)
-                if trait.output == True)
+                if trait.output)
         else:
             raise Exception(
                 "Unrecognized 'select_controls' option '{0}'. Valid "
