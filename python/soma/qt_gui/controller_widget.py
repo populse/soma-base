@@ -130,6 +130,9 @@ class ScrollControllerWidget(Qt.QScrollArea):
         if hasattr(self, 'controller_widget'):
             self.controller_widget.userlevel = value
 
+    def update_controller(self):
+        self.controller_widget.update_controller()
+
 
 class DeletableLineEdit(QtGui.QWidget):
 
