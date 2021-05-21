@@ -214,7 +214,7 @@ class FileControlWidget(object):
 
     @staticmethod
     def update_controller(controller_widget, control_name, control_instance,
-                          reset_invalid_value, *args, **kwargs):
+                          reset_invalid_value=False, *args, **kwargs):
         """ Update one element of the controller.
 
         At the end the controller trait value with the name 'control_name'
