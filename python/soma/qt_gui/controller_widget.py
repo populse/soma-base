@@ -394,6 +394,12 @@ class ControllerWidget(QtGui.QWidget):
             # Update the controller widget values
             self.update_controller_widget()
 
+            # notifications should be removed when the GUI is destroyed
+            # (on C++ side)
+            self.destroyed.connect(
+                partial(self.static_disconnect, self.controller,
+                        self.update_controls, self.groups_vibility_changed,
+                        self._controls))
             # Update the connection status
             self.connected = True
 
@@ -416,6 +422,36 @@ class ControllerWidget(QtGui.QWidget):
                 label_control.buttonPressed.connect(hook2)
                 keys_connect[control_name] = (label_control, hook1, hook2)
         self._keys_connections = keys_connect
+
+    @staticmethod
+    def static_disconnect(controller, update_controls, groups_vibility_changed,
+                          controls, widget):
+        ''' disconnect() cannot be called at the right time.
+        static_disconnect() is called via a Qt signat when the widget is
+        destroyed. But the python part is already destroyed then.
+        '''
+        controller.on_trait_change(
+            update_controls, "user_traits_changed", remove=True)
+
+        # if 'visible_groups' is a trait, connect it to groups
+        if controller.trait('visible_groups'):
+            controller.on_trait_change(
+                groups_vibility_changed, 'visible_groups', remove=True)
+
+        # Go through all the controller widget controls
+        for control_name, control_groups in six.iteritems(controls):
+            for group_name, control in six.iteritems(control_groups):
+
+                # Unpack the control item
+                trait, control_class, control_instance, control_label \
+                    = control
+
+                # Call the current control specific disconnection method
+                try:
+                    control_class.disconnect(widget, control_name,
+                                             control_instance)
+                except Exception:
+                    pass  # probably something already deleted
 
     def disconnect(self):
         """ Disconnect the controller trait and the controller widget controls

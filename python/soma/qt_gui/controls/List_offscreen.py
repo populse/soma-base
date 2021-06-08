@@ -31,6 +31,7 @@ from soma.qt_gui.controller_widget import ControllerWidget, \
 from .List import ListControlWidget, ListController
 import traits.api as traits
 import weakref
+import sip
 
 # Qt import
 try:
@@ -350,6 +351,11 @@ class OffscreenListControlWidget(object):
         control_instance.controller_widget.disconnect()
 
         widget = control_instance.control_widget
+        if sip.isdeleted(widget):
+            OffscreenListControlWidget.disconnect(
+                controller_widget, control_name, control_instance)
+            return
+
         clayout = widget.control_widget.layout()
         owned_widgets = set()
         parent = widget

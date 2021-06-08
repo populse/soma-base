@@ -23,6 +23,7 @@ from soma.qt_gui.qt_backend import QtGui, QtCore
 from soma.utils.functiontools import SomaPartial
 from soma.qt_gui.timered_widgets import TimeredQLineEdit
 from soma.utils.weak_proxy import weak_proxy
+import sip
 
 
 class StrControlWidget(object):
@@ -237,6 +238,11 @@ class StrControlWidget(object):
             the instance of the controller widget control we want to
             synchronize with the controller
         """
+        if sip.isdeleted(control_instance.__init__.__self__):
+            StrControlWidget.disconnect(controller_widget, control_name,
+                                        control_instance)
+            return
+
         try:
             was_connected = control_instance.connected
         except ReferenceError:
@@ -338,6 +344,9 @@ class StrControlWidget(object):
             # Remove the controller hook from the 'control_name' trait
             controller_widget.controller.on_trait_change(
                 controller_hook, name=control_name, remove=True)
+
+            if sip.isdeleted(control_instance):
+                return
 
             # Remove the widget hook associated with the qt 'userModification'
             # signal

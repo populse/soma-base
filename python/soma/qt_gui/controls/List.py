@@ -30,6 +30,7 @@ import traits.api as traits
 import json
 import csv
 import sys
+import sip
 
 from six.moves import cStringIO as StringIO
 
@@ -432,6 +433,11 @@ class ListControlWidget(object):
         if getattr(controller_widget, '_updating', False):
             return
         controller_widget._updating = True
+
+        if sip.isdeleted(control_instance.__init__.__self__):
+            ListControlWidget.disconnect(controller_widget, control_name,
+                                         control_instance)
+            return
 
         # One callback has not been removed properly
         if control_name in controller_widget.controller.user_traits():

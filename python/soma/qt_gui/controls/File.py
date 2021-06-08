@@ -25,6 +25,7 @@ from soma.qt_gui import qt_backend
 from soma.utils.functiontools import SomaPartial
 from soma.qt_gui.timered_widgets import TimeredQLineEdit
 from soma.qt_gui.controller_widget import get_ref, weak_proxy
+import sip
 
 
 class FileControlWidget(object):
@@ -290,6 +291,11 @@ class FileControlWidget(object):
             the instance of the controller widget control we want to
             synchronize with the controller
         """
+        if sip.isdeleted(control_instance.__init__.__self__):
+            FileControlWidget.disconnect(controller_widget, control_name,
+                                         control_instance)
+            return
+
         # Get the trait value
         try:
             was_connected = control_instance.connected
@@ -392,6 +398,9 @@ class FileControlWidget(object):
             # Remove the controller hook from the 'control_name' trait
             controller_widget.controller.on_trait_change(
                 controller_hook, name=control_name, remove=True)
+
+            if sip.isdeleted(control_instance.__init__.__self__):
+                return
 
             # Remove the widget hook associated with the qt 'userModification'
             # signal

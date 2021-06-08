@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 from soma.qt_gui.qt_backend import QtGui, Qt
 from soma.utils.functiontools import SomaPartial
 from soma.qt_gui.controller_widget import weak_proxy
+import sip
 
 import traits.api as traits
 
@@ -183,11 +184,17 @@ class BoolControlWidget(object):
             the instance of the controller widget control we want to
             synchronize with the controller
         """
+        if sip.isdeleted(control_instance.__init__.__self__):
+            BoolControlWidget.disconnect(controller_widget, control_name,
+                                         control_instance)
+            return
+
         try:
             test = control_instance.setTristate
         except ReferenceError:
             # widget deleted in the meantime
             return
+
         # Get the trait value
         new_controller_value = getattr(
             controller_widget.controller, control_name, False)

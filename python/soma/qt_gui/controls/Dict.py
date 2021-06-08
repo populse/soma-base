@@ -26,6 +26,7 @@ from soma.controller import Controller
 from soma.sorted_dictionary import OrderedDict
 from soma.qt_gui.controller_widget import ControllerWidget, weak_proxy
 import traits.api as traits
+import sip
 
 # Qt import
 try:
@@ -305,6 +306,12 @@ class DictControlWidget(object):
         except ReferenceError:
             # widget deleted in the meantime
             return
+
+        if sip.isdeleted(control_instance.__init__.__self__):
+            DictControlWidget.disconnect(controller_widget, control_name,
+                                         control_instance)
+            return
+
         # One callback has not been removed properly
         if control_name in controller_widget.controller.user_traits():
 

@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 # Soma import
 from soma.qt_gui.qt_backend import QtCore, QtGui
 from .Str import StrControlWidget
+import sip
 
 
 class IntControlWidget(StrControlWidget):
@@ -164,6 +165,11 @@ class IntControlWidget(StrControlWidget):
             the instance of the controller widget control we want to
             synchronize with the controller
         """
+        if sip.isdeleted(control_instance.__init__.__self__):
+            IntControlWidget.disconnect(controller_widget, control_name,
+                                         control_instance)
+            return
+
         try:
             test = control_instance.setText
         except ReferenceError:
