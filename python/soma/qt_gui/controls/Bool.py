@@ -184,15 +184,15 @@ class BoolControlWidget(object):
             the instance of the controller widget control we want to
             synchronize with the controller
         """
-        if sip.isdeleted(control_instance.__init__.__self__):
-            BoolControlWidget.disconnect(controller_widget, control_name,
-                                         control_instance)
-            return
-
         try:
             test = control_instance.setTristate
         except ReferenceError:
             # widget deleted in the meantime
+            return
+
+        if sip.isdeleted(control_instance.__init__.__self__):
+            BoolControlWidget.disconnect(controller_widget, control_name,
+                                         control_instance)
             return
 
         # Get the trait value
@@ -293,7 +293,8 @@ class BoolControlWidget(object):
                 controller_hook, name=control_name, remove=True)
 
             # Remove the widget hook associated with the qt 'clicked' signal
-            control_instance.clicked.disconnect(widget_hook)
+            if not sip.isdeleted(control_instance.__init__.__self__):
+                control_instance.clicked.disconnect(widget_hook)
 
             # Delete the trait - control connection we just remove
             del control_instance._controller_connections

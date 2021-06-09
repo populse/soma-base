@@ -12,6 +12,7 @@ from __future__ import absolute_import
 import traits.api as traits
 # Soma import
 from soma.qt_gui.qt_backend import Qt
+import sip
 
 
 class NonEditableControlWidget(object):
@@ -151,6 +152,12 @@ class NonEditableControlWidget(object):
         except ReferenceError:
             # widget deleted in the meantime
             return
+
+        if sip.isdeleted(control_instance.__init__.__self__):
+            NonEditableControlWidget.disconnect(
+                controller_widget, control_name, control_instance)
+            return
+
         # Get the trait value
         new_controller_value = getattr(
             controller_widget.controller, control_name, traits.Undefined)

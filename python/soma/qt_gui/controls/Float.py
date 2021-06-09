@@ -166,16 +166,18 @@ class FloatControlWidget(StrControlWidget):
             the instance of the controller widget control we want to
             synchronize with the controller
         """
-        if sip.isdeleted(control_instance.__init__.__self__):
-            FloatControlWidget.disconnect(controller_widget, control_name,
-                                          control_instance)
-            return
 
         try:
             test = control_instance.setText
         except ReferenceError:
             # widget deleted in the meantime
             return
+
+        if sip.isdeleted(control_instance.__init__.__self__):
+            FloatControlWidget.disconnect(controller_widget, control_name,
+                                          control_instance)
+            return
+
         # Get the trait value
         new_controller_value = getattr(
             controller_widget.controller, control_name, traits.Undefined)

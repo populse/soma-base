@@ -19,6 +19,7 @@ from soma.qt_gui.qt_backend import QtGui, QtCore
 from soma.functiontools import partial
 from soma.qt_gui.controller_widget import ControllerWidget
 from soma.qt_gui.controller_widget import weak_proxy
+import sip
 
 # Qt import
 try:
@@ -269,6 +270,12 @@ class ControllerControlWidget(object):
         except ReferenceError:
             # widget deleted in the meantime
             return
+
+        if sip.isdeleted(control_instance.__init__.__self__):
+            ControllerControlWidget.disconnect(controller_widget, control_name,
+                                               control_instance)
+            return
+
         # One callback has not been removed properly
         control_instance.controller_widget.update_controller_widget()
 

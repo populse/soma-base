@@ -197,16 +197,17 @@ class EnumControlWidget(object):
             the instance of the controller widget control we want to
             synchronize with the controller
         """
-        if sip.isdeleted(control_instance.__init__.__self__):
-            EnumControlWidget.disconnect(controller_widget, control_name,
-                                         control_instance)
-            return
 
         # Get the controller trait value
         try:
             test = control_instance.setCurrentIndex
         except ReferenceError:
             # widget deleted in the meantime
+            return
+
+        if sip.isdeleted(control_instance.__init__.__self__):
+            EnumControlWidget.disconnect(controller_widget, control_name,
+                                         control_instance)
             return
 
         new_controller_value = getattr(
@@ -293,7 +294,8 @@ class EnumControlWidget(object):
 
         # Remove the widget hook associated with the qt 'activated'
         # signal
-        control_instance.activated.disconnect(widget_hook)
+        if not sip.isdeleted(control_instance.__init__.__self__):
+            control_instance.activated.disconnect(widget_hook)
 
         # Delete the trait - control connection we just remove
         del control_instance._controller_connections

@@ -238,16 +238,17 @@ class StrControlWidget(object):
             the instance of the controller widget control we want to
             synchronize with the controller
         """
-        if sip.isdeleted(control_instance.__init__.__self__):
-            StrControlWidget.disconnect(controller_widget, control_name,
-                                        control_instance)
-            return
-
         try:
             was_connected = control_instance.connected
         except ReferenceError:
             # widget deleted in the meantime
             return
+
+        if sip.isdeleted(control_instance.__init__.__self__):
+            StrControlWidget.disconnect(controller_widget, control_name,
+                                        control_instance)
+            return
+
         # Get the trait value
         new_controller_value = getattr(
             controller_widget.controller, control_name, traits.Undefined)
@@ -345,7 +346,7 @@ class StrControlWidget(object):
             controller_widget.controller.on_trait_change(
                 controller_hook, name=control_name, remove=True)
 
-            if sip.isdeleted(control_instance):
+            if sip.isdeleted(control_instance.__init__.__self__):
                 return
 
             # Remove the widget hook associated with the qt 'userModification'

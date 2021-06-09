@@ -23,6 +23,7 @@ from soma.utils.functiontools import SomaPartial
 from soma.utils.weak_proxy import weak_proxy
 from soma.controller.trait_utils import trait_ids
 import traits.api as traits
+import sip
 
 
 class CompoundControlWidget(object):
@@ -308,6 +309,12 @@ class CompoundControlWidget(object):
         except ReferenceError:
             # widget deleted in the meantime
             return
+
+        if sip.isdeleted(control_instance.__init__.__self__):
+            CompoundControlWidget.disconnect(controller_widget, control_name,
+                                             control_instance)
+            return
+
         if not hasattr(controller_widget.controller, control_name):
             return  # probably deleting this item
         # Get the controller trait value

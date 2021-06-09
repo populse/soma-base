@@ -291,10 +291,6 @@ class FileControlWidget(object):
             the instance of the controller widget control we want to
             synchronize with the controller
         """
-        if sip.isdeleted(control_instance.__init__.__self__):
-            FileControlWidget.disconnect(controller_widget, control_name,
-                                         control_instance)
-            return
 
         # Get the trait value
         try:
@@ -302,6 +298,12 @@ class FileControlWidget(object):
         except ReferenceError:
             # widget deleted in the meantime
             return
+
+        if sip.isdeleted(control_instance.__init__.__self__):
+            FileControlWidget.disconnect(controller_widget, control_name,
+                                         control_instance)
+            return
+
         new_controller_value = getattr(
             controller_widget.controller, control_name, "")
 
