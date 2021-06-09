@@ -1,0 +1,485 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>soma.minf.api &#8212; Soma-base 5.1.0 documentation</title>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css" />
+    
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">Soma-base 5.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">soma.minf.api</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for soma.minf.api</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+
+<span class="c1">#  This software and supporting documentation are distributed by</span>
+<span class="c1">#      Institut Federatif de Recherche 49</span>
+<span class="c1">#      CEA/NeuroSpin, Batiment 145,</span>
+<span class="c1">#      91191 Gif-sur-Yvette cedex</span>
+<span class="c1">#      France</span>
+<span class="c1">#</span>
+<span class="c1"># This software is governed by the CeCILL-B license under</span>
+<span class="c1"># French law and abiding by the rules of distribution of free software.</span>
+<span class="c1"># You can  use, modify and/or redistribute the software under the</span>
+<span class="c1"># terms of the CeCILL-B license as circulated by CEA, CNRS</span>
+<span class="c1"># and INRIA at the following URL &quot;http://www.cecill.info&quot;.</span>
+<span class="c1">#</span>
+<span class="c1"># As a counterpart to the access to the source code and  rights to copy,</span>
+<span class="c1"># modify and redistribute granted by the license, users are provided only</span>
+<span class="c1"># with a limited warranty  and the software&#39;s author,  the holder of the</span>
+<span class="c1"># economic rights,  and the successive licensors  have only  limited</span>
+<span class="c1"># liability.</span>
+<span class="c1">#</span>
+<span class="c1"># In this respect, the user&#39;s attention is drawn to the risks associated</span>
+<span class="c1"># with loading,  using,  modifying and/or developing or reproducing the</span>
+<span class="c1"># software by the user in light of its specific status of free software,</span>
+<span class="c1"># that may mean  that it is complicated to manipulate,  and  that  also</span>
+<span class="c1"># therefore means  that it is reserved for developers  and  experienced</span>
+<span class="c1"># professionals having in-depth computer knowledge. Users are therefore</span>
+<span class="c1"># encouraged to load and test the software&#39;s suitability as regards their</span>
+<span class="c1"># requirements in conditions enabling the security of their systems and/or</span>
+<span class="c1"># data to be ensured and,  more generally, to use and operate it in the</span>
+<span class="c1"># same conditions as regards security.</span>
+<span class="c1">#</span>
+<span class="c1"># The fact that you are presently reading this means that you have had</span>
+<span class="c1"># knowledge of the CeCILL-B license and that you accept its terms.</span>
+
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">This module contains all the framework necessary to customize, read and</span>
+<span class="sd">write minf files. A minf file is composed of structured data saved in</span>
+<span class="sd">XML or Python format. The minf framework provides tools to read and write</span>
+<span class="sd">minf files but also to customize the way Python objects are read an written.</span>
+
+<span class="sd">There are several submodules in this package but main functions and classes</span>
+<span class="sd">can be imported from :py:mod:`soma.minf.api`:</span>
+
+<span class="sd">- for reading minf files: :func:`iterateMinf`, :func:`readMinf`</span>
+<span class="sd">- for writing minf files: :func:`createMinfWriter`, :func:`writeMinf`</span>
+<span class="sd">- for customizing minf files: :func:`createReducerAndExpander`, :func:`registerClass`, :func:`registerClassAs`</span>
+
+<span class="sd">* author: Yann Cointepas</span>
+<span class="sd">* organization: NeuroSpin</span>
+<span class="sd">* license: `CeCILL B &lt;http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html&gt;`_</span>
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">print_function</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">absolute_import</span>
+<span class="n">__docformat__</span> <span class="o">=</span> <span class="s2">&quot;restructuredtext en&quot;</span>
+
+<span class="kn">import</span> <span class="nn">gzip</span>
+<span class="kn">import</span> <span class="nn">six</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+
+<span class="kn">from</span> <span class="nn">soma.translation</span> <span class="kn">import</span> <span class="n">translate</span> <span class="k">as</span> <span class="n">_</span>
+<span class="kn">from</span> <span class="nn">soma.minf.error</span> <span class="kn">import</span> <span class="n">MinfError</span>
+<span class="kn">from</span> <span class="nn">soma.bufferandfile</span> <span class="kn">import</span> <span class="n">BufferAndFile</span>
+<span class="kn">from</span> <span class="nn">soma.minf.reader</span> <span class="kn">import</span> <span class="n">MinfReader</span>
+<span class="kn">from</span> <span class="nn">soma.minf.writer</span> <span class="kn">import</span> <span class="n">MinfWriter</span>
+<span class="kn">from</span> <span class="nn">soma.minf.tree</span> <span class="kn">import</span> <span class="n">createReducerAndExpander</span><span class="p">,</span> <span class="n">registerClass</span><span class="p">,</span> \
+    <span class="n">registerClassAs</span><span class="p">,</span> <span class="n">createMinfExpander</span><span class="p">,</span> \
+    <span class="n">EndStructure</span><span class="p">,</span> <span class="n">MinfReducer</span><span class="p">,</span> <span class="n">MinfExpander</span><span class="p">,</span> \
+    <span class="n">listStructure</span><span class="p">,</span> <span class="n">dictStructure</span>
+<span class="kn">from</span> <span class="nn">soma.undefined</span> <span class="kn">import</span> <span class="n">Undefined</span>
+<span class="n">defaultReducer</span> <span class="o">=</span> <span class="n">MinfReducer</span><span class="o">.</span><span class="n">defaultReducer</span>
+
+
+<span class="c1">#------------------------------------------------------------------------------</span>
+<div class="viewcode-block" id="minfFormat"><a class="viewcode-back" href="../../../api.html#soma.minf.api.minfFormat">[docs]</a><span class="k">def</span> <span class="nf">minfFormat</span><span class="p">(</span><span class="n">source</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Return a pair (format, reduction) identifying the minf format. If</span>
+<span class="sd">    source is not a minf file, (None, None) is returned. Otherwise,</span>
+<span class="sd">    format is a string representing the format of the minf file: &#39;XML&#39; or</span>
+<span class="sd">    &#39;python&#39;. reduction is the name of the reducer used to write the minf</span>
+<span class="sd">    file or None if format is &#39;python&#39;.</span>
+
+<span class="sd">    Example:</span>
+
+<span class="sd">    ::</span>
+
+<span class="sd">      from soma.minf.api import minfFormat</span>
+<span class="sd">      format, reduction = minfFormat(&#39;/home/me/test.minf&#39;)</span>
+
+<span class="sd">    If source is a :class:`BufferAndFile` instance, this call behave as if nothing</span>
+<span class="sd">    has been read from the file. This can be useful if you have an opened file</span>
+<span class="sd">    that cannot be seeked backward:</span>
+
+<span class="sd">    Example:</span>
+
+<span class="sd">    ::</span>
+
+<span class="sd">      from soma.bufferandfile import BufferAndFile</span>
+<span class="sd">      from soma.minf.api import minfFormat, readMinf</span>
+
+<span class="sd">      bf = BufferAndFile(stream_file_object)</span>
+<span class="sd">      format, reduction = minfFormat(bf)</span>
+<span class="sd">      if format is not None:</span>
+<span class="sd">        minfContent = readMinf(bf)</span>
+
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    source: string</span>
+<span class="sd">      Input file name or file object. If it is a file name, it is</span>
+<span class="sd">      opened with open(source).</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">opened_source_file</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="s1">&#39;readline&#39;</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">six</span><span class="o">.</span><span class="n">PY2</span><span class="p">:</span>
+                <span class="n">opened_source_file</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">opened_source_file</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;UTF-8&#39;</span><span class="p">)</span>
+                
+            <span class="n">source</span> <span class="o">=</span> <span class="n">BufferAndFile</span><span class="p">(</span><span class="n">opened_source_file</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">BufferAndFile</span><span class="p">):</span>
+            <span class="n">source</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">source</span> <span class="o">=</span> <span class="n">BufferAndFile</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
+
+        <span class="c1"># Check first non white character to see if the minf file is XML or not</span>
+        <span class="n">start</span> <span class="o">=</span> <span class="n">source</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">start</span> <span class="o">==</span> <span class="s1">&#39;attri&#39;</span><span class="p">:</span>
+            <span class="n">source</span><span class="o">.</span><span class="n">unread</span><span class="p">(</span><span class="n">start</span><span class="p">)</span>
+            <span class="k">return</span> <span class="p">(</span><span class="s1">&#39;python&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">start</span> <span class="o">!=</span> <span class="s1">&#39;&lt;?xml&#39;</span><span class="p">:</span>
+            <span class="c1"># Try gzip compressed file</span>
+            <span class="n">gzipSource</span> <span class="o">=</span> <span class="n">source</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
+            <span class="n">gzipSource</span><span class="o">.</span><span class="n">unread</span><span class="p">(</span><span class="n">start</span><span class="p">)</span>
+            <span class="n">gunzipSource</span> <span class="o">=</span> <span class="n">gzip</span><span class="o">.</span><span class="n">GzipFile</span><span class="p">(</span><span class="n">source</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">start</span> <span class="o">=</span> <span class="n">gunzipSource</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">IOError</span><span class="p">:</span>
+                <span class="n">start</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+            <span class="k">if</span> <span class="n">start</span> <span class="o">!=</span> <span class="s1">&#39;&lt;?xml&#39;</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">MinfError</span><span class="p">(</span><span class="n">_</span><span class="p">(</span><span class="s1">&#39;Invalid minf file: </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">)</span> <span class="o">%</span> <span class="p">(</span><span class="n">source</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="p">))</span>
+            <span class="n">source</span><span class="o">.</span><span class="n">change_file</span><span class="p">(</span><span class="n">gunzipSource</span><span class="p">)</span>
+            <span class="n">source</span><span class="o">.</span><span class="n">unread</span><span class="p">(</span><span class="n">start</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">source</span><span class="o">.</span><span class="n">unread</span><span class="p">(</span><span class="n">start</span><span class="p">)</span>
+
+        <span class="n">r</span> <span class="o">=</span> <span class="n">MinfReader</span><span class="o">.</span><span class="n">createReader</span><span class="p">(</span><span class="s1">&#39;XML&#39;</span><span class="p">)</span>
+        <span class="n">reduction</span><span class="p">,</span> <span class="n">buffer</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">reduction</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
+        <span class="n">source</span><span class="o">.</span><span class="n">unread</span><span class="p">(</span><span class="n">buffer</span><span class="p">)</span>
+        <span class="k">return</span><span class="p">(</span><span class="s1">&#39;XML&#39;</span><span class="p">,</span> <span class="n">reduction</span><span class="p">)</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">opened_source_file</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">opened_source_file</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
+
+<span class="c1">#------------------------------------------------------------------------------</span>
+<span class="k">def</span> <span class="nf">_setTarget</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">source</span><span class="p">):</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="kn">from</span> <span class="nn">soma.signature.api</span> <span class="kn">import</span> <span class="n">HasSignature</span>
+    <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+        <span class="k">class</span> <span class="nc">HasSignature</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+            <span class="k">pass</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="n">target</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">HasSignature</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">six</span><span class="o">.</span><span class="n">iteritems</span><span class="p">(</span><span class="n">source</span><span class="p">):</span>
+                <span class="n">attrTarget</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">Undefined</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">attrTarget</span> <span class="ow">is</span> <span class="n">Undefined</span><span class="p">:</span>
+                    <span class="nb">setattr</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">_setTarget</span><span class="p">(</span><span class="n">attrTarget</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+                        <span class="nb">setattr</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">True</span>
+    <span class="k">return</span> <span class="kc">False</span>
+
+
+<span class="c1">#------------------------------------------------------------------------------</span>
+<div class="viewcode-block" id="iterateMinf"><a class="viewcode-back" href="../../../api.html#soma.minf.api.iterateMinf">[docs]</a><span class="k">def</span> <span class="nf">iterateMinf</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">targets</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">stop_on_error</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exceptions</span><span class="o">=</span><span class="p">[]):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Returns an iterator over all objects stored in a minf file.</span>
+
+<span class="sd">    Example:</span>
+
+<span class="sd">    ::</span>
+
+<span class="sd">      from soma.minf.api import iterateMinf</span>
+
+<span class="sd">      for item in iterateMinf(&#39;test.minf&#39;):</span>
+<span class="sd">        print(repr(item))</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    source: string</span>
+<span class="sd">      Input file name or file object. If it is a file name, it is</span>
+<span class="sd">      opened with C{open( source )}.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">if</span> <span class="n">targets</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">targets</span> <span class="o">=</span> <span class="nb">iter</span><span class="p">(</span><span class="n">targets</span><span class="p">)</span>
+
+    <span class="n">initial_source</span> <span class="o">=</span> <span class="n">source</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">initial_source</span><span class="p">,</span> <span class="s1">&#39;readline&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">six</span><span class="o">.</span><span class="n">PY2</span><span class="p">:</span>
+        <span class="c1"># in python3 the encoding of a file should be specified when opening</span>
+        <span class="c1"># it: it cannot be changed afterwards. So in python3 we cannot read</span>
+        <span class="c1"># the encoding within the file (for instance in a XML file).</span>
+        <span class="c1"># This is completely silly, but here it is...</span>
+        <span class="c1"># So we just have to try several encodings...</span>
+        <span class="n">try_encodings</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;UTF-8&#39;</span><span class="p">,</span> <span class="s1">&#39;latin1&#39;</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">try_encodings</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span>
+
+    <span class="k">for</span> <span class="n">encoding</span> <span class="ow">in</span> <span class="n">try_encodings</span><span class="p">:</span>
+        <span class="n">opened_source_file</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">initial_source</span><span class="p">,</span> <span class="s1">&#39;readline&#39;</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">six</span><span class="o">.</span><span class="n">PY2</span><span class="p">:</span>
+                <span class="n">opened_source_file</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">initial_source</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">opened_source_file</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">initial_source</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="n">encoding</span><span class="p">)</span>
+            <span class="n">source</span> <span class="o">=</span> <span class="n">BufferAndFile</span><span class="p">(</span><span class="n">opened_source_file</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">BufferAndFile</span><span class="p">):</span>
+            <span class="n">source</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">source</span> <span class="o">=</span> <span class="n">BufferAndFile</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># Check first non white character to see if the minf file is XML or not</span>
+            <span class="n">start</span> <span class="o">=</span> <span class="n">source</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+            <span class="n">source</span><span class="o">.</span><span class="n">unread</span><span class="p">(</span><span class="n">start</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">start</span> <span class="o">==</span> <span class="s1">&#39;attri&#39;</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="kn">import</span> <span class="nn">numpy</span>
+                    <span class="n">d</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;nan&#39;</span><span class="p">:</span> <span class="n">numpy</span><span class="o">.</span><span class="n">nan</span><span class="p">}</span>
+                <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                    <span class="n">d</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;nan&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">}</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">six</span><span class="o">.</span><span class="n">exec_</span><span class="p">(</span><span class="n">source</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\r\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">),</span> <span class="n">d</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                    <span class="n">x</span> <span class="o">=</span> <span class="n">source</span>
+                    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="s1">&#39;_BufferAndFile__file&#39;</span><span class="p">):</span>
+                        <span class="n">x</span> <span class="o">=</span> <span class="n">source</span><span class="o">.</span><span class="n">_BufferAndFile__file</span>
+                    <span class="n">x</span> <span class="o">=</span> <span class="s1">&#39;Error in iterateMinf while reading &#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;: &#39;</span>
+                    <span class="n">msg</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="n">e</span><span class="o">.</span><span class="n">message</span>
+                    <span class="c1"># e.message = msg</span>
+                    <span class="c1"># e.args = ( x + e.args[0], ) + e.args[1:]</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+                    <span class="k">raise</span>
+                <span class="n">minf</span> <span class="o">=</span> <span class="n">d</span><span class="p">[</span><span class="s1">&#39;attributes&#39;</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">targets</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">result</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">targets</span><span class="p">)</span>
+                    <span class="n">_setTarget</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">minf</span><span class="p">)</span>
+                    <span class="k">yield</span> <span class="n">result</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">yield</span> <span class="n">minf</span>
+                <span class="k">return</span>
+            <span class="k">elif</span> <span class="n">start</span> <span class="o">!=</span> <span class="s1">&#39;&lt;?xml&#39;</span><span class="p">:</span>
+                <span class="c1"># Try gzip compressed file</span>
+                <span class="n">gzSource</span> <span class="o">=</span> <span class="n">gzip</span><span class="o">.</span><span class="n">GzipFile</span><span class="p">(</span><span class="n">source</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">gzSource</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span> <span class="o">!=</span> <span class="s1">&#39;&lt;?xml&#39;</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="n">MinfError</span><span class="p">(</span><span class="n">_</span><span class="p">(</span><span class="s1">&#39;Invalid minf file: </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">)</span>
+                                    <span class="o">%</span> <span class="p">(</span><span class="n">source</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="p">))</span>
+                <span class="n">source</span> <span class="o">=</span> <span class="n">BufferAndFile</span><span class="p">(</span><span class="n">gzSource</span><span class="p">)</span>
+                <span class="n">source</span><span class="o">.</span><span class="n">unread</span><span class="p">(</span><span class="s1">&#39;&lt;?xml&#39;</span><span class="p">)</span>
+
+            <span class="n">r</span> <span class="o">=</span> <span class="n">MinfReader</span><span class="o">.</span><span class="n">createReader</span><span class="p">(</span><span class="s1">&#39;XML&#39;</span><span class="p">)</span>
+            <span class="n">iterator</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">nodeIterator</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
+            <span class="n">minfNode</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">iterator</span><span class="p">)</span>
+            <span class="n">expander</span> <span class="o">=</span> <span class="n">createMinfExpander</span><span class="p">(</span><span class="n">minfNode</span><span class="o">.</span><span class="n">attributes</span><span class="p">[</span><span class="s1">&#39;reduction&#39;</span><span class="p">])</span>
+            <span class="n">count</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">for</span> <span class="n">nodeItem</span> <span class="ow">in</span> <span class="n">iterator</span><span class="p">:</span>
+                <span class="n">count</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">nodeItem</span><span class="p">,</span> <span class="n">EndStructure</span><span class="p">):</span>
+                    <span class="k">break</span>
+                <span class="n">target</span> <span class="o">=</span> <span class="kc">None</span>
+                <span class="k">if</span> <span class="n">targets</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="n">target</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">targets</span><span class="p">)</span>
+                    <span class="k">except</span> <span class="ne">StopIteration</span><span class="p">:</span>
+                        <span class="n">targets</span> <span class="o">=</span> <span class="kc">None</span>
+                <span class="k">yield</span> <span class="n">expander</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">iterator</span><span class="p">,</span> <span class="n">nodeItem</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="n">target</span><span class="p">,</span>
+                                      <span class="n">stop_on_error</span><span class="o">=</span><span class="n">stop_on_error</span><span class="p">,</span>
+                                      <span class="n">exceptions</span><span class="o">=</span><span class="n">exceptions</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">UnicodeDecodeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">encoding</span> <span class="o">==</span> <span class="n">try_encodings</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
+                <span class="k">raise</span>
+            <span class="k">continue</span>
+        <span class="k">finally</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">opened_source_file</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">opened_source_file</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="k">break</span> <span class="c1"># no error, don&#39;t process next encoding</span></div>
+
+<span class="c1">#------------------------------------------------------------------------------</span>
+
+
+<div class="viewcode-block" id="readMinf"><a class="viewcode-back" href="../../../api.html#soma.minf.api.readMinf">[docs]</a><span class="k">def</span> <span class="nf">readMinf</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">targets</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">stop_on_error</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exceptions</span><span class="o">=</span><span class="p">[]):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Entirerly reads a minf file and returns its content in a tuple.</span>
+<span class="sd">    Equivalent to tuple(iterateMinf(source)).</span>
+
+<span class="sd">    see: :func`iterateMinf`</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">iterateMinf</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">targets</span><span class="o">=</span><span class="n">targets</span><span class="p">,</span>
+                             <span class="n">stop_on_error</span><span class="o">=</span><span class="n">stop_on_error</span><span class="p">,</span>
+                             <span class="n">exceptions</span><span class="o">=</span><span class="n">exceptions</span><span class="p">))</span></div>
+
+
+<span class="c1">#------------------------------------------------------------------------------</span>
+<div class="viewcode-block" id="createMinfWriter"><a class="viewcode-back" href="../../../api.html#soma.minf.api.createMinfWriter">[docs]</a><span class="k">def</span> <span class="nf">createMinfWriter</span><span class="p">(</span><span class="n">destFile</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s1">&#39;XML&#39;</span><span class="p">,</span> <span class="n">reducer</span><span class="o">=</span><span class="s1">&#39;minf_2.0&#39;</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Create a writer for storing objects in destFile.</span>
+<span class="sd">    Example:</span>
+
+<span class="sd">    ::</span>
+
+<span class="sd">      from soma.minf.api import createMinfWriter</span>
+<span class="sd">      writer = createMinfWriter( &#39;/tmp/test.minf&#39; )</span>
+<span class="sd">      writer.write( &#39;A string&#39; )</span>
+<span class="sd">      writer.write( { &#39;A dict key&#39;: [ &#39;A list&#39;, &#39;with two elements&#39; ] } )</span>
+<span class="sd">      writer.close()</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    format: string</span>
+<span class="sd">      name of the format to write.</span>
+<span class="sd">    reducer: string</span>
+<span class="sd">      name of the reducer to use (see L{soma.minf.tree} for</span>
+<span class="sd">      more information about reducers).</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">return</span> <span class="n">MinfWriter</span><span class="o">.</span><span class="n">createWriter</span><span class="p">(</span><span class="n">destFile</span><span class="p">,</span> <span class="nb">format</span><span class="p">,</span> <span class="n">reducer</span><span class="p">)</span></div>
+
+
+<span class="c1">#------------------------------------------------------------------------------</span>
+<div class="viewcode-block" id="writeMinf"><a class="viewcode-back" href="../../../api.html#soma.minf.api.writeMinf">[docs]</a><span class="k">def</span> <span class="nf">writeMinf</span><span class="p">(</span><span class="n">destFile</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s1">&#39;XML&#39;</span><span class="p">,</span> <span class="n">reducer</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Creates a minf writer with :func:`createMinfWriter` and write the content</span>
+<span class="sd">    of args in it.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    destFile:</span>
+<span class="sd">      see :func:`createMinfWriter`</span>
+<span class="sd">    args: sequence or iterator</span>
+<span class="sd">      series of values to write</span>
+<span class="sd">    format:</span>
+<span class="sd">      see :func:`createMinfWriter`</span>
+<span class="sd">    reducer:</span>
+<span class="sd">      see :func:`createMinfWriter`</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">it</span> <span class="o">=</span> <span class="nb">iter</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">firstItem</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">it</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">StopIteration</span><span class="p">:</span>
+        <span class="n">firstItem</span> <span class="o">=</span> <span class="n">Undefined</span>
+    <span class="k">if</span> <span class="n">reducer</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">firstItem</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">Undefined</span><span class="p">:</span>
+            <span class="n">reducer</span> <span class="o">=</span> <span class="n">MinfReducer</span><span class="o">.</span><span class="n">defaultReducer</span><span class="p">(</span><span class="n">firstItem</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">reducer</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">reducer</span> <span class="o">=</span> <span class="s1">&#39;minf_2.0&#39;</span>
+
+    <span class="n">writer</span> <span class="o">=</span> <span class="n">createMinfWriter</span><span class="p">(</span><span class="n">destFile</span><span class="p">,</span> <span class="nb">format</span><span class="p">,</span> <span class="n">reducer</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">firstItem</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">Undefined</span><span class="p">:</span>
+        <span class="n">writer</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">firstItem</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">it</span><span class="p">:</span>
+            <span class="n">writer</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+    <span class="n">writer</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
+
+
+<span class="c1">#------------------------------------------------------------------------------</span>
+<span class="c1"># xml_reader and xml_writer are not used directly but importing</span>
+<span class="c1"># them register the XML minf format</span>
+<span class="kn">import</span> <span class="nn">soma.minf.xml_reader</span>
+<span class="kn">import</span> <span class="nn">soma.minf.xml_writer</span>
+
+
+<span class="c1">#------------------------------------------------------------------------------</span>
+<span class="kn">from</span> <span class="nn">soma.minf.xhtml</span> <span class="kn">import</span> <span class="n">XHTML</span>
+<span class="kn">from</span> <span class="nn">soma.uuid</span> <span class="kn">import</span> <span class="n">Uuid</span>
+
+<span class="n">minf_2_0_reducer</span> <span class="o">=</span> <span class="n">MinfReducer</span><span class="p">(</span><span class="s1">&#39;minf_2.0&#39;</span><span class="p">)</span>
+<span class="n">minf_2_0_reducer</span><span class="o">.</span><span class="n">registerAtomType</span><span class="p">(</span><span class="kc">None</span><span class="o">.</span><span class="vm">__class__</span><span class="p">)</span>
+<span class="n">minf_2_0_reducer</span><span class="o">.</span><span class="n">registerAtomType</span><span class="p">(</span><span class="nb">bool</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">six</span><span class="o">.</span><span class="n">integer_types</span><span class="p">:</span>
+    <span class="n">minf_2_0_reducer</span><span class="o">.</span><span class="n">registerAtomType</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+<span class="n">minf_2_0_reducer</span><span class="o">.</span><span class="n">registerAtomType</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+<span class="n">minf_2_0_reducer</span><span class="o">.</span><span class="n">registerAtomType</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span>
+<span class="n">minf_2_0_reducer</span><span class="o">.</span><span class="n">registerAtomType</span><span class="p">(</span><span class="n">six</span><span class="o">.</span><span class="n">text_type</span><span class="p">)</span>  <span class="c1"># unicode in Python 2</span>
+<span class="n">minf_2_0_reducer</span><span class="o">.</span><span class="n">registerAtomType</span><span class="p">(</span><span class="n">XHTML</span><span class="p">)</span>
+<span class="n">minf_2_0_reducer</span><span class="o">.</span><span class="n">registerClass</span><span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="n">minf_2_0_reducer</span><span class="o">.</span><span class="n">sequenceReducer</span><span class="p">)</span>
+<span class="n">minf_2_0_reducer</span><span class="o">.</span><span class="n">registerClass</span><span class="p">(</span><span class="nb">tuple</span><span class="p">,</span> <span class="n">minf_2_0_reducer</span><span class="o">.</span><span class="n">sequenceReducer</span><span class="p">)</span>
+<span class="n">minf_2_0_reducer</span><span class="o">.</span><span class="n">registerClass</span><span class="p">(</span><span class="nb">dict</span><span class="p">,</span> <span class="n">minf_2_0_reducer</span><span class="o">.</span><span class="n">dictReducer</span><span class="p">)</span>
+
+<span class="n">minf_2_0_expander</span> <span class="o">=</span> <span class="n">MinfExpander</span><span class="p">(</span><span class="s1">&#39;minf_2.0&#39;</span><span class="p">)</span>
+<span class="n">minf_2_0_expander</span><span class="o">.</span><span class="n">registerStructure</span><span class="p">(</span>
+    <span class="n">listStructure</span><span class="p">,</span> <span class="n">minf_2_0_expander</span><span class="o">.</span><span class="n">sequenceExpander</span><span class="p">)</span>
+<span class="n">minf_2_0_expander</span><span class="o">.</span><span class="n">registerStructure</span><span class="p">(</span>
+    <span class="n">dictStructure</span><span class="p">,</span> <span class="n">minf_2_0_expander</span><span class="o">.</span><span class="n">dictExpander</span><span class="p">)</span>
+
+<span class="n">registerClass</span><span class="p">(</span><span class="s1">&#39;minf_2.0&#39;</span><span class="p">,</span> <span class="n">Uuid</span><span class="p">,</span> <span class="s1">&#39;Uuid&#39;</span><span class="p">)</span>
+
+
+<span class="c1">#------------------------------------------------------------------------------</span>
+<span class="n">minf_1_0_reducer</span> <span class="o">=</span> <span class="n">MinfReducer</span><span class="p">(</span><span class="s1">&#39;minf_1.0&#39;</span><span class="p">,</span> <span class="p">(</span><span class="s1">&#39;minf_2.0&#39;</span><span class="p">,</span> <span class="p">))</span>
+<span class="n">minf_1_0_expander</span> <span class="o">=</span> <span class="n">MinfExpander</span><span class="p">(</span><span class="s1">&#39;minf_1.0&#39;</span><span class="p">,</span> <span class="p">(</span><span class="s1">&#39;minf_2.0&#39;</span><span class="p">,</span> <span class="p">))</span>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">Soma-base 5.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">soma.minf.api</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2011, IFR49.org.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.5.4.
+    </div>
+  </body>
+</html>

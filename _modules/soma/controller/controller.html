@@ -1,0 +1,880 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>soma.controller.controller &#8212; Soma-base 5.1.0 documentation</title>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css" />
+    
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">Soma-base 5.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">soma.controller.controller</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for soma.controller.controller</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="c1">#</span>
+<span class="c1"># SOMA - Copyright (C) CEA, 2015</span>
+<span class="c1"># Distributed under the terms of the CeCILL-B license, as published by</span>
+<span class="c1"># the CEA-CNRS-INRIA. Refer to the LICENSE file or to</span>
+<span class="c1"># http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html</span>
+<span class="c1"># for details.</span>
+<span class="c1">#</span>
+
+<span class="c1"># System import</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">absolute_import</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">six</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+
+<span class="c1"># Define the logger</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="c1"># Trait import</span>
+<span class="kn">from</span> <span class="nn">traits.api</span> <span class="kn">import</span> <span class="n">HasTraits</span><span class="p">,</span> <span class="n">Event</span><span class="p">,</span> <span class="n">CTrait</span><span class="p">,</span> <span class="n">Instance</span><span class="p">,</span> <span class="n">Undefined</span><span class="p">,</span> \
+    <span class="n">TraitType</span><span class="p">,</span> <span class="n">TraitError</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Set</span><span class="p">,</span> <span class="n">TraitInstance</span><span class="p">,</span> <span class="n">TraitCoerceType</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> \
+    <span class="n">TraitHandler</span>
+<span class="kn">import</span> <span class="nn">traits.api</span> <span class="k">as</span> <span class="nn">traits</span>
+<span class="c1"># Soma import</span>
+<span class="kn">from</span> <span class="nn">soma.sorted_dictionary</span> <span class="kn">import</span> <span class="n">SortedDictionary</span><span class="p">,</span> <span class="n">OrderedDict</span>
+<span class="kn">from</span> <span class="nn">soma.controller.trait_utils</span> <span class="kn">import</span> <span class="n">_type_to_trait_id</span>
+
+
+<div class="viewcode-block" id="Controller"><a class="viewcode-back" href="../../../api.html#soma.controller.controller.Controller">[docs]</a><span class="k">class</span> <span class="nc">Controller</span><span class="p">(</span><span class="n">HasTraits</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot; A Controller contains some traits: attributes typing and observer</span>
+<span class="sd">    (callback) pattern.</span>
+
+<span class="sd">    The class provides some methods to add/remove/inspect user defined traits.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    `user_traits_changed` : Event</span>
+<span class="sd">        single event that can be sent when several traits changes. This event</span>
+<span class="sd">        has to be triggered explicitely to take into account changes due to</span>
+<span class="sd">        call(s) to add_trait or remove_trait.</span>
+
+<span class="sd">    Methods</span>
+<span class="sd">    -------</span>
+<span class="sd">    user_traits</span>
+<span class="sd">    is_user_trait</span>
+<span class="sd">    add_trait</span>
+<span class="sd">    remove_trait</span>
+<span class="sd">    _clone_trait</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># This event is necessary because there is no event when a trait is</span>
+    <span class="c1"># removed with remove_trait and because it is sometimes better to send</span>
+    <span class="c1"># a single event when several traits changes are done (especially</span>
+    <span class="c1"># when GUI is updated on real time). This event have to be triggered</span>
+    <span class="c1"># explicitely to take into account changes due to call(s) to</span>
+    <span class="c1"># add_trait or remove_trait.</span>
+    <span class="n">user_traits_changed</span> <span class="o">=</span> <span class="n">Event</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Initilaize the Controller class.</span>
+
+<span class="sd">        During the class initialization create a class attribute</span>
+<span class="sd">        &#39;_user_traits&#39; that contains all the class traits and instance traits</span>
+<span class="sd">        defined by user (i.e.  the traits that are not automatically</span>
+<span class="sd">        defined by HasTraits or Controller). We can access this class</span>
+<span class="sd">        parameter with the &#39;user_traits&#39; method.</span>
+
+<span class="sd">        If user trait parameters are defined directly on derived class, this</span>
+<span class="sd">        procedure call the &#39;add_trait&#39; method in order to not share</span>
+<span class="sd">        user traits between instances.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Inheritance</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Controller</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="c1"># Create a sorted dictionnary with user parameters</span>
+        <span class="c1"># The dictionary order correspond to the definition order</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_user_traits</span> <span class="o">=</span> <span class="n">SortedDictionary</span><span class="p">()</span>
+
+        <span class="c1"># Get all the class traits</span>
+        <span class="n">class_traits</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">class_traits</span><span class="p">()</span>
+
+        <span class="c1"># If some traits are defined on the controller, create a list</span>
+        <span class="c1"># with definition ordered trait name. These names will correspond</span>
+        <span class="c1"># to user trait sorted dictionary keys</span>
+        <span class="k">if</span> <span class="n">class_traits</span><span class="p">:</span>
+            
+            <span class="n">sorted_names</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">trait</span> <span class="ow">in</span> <span class="n">six</span><span class="o">.</span><span class="n">iteritems</span><span class="p">(</span><span class="n">class_traits</span><span class="p">):</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_user_trait</span><span class="p">(</span><span class="n">trait</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">trait</span><span class="p">,</span> <span class="s1">&#39;order&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span>
+                        <span class="c1"># Only if trait.order exists AND trait.order is no None</span>
+                        <span class="n">sorted_names</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="nb">getattr</span><span class="p">(</span><span class="n">trait</span><span class="p">,</span> <span class="s1">&#39;order&#39;</span><span class="p">),</span> <span class="n">name</span><span class="p">))</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">sorted_names</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">name</span><span class="p">))</span>
+                    
+            <span class="n">sorted_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">sorted_name</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">sorted_name</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">sorted_names</span><span class="p">)]</span>
+
+            <span class="c1"># Go through all trait names that have been ordered</span>
+            <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">sorted_names</span><span class="p">:</span>
+
+                <span class="c1"># If the trait is defined on the class, need to clone</span>
+                <span class="c1"># the class trait and add the cloned trait to the instance.</span>
+                <span class="c1"># This step avoids us to share trait objects between</span>
+                <span class="c1"># instances.</span>
+                <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">__base_traits__</span><span class="p">:</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Add class parameter &#39;</span><span class="si">{0}</span><span class="s2">&#39;.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
+                    <span class="n">trait</span> <span class="o">=</span> <span class="n">class_traits</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">add_trait</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_clone_trait</span><span class="p">(</span><span class="n">trait</span><span class="p">))</span>
+
+                <span class="c1"># If the trait is defined on the instance, just</span>
+                <span class="c1"># add the user parameter to the &#39;_user_traits&#39; instance</span>
+                <span class="c1"># parameter</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Add instance parameter &#39;</span><span class="si">{0}</span><span class="s2">&#39;.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_user_traits</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">class_traits</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+
+    <span class="c1">#</span>
+    <span class="c1"># Private methods</span>
+    <span class="c1">#</span>
+
+<div class="viewcode-block" id="Controller._clone_trait"><a class="viewcode-back" href="../../../api.html#soma.controller.controller.Controller._clone_trait">[docs]</a>    <span class="k">def</span> <span class="nf">_clone_trait</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">clone</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Creates a clone of a specific trait (ie. the same trait</span>
+<span class="sd">        type but different ids).</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        clone: CTrait (mandatory)</span>
+<span class="sd">            the input trait to clone.</span>
+<span class="sd">        metadata: dict (opional, default None)</span>
+<span class="sd">            some metadata than can be added to the trait __dict__.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        trait: CTrait</span>
+<span class="sd">            the cloned input trait.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Create an empty trait</span>
+        <span class="n">trait</span> <span class="o">=</span> <span class="n">CTrait</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+        <span class="c1"># we need a CTrait, not a TraitType</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">clone</span><span class="p">,</span> <span class="n">TraitType</span><span class="p">):</span>
+            <span class="n">clone</span> <span class="o">=</span> <span class="n">clone</span><span class="o">.</span><span class="n">as_ctrait</span><span class="p">()</span>
+
+        <span class="c1"># Clone the input trait in the empty trait structure</span>
+        <span class="n">trait</span><span class="o">.</span><span class="n">clone</span><span class="p">(</span><span class="n">clone</span><span class="p">)</span>
+
+        <span class="c1"># Set the input trait __dict__ elements to the cloned trait</span>
+        <span class="c1"># __dict__</span>
+        <span class="k">if</span> <span class="n">clone</span><span class="o">.</span><span class="vm">__dict__</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">trait</span><span class="o">.</span><span class="vm">__dict__</span> <span class="o">=</span> <span class="n">clone</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+        <span class="c1"># Update the cloned trait __dict__ if necessary</span>
+        <span class="k">if</span> <span class="n">metadata</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">trait</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">metadata</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">trait</span></div>
+
+    <span class="k">def</span> <span class="nf">_propagate_optional_parameter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">trait</span><span class="p">,</span> <span class="n">optional</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Get the trait class name</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">trait</span><span class="p">,</span> <span class="s1">&#39;handler&#39;</span><span class="p">):</span>
+            <span class="n">handler</span> <span class="o">=</span> <span class="n">trait</span><span class="o">.</span><span class="n">handler</span> <span class="ow">or</span> <span class="n">trait</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">handler</span> <span class="o">=</span> <span class="n">trait</span> <span class="c1"># hope it is already a handler</span>
+        <span class="n">main_id</span> <span class="o">=</span> <span class="n">handler</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span>
+        <span class="k">if</span> <span class="n">main_id</span> <span class="o">==</span> <span class="s2">&quot;TraitCoerceType&quot;</span><span class="p">:</span>
+            <span class="n">real_id</span> <span class="o">=</span> <span class="n">_type_to_trait_id</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">handler</span><span class="o">.</span><span class="n">aType</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">real_id</span><span class="p">:</span>
+                <span class="n">main_id</span> <span class="o">=</span> <span class="n">real_id</span>
+
+        <span class="c1"># Debug message</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Propagation optional parameter of trait with main id </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+                     <span class="n">main_id</span><span class="p">)</span>
+
+        <span class="c1"># Get the optional parameter and set the default value if necessary</span>
+        <span class="k">if</span> <span class="n">optional</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">trait</span><span class="o">.</span><span class="n">optional</span> <span class="o">=</span> <span class="n">optional</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">optional</span> <span class="o">=</span> <span class="n">trait</span><span class="o">.</span><span class="n">optional</span>
+            <span class="k">if</span> <span class="n">optional</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">optional</span> <span class="o">=</span> <span class="kc">False</span>
+                <span class="n">trait</span><span class="o">.</span><span class="n">optional</span> <span class="o">=</span> <span class="n">optional</span>
+
+        <span class="c1"># Either case</span>
+        <span class="k">if</span> <span class="n">main_id</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;Either&quot;</span><span class="p">,</span> <span class="s2">&quot;TraitCompound&quot;</span><span class="p">]:</span>
+
+            <span class="c1"># Debug message</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;A coumpound trait has been found </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="nb">repr</span><span class="p">(</span>
+                <span class="n">handler</span><span class="o">.</span><span class="n">handlers</span><span class="p">))</span>
+
+            <span class="c1"># Update each trait compound optional parameter</span>
+            <span class="k">for</span> <span class="n">sub_trait</span> <span class="ow">in</span> <span class="n">handler</span><span class="o">.</span><span class="n">handlers</span><span class="p">:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sub_trait</span><span class="p">,</span> <span class="p">(</span><span class="n">TraitInstance</span><span class="p">,</span> <span class="n">TraitCoerceType</span><span class="p">,</span>
+                                              <span class="n">TraitHandler</span><span class="p">)):</span>
+                    <span class="n">sub_trait</span> <span class="o">=</span> <span class="n">sub_trait</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_propagate_optional_parameter</span><span class="p">(</span><span class="n">sub_trait</span><span class="p">,</span> <span class="n">optional</span><span class="p">)</span>
+
+        <span class="c1"># Default case</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># FIXME may recurse indefinitely if the trait is recursive</span>
+            <span class="k">for</span> <span class="n">inner_trait</span> <span class="ow">in</span> <span class="n">handler</span><span class="o">.</span><span class="n">inner_traits</span><span class="p">():</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_propagate_optional_parameter</span><span class="p">(</span><span class="n">inner_trait</span><span class="p">,</span> <span class="n">optional</span><span class="p">)</span>
+
+    <span class="c1">#</span>
+    <span class="c1"># Public methods</span>
+    <span class="c1">#</span>
+
+<div class="viewcode-block" id="Controller.user_traits"><a class="viewcode-back" href="../../../api.html#soma.controller.controller.Controller.user_traits">[docs]</a>    <span class="k">def</span> <span class="nf">user_traits</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Method to access the user parameters.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        out: dict</span>
+<span class="sd">            a dictionnary containing class traits and instance traits</span>
+<span class="sd">            defined by user (i.e.  the traits that are not automatically</span>
+<span class="sd">            defined by HasTraits or Controller). Returned values are</span>
+<span class="sd">            sorted according to the &#39;order&#39; trait meta-attribute.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_user_traits</span></div>
+
+<div class="viewcode-block" id="Controller.is_user_trait"><a class="viewcode-back" href="../../../api.html#soma.controller.controller.Controller.is_user_trait">[docs]</a>    <span class="k">def</span> <span class="nf">is_user_trait</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">trait</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Method that evaluate if a trait is a user parameter</span>
+<span class="sd">        (i.e. not an Event).</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        out: bool</span>
+<span class="sd">            True if the trait is a user trait,</span>
+<span class="sd">            False otherwise.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">trait</span><span class="o">.</span><span class="n">handler</span><span class="p">,</span> <span class="n">Event</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Controller.checked_trait"><a class="viewcode-back" href="../../../api.html#soma.controller.controller.Controller.checked_trait">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">checked_trait</span><span class="p">(</span><span class="n">trait</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Check the trait and build a new one if needed.</span>
+
+<span class="sd">        This function mainly checks the default value of the given trait,</span>
+<span class="sd">        and tests in some ways whether it is valid ot not. If not, a new</span>
+<span class="sd">        trait is created to replace it.</span>
+
+<span class="sd">        For now it just checks that lists with a non-null minlen will actually</span>
+<span class="sd">        get a default value which is a list with this minimum size. Otherwise</span>
+<span class="sd">        it causes exceptions in the traits notification system at some point.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        trait: Trait instance to be checked</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        new_trait: Trait instance</span>
+<span class="sd">            the returned trait may be the input one (trait), or a new one if</span>
+<span class="sd">            it had to be modified.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">ut</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">trait</span><span class="p">,</span> <span class="s1">&#39;trait_type&#39;</span><span class="p">,</span> <span class="n">trait</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ut</span><span class="p">,</span> <span class="n">traits</span><span class="o">.</span><span class="n">List</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">ut</span><span class="o">.</span><span class="n">minlen</span> <span class="o">!=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="p">(</span><span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ut</span><span class="o">.</span><span class="n">default</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span>
+                                   <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">ut</span><span class="o">.</span><span class="n">default</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">ut</span><span class="o">.</span><span class="n">minlen</span><span class="p">):</span>
+                <span class="c1"># default value is not OK, we have to build another one</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ut</span><span class="o">.</span><span class="n">default</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+                    <span class="n">default</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">ut</span><span class="o">.</span><span class="n">default</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">default</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="n">default</span> <span class="o">+=</span> <span class="p">[</span><span class="n">ut</span><span class="o">.</span><span class="n">item_trait</span><span class="o">.</span><span class="n">default</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">ut</span><span class="o">.</span><span class="n">minlen</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">default</span><span class="p">))</span>
+                <span class="n">trait</span> <span class="o">=</span> <span class="n">traits</span><span class="o">.</span><span class="n">List</span><span class="p">(</span><span class="n">ut</span><span class="o">.</span><span class="n">item_trait</span><span class="p">,</span> <span class="n">default</span><span class="p">,</span> <span class="n">minlen</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">minlen</span><span class="p">,</span>
+                                    <span class="n">maxlen</span><span class="o">=</span><span class="n">ut</span><span class="o">.</span><span class="n">maxlen</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">trait</span></div>
+
+
+<div class="viewcode-block" id="Controller.add_trait"><a class="viewcode-back" href="../../../api.html#soma.controller.controller.Controller.add_trait">[docs]</a>    <span class="k">def</span> <span class="nf">add_trait</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="o">*</span><span class="n">trait</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Add a new trait.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        name: str (mandatory)</span>
+<span class="sd">            the trait name.</span>
+<span class="sd">        trait: traits.api (mandatory)</span>
+<span class="sd">            a valid trait.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Debug message</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Adding trait &#39;</span><span class="si">{0}</span><span class="s2">&#39;...&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
+
+        <span class="c1"># check trait default value inconsistencies</span>
+        <span class="n">trait</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">checked_trait</span><span class="p">(</span><span class="n">trait</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="p">)</span> <span class="o">+</span> <span class="n">trait</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+
+        <span class="c1"># Inheritance: create the instance trait attribute</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Controller</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">add_trait</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="o">*</span><span class="n">trait</span><span class="p">)</span>
+
+        <span class="c1"># Get the trait instance and if it is a user trait load the traits</span>
+        <span class="c1"># to get it direcly from the instance (as a property) and add it</span>
+        <span class="c1"># to the class &#39;_user_traits&#39; attributes</span>
+        <span class="n">trait_instance</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">trait</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_user_trait</span><span class="p">(</span><span class="n">trait_instance</span><span class="p">):</span>
+            <span class="c1">#trait_instance.defaultvalue = trait_instance.default</span>
+            <span class="c1">#try:</span>
+                <span class="c1">#self.get(name)</span>
+            <span class="c1">#except TraitError:</span>
+                <span class="c1">## default value is invalid</span>
+                <span class="c1">#try:</span>
+                    <span class="c1">#setattr(self, name, Undefined)</span>
+                <span class="c1">#except TraitError:</span>
+                    <span class="c1">## Undefined is invalid, too...</span>
+                    <span class="c1">#pass</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_user_traits</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">trait_instance</span>
+
+        <span class="c1"># Update/set the optional trait parameter</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_propagate_optional_parameter</span><span class="p">(</span><span class="n">trait_instance</span><span class="p">)</span>
+
+        <span class="c1"># validate default value, or try to set another one</span>
+        <span class="n">new_trait</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">trait</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">new_trait</span><span class="o">.</span><span class="n">trait_type</span><span class="p">,</span> <span class="n">traits</span><span class="o">.</span><span class="n">Event</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">values</span> <span class="o">=</span> <span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">),</span> <span class="n">traits</span><span class="o">.</span><span class="n">Undefined</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="k">except</span> <span class="n">TraitError</span><span class="p">:</span>
+                <span class="n">values</span> <span class="o">=</span> <span class="p">(</span><span class="n">traits</span><span class="o">.</span><span class="n">Undefined</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">values</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="c1"># validate() doesn&#39;t accept Undefined values when the</span>
+                    <span class="c1"># &quot;real&quot; trait does. so we must really setattr()</span>
+                    <span class="c1">#new_trait.validate(self, name, value)</span>
+                    <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+                    <span class="k">break</span>  <span class="c1"># OK</span>
+                <span class="k">except</span> <span class="p">(</span><span class="n">traits</span><span class="o">.</span><span class="n">TraitError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                    <span class="k">pass</span>
+            <span class="c1">#else:</span>
+                <span class="c1">## should it be silent ?</span>
+                <span class="c1">#print(&#39;value %s is invalid for %s.%s&#39;</span>
+                      <span class="c1">#% (repr(values[0]), repr(self), name), file=sys.stderr)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">user_traits_changed</span> <span class="o">=</span> <span class="kc">True</span></div>
+
+<div class="viewcode-block" id="Controller.remove_trait"><a class="viewcode-back" href="../../../api.html#soma.controller.controller.Controller.remove_trait">[docs]</a>    <span class="k">def</span> <span class="nf">remove_trait</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Remove a trait from its name.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        name: str (mandatory)</span>
+<span class="sd">            the trait name to remove.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Debug message</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Removing trait &#39;</span><span class="si">{0}</span><span class="s2">&#39;...&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
+
+        <span class="c1"># Call the Traits remove_trait method</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Controller</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">remove_trait</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+
+        <span class="c1"># Remove name from the &#39;_user_traits&#39; without error if it</span>
+        <span class="c1"># is not present</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_user_traits</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">user_traits_changed</span> <span class="o">=</span> <span class="kc">True</span></div>
+
+<div class="viewcode-block" id="Controller.export_to_dict"><a class="viewcode-back" href="../../../api.html#soma.controller.controller.Controller.export_to_dict">[docs]</a>    <span class="k">def</span> <span class="nf">export_to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exclude_undefined</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                       <span class="n">exclude_transient</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                       <span class="n">exclude_none</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                       <span class="n">exclude_empty</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                       <span class="n">dict_class</span><span class="o">=</span><span class="n">OrderedDict</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; return the controller state to a dictionary, replacing controller</span>
+<span class="sd">        values in sub-trees to dicts also.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        exclude_undefined: bool (optional)</span>
+<span class="sd">            if set, do not export Undefined values</span>
+<span class="sd">        exclude_transient: bool (optional)</span>
+<span class="sd">            if set, do not export values whose trait is marked &quot;transcient&quot;</span>
+<span class="sd">        exclude_none: bool (optional)</span>
+<span class="sd">            if set, do not export None values</span>
+<span class="sd">        exclude_empty: bool (optional)</span>
+<span class="sd">            if set, do not export empty lists/dicts values</span>
+<span class="sd">        dict_class: class type (optional, default: soma.sorted_dictionary.OrderedDict)</span>
+<span class="sd">            use this type of mapping type to represent controllers. It should</span>
+<span class="sd">            follow the mapping protocol API.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">controller_to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exclude_undefined</span><span class="o">=</span><span class="n">exclude_undefined</span><span class="p">,</span>
+                                  <span class="n">exclude_transient</span><span class="o">=</span><span class="n">exclude_transient</span><span class="p">,</span>
+                                  <span class="n">exclude_none</span><span class="o">=</span><span class="n">exclude_none</span><span class="p">,</span>
+                                  <span class="n">exclude_empty</span><span class="o">=</span><span class="n">exclude_empty</span><span class="p">,</span>
+                                  <span class="n">dict_class</span><span class="o">=</span><span class="n">dict_class</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Controller.import_from_dict"><a class="viewcode-back" href="../../../api.html#soma.controller.controller.Controller.import_from_dict">[docs]</a>    <span class="k">def</span> <span class="nf">import_from_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state_dict</span><span class="p">,</span> <span class="n">clear</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Set Controller variables from a dictionary. When setting values on</span>
+<span class="sd">        Controller instances (in the Controller sub-tree), replace dictionaries</span>
+<span class="sd">        by Controller instances appropriately.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        state_dict: dict, sorted_dictionary or OrderedDict</span>
+<span class="sd">            dict containing the variables to set</span>
+<span class="sd">        clear: bool (optional, default: False)</span>
+<span class="sd">            if True, older values (in keys not listed in state_dict) will be</span>
+<span class="sd">            cleared, otherwise they are left in place.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">clear</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">trait_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">user_traits</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">trait_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">state_dict</span><span class="p">:</span>
+                    <span class="nb">delattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">trait_name</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">trait_name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">six</span><span class="o">.</span><span class="n">iteritems</span><span class="p">(</span><span class="n">state_dict</span><span class="p">):</span>
+            <span class="n">trait</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">trait</span><span class="p">(</span><span class="n">trait_name</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">trait_name</span> <span class="o">==</span> <span class="s1">&#39;protected_parameters&#39;</span> <span class="ow">and</span> <span class="n">trait</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">HasTraits</span><span class="o">.</span><span class="n">add_trait</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;protected_parameters&#39;</span><span class="p">,</span>
+                                    <span class="n">traits</span><span class="o">.</span><span class="n">List</span><span class="p">(</span><span class="n">traits</span><span class="o">.</span><span class="n">Str</span><span class="p">(),</span> <span class="n">default</span><span class="o">=</span><span class="p">[],</span>
+                                                <span class="n">hidden</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+                <span class="n">trait</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">trait</span><span class="p">(</span><span class="s1">&#39;protected_parameters&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">trait</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">OpenKeyController</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span>
+                    <span class="s2">&quot;item </span><span class="si">%s</span><span class="s2"> is not a trait in the Controller&quot;</span> <span class="o">%</span> <span class="n">trait_name</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">trait</span><span class="o">.</span><span class="n">trait_type</span><span class="p">,</span> <span class="n">Instance</span><span class="p">)</span> \
+                    <span class="ow">and</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">trait</span><span class="o">.</span><span class="n">trait_type</span><span class="o">.</span><span class="n">klass</span><span class="p">,</span> <span class="n">Controller</span><span class="p">):</span>
+                <span class="n">controller</span> <span class="o">=</span> <span class="n">trait</span><span class="o">.</span><span class="n">trait_type</span><span class="o">.</span><span class="n">create_default_value</span><span class="p">(</span>
+                    <span class="n">trait</span><span class="o">.</span><span class="n">trait_type</span><span class="o">.</span><span class="n">klass</span><span class="p">)</span>
+                <span class="n">controller</span><span class="o">.</span><span class="n">import_from_dict</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">value</span> <span class="ow">in</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">Undefined</span><span class="p">):</span>
+                    <span class="c1"># None / Undefined may be an acceptable value for many</span>
+                    <span class="c1"># traits types</span>
+                    <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">trait_name</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># check trait type for conversions</span>
+                    <span class="n">tr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">trait</span><span class="p">(</span><span class="n">trait_name</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">tr</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tr</span><span class="o">.</span><span class="n">trait_type</span><span class="p">,</span> <span class="n">Set</span><span class="p">):</span>
+                        <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">trait_name</span><span class="p">,</span> <span class="nb">set</span><span class="p">(</span><span class="n">value</span><span class="p">))</span>
+                    <span class="k">elif</span> <span class="n">tr</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tr</span><span class="o">.</span><span class="n">trait_type</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">):</span>
+                        <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">trait_name</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">value</span><span class="p">))</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">trait_name</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Controller.copy"><a class="viewcode-back" href="../../../api.html#soma.controller.controller.Controller.copy">[docs]</a>    <span class="k">def</span> <span class="nf">copy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">with_values</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Copy traits definitions to a new Controller object</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        with_values: bool (optional, default: False)</span>
+<span class="sd">            if True, traits values will be copied, otherwise the defaut trait</span>
+<span class="sd">            value will be left in the copy.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        copied: Controller instance</span>
+<span class="sd">            the returned copy will have the same class as the copied object</span>
+<span class="sd">            (which may be a derived class from Controller). Traits definitions</span>
+<span class="sd">            will be copied. Traits values will only be copied if with_values is</span>
+<span class="sd">            True.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">import</span> <span class="nn">copy</span>
+
+        <span class="n">initargs</span> <span class="o">=</span> <span class="p">()</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;__getinitargs__&#39;</span><span class="p">):</span>
+            <span class="c1"># if the Controller class is subclassed and needs init parameters</span>
+            <span class="n">initargs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__getinitargs__</span><span class="p">()</span>
+        <span class="n">copied</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span><span class="o">*</span><span class="n">initargs</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">trait</span> <span class="ow">in</span> <span class="n">six</span><span class="o">.</span><span class="n">iteritems</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">user_traits</span><span class="p">()):</span>
+            <span class="n">copied</span><span class="o">.</span><span class="n">add_trait</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_clone_trait</span><span class="p">(</span><span class="n">trait</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">with_values</span><span class="p">:</span>
+                <span class="nb">setattr</span><span class="p">(</span><span class="n">copied</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">))</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">trait</span><span class="p">(</span><span class="s1">&#39;protected_parameters&#39;</span><span class="p">):</span>
+            <span class="n">trait</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">trait</span><span class="p">(</span><span class="s1">&#39;protected_parameters&#39;</span><span class="p">)</span>
+            <span class="n">HasTraits</span><span class="o">.</span><span class="n">add_trait</span><span class="p">(</span><span class="n">copied</span><span class="p">,</span> <span class="s1">&#39;protected_parameters&#39;</span><span class="p">,</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">_clone_trait</span><span class="p">(</span><span class="n">trait</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">with_values</span><span class="p">:</span>
+                <span class="nb">setattr</span><span class="p">(</span><span class="n">copied</span><span class="p">,</span> <span class="s1">&#39;protected_parameters&#39;</span><span class="p">,</span>
+                        <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;protected_parameters&#39;</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">copied</span></div>
+
+<div class="viewcode-block" id="Controller.reorder_traits"><a class="viewcode-back" href="../../../api.html#soma.controller.controller.Controller.reorder_traits">[docs]</a>    <span class="k">def</span> <span class="nf">reorder_traits</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">traits_list</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Reorder traits in the controller according to a new ordered list.</span>
+
+<span class="sd">        If the new list does not contain all user traits, the remaining ones</span>
+<span class="sd">        will be appended at the end.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        traits_list: list</span>
+<span class="sd">            New list of trait names. This list order will be kept.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">former_traits</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_user_traits</span><span class="o">.</span><span class="n">sortedKeys</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">traits_list</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">t</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">former_traits</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;parameter </span><span class="si">%s</span><span class="s2"> is not in Controller traits.&quot;</span>
+                                 <span class="o">%</span> <span class="n">t</span><span class="p">)</span>
+        <span class="n">new_traits</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">traits_list</span><span class="p">)</span>
+        <span class="n">done</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">new_traits</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_user_traits</span><span class="o">.</span><span class="n">sortedKeys</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">t</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">done</span><span class="p">:</span>
+                <span class="n">new_traits</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_user_traits</span><span class="o">.</span><span class="n">sortedKeys</span> <span class="o">=</span> <span class="n">new_traits</span></div>
+
+<div class="viewcode-block" id="Controller.protect_parameter"><a class="viewcode-back" href="../../../api.html#soma.controller.controller.Controller.protect_parameter">[docs]</a>    <span class="k">def</span> <span class="nf">protect_parameter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">param</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Protect the named parameter.</span>
+
+<span class="sd">        Protecting is not a real lock, it just marks the parameter a list of</span>
+<span class="sd">        &quot;protected&quot; parameters. This is typically used to mark values that have</span>
+<span class="sd">        been set manually by the user (using the ControllerWidget for instance)</span>
+<span class="sd">        and that should not be later modified by automatic parameters tweaking</span>
+<span class="sd">        (such as completion systems).</span>
+
+<span class="sd">        Protected parameters are listed in an additional trait,</span>
+<span class="sd">        &quot;protected_parameters&quot;.</span>
+
+<span class="sd">        If the &quot;state&quot; parameter is False, then we will unprotect it</span>
+<span class="sd">        (calling unprotect_parameter())</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">state</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">unprotect_parameter</span><span class="p">(</span><span class="n">param</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">trait</span><span class="p">(</span><span class="s1">&#39;protected_parameters&#39;</span><span class="p">):</span>
+            <span class="c1"># add a &#39;protected_parameters&#39; trait bypassing the</span>
+            <span class="c1"># Controller.add_trait mechanism (it will not be a &quot;user_trait&quot;)</span>
+            <span class="n">HasTraits</span><span class="o">.</span><span class="n">add_trait</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;protected_parameters&#39;</span><span class="p">,</span>
+                                <span class="n">traits</span><span class="o">.</span><span class="n">List</span><span class="p">(</span><span class="n">traits</span><span class="o">.</span><span class="n">Str</span><span class="p">(),</span> <span class="n">default</span><span class="o">=</span><span class="p">[],</span>
+                                            <span class="n">hidden</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+            <span class="c1">#self.locked_parameters = []</span>
+        <span class="n">protected</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">protected_parameters</span><span class="p">)</span>
+        <span class="n">protected</span><span class="o">.</span><span class="n">update</span><span class="p">([</span><span class="n">param</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">protected_parameters</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">protected</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Controller.unprotect_parameter"><a class="viewcode-back" href="../../../api.html#soma.controller.controller.Controller.unprotect_parameter">[docs]</a>    <span class="k">def</span> <span class="nf">unprotect_parameter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">param</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Unprotect the named parameter</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">trait</span><span class="p">(</span><span class="s1">&#39;protected_parameters&#39;</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">protected_parameters</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">param</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+                <span class="k">pass</span>  <span class="c1"># it was not protected.</span></div>
+
+<div class="viewcode-block" id="Controller.is_parameter_protected"><a class="viewcode-back" href="../../../api.html#soma.controller.controller.Controller.is_parameter_protected">[docs]</a>    <span class="k">def</span> <span class="nf">is_parameter_protected</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">param</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Tells whether the given parameter is protected or not</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">trait</span><span class="p">(</span><span class="s1">&#39;protected_parameters&#39;</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">return</span> <span class="n">param</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">protected_parameters</span></div></div>
+
+
+<div class="viewcode-block" id="OpenKeyController"><a class="viewcode-back" href="../../../api.html#soma.controller.controller.OpenKeyController">[docs]</a><span class="k">class</span> <span class="nc">OpenKeyController</span><span class="p">(</span><span class="n">Controller</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot; A dictionary-like controller, with &quot;open keys&quot;: items may be added</span>
+<span class="sd">    on the fly, traits are created upon assignation.</span>
+
+<span class="sd">    A value trait type should be specified to build the items.</span>
+
+<span class="sd">    Usage:</span>
+
+<span class="sd">    &gt;&gt;&gt; dict_controller = OpenKeyController(value_trait=traits.Str())</span>
+<span class="sd">    &gt;&gt;&gt; print(dict_controller.user_traits().keys())</span>
+<span class="sd">    []</span>
+<span class="sd">    &gt;&gt;&gt; dict_controller.my_item = &#39;bubulle&#39;</span>
+<span class="sd">    &gt;&gt;&gt; print(dict_controller.user_traits().keys())</span>
+<span class="sd">    [&#39;my_item&#39;]</span>
+<span class="sd">    &gt;&gt;&gt; print(dict_controller.export_to_dict())</span>
+<span class="sd">    {&#39;my_item&#39;: &#39;bubulle&#39;}</span>
+<span class="sd">    &gt;&gt;&gt; del dict_controller.my_item</span>
+<span class="sd">    &gt;&gt;&gt; print(dict_controller.export_to_dict())</span>
+<span class="sd">    {}</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">_reserved_names</span> <span class="o">=</span> <span class="nb">set</span><span class="p">([</span><span class="s1">&#39;trait_added&#39;</span><span class="p">])</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value_trait</span><span class="o">=</span><span class="n">Any</span><span class="p">(),</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Build an OpenKeyController controller.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        value_trait: Trait instance (optional, default: Any())</span>
+<span class="sd">            trait type to be used when creating traits on the fly</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">OpenKeyController</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">OpenKeyController</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="s1">&#39;_value_trait&#39;</span><span class="p">,</span> <span class="n">value_trait</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span> \
+                <span class="ow">and</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">traits</span><span class="p">()</span> \
+                <span class="ow">and</span> <span class="ow">not</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">OpenKeyController</span><span class="o">.</span><span class="n">_reserved_names</span><span class="p">:</span>
+            <span class="n">cloned_trait</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_clone_trait</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_value_trait</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">add_trait</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">cloned_trait</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">OpenKeyController</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__delattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">trait</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">remove_trait</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">super</span><span class="p">(</span><span class="n">OpenKeyController</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__delattr__</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__getinitargs__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_value_trait</span><span class="p">,</span> <span class="p">)</span></div>
+
+    <span class="c1"># this specialization does not do anything more than the base class does.</span>
+    <span class="c1">#def copy(self, with_values=True):</span>
+        <span class="c1">#&quot;&quot;&quot; Copy traits definitions to a new Controller object</span>
+
+        <span class="c1">#Parameters</span>
+        <span class="c1">#----------</span>
+        <span class="c1">#with_values: bool (optional, default: False)</span>
+            <span class="c1">#if True, traits values will be copied, otherwise the defaut trait</span>
+            <span class="c1">#value will be left in the copy.</span>
+
+        <span class="c1">#Returns</span>
+        <span class="c1">#-------</span>
+        <span class="c1">#copied: Controller instance</span>
+            <span class="c1">#the returned copy will have the same class as the copied object</span>
+            <span class="c1">#(which may be a derived class from Controller). Traits definitions</span>
+            <span class="c1">#will be copied. Traits values will only be copied if with_values is</span>
+            <span class="c1">#True.</span>
+        <span class="c1">#&quot;&quot;&quot;</span>
+        <span class="c1">#copied = super(OpenKeyController, self).copy(with_values=with_values)</span>
+        <span class="c1">#super(OpenKeyController, copied).__setattr__(&#39;_value_trait&#39;,</span>
+                                                     <span class="c1">#self._value_trait)</span>
+        <span class="c1">#return copied</span>
+
+
+<div class="viewcode-block" id="ControllerTrait"><a class="viewcode-back" href="../../../api.html#soma.controller.controller.ControllerTrait">[docs]</a><span class="k">class</span> <span class="nc">ControllerTrait</span><span class="p">(</span><span class="n">TraitType</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot; A specialized trait type for Controller values.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">controller</span><span class="p">,</span> <span class="n">inner_trait</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Build a Controller valued trait.</span>
+
+<span class="sd">        Contrarily to Instance(Controller), it ensures better validation when</span>
+<span class="sd">        assigning values.</span>
+
+<span class="sd">        It has the ability to convert values from dictionaries, so the trait</span>
+<span class="sd">        value can be assigned with a dict, whereas it is actually a Controller.</span>
+<span class="sd">        This works recursively if the controller contains traits which are also</span>
+<span class="sd">        controllers.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        controller: Controller instance (mandatory)</span>
+<span class="sd">            default value for trait, and placeholder for allowed traits</span>
+<span class="sd">        inner_trait: Trait instance (optional)</span>
+<span class="sd">            if provided, the controller is assumed to be an &quot;open key&quot; type,</span>
+<span class="sd">            new keys/traits can be added on the fly like in a dictionary, and</span>
+<span class="sd">            this inner_trait is the trait type used to instantiate new</span>
+<span class="sd">            traits when new keys are encountered while setting values.</span>
+<span class="sd">            If inner_trait is not provided, we will look if the controller</span>
+<span class="sd">            instance is an OpenKeyController, and in such case, take its value</span>
+<span class="sd">            trait.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">ControllerTrait</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">controller</span> <span class="o">=</span> <span class="n">controller</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">default_value</span> <span class="o">=</span> <span class="n">controller</span>
+        <span class="k">if</span> <span class="n">inner_trait</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">controller</span><span class="p">,</span> <span class="s1">&#39;_value_trait&#39;</span><span class="p">):</span>
+            <span class="n">inner_trait</span> <span class="o">=</span> <span class="n">controller</span><span class="o">.</span><span class="n">_value_trait</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">inner_trait</span> <span class="o">=</span> <span class="n">inner_trait</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">handler</span> <span class="o">=</span> <span class="bp">self</span>
+
+    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">object</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">Controller</span><span class="p">):</span>
+            <span class="n">sup_inst</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">ControllerTrait</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">sup_inst</span><span class="p">,</span> <span class="s1">&#39;validate&#39;</span><span class="p">):</span>
+                <span class="k">return</span> <span class="n">sup_inst</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">value</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="s1">&#39;items&#39;</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">TraitError</span><span class="p">(</span><span class="s1">&#39;trait must be a Controller or a mapping type&#39;</span><span class="p">)</span>
+        <span class="n">new_value</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="nb">object</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">with_values</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">inner_trait</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">new_value</span><span class="o">.</span><span class="n">user_traits</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">value</span><span class="p">:</span>
+                    <span class="n">new_value</span><span class="o">.</span><span class="n">remove_trait</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">value</span><span class="p">:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">controller</span><span class="o">.</span><span class="n">trait</span><span class="p">(</span><span class="n">key</span><span class="p">):</span>
+                    <span class="n">new_value</span><span class="o">.</span><span class="n">add_trait</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">inner_trait</span><span class="p">)</span>
+        <span class="n">new_value</span><span class="o">.</span><span class="n">import_from_dict</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">new_value</span>
+
+<div class="viewcode-block" id="ControllerTrait.inner_traits"><a class="viewcode-back" href="../../../api.html#soma.controller.controller.ControllerTrait.inner_traits">[docs]</a>    <span class="k">def</span> <span class="nf">inner_traits</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">inner_trait</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inner_trait</span><span class="p">,</span> <span class="p">)</span>
+        <span class="k">return</span> <span class="p">()</span></div></div>
+
+
+<div class="viewcode-block" id="controller_to_dict"><a class="viewcode-back" href="../../../api.html#soma.controller.controller.controller_to_dict">[docs]</a><span class="k">def</span> <span class="nf">controller_to_dict</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">exclude_undefined</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                       <span class="n">exclude_transient</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                       <span class="n">exclude_none</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                       <span class="n">exclude_empty</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                       <span class="n">dict_class</span><span class="o">=</span><span class="n">OrderedDict</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Convert an item to a Python value where controllers had been converted</span>
+<span class="sd">    to dictionary. It can recursively convert the values contained in a</span>
+<span class="sd">    Controller instances or a  dict instances. All other items are returned</span>
+<span class="sd">    untouched.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    exclude_undefined: bool (optional)</span>
+<span class="sd">        if set, do not export Undefined values</span>
+<span class="sd">    exclude_transient: bool (optional)</span>
+<span class="sd">        if set, do not export values whose trait is marked &quot;transcient&quot;</span>
+<span class="sd">    exclude_none: bool (optional)</span>
+<span class="sd">        if set, do not export None values</span>
+<span class="sd">    exclude_empty: bool (optional)</span>
+<span class="sd">        if set, do not export empty lists/dicts values</span>
+<span class="sd">    dict_class: class type (optional, default: soma.sorted_dictionary.OrderedDict)</span>
+<span class="sd">        use this type of mapping type to represent controllers. It should</span>
+<span class="sd">        follow the mapping protocol API.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">Controller</span><span class="p">):</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">dict_class</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">trait</span> <span class="ow">in</span> <span class="n">six</span><span class="o">.</span><span class="n">iteritems</span><span class="p">(</span><span class="n">item</span><span class="o">.</span><span class="n">user_traits</span><span class="p">()):</span>
+            <span class="k">if</span> <span class="n">exclude_transient</span> <span class="ow">and</span> <span class="n">trait</span><span class="o">.</span><span class="n">transient</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">exclude_undefined</span> <span class="ow">and</span> <span class="n">value</span> <span class="ow">is</span> <span class="n">Undefined</span><span class="p">)</span> \
+                <span class="ow">or</span> <span class="p">(</span><span class="n">exclude_none</span> <span class="ow">and</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">):</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="n">exclude_empty</span> <span class="ow">and</span> <span class="p">(</span><span class="n">value</span> <span class="o">==</span> <span class="p">[]</span> <span class="ow">or</span> <span class="n">value</span> <span class="o">==</span> <span class="p">{}):</span>
+                <span class="k">continue</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="n">controller_to_dict</span><span class="p">(</span><span class="n">value</span><span class="p">,</span>
+                                       <span class="n">exclude_undefined</span><span class="o">=</span><span class="n">exclude_undefined</span><span class="p">,</span>
+                                       <span class="n">exclude_transient</span><span class="o">=</span><span class="n">exclude_transient</span><span class="p">,</span>
+                                       <span class="n">exclude_none</span><span class="o">=</span><span class="n">exclude_none</span><span class="p">,</span>
+                                       <span class="n">exclude_empty</span><span class="o">=</span><span class="n">exclude_empty</span><span class="p">,</span>
+                                       <span class="n">dict_class</span><span class="o">=</span><span class="n">dict_class</span><span class="p">)</span>
+            <span class="n">result</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="k">if</span> <span class="n">item</span><span class="o">.</span><span class="n">trait</span><span class="p">(</span><span class="s1">&#39;protected_parameters&#39;</span><span class="p">):</span>
+            <span class="n">result</span><span class="p">[</span><span class="s1">&#39;protected_parameters&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">item</span><span class="o">.</span><span class="n">protected_parameters</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">dict_class</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">six</span><span class="o">.</span><span class="n">iteritems</span><span class="p">(</span><span class="n">item</span><span class="p">):</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">exclude_undefined</span> <span class="ow">and</span> <span class="n">value</span> <span class="ow">is</span> <span class="n">Undefined</span><span class="p">)</span> \
+                <span class="ow">or</span> <span class="p">(</span><span class="n">exclude_none</span> <span class="ow">and</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">):</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="n">exclude_empty</span> <span class="ow">and</span> <span class="p">(</span><span class="n">value</span> <span class="o">==</span> <span class="p">[]</span> <span class="ow">or</span> <span class="n">value</span> <span class="o">==</span> <span class="p">{}):</span>
+                <span class="k">continue</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="n">controller_to_dict</span><span class="p">(</span><span class="n">value</span><span class="p">,</span>
+                                       <span class="n">exclude_undefined</span><span class="o">=</span><span class="n">exclude_undefined</span><span class="p">,</span>
+                                       <span class="n">exclude_transient</span><span class="o">=</span><span class="n">exclude_transient</span><span class="p">,</span>
+                                       <span class="n">exclude_none</span><span class="o">=</span><span class="n">exclude_none</span><span class="p">,</span>
+                                       <span class="n">exclude_empty</span><span class="o">=</span><span class="n">exclude_empty</span><span class="p">,</span>
+                                       <span class="n">dict_class</span><span class="o">=</span><span class="n">dict_class</span><span class="p">)</span>
+            <span class="n">result</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">item</span>
+
+    <span class="k">return</span> <span class="n">result</span></div>
+
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">json</span>
+
+<div class="viewcode-block" id="JsonControllerEncoder"><a class="viewcode-back" href="../../../api.html#soma.controller.controller.JsonControllerEncoder">[docs]</a>    <span class="k">class</span> <span class="nc">JsonControllerEncoder</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">JSONEncoder</span><span class="p">):</span>
+<div class="viewcode-block" id="JsonControllerEncoder.default"><a class="viewcode-back" href="../../../api.html#soma.controller.controller.JsonControllerEncoder.default">[docs]</a>        <span class="k">def</span> <span class="nf">default</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">obj</span> <span class="ow">is</span> <span class="n">Undefined</span><span class="p">:</span>
+                <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;__class__&#39;</span><span class="p">:</span> <span class="s1">&#39;&lt;undefined&gt;&#39;</span><span class="p">}</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">traits</span><span class="o">.</span><span class="n">TraitSetObject</span><span class="p">):</span>
+                <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span> <span class="c1"># {&#39;__class__&#39;: &#39;traits.TraitSetObject&#39;,</span>
+                        <span class="c1">#&#39;items&#39;: list(obj)}</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">Controller</span><span class="p">):</span>
+                <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">JsonControllerEncoder</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">default</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+            <span class="n">d</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">export_to_dict</span><span class="p">(</span><span class="n">exclude_undefined</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="n">exclude_transient</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="n">exclude_none</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="n">exclude_empty</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="n">dict_class</span><span class="o">=</span><span class="n">OrderedDict</span><span class="p">)</span>
+            <span class="n">d</span><span class="p">[</span><span class="s1">&#39;__class__&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span>
+            <span class="k">return</span> <span class="n">d</span></div></div>
+
+<div class="viewcode-block" id="JsonControllerDecoder"><a class="viewcode-back" href="../../../api.html#soma.controller.controller.JsonControllerDecoder">[docs]</a>    <span class="k">class</span> <span class="nc">JsonControllerDecoder</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">JSONDecoder</span><span class="p">):</span>
+        <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+            <span class="c1"># install a new object_hoook.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_old_object_hook</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">if</span> <span class="s1">&#39;object_hook&#39;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_old_object_hook</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;object_hook&#39;</span><span class="p">]</span>
+                <span class="n">kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                          <span class="k">if</span> <span class="n">k</span> <span class="o">!=</span> <span class="s1">&#39;object_hook&#39;</span><span class="p">}</span>
+            <span class="nb">super</span><span class="p">(</span><span class="n">JsonControllerDecoder</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+                <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">object_hook</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">obj_hook</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">obj_hook</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">):</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_old_object_hook</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">obj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_old_object_hook</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="s1">&#39;__class__&#39;</span> <span class="ow">in</span> <span class="n">obj</span><span class="p">:</span>
+                <span class="n">c</span> <span class="o">=</span> <span class="n">obj</span><span class="p">[</span><span class="s1">&#39;__class__&#39;</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">c</span> <span class="o">==</span> <span class="s1">&#39;&lt;undefined&gt;&#39;</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">Undefined</span>
+                <span class="c1"># Controller objects are decoded as dicts, without the</span>
+                <span class="c1"># __class__ item, because we cannot rebuild their traits in</span>
+                <span class="c1"># the general case. They should be converted later by</span>
+                <span class="c1"># import_from_dict()</span>
+                <span class="n">d</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">obj</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="o">!=</span> <span class="s1">&#39;__class__&#39;</span><span class="p">}</span>
+                <span class="k">return</span> <span class="n">d</span>
+                <span class="c1">#controller = Controller()  ## FIXME instantiate __Class__</span>
+                <span class="c1">#controller.import_from_dict(d)</span>
+                <span class="c1">#return controller</span>
+            <span class="k">return</span> <span class="n">obj</span></div>
+
+    <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">_default_encoder</span><span class="p">)</span> <span class="ow">is</span> <span class="n">json</span><span class="o">.</span><span class="n">JSONEncoder</span> \
+            <span class="ow">or</span> <span class="n">json</span><span class="o">.</span><span class="n">_default_encoder</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span> \
+                <span class="o">==</span> <span class="s1">&#39;JsonControllerEncoder&#39;</span><span class="p">:</span>
+        <span class="n">json</span><span class="o">.</span><span class="n">_default_encoder</span> <span class="o">=</span> <span class="n">JsonControllerEncoder</span><span class="p">()</span>
+    <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">_default_decoder</span><span class="p">)</span> <span class="ow">is</span> <span class="n">json</span><span class="o">.</span><span class="n">JSONDecoder</span> \
+            <span class="ow">or</span> <span class="n">json</span><span class="o">.</span><span class="n">_default_decoder</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span> \
+                <span class="o">==</span> <span class="s1">&#39;JsonControllerDecoder&#39;</span><span class="p">:</span>
+        <span class="n">json</span><span class="o">.</span><span class="n">_default_decoder</span> <span class="o">=</span> <span class="n">JsonControllerDecoder</span><span class="p">()</span>
+
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="k">pass</span>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">Soma-base 5.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">soma.controller.controller</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2011, IFR49.org.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.5.4.
+    </div>
+  </body>
+</html>

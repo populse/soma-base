@@ -1,0 +1,379 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>soma.utils.functiontools &#8212; Soma-base 5.1.0 documentation</title>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css" />
+    
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">Soma-base 5.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">soma.utils.functiontools</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for soma.utils.functiontools</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+
+<span class="c1">#  This software and supporting documentation are distributed by</span>
+<span class="c1">#      Institut Federatif de Recherche 49</span>
+<span class="c1">#      CEA/NeuroSpin, Batiment 145,</span>
+<span class="c1">#      91191 Gif-sur-Yvette cedex</span>
+<span class="c1">#      France</span>
+<span class="c1">#</span>
+<span class="c1"># This software is governed by the CeCILL-B license under</span>
+<span class="c1"># French law and abiding by the rules of distribution of free software.</span>
+<span class="c1"># You can  use, modify and/or redistribute the software under the</span>
+<span class="c1"># terms of the CeCILL-B license as circulated by CEA, CNRS</span>
+<span class="c1"># and INRIA at the following URL &quot;http://www.cecill.info&quot;.</span>
+<span class="c1">#</span>
+<span class="c1"># As a counterpart to the access to the source code and  rights to copy,</span>
+<span class="c1"># modify and redistribute granted by the license, users are provided only</span>
+<span class="c1"># with a limited warranty  and the software&#39;s author,  the holder of the</span>
+<span class="c1"># economic rights,  and the successive licensors  have only  limited</span>
+<span class="c1"># liability.</span>
+<span class="c1">#</span>
+<span class="c1"># In this respect, the user&#39;s attention is drawn to the risks associated</span>
+<span class="c1"># with loading,  using,  modifying and/or developing or reproducing the</span>
+<span class="c1"># software by the user in light of its specific status of free software,</span>
+<span class="c1"># that may mean  that it is complicated to manipulate,  and  that  also</span>
+<span class="c1"># therefore means  that it is reserved for developers  and  experienced</span>
+<span class="c1"># professionals having in-depth computer knowledge. Users are therefore</span>
+<span class="c1"># encouraged to load and test the software&#39;s suitability as regards their</span>
+<span class="c1"># requirements in conditions enabling the security of their systems and/or</span>
+<span class="c1"># data to be ensured and,  more generally, to use and operate it in the</span>
+<span class="c1"># same conditions as regards security.</span>
+<span class="c1">#</span>
+<span class="c1"># The fact that you are presently reading this means that you have had</span>
+<span class="c1"># knowledge of the CeCILL-B license and that you accept its terms.</span>
+
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">Utility classes and functions for Python callable.</span>
+
+<span class="sd">* author: Yann Cointepas</span>
+<span class="sd">* organization: `NeuroSpin &lt;http://www.neurospin.org&gt;`_</span>
+<span class="sd">* license: `CeCILL B &lt;http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html&gt;`_</span>
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">absolute_import</span>
+<span class="kn">from</span> <span class="nn">six.moves</span> <span class="kn">import</span> <span class="nb">zip</span>
+<span class="kn">import</span> <span class="nn">six</span>
+<span class="n">__docformat__</span> <span class="o">=</span> <span class="s2">&quot;restructuredtext en&quot;</span>
+
+<span class="kn">import</span> <span class="nn">inspect</span>
+<span class="c1"># handle deprecation of getargspec in python3</span>
+<span class="n">getfullargspec</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">inspect</span><span class="p">,</span> <span class="s1">&#39;getfullargspec&#39;</span><span class="p">,</span> <span class="n">inspect</span><span class="o">.</span><span class="n">getargspec</span><span class="p">)</span>
+
+<span class="c1">#-------------------------------------------------------------------------</span>
+<span class="kn">from</span> <span class="nn">soma.translation</span> <span class="kn">import</span> <span class="n">translate</span> <span class="k">as</span> <span class="n">_</span>
+
+<span class="c1">#-------------------------------------------------------------------------</span>
+<span class="k">class</span> <span class="nc">Empty</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="k">pass</span>
+
+<span class="c1">#-------------------------------------------------------------------------</span>
+
+
+<div class="viewcode-block" id="SomaPartial"><a class="viewcode-back" href="../../../api.html#soma.utils.functiontools.SomaPartial">[docs]</a><span class="k">class</span> <span class="nc">SomaPartial</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    This is a reimplementation of :py:func:`functools.partial`, which adds</span>
+<span class="sd">    compatibility with the :py:mod:`traits` module.</span>
+
+<span class="sd">    See the documentation of :py:func:`functools.partial` for details:</span>
+<span class="sd">    https://docs.python.org/library/functools.html#functools.partial</span>
+
+<span class="sd">    Example::</span>
+
+<span class="sd">        from soma.functiontools import partial</span>
+
+<span class="sd">        def f(a, b, c):</span>
+<span class="sd">            return (a, b, c)</span>
+
+<span class="sd">        g = partial(f, &#39;a&#39;, c=&#39;c&#39;)</span>
+<span class="sd">        g(&#39;b&#39;) # calls f(&#39;a&#39;, &#39;b&#39;, c=&#39;c&#39;)</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">function</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">func</span> <span class="o">=</span> <span class="n">function</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">args</span> <span class="o">=</span> <span class="n">args</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">keywords</span> <span class="o">=</span> <span class="n">kwargs</span>
+
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">merged_kwargs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">keywords</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">merged_kwargs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">args</span> <span class="o">+</span> <span class="n">args</span><span class="p">),</span> <span class="o">**</span><span class="n">merged_kwargs</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">func_code</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        This property make SomaPartial useable with traits module. The method</span>
+<span class="sd">        on_trait_change is requiring that the function has a func_code.co_argcount</span>
+<span class="sd">        attribute.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">Empty</span><span class="p">()</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">co_argcount</span> <span class="o">=</span> <span class="n">numberOfParameterRange</span><span class="p">(</span><span class="bp">self</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">result</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">__code__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">func_code</span></div>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="n">partial</span> <span class="o">=</span> <span class="n">SomaPartial</span>
+
+<span class="c1">#-------------------------------------------------------------------------</span>
+
+
+<div class="viewcode-block" id="getArgumentsSpecification"><a class="viewcode-back" href="../../../api.html#soma.utils.functiontools.getArgumentsSpecification">[docs]</a><span class="k">def</span> <span class="nf">getArgumentsSpecification</span><span class="p">(</span><span class="n">callable</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    This is an extension of Python module :py:mod:`inspect.getargspec` that</span>
+<span class="sd">    accepts classes and returns only information about the parameters that can</span>
+<span class="sd">    be used in a call to *callable* (*e.g.* the first *self* parameter of bound</span>
+<span class="sd">    methods is ignored). If *callable* has not an appropriate type, a</span>
+<span class="sd">    :class:`TypeError &lt;exceptions.TypeError&gt;` exception is raised.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    callable: callable</span>
+<span class="sd">        *function*, *method*, *class* or *instance* to inspect</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    tuple:</span>
+<span class="sd">        As :func:`inspect.getargspec`, returns</span>
+<span class="sd">        *(args, varargs, varkw, defaults)* where *args* is a list of the</span>
+<span class="sd">        argument names (it may contain nested lists). *varargs* and *varkw* are</span>
+<span class="sd">        the names of the ``*`` and ``**`` arguments or *None*. *defaults* is a</span>
+<span class="sd">        n-tuple of the default values of the last *n* arguments.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">if</span> <span class="n">inspect</span><span class="o">.</span><span class="n">isfunction</span><span class="p">(</span><span class="n">callable</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">getfullargspec</span><span class="p">(</span><span class="n">callable</span><span class="p">)[:</span><span class="mi">4</span><span class="p">]</span>
+    <span class="k">elif</span> <span class="n">inspect</span><span class="o">.</span><span class="n">ismethod</span><span class="p">(</span><span class="n">callable</span><span class="p">):</span>
+        <span class="n">args</span><span class="p">,</span> <span class="n">varargs</span><span class="p">,</span> <span class="n">varkw</span><span class="p">,</span> <span class="n">defaults</span> <span class="o">=</span> <span class="n">getfullargspec</span><span class="p">(</span><span class="n">callable</span><span class="p">)[:</span><span class="mi">4</span><span class="p">]</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>  <span class="c1"># ignore the first &quot;self&quot; parameter</span>
+        <span class="k">return</span> <span class="n">args</span><span class="p">,</span> <span class="n">varargs</span><span class="p">,</span> <span class="n">varkw</span><span class="p">,</span> <span class="n">defaults</span>
+    <span class="k">elif</span> <span class="n">inspect</span><span class="o">.</span><span class="n">isclass</span><span class="p">(</span><span class="n">callable</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">init</span> <span class="o">=</span> <span class="n">callable</span><span class="o">.</span><span class="fm">__init__</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[],</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="n">getArgumentsSpecification</span><span class="p">(</span><span class="n">init</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">callable</span><span class="p">,</span> <span class="p">(</span><span class="n">partial</span><span class="p">,</span> <span class="n">SomaPartial</span><span class="p">)):</span>
+        <span class="n">args</span><span class="p">,</span> <span class="n">varargs</span><span class="p">,</span> <span class="n">varkw</span><span class="p">,</span> <span class="n">defaults</span> <span class="o">=</span> <span class="n">getArgumentsSpecification</span><span class="p">(</span>
+            <span class="n">callable</span><span class="o">.</span><span class="n">func</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">defaults</span><span class="p">:</span>
+            <span class="n">d</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="nb">reversed</span><span class="p">(</span><span class="n">args</span><span class="p">),</span> <span class="nb">reversed</span><span class="p">(</span><span class="n">defaults</span><span class="p">)))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">d</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">d</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="nb">reversed</span><span class="p">(</span><span class="n">args</span><span class="p">),</span> <span class="nb">reversed</span><span class="p">(</span><span class="n">callable</span><span class="o">.</span><span class="n">args</span><span class="p">)))</span>
+        <span class="k">if</span> <span class="n">callable</span><span class="o">.</span><span class="n">keywords</span><span class="p">:</span>
+            <span class="n">d</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">callable</span><span class="o">.</span><span class="n">keywords</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">d</span><span class="p">):</span>
+            <span class="n">defaults</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">((</span><span class="n">d</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">args</span><span class="p">[</span><span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="n">d</span><span class="p">):]))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">defaults</span> <span class="o">=</span> <span class="n">d</span>
+
+        <span class="k">return</span> <span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">varargs</span><span class="p">,</span> <span class="n">varkw</span><span class="p">,</span> <span class="n">defaults</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">call</span> <span class="o">=</span> <span class="n">callable</span><span class="o">.</span><span class="fm">__call__</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="n">_</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1"> is not callable&#39;</span><span class="p">)</span> <span class="o">%</span>
+                            <span class="nb">repr</span><span class="p">(</span><span class="n">callable</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">getArgumentsSpecification</span><span class="p">(</span><span class="n">call</span><span class="p">)</span></div>
+
+<span class="c1">#-------------------------------------------------------------------------</span>
+
+
+<div class="viewcode-block" id="getCallableString"><a class="viewcode-back" href="../../../api.html#soma.utils.functiontools.getCallableString">[docs]</a><span class="k">def</span> <span class="nf">getCallableString</span><span class="p">(</span><span class="n">callable</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Returns a translated human readable string representing a callable.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    callable: callable</span>
+<span class="sd">        *function*, *method*, *class* or *instance* to inspect</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    --------</span>
+<span class="sd">    string:</span>
+<span class="sd">        type and name of the callable</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">if</span> <span class="n">inspect</span><span class="o">.</span><span class="n">isfunction</span><span class="p">(</span><span class="n">callable</span><span class="p">):</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="n">_</span><span class="p">(</span><span class="s1">&#39;function </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">)</span> <span class="o">%</span> <span class="p">(</span><span class="n">callable</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="p">)</span>
+    <span class="k">elif</span> <span class="n">inspect</span><span class="o">.</span><span class="n">ismethod</span><span class="p">(</span><span class="n">callable</span><span class="p">):</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="n">_</span><span class="p">(</span><span class="s1">&#39;method </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">)</span> <span class="o">%</span> <span class="p">(</span><span class="n">six</span><span class="o">.</span><span class="n">get_method_self</span><span class="p">(</span><span class="n">callable</span><span class="p">)</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span> <span class="o">+</span> <span class="s1">&#39;.&#39;</span> <span class="o">+</span>
+                                 <span class="n">callable</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="p">)</span>
+    <span class="k">elif</span> <span class="n">inspect</span><span class="o">.</span><span class="n">isclass</span><span class="p">(</span><span class="n">callable</span><span class="p">):</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="n">_</span><span class="p">(</span><span class="s1">&#39;class </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">)</span> <span class="o">%</span> <span class="p">(</span><span class="n">callable</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">callable</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">name</span></div>
+
+<span class="c1">#-------------------------------------------------------------------------</span>
+
+
+<div class="viewcode-block" id="hasParameter"><a class="viewcode-back" href="../../../api.html#soma.utils.functiontools.hasParameter">[docs]</a><span class="k">def</span> <span class="nf">hasParameter</span><span class="p">(</span><span class="n">callable</span><span class="p">,</span> <span class="n">parameterName</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Returns *True* if *callable* can be called with a parameter named</span>
+<span class="sd">    *parameterName*. Otherwise, returns *False*.</span>
+
+<span class="sd">    .. seealso:: :py:func:`getArgumentsSpecification`</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    callable: callable</span>
+<span class="sd">        *function*, *method*, *class* or *instance* to inspect</span>
+<span class="sd">    parameterName: string</span>
+<span class="sd">        name of the parameter</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    bool:</span>
+
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">args</span><span class="p">,</span> <span class="n">varargs</span><span class="p">,</span> <span class="n">varkw</span><span class="p">,</span> <span class="n">defaults</span> <span class="o">=</span> <span class="n">getArgumentsSpecification</span><span class="p">(</span><span class="n">callable</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">varkw</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">parameterName</span> <span class="ow">in</span> <span class="n">args</span></div>
+
+<span class="c1">#-------------------------------------------------------------------------</span>
+
+
+<div class="viewcode-block" id="numberOfParameterRange"><a class="viewcode-back" href="../../../api.html#soma.utils.functiontools.numberOfParameterRange">[docs]</a><span class="k">def</span> <span class="nf">numberOfParameterRange</span><span class="p">(</span><span class="n">callable</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Returns the minimum and maximum number of parameter that can be used to</span>
+<span class="sd">    call a function. If the maximum number of argument is not defined, it is</span>
+<span class="sd">    set to *None*.</span>
+
+<span class="sd">    .. seealso:: :func:`getArgumentsSpecification`</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    callable: callable</span>
+<span class="sd">        *function*, *method*, *class* or *instance* to inspect</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    tuple:</span>
+<span class="sd">        two elements (minimum, maximum)</span>
+
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">args</span><span class="p">,</span> <span class="n">varargs</span><span class="p">,</span> <span class="n">varkw</span><span class="p">,</span> <span class="n">defaults</span> <span class="o">=</span> <span class="n">getArgumentsSpecification</span><span class="p">(</span><span class="n">callable</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">defaults</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">defaults</span><span class="p">)</span> <span class="o">&gt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
+        <span class="n">lenDefault</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">lenDefault</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">defaults</span><span class="p">)</span>
+    <span class="n">minimum</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">-</span> <span class="n">lenDefault</span>
+    <span class="k">if</span> <span class="n">varargs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">maximum</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">maximum</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="n">minimum</span><span class="p">,</span> <span class="n">maximum</span></div>
+
+
+<span class="c1">#-------------------------------------------------------------------------</span>
+<div class="viewcode-block" id="checkParameterCount"><a class="viewcode-back" href="../../../api.html#soma.utils.functiontools.checkParameterCount">[docs]</a><span class="k">def</span> <span class="nf">checkParameterCount</span><span class="p">(</span><span class="n">callable</span><span class="p">,</span> <span class="n">paramCount</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Checks that a callable can be called with *paramCount* arguments. If not, a</span>
+<span class="sd">    RuntimeError is raised.</span>
+
+<span class="sd">    .. seealso:: :func:`getArgumentsSpecification`</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    callable: callable</span>
+<span class="sd">        *function*, *method*, *class* or *instance* to inspect</span>
+<span class="sd">    paramCount: int</span>
+<span class="sd">        number of parameters</span>
+
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">minimum</span><span class="p">,</span> <span class="n">maximum</span> <span class="o">=</span> <span class="n">numberOfParameterRange</span><span class="p">(</span><span class="n">callable</span><span class="p">)</span>
+    <span class="k">if</span> <span class="p">(</span> <span class="n">maximum</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">paramCount</span> <span class="o">&gt;</span> <span class="n">maximum</span> <span class="p">)</span> <span class="ow">or</span> \
+       <span class="n">paramCount</span> <span class="o">&lt;</span> <span class="n">minimum</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+            <span class="n">_</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%(callable)s</span><span class="s1"> cannot be called with </span><span class="si">%(paramCount)d</span><span class="s1"> arguments&#39;</span><span class="p">)</span> <span class="o">%</span>
+            <span class="p">{</span><span class="s1">&#39;callable&#39;</span><span class="p">:</span> <span class="n">getCallableString</span><span class="p">(</span><span class="n">callable</span><span class="p">),</span>
+             <span class="s1">&#39;paramCount&#39;</span><span class="p">:</span> <span class="n">paramCount</span><span class="p">})</span></div>
+
+<span class="c1">#-------------------------------------------------------------------------</span>
+
+
+<div class="viewcode-block" id="drange"><a class="viewcode-back" href="../../../api.html#soma.utils.functiontools.drange">[docs]</a><span class="k">def</span> <span class="nf">drange</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">stop</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Creates lists containing arithmetic progressions of any number type (int,</span>
+<span class="sd">    float, ...)</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="n">start</span>
+    <span class="k">while</span> <span class="n">r</span> <span class="o">&lt;</span> <span class="n">stop</span><span class="p">:</span>
+        <span class="k">yield</span> <span class="n">r</span>
+        <span class="n">r</span> <span class="o">+=</span> <span class="n">step</span></div>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">Soma-base 5.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">soma.utils.functiontools</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2011, IFR49.org.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.5.4.
+    </div>
+  </body>
+</html>

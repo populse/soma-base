@@ -1,0 +1,560 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>soma.path &#8212; Soma-base 5.1.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css" />
+    
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Soma-base 5.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">soma.path</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for soma.path</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+
+<span class="c1">#  This software and supporting documentation are distributed by</span>
+<span class="c1">#      Institut Federatif de Recherche 49</span>
+<span class="c1">#      CEA/NeuroSpin, Batiment 145,</span>
+<span class="c1">#      91191 Gif-sur-Yvette cedex</span>
+<span class="c1">#      France</span>
+<span class="c1">#</span>
+<span class="c1"># This software is governed by the CeCILL-B license under</span>
+<span class="c1"># French law and abiding by the rules of distribution of free software.</span>
+<span class="c1"># You can  use, modify and/or redistribute the software under the</span>
+<span class="c1"># terms of the CeCILL-B license as circulated by CEA, CNRS</span>
+<span class="c1"># and INRIA at the following URL &quot;http://www.cecill.info&quot;.</span>
+<span class="c1">#</span>
+<span class="c1"># As a counterpart to the access to the source code and  rights to copy,</span>
+<span class="c1"># modify and redistribute granted by the license, users are provided only</span>
+<span class="c1"># with a limited warranty  and the software&#39;s author,  the holder of the</span>
+<span class="c1"># economic rights,  and the successive licensors  have only  limited</span>
+<span class="c1"># liability.</span>
+<span class="c1">#</span>
+<span class="c1"># In this respect, the user&#39;s attention is drawn to the risks associated</span>
+<span class="c1"># with loading,  using,  modifying and/or developing or reproducing the</span>
+<span class="c1"># software by the user in light of its specific status of free software,</span>
+<span class="c1"># that may mean  that it is complicated to manipulate,  and  that  also</span>
+<span class="c1"># therefore means  that it is reserved for developers  and  experienced</span>
+<span class="c1"># professionals having in-depth computer knowledge. Users are therefore</span>
+<span class="c1"># encouraged to load and test the software&#39;s suitability as regards their</span>
+<span class="c1"># requirements in conditions enabling the security of their systems and/or</span>
+<span class="c1"># data to be ensured and,  more generally, to use and operate it in the</span>
+<span class="c1"># same conditions as regards security.</span>
+<span class="c1">#</span>
+<span class="c1"># The fact that you are presently reading this means that you have had</span>
+<span class="c1"># knowledge of the CeCILL-B license and that you accept its terms.</span>
+
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">Some useful functions to manage file or directorie names.</span>
+
+<span class="sd">* author: Yann Cointepas</span>
+<span class="sd">* organization: NeuroSpin</span>
+<span class="sd">* license: `CeCILL B &lt;http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html&gt;`_</span>
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">absolute_import</span>
+<span class="n">__docformat__</span> <span class="o">=</span> <span class="s2">&quot;restructuredtext en&quot;</span>
+
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">platform</span>
+<span class="kn">import</span> <span class="nn">fnmatch</span>
+<span class="kn">import</span> <span class="nn">glob</span>
+<span class="kn">import</span> <span class="nn">hashlib</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">shutil</span>
+<span class="kn">import</span> <span class="nn">six</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+
+
+<div class="viewcode-block" id="split_path"><a class="viewcode-back" href="../../api.html#soma.path.split_path">[docs]</a><span class="k">def</span> <span class="nf">split_path</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Iteratively apply :func:`os.path.split` to build a list. Ignore trailing directory separator.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    ::</span>
+
+<span class="sd">        split_path(&#39;/home/myaccount/data/file.csv&#39;) returns [&#39;/&#39;, &#39;home&#39;, &#39;myaccount&#39;, &#39;data&#39;, &#39;file.csv&#39;]</span>
+<span class="sd">        split_path(&#39;home/myaccount/data/file.csv&#39;) returns [&#39;home&#39;, &#39;myaccount&#39;, &#39;data&#39;, &#39;file.csv&#39;]</span>
+<span class="sd">        split_path(&#39;/home/myaccount/data/&#39;) returns [&#39;/&#39;, &#39;home&#39;, &#39;myaccount&#39;, &#39;data&#39;]</span>
+<span class="sd">        split_path(&#39;/home/myaccount/data&#39;) returns [&#39;/&#39;, &#39;home&#39;, &#39;myaccount&#39;, &#39;data&#39;]</span>
+<span class="sd">        split_path(&#39;&#39;) returns [&#39;&#39;]</span>
+<span class="sd">  &#39;&#39;&#39;</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">b</span><span class="p">:</span>
+        <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>
+    <span class="k">while</span> <span class="n">a</span> <span class="ow">and</span> <span class="n">b</span><span class="p">:</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span>
+        <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">a</span><span class="p">:</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">a</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">result</span></div>
+
+
+<div class="viewcode-block" id="relative_path"><a class="viewcode-back" href="../../api.html#soma.path.relative_path">[docs]</a><span class="k">def</span> <span class="nf">relative_path</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">referenceDirectory</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Return a relative version of a path given a</span>
+<span class="sd">    reference directory.</span>
+
+<span class="sd">    ::</span>
+
+<span class="sd">        os.path.join(referenceDirectory, relative_path(path, referenceDirectory))</span>
+<span class="sd">        returns os.path.abspath(pat)</span>
+
+<span class="sd">    Example</span>
+<span class="sd">    =======</span>
+<span class="sd">    ::</span>
+
+<span class="sd">        relative_path(&#39;/usr/local/brainvisa-3.1/bin/brainvisa&#39;, &#39;/usr/local&#39;)</span>
+<span class="sd">        returns &#39;brainvisa-3.1/bin/brainvisa&#39;</span>
+
+<span class="sd">        relative_path(&#39;/usr/local/brainvisa-3.1/bin/brainvisa&#39;, &#39;/usr/local/bin&#39;)</span>
+<span class="sd">        returns &#39;../brainvisa-3.1/bin/brainvisa&#39;</span>
+
+<span class="sd">        relative_path(&#39;/usr/local/brainvisa-3.1/bin/brainvisa&#39;, &#39;/tmp/test/brainvisa&#39;)</span>
+<span class="sd">        returns &#39;../../../usr/local/brainvisa-3.1/bin/brainvisa&#39;</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">sPath</span> <span class="o">=</span> <span class="n">split_path</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">path</span><span class="p">))</span>
+    <span class="n">sReferencePath</span> <span class="o">=</span> <span class="n">split_path</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">referenceDirectory</span><span class="p">))</span>
+    <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">while</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">sPath</span><span class="p">)</span> <span class="ow">and</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">sReferencePath</span><span class="p">)</span> <span class="ow">and</span> <span class="n">sPath</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="n">sReferencePath</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span>
+        <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="n">plist</span> <span class="o">=</span> <span class="p">([</span><span class="s1">&#39;..&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">sReferencePath</span><span class="p">)</span> <span class="o">-</span> <span class="n">i</span><span class="p">))</span> <span class="o">+</span> <span class="n">sPath</span><span class="p">[</span><span class="n">i</span><span class="p">:]</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">plist</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s1">&#39;&#39;</span>
+    <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="o">*</span><span class="n">plist</span><span class="p">)</span></div>
+
+
+<span class="n">query_string_re</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s1">&#39;\?([^\?\&amp;]+\=[^\&amp;]*)(\&amp;[^\?\&amp;]+\=[^\&amp;]*)*$&#39;</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="split_query_string"><a class="viewcode-back" href="../../api.html#soma.path.split_query_string">[docs]</a><span class="k">def</span> <span class="nf">split_query_string</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Split a path and its query string.</span>
+
+<span class="sd">    Example</span>
+<span class="sd">    =======</span>
+<span class="sd">    A path containing a query string is::</span>
+
+<span class="sd">        /dir1/file1?param1=val1&amp;param2=val2&amp;paramN=valN</span>
+
+<span class="sd">    ::</span>
+
+<span class="sd">        split_query_string( &#39;/dir1/file1?param1=val1&amp;param2=val2&amp;paramN=valN&#39; )</span>
+
+<span class="sd">    would return::</span>
+
+<span class="sd">        (&#39;/dir1/file1&#39;, &#39;?param1=val1&amp;param2=val2&amp;paramN=valN&#39;)</span>
+
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="n">query_string_re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">m</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">path</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">m</span><span class="o">.</span><span class="n">start</span><span class="p">()],</span> <span class="n">path</span><span class="p">[</span><span class="n">m</span><span class="o">.</span><span class="n">start</span><span class="p">():])</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="remove_query_string"><a class="viewcode-back" href="../../api.html#soma.path.remove_query_string">[docs]</a><span class="k">def</span> <span class="nf">remove_query_string</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Remove the query string from a path.</span>
+
+<span class="sd">    Example</span>
+<span class="sd">    =======</span>
+<span class="sd">    A path containing a query string is::</span>
+
+<span class="sd">        /dir1/file1?param1=val1&amp;param2=val2&amp;paramN=valN</span>
+
+<span class="sd">    ::</span>
+
+<span class="sd">        remove_query_string( &#39;/dir1/file1?param1=val1&amp;param2=val2&amp;paramN=valN&#39; )</span>
+
+<span class="sd">    would return::</span>
+
+<span class="sd">        &#39;/dir1/file1&#39;</span>
+
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">return</span> <span class="n">query_string_re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="strict_urlparse"><a class="viewcode-back" href="../../api.html#soma.path.strict_urlparse">[docs]</a><span class="k">def</span> <span class="nf">strict_urlparse</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    A &quot;fixed&quot; version of urlparse.urlparse() which preserves the case of the</span>
+<span class="sd">    drive letter in windows paths. The standard urlparse changes &#39;Z:/some/path&#39;</span>
+<span class="sd">    to &#39;z:/some/path&#39;</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="kn">from</span> <span class="nn">six.moves.urllib</span> <span class="kn">import</span> <span class="n">parse</span> <span class="k">as</span> <span class="n">urlparse</span>
+    <span class="n">url_parsed</span> <span class="o">=</span> <span class="n">urlparse</span><span class="o">.</span><span class="n">urlparse</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">url_parsed</span><span class="o">.</span><span class="n">scheme</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">url_parsed</span><span class="o">.</span><span class="n">scheme</span> <span class="o">&gt;=</span> <span class="s1">&#39;a&#39;</span> \
+            <span class="ow">and</span> <span class="n">url_parsed</span><span class="o">.</span><span class="n">scheme</span> <span class="o">&lt;=</span> <span class="s1">&#39;z&#39;</span> <span class="ow">and</span> <span class="n">path</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;:&#39;</span> \
+              <span class="ow">and</span> <span class="n">path</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">url_parsed</span><span class="o">.</span><span class="n">scheme</span><span class="o">.</span><span class="n">upper</span><span class="p">():</span>
+        <span class="n">url_parsed</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">url_parsed</span><span class="p">)(</span>
+            <span class="n">scheme</span><span class="o">=</span><span class="n">url_parsed</span><span class="o">.</span><span class="n">scheme</span><span class="o">.</span><span class="n">upper</span><span class="p">(),</span>
+            <span class="n">netloc</span><span class="o">=</span><span class="n">url_parsed</span><span class="o">.</span><span class="n">netloc</span><span class="p">,</span>
+            <span class="n">path</span><span class="o">=</span><span class="n">url_parsed</span><span class="o">.</span><span class="n">path</span><span class="p">,</span>
+            <span class="n">params</span><span class="o">=</span><span class="n">url_parsed</span><span class="o">.</span><span class="n">params</span><span class="p">,</span>
+            <span class="n">query</span><span class="o">=</span><span class="n">url_parsed</span><span class="o">.</span><span class="n">query</span><span class="p">,</span>
+            <span class="n">fragment</span><span class="o">=</span><span class="n">url_parsed</span><span class="o">.</span><span class="n">fragment</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">url_parsed</span></div>
+
+<div class="viewcode-block" id="parse_query_string"><a class="viewcode-back" href="../../api.html#soma.path.parse_query_string">[docs]</a><span class="k">def</span> <span class="nf">parse_query_string</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Parses the query string from a path and returns a dictionary.</span>
+
+<span class="sd">    Example</span>
+<span class="sd">    =======</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="kn">from</span> <span class="nn">six.moves.urllib</span> <span class="kn">import</span> <span class="n">parse</span> <span class="k">as</span> <span class="n">urlparse</span>
+        
+    <span class="n">url_parsed</span> <span class="o">=</span> <span class="n">urlparse</span><span class="o">.</span><span class="n">urlparse</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="n">qs_parsed</span> <span class="o">=</span> <span class="n">urlparse</span><span class="o">.</span><span class="n">parse_qs</span><span class="p">(</span><span class="n">url_parsed</span><span class="o">.</span><span class="n">query</span><span class="p">)</span>
+    
+    <span class="k">return</span> <span class="nb">dict</span><span class="p">([(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span> \
+                 <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">six</span><span class="o">.</span><span class="n">iteritems</span><span class="p">(</span><span class="n">qs_parsed</span><span class="p">)])</span></div>
+    
+
+<span class="k">class</span> <span class="nc">QueryStringParamUpdateMode</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="n">REPLACE</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">APPEND</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">REMOVE</span> <span class="o">=</span> <span class="mi">2</span>
+
+<div class="viewcode-block" id="update_query_string"><a class="viewcode-back" href="../../api.html#soma.path.update_query_string">[docs]</a><span class="k">def</span> <span class="nf">update_query_string</span><span class="p">(</span>
+    <span class="n">path</span><span class="p">,</span>
+    <span class="n">params</span><span class="p">,</span>
+    <span class="n">params_update_mode</span><span class="o">=</span><span class="n">QueryStringParamUpdateMode</span><span class="o">.</span><span class="n">REPLACE</span>
+<span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Update the query string parameters in a path.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    path: string</span>
+<span class="sd">          The path to update parameters within.</span>
+
+<span class="sd">    params: dict|list</span>
+<span class="sd">          A dictionnary that contains keys and parameters to set in the query</span>
+<span class="sd">          string</span>
+
+<span class="sd">    params_update_mode: dict|string|list|int</span>
+<span class="sd">          The default value is QueryStringParamUpdateMode.REPLACE that lead to</span>
+<span class="sd">          replace value in the query string path by the one given in the params</span>
+<span class="sd">          dictionary.</span>
+
+<span class="sd">          It is possible to change the default behaviour giving the value</span>
+<span class="sd">          QueryStringParamUpdateMode.APPEND. This will lead to always append</span>
+<span class="sd">          values of the params dictionary to values of the query string path.</span>
+<span class="sd">          The default behaviour can also be changed by specifying a parameter</span>
+<span class="sd">          name as string, in this case only values for that parameter name will</span>
+<span class="sd">          be appended. It can also contains a list or a tuple of parameter names</span>
+<span class="sd">          for which values will be appended.</span>
+
+<span class="sd">          Finally, this parameter can be a dictionary that specifies which</span>
+<span class="sd">          parameter has to be appended or replaced. The dictionary contains</span>
+<span class="sd">          parameter names in its keys and QueryStringParamUpdateMode in values.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    path: string</span>
+<span class="sd">          The path updated with given parameters</span>
+
+<span class="sd">    Example</span>
+<span class="sd">    -------</span>
+<span class="sd">    A path containing a query string is::</span>
+
+<span class="sd">        /dir1/file1?param1=val1&amp;param2=val2&amp;paramN=valN</span>
+
+<span class="sd">    the params dictionary contains::</span>
+
+<span class="sd">        {&#39;param1&#39;:&#39;newval1&#39;, param2=newval2&#39;, param3&#39;:&#39;newval3&#39;}</span>
+
+<span class="sd">    ::</span>
+
+<span class="sd">        update_query_string(&#39;/dir1/file1?param1=val1&amp;param2=val2&amp;paramN=valN&#39;,</span>
+<span class="sd">                            {&#39;param1&#39;:&#39;newval1&#39;, &#39;param2&#39;:&#39;newval2&#39;, &#39;param3&#39;:&#39;newval3&#39;})</span>
+
+<span class="sd">    would return::</span>
+
+<span class="sd">        &#39;/dir1/file1?param1=newval1&amp;param2=newval2&amp;paramN=valN&amp;param3=newval3&#39;</span>
+
+<span class="sd">    ::</span>
+
+<span class="sd">        update_query_string(&#39;/dir1/file1?param1=val1&amp;param2=val2&amp;paramN=valN&#39;,</span>
+<span class="sd">                            {&#39;param1&#39;:&#39;newval1&#39;, &#39;param2&#39;:&#39;newval2&#39;, &#39;param3&#39;:&#39;newval3&#39;},</span>
+<span class="sd">                            QueryStringParamUpdateMode.APPEND)</span>
+
+<span class="sd">    would return::</span>
+
+<span class="sd">        &#39;/dir1/file1?param1=val1&amp;param1=newval1&amp;param2=val2&amp;param2=newval2&amp;paramN=valN&amp;param3=newval3&#39;</span>
+
+<span class="sd">    ::</span>
+
+<span class="sd">        update_query_string(&#39;/dir1/file1?param1=val1&amp;param2=val2&amp;paramN=valN&#39;,</span>
+<span class="sd">                            {&#39;param1&#39;:&#39;newval1&#39;, &#39;param2&#39;:&#39;newval2&#39;, &#39;param3&#39;:&#39;newval3&#39;},</span>
+<span class="sd">                            &#39;param2&#39;)</span>
+
+<span class="sd">    would return::</span>
+
+<span class="sd">        &#39;/dir1/file1?param1=newval1&amp;param2=val2&amp;param2=newval2&amp;paramN=valN&amp;param3=newval3&#39;</span>
+
+<span class="sd">    ::</span>
+
+<span class="sd">        update_query_string(&#39;/dir1/file1?param1=val1&amp;param2=val2&amp;paramN=valN&#39;,</span>
+<span class="sd">                            {&#39;param1&#39;:&#39;newval1&#39;, &#39;param2&#39;:&#39;newval2&#39;, &#39;param3&#39;:&#39;newval3&#39;},</span>
+<span class="sd">                            (&#39;param1&#39;, &#39;param2&#39;))</span>
+
+<span class="sd">    would return::</span>
+
+<span class="sd">        &#39;/dir1/file1?param1=val1&amp;param1=newval1&amp;param2=val2&amp;param2=newval2&amp;paramN=valN&amp;param3=newval3&#39;</span>
+
+<span class="sd">    ::</span>
+
+<span class="sd">        update_query_string(&#39;/dir1/file1?param1=val1&amp;param2=val2&amp;paramN=valN&#39;,</span>
+<span class="sd">                            {&#39;param1&#39;:&#39;newval1&#39;, &#39;param2&#39;:&#39;newval2&#39;, &#39;param3&#39;:&#39;newval3&#39;},</span>
+<span class="sd">                            {&#39;param1&#39;: QueryStringParamUpdateMode.APPEND,</span>
+<span class="sd">                            &#39;param2&#39;: QueryStringParamUpdateMode.REPLACE})</span>
+
+<span class="sd">    would return::</span>
+
+<span class="sd">        &#39;/dir1/file1?param1=val1&amp;param1=newval1&amp;param2=val2&amp;param2=newval2&amp;paramN=valN&amp;param3=newval3&#39;</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="kn">from</span> <span class="nn">six.moves.urllib</span> <span class="kn">import</span> <span class="n">parse</span> <span class="k">as</span> <span class="n">urllib</span>
+    <span class="n">urlparse</span> <span class="o">=</span> <span class="n">urllib</span>
+
+    <span class="c1"># Convert params_update_mode to a dictionary that contains the update mode</span>
+    <span class="c1"># for each parameter</span>
+    <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">params_update_mode</span><span class="p">)</span> <span class="ow">in</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+        <span class="c1"># Update mode is specified using a list of parameter names</span>
+        <span class="n">default_update_mode</span> <span class="o">=</span> <span class="n">QueryStringParamUpdateMode</span><span class="o">.</span><span class="n">REPLACE</span>
+        <span class="n">params_update</span> <span class="o">=</span> <span class="n">params_update_mode</span>
+        <span class="n">params_update_mode</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+
+        <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">params_update</span><span class="p">:</span>
+            <span class="k">if</span> <span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="ow">in</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
+                <span class="k">if</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">):</span>
+                    <span class="n">params_update_mode</span><span class="p">[</span><span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">=</span> <span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+                <span class="k">elif</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span>
+                    <span class="n">params_update_mode</span><span class="p">[</span>
+                        <span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">=</span> <span class="n">QueryStringParamUpdateMode</span><span class="o">.</span><span class="n">APPEND</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">params_update_mode</span><span class="p">[</span><span class="n">p</span><span class="p">]</span> <span class="o">=</span> <span class="n">QueryStringParamUpdateMode</span><span class="o">.</span><span class="n">APPEND</span>
+
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">params_update_mode</span><span class="p">,</span> <span class="n">six</span><span class="o">.</span><span class="n">string_types</span><span class="p">):</span>
+        <span class="c1"># A parameter name was given directly</span>
+        <span class="n">default_update_mode</span> <span class="o">=</span> <span class="n">QueryStringParamUpdateMode</span><span class="o">.</span><span class="n">REPLACE</span>
+        <span class="n">params_update_mode</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(((</span><span class="n">params_update_mode</span><span class="p">,</span>
+                                    <span class="n">QueryStringParamUpdateMode</span><span class="o">.</span><span class="n">APPEND</span><span class="p">),))</span>
+
+    <span class="k">elif</span> <span class="n">params_update_mode</span> <span class="ow">in</span> <span class="p">(</span><span class="n">QueryStringParamUpdateMode</span><span class="o">.</span><span class="n">APPEND</span><span class="p">,</span>
+                                <span class="n">QueryStringParamUpdateMode</span><span class="o">.</span><span class="n">REPLACE</span><span class="p">,</span>
+                                <span class="n">QueryStringParamUpdateMode</span><span class="o">.</span><span class="n">REMOVE</span><span class="p">):</span>
+        <span class="c1"># Update mode was specified for all parameters</span>
+        <span class="n">default_update_mode</span> <span class="o">=</span> <span class="n">params_update_mode</span>
+        <span class="n">params_update_mode</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+
+    <span class="k">elif</span> <span class="nb">type</span><span class="p">(</span><span class="n">params_update_mode</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">dict</span><span class="p">:</span>
+        <span class="n">default_update_mode</span> <span class="o">=</span> <span class="n">QueryStringParamUpdateMode</span><span class="o">.</span><span class="n">REPLACE</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+            <span class="s1">&#39;params_update_mode is not specified correctly. &#39;</span>
+            <span class="s1">&#39;It must be either a dictionary that contains parameter names &#39;</span>
+            <span class="s1">&#39;and the corresponding QueryStringParamUpdateMode, &#39;</span>
+            <span class="s1">&#39;either a list that contains parameter names, either&#39;</span>
+            <span class="s1">&#39;QueryStringParamUpdateMode.&#39;</span><span class="p">)</span>
+
+    <span class="n">url_parsed</span> <span class="o">=</span> <span class="n">strict_urlparse</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="n">url_params</span> <span class="o">=</span> <span class="n">urlparse</span><span class="o">.</span><span class="n">parse_qs</span><span class="p">(</span><span class="n">url_parsed</span><span class="o">.</span><span class="n">query</span><span class="p">)</span>
+    
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">([(</span><span class="n">p</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">params</span><span class="p">])</span>
+        
+
+    <span class="c1"># Update parameters dictionary</span>
+    <span class="k">for</span> <span class="n">p</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">six</span><span class="o">.</span><span class="n">iteritems</span><span class="p">(</span><span class="n">params</span><span class="p">):</span>
+        <span class="n">update_mode</span> <span class="o">=</span> <span class="n">params_update_mode</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+            <span class="n">p</span><span class="p">,</span>
+            <span class="n">default_update_mode</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">update_mode</span> <span class="o">==</span> <span class="n">QueryStringParamUpdateMode</span><span class="o">.</span><span class="n">REPLACE</span><span class="p">:</span>
+            <span class="n">url_params</span><span class="p">[</span><span class="n">p</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
+
+        <span class="k">elif</span> <span class="n">update_mode</span> <span class="o">==</span> <span class="n">QueryStringParamUpdateMode</span><span class="o">.</span><span class="n">APPEND</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="ow">in</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+                <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">tuple</span><span class="p">:</span>
+                    <span class="n">url_params</span><span class="p">[</span><span class="n">p</span><span class="p">]</span> <span class="o">+=</span> <span class="nb">list</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">url_params</span><span class="p">[</span><span class="n">p</span><span class="p">]</span> <span class="o">+=</span> <span class="n">v</span>
+
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">url_params</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="nb">list</span><span class="p">())</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+                
+        <span class="k">elif</span> <span class="n">update_mode</span> <span class="o">==</span> <span class="n">QueryStringParamUpdateMode</span><span class="o">.</span><span class="n">REMOVE</span><span class="p">:</span>
+            <span class="k">del</span> <span class="n">url_params</span><span class="p">[</span><span class="n">p</span><span class="p">]</span>
+            
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;params_update_mode is not specified correctly. </span><span class="si">%s</span><span class="s1"> is &#39;</span>
+                               <span class="s1">&#39;not a valid value for parameter </span><span class="si">%s</span><span class="s1">. Valid values are &#39;</span>
+                               <span class="s1">&#39;either QueryStringParamUpdateMode.APPEND, either&#39;</span>
+                               <span class="s1">&#39;QueryStringParamUpdateMode.REPLACE.&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">p</span><span class="p">))</span>
+        
+        
+    <span class="n">url_new</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">url_parsed</span><span class="p">)</span>
+    <span class="n">url_new</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">urlencode</span><span class="p">(</span><span class="n">url_params</span><span class="p">,</span> <span class="n">doseq</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">urlparse</span><span class="o">.</span><span class="n">urlunparse</span><span class="p">(</span><span class="n">url_new</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="find_in_path"><a class="viewcode-back" href="../../api.html#soma.path.find_in_path">[docs]</a><span class="k">def</span> <span class="nf">find_in_path</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Look for a file in a series of directories. By default, directories are</span>
+<span class="sd">    contained in ``PATH`` environment variable. But another environment</span>
+<span class="sd">    variable name or a sequence of directories names can be given in *path*</span>
+<span class="sd">    parameter.</span>
+
+<span class="sd">    Examples::</span>
+
+<span class="sd">      find_in_path(&#39;sh&#39;) could return &#39;/bin/sh&#39;</span>
+<span class="sd">      find_in_path(&#39;libpython2.7.so&#39;, &#39;LD_LIBRARY_PATH&#39;) could return &#39;/usr/local/lib/libpython2.7.so&#39;</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">if</span> <span class="n">path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;PATH&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">pathsep</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">six</span><span class="o">.</span><span class="n">string_types</span><span class="p">):</span>
+        <span class="n">var</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">var</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">var</span> <span class="o">=</span> <span class="n">path</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">var</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">pathsep</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">path</span><span class="p">:</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">normpath</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">i</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">p</span><span class="p">:</span>
+            <span class="n">r</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">file</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">r</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">r</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="locate_file"><a class="viewcode-back" href="../../api.html#soma.path.locate_file">[docs]</a><span class="k">def</span> <span class="nf">locate_file</span><span class="p">(</span><span class="n">pattern</span><span class="p">,</span> <span class="n">root</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">curdir</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Locates a file in a directory tree</span>
+
+<span class="sd">    :param string pattern:</span>
+<span class="sd">        The pattern to find</span>
+
+<span class="sd">    :param string root:</span>
+<span class="sd">        The search root directory</span>
+
+<span class="sd">    :returns:</span>
+<span class="sd">        The first found occurrence</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">path</span><span class="p">,</span> <span class="n">dirs</span><span class="p">,</span> <span class="n">files</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">walk</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">root</span><span class="p">)):</span>
+        <span class="k">for</span> <span class="n">filename</span> <span class="ow">in</span> <span class="n">fnmatch</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">files</span><span class="p">,</span> <span class="n">pattern</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">filename</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="update_hash_from_directory"><a class="viewcode-back" href="../../api.html#soma.path.update_hash_from_directory">[docs]</a><span class="k">def</span> <span class="nf">update_hash_from_directory</span><span class="p">(</span><span class="n">directory</span><span class="p">,</span> <span class="nb">hash</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Update a hash object from the content of a directory. The hash will</span>
+<span class="sd">    reflect the recursive content of all files as well as the paths in all</span>
+<span class="sd">    directories.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">for</span> <span class="n">root</span><span class="p">,</span> <span class="n">dirs</span><span class="p">,</span> <span class="n">files</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">walk</span><span class="p">(</span><span class="n">directory</span><span class="p">)):</span>
+        <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">files</span><span class="p">):</span>
+            <span class="nb">hash</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">file</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">))</span>
+            <span class="nb">hash</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">file</span><span class="p">),</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+        <span class="k">for</span> <span class="nb">dir</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">dirs</span><span class="p">):</span>
+            <span class="nb">hash</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="nb">dir</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">))</span>
+            <span class="n">update_hash_from_directory</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="nb">dir</span><span class="p">),</span> <span class="nb">hash</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="path_hash"><a class="viewcode-back" href="../../api.html#soma.path.path_hash">[docs]</a><span class="k">def</span> <span class="nf">path_hash</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="nb">hash</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Return a hash hexdigest for a file or a directory.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">if</span> <span class="nb">hash</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">hash</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">md5</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+        <span class="n">update_hash_from_directory</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="nb">hash</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">hash</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+    <span class="k">return</span> <span class="nb">hash</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="ensure_is_dir"><a class="viewcode-back" href="../../api.html#soma.path.ensure_is_dir">[docs]</a><span class="k">def</span> <span class="nf">ensure_is_dir</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">clear_dir</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; If the directory doesn&#39;t exist, use os.makedirs &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">d</span><span class="p">):</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">clear_dir</span><span class="p">:</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">d</span><span class="p">)</span></div>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Soma-base 5.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">soma.path</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2011, IFR49.org.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.5.4.
+    </div>
+  </body>
+</html>

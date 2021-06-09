@@ -1,0 +1,183 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>soma.html &#8212; Soma-base 5.1.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css" />
+    
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Soma-base 5.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">soma.html</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for soma.html</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+
+<span class="c1">#  This software and supporting documentation are distributed by</span>
+<span class="c1">#      Institut Federatif de Recherche 49</span>
+<span class="c1">#      CEA/NeuroSpin, Batiment 145,</span>
+<span class="c1">#      91191 Gif-sur-Yvette cedex</span>
+<span class="c1">#      France</span>
+<span class="c1">#</span>
+<span class="c1"># This software is governed by the CeCILL-B license under</span>
+<span class="c1"># French law and abiding by the rules of distribution of free software.</span>
+<span class="c1"># You can  use, modify and/or redistribute the software under the</span>
+<span class="c1"># terms of the CeCILL-B license as circulated by CEA, CNRS</span>
+<span class="c1"># and INRIA at the following URL &quot;http://www.cecill.info&quot;.</span>
+<span class="c1">#</span>
+<span class="c1"># As a counterpart to the access to the source code and  rights to copy,</span>
+<span class="c1"># modify and redistribute granted by the license, users are provided only</span>
+<span class="c1"># with a limited warranty  and the software&#39;s author,  the holder of the</span>
+<span class="c1"># economic rights,  and the successive licensors  have only  limited</span>
+<span class="c1"># liability.</span>
+<span class="c1">#</span>
+<span class="c1"># In this respect, the user&#39;s attention is drawn to the risks associated</span>
+<span class="c1"># with loading,  using,  modifying and/or developing or reproducing the</span>
+<span class="c1"># software by the user in light of its specific status of free software,</span>
+<span class="c1"># that may mean  that it is complicated to manipulate,  and  that  also</span>
+<span class="c1"># therefore means  that it is reserved for developers  and  experienced</span>
+<span class="c1"># professionals having in-depth computer knowledge. Users are therefore</span>
+<span class="c1"># encouraged to load and test the software&#39;s suitability as regards their</span>
+<span class="c1"># requirements in conditions enabling the security of their systems and/or</span>
+<span class="c1"># data to be ensured and,  more generally, to use and operate it in the</span>
+<span class="c1"># same conditions as regards security.</span>
+<span class="c1">#</span>
+<span class="c1"># The fact that you are presently reading this means that you have had</span>
+<span class="c1"># knowledge of the CeCILL-B license and that you accept its terms.</span>
+
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">Utility functions for HTML format.</span>
+
+<span class="sd">* author: Yann Cointepas</span>
+<span class="sd">* organization: NeuroSpin</span>
+<span class="sd">* license: `CeCILL B &lt;http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html&gt;`_</span>
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">absolute_import</span>
+<span class="n">__docformat__</span> <span class="o">=</span> <span class="s2">&quot;restructuredtext en&quot;</span>
+
+<span class="kn">import</span> <span class="nn">six</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+
+<span class="c1">#------------------------------------------------------------------------------</span>
+<span class="c1">#: mapping of charaters to be escaped for HTML</span>
+<span class="n">_htmlEscape</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="n">_lesserHtmlEscape</span> <span class="o">=</span> <span class="kc">None</span>
+
+
+<span class="c1"># ylep 2020-03-24: now that UTF-8 is everywhere, shouldn&#39;t we just replace</span>
+<span class="c1"># HTML-unsafe characters (&amp;&lt;&gt;&quot;&#39;) and leave the rest untouched? (i.e. what the</span>
+<span class="c1"># standard library function html.escape does in Python 3.2 and later).</span>
+
+<div class="viewcode-block" id="htmlEscape"><a class="viewcode-back" href="../../api.html#soma.html.htmlEscape">[docs]</a><span class="k">def</span> <span class="nf">htmlEscape</span><span class="p">(</span><span class="n">msg</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Replace special characters by their correponding html entity.</span>
+
+<span class="sd">    All characters that have a corresponding named HTML entity are replaced.</span>
+
+<span class="sd">    - returns: *unicode*</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">global</span> <span class="n">_htmlEscape</span>
+    <span class="k">if</span> <span class="n">_htmlEscape</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">_htmlEscape</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">codepoint</span><span class="p">:</span> <span class="sa">u</span><span class="s1">&#39;&amp;&#39;</span> <span class="o">+</span> <span class="n">name</span> <span class="o">+</span> <span class="sa">u</span><span class="s1">&#39;;&#39;</span>
+            <span class="k">for</span> <span class="n">codepoint</span><span class="p">,</span> <span class="n">name</span>
+            <span class="ow">in</span> <span class="n">six</span><span class="o">.</span><span class="n">iteritems</span><span class="p">(</span><span class="n">six</span><span class="o">.</span><span class="n">moves</span><span class="o">.</span><span class="n">html_entities</span><span class="o">.</span><span class="n">codepoint2name</span><span class="p">)</span>
+        <span class="p">}</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="n">six</span><span class="o">.</span><span class="n">string_types</span><span class="p">):</span>
+        <span class="c1"># htmlEscape is sometimes used on non-string types (as print) like</span>
+        <span class="c1"># tuples or dicts</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+    <span class="n">msg</span> <span class="o">=</span> <span class="n">six</span><span class="o">.</span><span class="n">ensure_text</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">msg</span><span class="o">.</span><span class="n">translate</span><span class="p">(</span><span class="n">_htmlEscape</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="lesserHtmlEscape"><a class="viewcode-back" href="../../api.html#soma.html.lesserHtmlEscape">[docs]</a><span class="k">def</span> <span class="nf">lesserHtmlEscape</span><span class="p">(</span><span class="n">msg</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Replace special characters by their correponding html entity.</span>
+
+<span class="sd">    All characters that have a corresponding named HTML entity are replaced,</span>
+<span class="sd">    except accented characters commonly used in French text (éàèâêôîûàö) and</span>
+<span class="sd">    the double-quote character (&quot;).</span>
+
+<span class="sd">    - returns: *unicode*</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">global</span> <span class="n">_lesserHtmlEscape</span>
+    <span class="k">if</span> <span class="n">_lesserHtmlEscape</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">_lesserHtmlEscape</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">codepoint</span><span class="p">:</span> <span class="sa">u</span><span class="s1">&#39;&amp;&#39;</span> <span class="o">+</span> <span class="n">name</span> <span class="o">+</span> <span class="sa">u</span><span class="s1">&#39;;&#39;</span>
+            <span class="k">for</span> <span class="n">codepoint</span><span class="p">,</span> <span class="n">name</span>
+            <span class="ow">in</span> <span class="n">six</span><span class="o">.</span><span class="n">iteritems</span><span class="p">(</span><span class="n">six</span><span class="o">.</span><span class="n">moves</span><span class="o">.</span><span class="n">html_entities</span><span class="o">.</span><span class="n">codepoint2name</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">six</span><span class="o">.</span><span class="n">unichr</span><span class="p">(</span><span class="n">codepoint</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="sa">u</span><span class="s1">&#39;&quot;&#39;</span><span class="p">,</span> <span class="sa">u</span><span class="s1">&#39;é&#39;</span><span class="p">,</span> <span class="sa">u</span><span class="s1">&#39;à&#39;</span><span class="p">,</span> <span class="sa">u</span><span class="s1">&#39;è&#39;</span><span class="p">,</span> <span class="sa">u</span><span class="s1">&#39;â&#39;</span><span class="p">,</span>
+                                             <span class="sa">u</span><span class="s1">&#39;ê&#39;</span><span class="p">,</span> <span class="sa">u</span><span class="s1">&#39;ô&#39;</span><span class="p">,</span> <span class="sa">u</span><span class="s1">&#39;î&#39;</span><span class="p">,</span> <span class="sa">u</span><span class="s1">&#39;û&#39;</span><span class="p">,</span> <span class="sa">u</span><span class="s1">&#39;ù&#39;</span><span class="p">,</span>
+                                             <span class="sa">u</span><span class="s1">&#39;ö&#39;</span><span class="p">,</span> <span class="p">)</span>
+        <span class="p">}</span>
+    <span class="n">msg</span> <span class="o">=</span> <span class="n">six</span><span class="o">.</span><span class="n">ensure_text</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">msg</span><span class="o">.</span><span class="n">translate</span><span class="p">(</span><span class="n">_lesserHtmlEscape</span><span class="p">)</span></div>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Soma-base 5.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">soma.html</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2011, IFR49.org.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.5.4.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,215 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>soma.factory &#8212; Soma-base 5.1.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css" />
+    
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Soma-base 5.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">soma.factory</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for soma.factory</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">absolute_import</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">print_function</span>
+
+<span class="kn">import</span> <span class="nn">six</span>
+<span class="kn">from</span> <span class="nn">importlib</span> <span class="kn">import</span> <span class="n">import_module</span>
+<span class="kn">from</span> <span class="nn">pkgutil</span> <span class="kn">import</span> <span class="n">iter_modules</span>
+
+
+<div class="viewcode-block" id="find_subclasses_in_module"><a class="viewcode-back" href="../../api.html#soma.factory.find_subclasses_in_module">[docs]</a><span class="k">def</span> <span class="nf">find_subclasses_in_module</span><span class="p">(</span><span class="n">module_name</span><span class="p">,</span> <span class="n">parent_class</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Finds all the classes defined in a Python module that derive from a</span>
+<span class="sd">    given class or class name. If the module is a package, it also look</span>
+<span class="sd">    into submodules.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">parent_class</span><span class="p">,</span> <span class="n">six</span><span class="o">.</span><span class="n">string_types</span><span class="p">):</span>
+        <span class="n">check</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">item</span><span class="p">:</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="nb">type</span><span class="p">)</span> <span class="ow">and</span> 
+                              <span class="n">item</span><span class="o">.</span><span class="vm">__module__</span> <span class="o">==</span> <span class="n">module_name</span> <span class="ow">and</span> 
+                              <span class="n">parent_class</span> <span class="ow">in</span> <span class="p">(</span><span class="n">i</span><span class="o">.</span><span class="vm">__name__</span> 
+                                               <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">item</span><span class="o">.</span><span class="vm">__mro__</span><span class="p">))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">check</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">item</span><span class="p">:</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="nb">type</span><span class="p">)</span> <span class="ow">and</span> 
+                              <span class="n">item</span><span class="o">.</span><span class="vm">__module__</span> <span class="o">==</span> <span class="n">module_name</span> <span class="ow">and</span> 
+                              <span class="nb">issubclass</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">parent_class</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">find_items_in_module</span><span class="p">(</span><span class="n">module_name</span><span class="p">,</span> <span class="n">check</span><span class="p">):</span>
+        <span class="k">yield</span> <span class="n">i</span></div>
+
+
+<div class="viewcode-block" id="find_items_in_module"><a class="viewcode-back" href="../../api.html#soma.factory.find_items_in_module">[docs]</a><span class="k">def</span> <span class="nf">find_items_in_module</span><span class="p">(</span><span class="n">module_name</span><span class="p">,</span> <span class="n">check</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Finds all the items defined in a Python module that where *check(cls)* is</span>
+<span class="sd">    *True*. If the module is a package, it also look recursively into</span>
+<span class="sd">    submodules.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">module</span> <span class="o">=</span> <span class="n">import_module</span><span class="p">(</span><span class="n">module_name</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+        <span class="k">return</span>
+    
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">six</span><span class="o">.</span><span class="n">itervalues</span><span class="p">(</span><span class="n">module</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">check</span><span class="p">(</span><span class="n">i</span><span class="p">):</span>
+            <span class="k">yield</span> <span class="n">i</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="s1">&#39;__path__&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">path</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">importer</span><span class="p">,</span> <span class="n">submodule_name</span><span class="p">,</span> <span class="n">ispkg</span> <span class="ow">in</span> <span class="n">iter_modules</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">find_items_in_module</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">.</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> 
+                    <span class="p">(</span><span class="n">module</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">submodule_name</span><span class="p">),</span> <span class="n">check</span><span class="p">):</span>
+                <span class="k">yield</span> <span class="n">j</span></div>
+
+
+<div class="viewcode-block" id="ClassFactory"><a class="viewcode-back" href="../../api.html#soma.factory.ClassFactory">[docs]</a><span class="k">class</span> <span class="nc">ClassFactory</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    *ClassFactory* is the base class for creating factories that can look</span>
+<span class="sd">    for classes in Python modules and create instances.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">class_types</span><span class="o">=</span><span class="p">{}):</span>
+        <span class="c1"># List of Python modules where classes are looked for</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">module_path</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="c1"># Instance-level association between a class_type (which is a string)</span>
+        <span class="c1"># and the corresponding class. There can also be class-level</span>
+        <span class="c1"># class_types (see get_class method).</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">class_types</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="c1"># Cache of instances returned by get method. This is a dictionary</span>
+        <span class="c1"># whose keys are (class_type, factory_id) and values are instances.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">instances</span> <span class="o">=</span> <span class="p">{}</span>
+    
+<div class="viewcode-block" id="ClassFactory.find_class"><a class="viewcode-back" href="../../api.html#soma.factory.ClassFactory.find_class">[docs]</a>    <span class="k">def</span> <span class="nf">find_class</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">class_type</span><span class="p">,</span> <span class="n">factory_id</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Finds a class deriving of the class corresponding to *class_type* and</span>
+<span class="sd">        whose *factory_id* attribute has a given value. Look for all</span>
+<span class="sd">        subclasses of parent class declared in the modules of</span>
+<span class="sd">        :attr:`self.module_path`</span>
+<span class="sd">        and returns the first one having ``cls.factory_id == factory_id``. If</span>
+<span class="sd">        none is found, returns *None*.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">base_class</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_class</span><span class="p">(</span><span class="n">class_type</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">module_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">module_path</span><span class="p">:</span>
+            <span class="k">for</span> <span class="bp">cls</span> <span class="ow">in</span> <span class="n">find_subclasses_in_module</span><span class="p">(</span><span class="n">module_name</span><span class="p">,</span> <span class="n">base_class</span><span class="p">):</span>
+                <span class="k">if</span> <span class="bp">cls</span><span class="o">.</span><span class="n">factory_id</span> <span class="o">==</span> <span class="n">factory_id</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="bp">cls</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
+    
+<div class="viewcode-block" id="ClassFactory.get_class"><a class="viewcode-back" href="../../api.html#soma.factory.ClassFactory.get_class">[docs]</a>    <span class="k">def</span> <span class="nf">get_class</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">class_type</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Returns the class corresponding to a given class type. First look</span>
+<span class="sd">        for a dictionary in self.class_types, then look into parent</span>
+<span class="sd">        classes.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">class_types</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;class_types&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">class_types</span><span class="p">:</span>
+            <span class="bp">cls</span> <span class="o">=</span> <span class="n">class_types</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">class_type</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">cls</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">return</span> <span class="bp">cls</span>
+        <span class="k">for</span> <span class="n">parent_class</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__mro__</span><span class="p">:</span>
+            <span class="n">class_types</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">parent_class</span><span class="p">,</span> <span class="s1">&#39;class_types&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">class_types</span><span class="p">:</span>
+                <span class="bp">cls</span> <span class="o">=</span> <span class="n">class_types</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">class_type</span><span class="p">)</span>
+                <span class="k">if</span> <span class="bp">cls</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="bp">cls</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Unknown class type: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">class_type</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="ClassFactory.get"><a class="viewcode-back" href="../../api.html#soma.factory.ClassFactory.get">[docs]</a>    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">class_type</span><span class="p">,</span> <span class="n">factory_id</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Returns an instance of the class identified by *class_type* and</span>
+<span class="sd">        *factory_id*. There can be only one instance per *class_type* and</span>
+<span class="sd">        *factory_id*. Once created with the first call of this method, it</span>
+<span class="sd">        is stored in :attr:`self.instances` and simply returned in subsequent</span>
+<span class="sd">        calls.</span>
+
+<span class="sd">        If *get_class* is *True*, returns the class instead of an instance</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">instance</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">instances</span><span class="o">.</span><span class="n">get</span><span class="p">((</span><span class="n">class_type</span><span class="p">,</span> <span class="n">factory_id</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">instance</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">cls</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">find_class</span><span class="p">(</span><span class="n">class_type</span><span class="p">,</span> <span class="n">factory_id</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">cls</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="fm">__init__</span><span class="p">,</span> <span class="s1">&#39;__code__&#39;</span><span class="p">)</span> \
+                        <span class="ow">and</span> <span class="bp">cls</span><span class="o">.</span><span class="fm">__init__</span><span class="o">.</span><span class="vm">__code__</span><span class="o">.</span><span class="n">co_argcount</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="c1"># The class constructor takes arguments: we cannot</span>
+                    <span class="c1"># instantiate it: register the class itself</span>
+                    <span class="n">instance</span> <span class="o">=</span> <span class="bp">cls</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">instance</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">instances</span><span class="p">[(</span><span class="n">class_type</span><span class="p">,</span> <span class="n">factory_id</span><span class="p">)]</span> <span class="o">=</span> <span class="n">instance</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Cannot find a class for class type &quot;</span><span class="si">%s</span><span class="s1">&quot; &#39;</span>
+                                 <span class="s1">&#39;and factory id &quot;</span><span class="si">%s</span><span class="s1">&quot;&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">class_type</span><span class="p">,</span> 
+                                                          <span class="n">factory_id</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">instance</span></div></div>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Soma-base 5.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">soma.factory</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2011, IFR49.org.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.5.4.
+    </div>
+  </body>
+</html>

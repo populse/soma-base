@@ -1,0 +1,886 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>soma.qt_gui.qt_backend &#8212; Soma-base 5.1.0 documentation</title>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css" />
+    
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">Soma-base 5.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">soma.qt_gui.qt_backend</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for soma.qt_gui.qt_backend</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="c1">#</span>
+<span class="c1"># Soma-base - Copyright (C) CEA, 2013</span>
+<span class="c1"># Distributed under the terms of the CeCILL-B license, as published by</span>
+<span class="c1"># the CEA-CNRS-INRIA. Refer to the LICENSE file or to</span>
+<span class="c1"># http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html</span>
+<span class="c1"># for details.</span>
+<span class="c1">#</span>
+
+<span class="sd">&#39;&#39;&#39;Compatibility module for PyQt and PySide. Currently supports PyQt4,</span>
+<span class="sd">PySide, and PyQt5.</span>
+<span class="sd">This modules handles differences between PyQt and PySide APIs and behaviours,</span>
+<span class="sd">and offers a few functions to make it easier to build neutral GUI code, which</span>
+<span class="sd">can run using either backend.</span>
+
+<span class="sd">The main funcion here is set_qt_backend() which must be called to initialize</span>
+<span class="sd">the appropriate backend. Most functions of this module assume set_qt_backend()</span>
+<span class="sd">has been called first to setup internal variables.</span>
+
+<span class="sd">Note that such compatibility generally requires to use PyQt4 with SIP API</span>
+<span class="sd">version 2, ie do not use QString, QVariant, QDate and similar classes, but</span>
+<span class="sd">directly convert to/from python types, which is also PySide behaviour. The</span>
+<span class="sd">qt_backend module switches to this API level 2, but this only works before the</span>
+<span class="sd">PyQt modules are imported, thus it may fail if PyQt has already be imported</span>
+<span class="sd">without such settings.</span>
+
+<span class="sd">Qt submodules can be imported in two ways:</span>
+
+<span class="sd">&gt;&gt;&gt; from soma.qt_gui import qt_backend</span>
+<span class="sd">&gt;&gt;&gt; qt_backend.import_qt_submodule(&#39;QtWebKit&#39;)</span>
+
+<span class="sd">or using the import statement:</span>
+
+<span class="sd">&gt;&gt;&gt; from soma.qt_gui.qt_backend import QtWebKit</span>
+
+<span class="sd">in the latter case, set_qt_backend() will be called automatically to setup the</span>
+<span class="sd">appropriate Qt backend, so that the use of the backend selection is more</span>
+<span class="sd">transparent.</span>
+<span class="sd">&#39;&#39;&#39;</span>
+
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">absolute_import</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">imp</span>
+<span class="kn">import</span> <span class="nn">six</span>
+
+
+<span class="c1"># make qt_backend a fake module package, with Qt modules as sub-modules</span>
+<span class="n">__package__</span> <span class="o">=</span> <span class="vm">__name__</span>
+<span class="n">__path__</span> <span class="o">=</span> <span class="p">[</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)]</span>
+
+<span class="c1"># internal variable to avoid warning several times</span>
+<span class="n">_sip_api_set</span> <span class="o">=</span> <span class="kc">False</span>
+
+<span class="n">qt_backend</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="n">make_compatible_qt5</span> <span class="o">=</span> <span class="kc">False</span>
+
+
+<span class="k">class</span> <span class="nc">QtImporter</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">find_module</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fullname</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">modsplit</span> <span class="o">=</span> <span class="n">fullname</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)</span>
+        <span class="n">modpath</span> <span class="o">=</span> <span class="s1">&#39;.&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">modsplit</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">module_name</span> <span class="o">=</span> <span class="n">modsplit</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">modpath</span> <span class="o">!=</span> <span class="vm">__name__</span> <span class="ow">or</span> <span class="n">module_name</span> <span class="o">==</span> <span class="s1">&#39;sip&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="n">set_qt_backend</span><span class="p">()</span>
+        <span class="n">qt_backend</span> <span class="o">=</span> <span class="n">get_qt_backend</span><span class="p">()</span>
+        <span class="n">qt_module</span> <span class="o">=</span> <span class="n">get_qt_module</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">make_compatible_qt5</span> <span class="ow">and</span> <span class="n">qt_backend</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;PyQt4&#39;</span><span class="p">,</span> <span class="s1">&#39;PySide&#39;</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">module_name</span> <span class="o">==</span> <span class="s1">&#39;QtWidgets&#39;</span><span class="p">:</span>
+                <span class="n">module_name</span> <span class="o">=</span> <span class="s1">&#39;QtGui&#39;</span>
+            <span class="k">elif</span> <span class="n">module_name</span> <span class="o">==</span> <span class="s1">&#39;QtWebKitWidgets&#39;</span><span class="p">:</span>
+                <span class="n">module_name</span> <span class="o">=</span> <span class="s1">&#39;QtWebKit&#39;</span>
+        <span class="k">if</span> <span class="n">qt_backend</span> <span class="o">==</span> <span class="s1">&#39;PySide&#39;</span> <span class="ow">and</span> <span class="n">module_name</span> <span class="o">==</span> <span class="s1">&#39;Qt&#39;</span><span class="p">:</span>
+            <span class="n">module_name</span> <span class="o">=</span> <span class="s1">&#39;QtGui&#39;</span>
+        <span class="n">found</span> <span class="o">=</span> <span class="n">imp</span><span class="o">.</span><span class="n">find_module</span><span class="p">(</span><span class="n">module_name</span><span class="p">,</span> <span class="n">qt_module</span><span class="o">.</span><span class="n">__path__</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="k">def</span> <span class="nf">load_module</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="n">qt_backend</span> <span class="o">=</span> <span class="n">get_qt_backend</span><span class="p">()</span>
+        <span class="n">module_name</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">imp_module_name</span> <span class="o">=</span> <span class="n">module_name</span>
+        <span class="k">if</span> <span class="n">make_compatible_qt5</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">module_name</span> <span class="o">==</span> <span class="s1">&#39;QtWidgets&#39;</span><span class="p">:</span>
+                <span class="n">imp_module_name</span> <span class="o">=</span> <span class="s1">&#39;QtGui&#39;</span>
+            <span class="k">elif</span> <span class="n">module_name</span> <span class="o">==</span> <span class="s1">&#39;QtWebKitWidgets&#39;</span><span class="p">:</span>
+                <span class="n">imp_module_name</span> <span class="o">=</span> <span class="s1">&#39;QtWebKit&#39;</span>
+        <span class="k">if</span> <span class="n">imp_module_name</span> <span class="o">==</span> <span class="s1">&#39;Qt&#39;</span> <span class="ow">and</span> <span class="n">qt_backend</span> <span class="o">==</span> <span class="s1">&#39;PySide&#39;</span><span class="p">:</span>
+            <span class="c1"># PySide doesn&#39;t define the aggregating Qt module</span>
+            <span class="n">psmods</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">base</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">mod</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;QtCore&#39;</span><span class="p">,</span> <span class="s1">&#39;QtGui&#39;</span><span class="p">,</span> <span class="s1">&#39;phonon&#39;</span><span class="p">,</span> <span class="s1">&#39;QtNetwork&#39;</span><span class="p">,</span> <span class="s1">&#39;QtSvg&#39;</span><span class="p">,</span>
+                        <span class="s1">&#39;QtOpenGL&#39;</span><span class="p">,</span> <span class="s1">&#39;QtTest&#39;</span><span class="p">,</span> <span class="s1">&#39;QtDeclarative&#39;</span><span class="p">,</span> <span class="s1">&#39;QtScript&#39;</span><span class="p">,</span>
+                        <span class="s1">&#39;QtUiTools&#39;</span><span class="p">,</span> <span class="s1">&#39;QtScriptTools&#39;</span><span class="p">,</span> <span class="s1">&#39;QtWebKit&#39;</span><span class="p">,</span> <span class="s1">&#39;QtHelp&#39;</span><span class="p">,</span>
+                        <span class="s1">&#39;QtSql&#39;</span><span class="p">,</span> <span class="s1">&#39;QtXml&#39;</span><span class="p">):</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">psmods</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">load_module</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">base</span> <span class="o">+</span> <span class="p">[</span><span class="n">mod</span><span class="p">])))</span>
+                <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+                    <span class="k">pass</span>
+            <span class="n">patch_pyside_modules</span><span class="p">(</span><span class="n">psmods</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">[</span><span class="s1">&#39;.&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">qt_backend</span><span class="p">,</span> <span class="s1">&#39;Qt&#39;</span><span class="p">])]</span>
+        <span class="nb">__import__</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">qt_backend</span><span class="p">,</span> <span class="n">imp_module_name</span><span class="p">]))</span>
+        <span class="n">module</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">[</span><span class="s1">&#39;.&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">qt_backend</span><span class="p">,</span> <span class="n">imp_module_name</span><span class="p">])]</span>
+        <span class="c1"># fixes: #13432 - Ubuntu 14.04 LTS: Importing some modules</span>
+        <span class="c1">#                                   of scikit learn from</span>
+        <span class="c1">#                                   brainvisa process raises segfault</span>
+        <span class="c1"># ref: https://bioproj.extra.cea.fr/redmine/issues/13432</span>
+        <span class="k">if</span> <span class="n">module_name</span> <span class="o">==</span> <span class="s1">&#39;uic&#39;</span> <span class="ow">and</span> <span class="n">qt_backend</span> <span class="o">==</span> <span class="s1">&#39;PyQt4&#39;</span><span class="p">:</span>
+            <span class="k">def</span> <span class="nf">_safe_load_plugin</span><span class="p">(</span><span class="n">plugin</span><span class="p">,</span> <span class="n">plugin_globals</span><span class="p">,</span> <span class="n">plugin_locals</span><span class="p">):</span>
+                <span class="k">def</span> <span class="nf">_safe_getFilter</span><span class="p">():</span>
+                    <span class="kn">import</span> <span class="nn">sys</span><span class="o">,</span> <span class="nn">DLFCN</span>
+                    <span class="n">res</span> <span class="o">=</span> <span class="n">plugin_locals</span><span class="p">[</span><span class="s1">&#39;getFilter_orig&#39;</span><span class="p">]()</span>
+                    <span class="n">sys</span><span class="o">.</span><span class="n">setdlopenflags</span><span class="p">(</span><span class="n">DLFCN</span><span class="o">.</span><span class="n">RTLD_NOW</span><span class="p">)</span>
+
+                    <span class="k">return</span> <span class="n">res</span>
+
+                <span class="kn">import</span> <span class="nn">os</span>
+                <span class="nb">__import__</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="s1">&#39;PyQt4&#39;</span><span class="p">,</span> <span class="s1">&#39;uic&#39;</span><span class="p">,</span> <span class="s1">&#39;objcreator&#39;</span><span class="p">]))</span>
+                <span class="n">uic</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">[</span><span class="s1">&#39;.&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">qt_backend</span><span class="p">,</span> <span class="n">module_name</span><span class="p">])]</span>
+                <span class="n">res</span> <span class="o">=</span> <span class="n">uic</span><span class="o">.</span><span class="n">objcreator</span><span class="o">.</span><span class="n">load_plugin_orig</span><span class="p">(</span><span class="n">plugin</span><span class="p">,</span>
+                                                      <span class="n">plugin_globals</span><span class="p">,</span>
+                                                      <span class="n">plugin_locals</span><span class="p">)</span>
+
+                <span class="c1"># It seems that this function is sometimes called with a first</span>
+                <span class="c1"># argument of type File, sometimes of type str. Both cases</span>
+                <span class="c1"># should be handled by this switch.</span>
+                <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">plugin</span><span class="p">,</span> <span class="s2">&quot;name&quot;</span><span class="p">):</span>
+                    <span class="n">filename</span> <span class="o">=</span> <span class="n">plugin</span><span class="o">.</span><span class="n">name</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">filename</span> <span class="o">=</span> <span class="n">plugin</span>
+                <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">filename</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;kde4&#39;</span><span class="p">:</span>
+                    <span class="c1"># Replaces kde4 getFilter function</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="s1">&#39;getFilter_orig&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">plugin_locals</span><span class="p">):</span>
+                        <span class="n">plugin_locals</span><span class="p">[</span><span class="s1">&#39;getFilter_orig&#39;</span><span class="p">]</span> \
+                            <span class="o">=</span> <span class="n">plugin_locals</span><span class="p">[</span><span class="s1">&#39;getFilter&#39;</span><span class="p">]</span>
+                        <span class="n">plugin_locals</span><span class="p">[</span><span class="s1">&#39;getFilter&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">_safe_getFilter</span>
+
+                <span class="k">return</span> <span class="n">res</span>
+
+            <span class="nb">__import__</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">qt_backend</span><span class="p">,</span> <span class="n">module_name</span><span class="p">,</span> <span class="s1">&#39;objcreator&#39;</span><span class="p">]))</span>
+            <span class="n">uic</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">[</span><span class="s1">&#39;.&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">qt_backend</span><span class="p">,</span> <span class="n">module_name</span><span class="p">])]</span>
+            <span class="c1"># Replaces the load_plugin function in objcreator</span>
+            <span class="c1">#uic.port_v2.load_plugin.load_plugin_orig \</span>
+                <span class="c1">#= uic.port_v2.load_plugin.load_plugin</span>
+            <span class="c1">#uic.port_v2.load_plugin.load_plugin = _safe_load_plugin</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">uic</span><span class="o">.</span><span class="n">objcreator</span><span class="p">,</span> <span class="s1">&#39;load_plugin_orig&#39;</span><span class="p">):</span>
+                <span class="n">uic</span><span class="o">.</span><span class="n">objcreator</span><span class="o">.</span><span class="n">load_plugin_orig</span> \
+                    <span class="o">=</span> <span class="n">uic</span><span class="o">.</span><span class="n">objcreator</span><span class="o">.</span><span class="n">load_plugin</span>
+                <span class="n">uic</span><span class="o">.</span><span class="n">objcreator</span><span class="o">.</span><span class="n">load_plugin</span> <span class="o">=</span> <span class="n">_safe_load_plugin</span>
+
+        <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">module</span>
+        <span class="k">if</span> <span class="n">make_compatible_qt5</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">imp_module_name</span> <span class="o">==</span> <span class="s1">&#39;QtGui&#39;</span><span class="p">:</span>
+                <span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">QtCore</span>
+                <span class="k">if</span> <span class="n">qt_backend</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;PyQt4&#39;</span><span class="p">,</span> <span class="s1">&#39;PySide&#39;</span><span class="p">):</span>
+                    <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">[</span><span class="s1">&#39;.&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">qt_backend</span><span class="p">,</span> <span class="s1">&#39;QtWidgets&#39;</span><span class="p">])]</span> <span class="o">=</span> <span class="n">module</span>
+                    <span class="n">patch_qt4_modules</span><span class="p">(</span><span class="n">QtCore</span><span class="p">,</span> <span class="n">module</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="n">qt_backend</span> <span class="o">==</span> <span class="s1">&#39;PyQt5&#39;</span><span class="p">:</span>
+                    <span class="nb">__import__</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">qt_backend</span><span class="p">,</span> <span class="s1">&#39;QtWidgets&#39;</span><span class="p">]))</span>
+                    <span class="n">qtwidgets</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">[</span><span class="s1">&#39;.&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">qt_backend</span><span class="p">,</span>
+                                                      <span class="s1">&#39;QtWidgets&#39;</span><span class="p">])]</span>
+                    <span class="n">patch_qt5_modules</span><span class="p">(</span><span class="n">QtCore</span><span class="p">,</span> <span class="n">module</span><span class="p">,</span> <span class="n">qtwidgets</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">module_name</span> <span class="o">==</span> <span class="s1">&#39;QtWidgets&#39;</span><span class="p">:</span>
+                        <span class="n">module</span> <span class="o">=</span> <span class="n">qtwidgets</span>
+            <span class="k">elif</span> <span class="n">imp_module_name</span> <span class="o">==</span> <span class="s1">&#39;QtWebKit&#39;</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">qt_backend</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;PyQt4&#39;</span><span class="p">,</span> <span class="s1">&#39;PySide&#39;</span><span class="p">):</span>
+                    <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">[</span><span class="s1">&#39;.&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">qt_backend</span><span class="p">,</span> <span class="s1">&#39;QtWebKitWidgets&#39;</span><span class="p">])]</span> \
+                        <span class="o">=</span> <span class="n">module</span>
+                <span class="k">elif</span> <span class="n">qt_backend</span> <span class="o">==</span> <span class="s1">&#39;PyQt5&#39;</span><span class="p">:</span>
+                    <span class="nb">__import__</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">qt_backend</span><span class="p">,</span> <span class="s1">&#39;QtWebKitWidgets&#39;</span><span class="p">]))</span>
+                    <span class="n">qtwebkitwidgets</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">[</span>
+                        <span class="s1">&#39;.&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">qt_backend</span><span class="p">,</span><span class="s1">&#39;QtWebKitWidgets&#39;</span><span class="p">])]</span>
+                    <span class="n">patch_qt5_webkit_modules</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">qtwebkitwidgets</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">module_name</span> <span class="o">==</span> <span class="s1">&#39;QtWebKitWidgets&#39;</span><span class="p">:</span>
+                        <span class="n">module</span> <span class="o">=</span> <span class="n">qtwebkitwidgets</span>
+
+        <span class="k">return</span> <span class="n">module</span>
+
+
+<span class="c1"># tune the import statement to get Qt submodules in this one</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">meta_path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">QtImporter</span><span class="p">())</span>
+
+
+<div class="viewcode-block" id="get_qt_backend"><a class="viewcode-back" href="../../../api.html#soma.qt_gui.qt_backend.get_qt_backend">[docs]</a><span class="k">def</span> <span class="nf">get_qt_backend</span><span class="p">():</span>
+    <span class="sd">&#39;&#39;&#39;get currently setup or loaded Qt backend name: &quot;PyQt4&quot; or &quot;PySide&quot;&#39;&#39;&#39;</span>
+    <span class="k">global</span> <span class="n">qt_backend</span>
+    <span class="k">if</span> <span class="n">qt_backend</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">pyside</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;PySide&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">pyside</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">qt_backend</span> <span class="o">=</span> <span class="s1">&#39;PySide&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">pyqt</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;PyQt5&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">pyqt</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">qt_backend</span> <span class="o">=</span> <span class="s1">&#39;PyQt5&#39;</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">pyqt</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;PyQt4&#39;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">pyqt</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">qt_backend</span> <span class="o">=</span> <span class="s1">&#39;PyQt4&#39;</span>
+    <span class="k">return</span> <span class="n">qt_backend</span></div>
+
+
+<div class="viewcode-block" id="set_qt_backend"><a class="viewcode-back" href="../../../api.html#soma.qt_gui.qt_backend.set_qt_backend">[docs]</a><span class="k">def</span> <span class="nf">set_qt_backend</span><span class="p">(</span><span class="n">backend</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">pyqt_api</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">compatible_qt5</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;set the Qt backend.</span>
+
+<span class="sd">    If a different backend has already setup or loaded, a warning is issued.</span>
+<span class="sd">    If no backend is specified, try to guess which one is already loaded.</span>
+
+<span class="sd">    If no backend is loaded yet, try to behave like IPython does.</span>
+<span class="sd">    See: https://ipython.org/ipython-doc/dev/interactive/reference.html#pyqt-and-pyside</span>
+
+<span class="sd">    More precisely this means:</span>
+<span class="sd">    * If QT_API environement variable is not set, use PyQt4, with PyQt API v1</span>
+<span class="sd">    * if QT_API is set to &quot;pyqt&quot; or &quot;pyqt4&quot;, use PyQt4, with PyQt API v2</span>
+<span class="sd">    * if QT_API is set to &quot;pyside&quot;, use PySide</span>
+<span class="sd">    * if QT_API is set to &quot;pyqt5&quot;, use PyQt5</span>
+
+<span class="sd">    Moreover if using PyQt4, QtCore is patched to duplicate QtCore.pyqtSignal</span>
+<span class="sd">    and QtCore.pyqtSlot as QtCore.Signal and QtCore.Slot. This is meant to ease</span>
+<span class="sd">    code portability between both worlds.</span>
+
+<span class="sd">    if compatible_qt5 is set to True, modules QtGui and QtWidgets will be</span>
+<span class="sd">    exposed and completed to contain the same content, with both Qt4 and Qt5.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    backend: str (default: None)</span>
+<span class="sd">        name of the backend to use</span>
+<span class="sd">    pyqt_api: int (default: 1)</span>
+<span class="sd">        PyQt API version: 1 or 2, only useful for PyQt4</span>
+<span class="sd">    compatible_qt5: bool (default: None)</span>
+<span class="sd">        expose QtGui and QtWidgets with the same content.</span>
+<span class="sd">        If None (default), do not change the current setting.</span>
+<span class="sd">        If True, in Qt5, when QtGui or QtWidgets is loaded, the other module</span>
+<span class="sd">        (QtWidgets or QtGui) is also loaded, and the QtGui module is modified</span>
+<span class="sd">        to contain also the contents of QtWidgets, so as to have more or less</span>
+<span class="sd">        the same elements as in Qt4. It is a bit dirty and crappy but allows</span>
+<span class="sd">        the same code to work with both versions of Qt.</span>
+<span class="sd">        In Qt4, when QtGui is loaded, the module is also registered as</span>
+<span class="sd">        QtWidgets, so QtGui and QtWidgets are the same module. Loading</span>
+<span class="sd">        QtWidgets will also bring QtGui.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">        &gt;&gt;&gt; from soma.qt_gui import qt_backend</span>
+<span class="sd">        &gt;&gt;&gt; qt_backend.set_qt_backend(&#39;PySide&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; qt_backend.import_qt_submodule(&#39;QtCore&#39;)</span>
+<span class="sd">        &lt;module &#39;PySide.QtCore&#39; from &#39;/usr/lib/python2.7/dist-packages/PySide/QtCore.so&#39;&gt;</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">global</span> <span class="n">qt_backend</span>
+    <span class="k">global</span> <span class="n">make_compatible_qt5</span>
+    <span class="n">qt5_compat_changed</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="k">if</span> <span class="n">compatible_qt5</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">make_compatible_qt5</span> <span class="o">=</span> <span class="n">compatible_qt5</span>
+        <span class="n">qt5_compat_changed</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">get_qt_backend</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">backend</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">qt_backend</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># try to get from the environment variable QT_API, complying to</span>
+            <span class="c1"># ETS 4</span>
+            <span class="c1"># see</span>
+            <span class="c1"># https://ipython.org/ipython-doc/dev/interactive/reference.html#pyqt-and-pyside</span>
+            <span class="n">qt_api</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s1">&#39;QT_API&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">qt_api</span> <span class="o">==</span> <span class="s1">&#39;pyqt5&#39;</span><span class="p">:</span>
+                <span class="n">backend</span> <span class="o">=</span> <span class="s1">&#39;PyQt5&#39;</span>
+            <span class="k">elif</span> <span class="n">qt_api</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;pyqt&#39;</span><span class="p">,</span> <span class="s1">&#39;pyqt4&#39;</span><span class="p">):</span>
+                <span class="n">backend</span> <span class="o">=</span> <span class="s1">&#39;PyQt4&#39;</span>
+                <span class="n">pyqt_api</span> <span class="o">=</span> <span class="mi">2</span>
+            <span class="k">elif</span> <span class="n">qt_api</span> <span class="o">==</span> <span class="s1">&#39;pyside&#39;</span><span class="p">:</span>
+                <span class="n">backend</span> <span class="o">=</span> <span class="s1">&#39;PySide&#39;</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">backend</span> <span class="o">=</span> <span class="s1">&#39;PyQt4&#39;</span>
+                <span class="n">pyqt_api</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">backend</span> <span class="o">=</span> <span class="n">qt_backend</span>
+    <span class="k">if</span> <span class="n">qt_backend</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">qt_backend</span> <span class="o">!=</span> <span class="n">backend</span><span class="p">:</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s1">&#39;set_qt_backend: a different backend, </span><span class="si">%s</span><span class="s1">, has already &#39;</span>
+                     <span class="s1">&#39;be set, and </span><span class="si">%s</span><span class="s1"> is now requested&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">qt_backend</span><span class="p">,</span> <span class="n">backend</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">backend</span> <span class="o">==</span> <span class="s1">&#39;PyQt4&#39;</span><span class="p">:</span>  <span class="c1"># and sys.modules.get(&#39;PyQt4&#39;) is None:</span>
+        <span class="kn">import</span> <span class="nn">sip</span>
+        <span class="k">if</span> <span class="n">pyqt_api</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="n">sip_classes</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;QString&#39;</span><span class="p">,</span> <span class="s1">&#39;QVariant&#39;</span><span class="p">,</span> <span class="s1">&#39;QDate&#39;</span><span class="p">,</span> <span class="s1">&#39;QDateTime&#39;</span><span class="p">,</span>
+                           <span class="s1">&#39;QTextStream&#39;</span><span class="p">,</span> <span class="s1">&#39;QTime&#39;</span><span class="p">,</span> <span class="s1">&#39;QUrl&#39;</span><span class="p">]</span>
+            <span class="k">global</span> <span class="n">_sip_api_set</span>
+            <span class="k">for</span> <span class="n">sip_class</span> <span class="ow">in</span> <span class="n">sip_classes</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">sip</span><span class="o">.</span><span class="n">setapi</span><span class="p">(</span><span class="n">sip_class</span><span class="p">,</span> <span class="n">pyqt_api</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">_sip_api_set</span><span class="p">:</span>
+                        <span class="n">logging</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">message</span><span class="p">)</span>
+            <span class="n">_sip_api_set</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">qt_module</span> <span class="o">=</span> <span class="nb">__import__</span><span class="p">(</span><span class="n">backend</span><span class="p">)</span>
+    <span class="nb">__import__</span><span class="p">(</span><span class="n">backend</span> <span class="o">+</span> <span class="s1">&#39;.QtCore&#39;</span><span class="p">)</span>
+    <span class="c1">#__import__(backend + &#39;.QtGui&#39;)</span>
+    <span class="n">qt_backend</span> <span class="o">=</span> <span class="n">backend</span>
+    <span class="k">if</span> <span class="n">make_compatible_qt5</span> <span class="ow">and</span> <span class="n">qt5_compat_changed</span><span class="p">:</span>
+        <span class="n">ensure_compatible_qt5</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">backend</span> <span class="ow">in</span><span class="p">(</span><span class="s1">&#39;PyQt4&#39;</span><span class="p">,</span> <span class="s1">&#39;PyQt5&#39;</span><span class="p">):</span>
+            <span class="n">qt_module</span><span class="o">.</span><span class="n">QtCore</span><span class="o">.</span><span class="n">Signal</span> <span class="o">=</span> <span class="n">qt_module</span><span class="o">.</span><span class="n">QtCore</span><span class="o">.</span><span class="n">pyqtSignal</span>
+            <span class="n">qt_module</span><span class="o">.</span><span class="n">QtCore</span><span class="o">.</span><span class="n">Slot</span> <span class="o">=</span> <span class="n">qt_module</span><span class="o">.</span><span class="n">QtCore</span><span class="o">.</span><span class="n">pyqtSlot</span></div>
+
+
+<span class="k">def</span> <span class="nf">patch_qt5_modules</span><span class="p">(</span><span class="n">QtCore</span><span class="p">,</span> <span class="n">QtGui</span><span class="p">,</span> <span class="n">QtWidgets</span><span class="p">):</span>
+    <span class="c1"># copy QtWidgets contents into QtGui</span>
+    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">key</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;__&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">QtGui</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">:</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="n">QtGui</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">QtWidgets</span><span class="p">,</span> <span class="n">key</span><span class="p">))</span>
+    <span class="c1"># more hacks</span>
+    <span class="n">QtGui</span><span class="o">.</span><span class="n">QSortFilterProxyModel</span> <span class="o">=</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">QSortFilterProxyModel</span>
+    <span class="n">QtGui</span><span class="o">.</span><span class="n">QItemSelectionModel</span> <span class="o">=</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">QItemSelectionModel</span>
+
+
+<span class="k">def</span> <span class="nf">patch_qt5_webkit_modules</span><span class="p">(</span><span class="n">QtWebKit</span><span class="p">,</span> <span class="n">QtWebKitWidgets</span><span class="p">):</span>
+    <span class="c1"># copy QtWebKitWidgets contents into QtWebKit</span>
+    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">QtWebKitWidgets</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">key</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;__&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">QtWebKit</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">:</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="n">QtWebKit</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">QtWebKitWidgets</span><span class="p">,</span> <span class="n">key</span><span class="p">))</span>
+
+
+<span class="k">def</span> <span class="nf">patch_qt4_modules</span><span class="p">(</span><span class="n">QtCore</span><span class="p">,</span> <span class="n">QtGui</span><span class="p">):</span>
+    <span class="n">QtCore</span><span class="o">.</span><span class="n">QSortFilterProxyModel</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QSortFilterProxyModel</span>
+    <span class="n">QtCore</span><span class="o">.</span><span class="n">QItemSelectionModel</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QItemSelectionModel</span>
+
+
+<span class="k">def</span> <span class="nf">patch_pyside_modules</span><span class="p">(</span><span class="n">modules</span><span class="p">):</span>
+    <span class="k">if</span> <span class="s1">&#39;PySide.Qt&#39;</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">:</span>
+        <span class="n">Qt</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">[</span><span class="s1">&#39;PySide.Qt&#39;</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">Qt</span> <span class="o">=</span> <span class="n">imp</span><span class="o">.</span><span class="n">new_module</span><span class="p">(</span><span class="s1">&#39;PySide.Qt&#39;</span><span class="p">)</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">[</span><span class="s1">&#39;PySide.Qt&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Qt</span>
+    <span class="k">for</span> <span class="n">mod</span> <span class="ow">in</span> <span class="n">modules</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">six</span><span class="o">.</span><span class="n">iteritems</span><span class="p">(</span><span class="n">mod</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">key</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;__&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">Qt</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">:</span>
+                <span class="nb">setattr</span><span class="p">(</span><span class="n">Qt</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">item</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">ensure_compatible_qt5</span><span class="p">():</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">make_compatible_qt5</span><span class="p">:</span>
+        <span class="k">return</span>
+    <span class="n">qt_backend</span> <span class="o">=</span> <span class="n">get_qt_backend</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">qt_backend</span> <span class="o">==</span> <span class="s1">&#39;PyQt5&#39;</span><span class="p">:</span>
+        <span class="n">qtgui</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">qtwidgets</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">qtwebkit</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">qtwebkitwidgets</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="s1">&#39;PyQt5.QtGui&#39;</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">:</span>
+            <span class="n">qtgui</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">[</span><span class="s1">&#39;PyQt5.QtGui&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="s1">&#39;PyQt5.QtWidgets&#39;</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">:</span>
+            <span class="n">qtwidgets</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">[</span><span class="s1">&#39;PyQt5.QtWidgets&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="s1">&#39;PyQt5.QtWebKit&#39;</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">:</span>
+            <span class="n">qtwebkit</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">[</span><span class="s1">&#39;PyQt5.QtWebKit&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="s1">&#39;PyQt5.QtWebKitWidgets&#39;</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">:</span>
+            <span class="n">qtwebkitwidgets</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">[</span><span class="s1">&#39;PyQt5.QtWebKitWidgets&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">qtgui</span> <span class="ow">and</span> <span class="n">qtwidgets</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">QtWidgets</span>
+            <span class="n">qtwidgets</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">[</span><span class="s1">&#39;PyQt5.QtWidgets&#39;</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="n">qtwidgets</span> <span class="ow">and</span> <span class="n">qtgui</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">QtGui</span>
+            <span class="n">qtgui</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">[</span><span class="s1">&#39;PyQt5.QtGui&#39;</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="n">qtgui</span> <span class="ow">and</span> <span class="n">qtwidgets</span><span class="p">:</span>
+            <span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">QtCore</span>
+            <span class="n">patch_qt5_modules</span><span class="p">(</span><span class="n">QtCore</span><span class="p">,</span> <span class="n">qtgui</span><span class="p">,</span> <span class="n">qtwidgets</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">qtwebkit</span> <span class="ow">and</span> <span class="n">qtwebkitwidgets</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">QtWebKitWidgets</span>
+            <span class="n">qtwebkitwidgets</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">[</span><span class="s1">&#39;PyQt5.QtWebKitWidgets&#39;</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="n">qtwebkitwidgets</span> <span class="ow">and</span> <span class="n">qtwebkit</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">QtWebKit</span>
+        <span class="k">elif</span> <span class="n">qtwebkit</span> <span class="ow">and</span> <span class="n">qtwebkitwidgets</span><span class="p">:</span>
+            <span class="n">patch_qt5_webkit_modules</span><span class="p">(</span><span class="n">qtwebkit</span><span class="p">,</span> <span class="n">qtwebkitwidgets</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="s1">&#39;</span><span class="si">%s</span><span class="s1">.QtGui&#39;</span> <span class="o">%</span> <span class="n">qt_backend</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">:</span>
+            <span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">QtWidgets</span>
+        <span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">QtCore</span><span class="p">,</span> <span class="n">QtGui</span>
+        <span class="n">patch_qt4_modules</span><span class="p">(</span><span class="n">QtCore</span><span class="p">,</span> <span class="n">QtGui</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">qt_backend</span> <span class="ow">in</span><span class="p">(</span><span class="s1">&#39;PyQt4&#39;</span><span class="p">,</span> <span class="s1">&#39;PyQt5&#39;</span><span class="p">):</span>
+        <span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">QtCore</span>
+        <span class="n">QtCore</span><span class="o">.</span><span class="n">Signal</span> <span class="o">=</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">pyqtSignal</span>
+        <span class="n">QtCore</span><span class="o">.</span><span class="n">Slot</span> <span class="o">=</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">pyqtSlot</span>
+
+
+<div class="viewcode-block" id="get_qt_module"><a class="viewcode-back" href="../../../api.html#soma.qt_gui.qt_backend.get_qt_module">[docs]</a><span class="k">def</span> <span class="nf">get_qt_module</span><span class="p">():</span>
+    <span class="sd">&#39;&#39;&#39;Get the main Qt module (PyQt4 or PySide)&#39;&#39;&#39;</span>
+    <span class="k">global</span> <span class="n">qt_backend</span>
+    <span class="k">return</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">qt_backend</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="import_qt_submodule"><a class="viewcode-back" href="../../../api.html#soma.qt_gui.qt_backend.import_qt_submodule">[docs]</a><span class="k">def</span> <span class="nf">import_qt_submodule</span><span class="p">(</span><span class="n">submodule</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Import a specified Qt submodule.</span>
+<span class="sd">    An alternative to the standard statement:</span>
+
+<span class="sd">    &gt;&gt;&gt; from soma.qt_gui.qt_backend import &lt;submodule&gt;</span>
+
+<span class="sd">    The main differences is that it forces loading the module from the</span>
+<span class="sd">    appropriate backend, whereas the import statement will reuse the already</span>
+<span class="sd">    loaded one. Moreover it returns the module.</span>
+
+<span class="sd">    For instance,</span>
+
+<span class="sd">    &gt;&gt;&gt; from soma.qt_gui import qt_backend</span>
+<span class="sd">    &gt;&gt;&gt; qt_backend.set_qt_backend(&#39;PyQt4&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; from soma.qt_gui.qt_backend import QtWebKit</span>
+<span class="sd">    &gt;&gt;&gt; QtWebKit</span>
+<span class="sd">    &lt;module &#39;PyQt4.QtWebKit&#39; from &#39;/usr/lib/python2.7/dist-packages/PyQt4/QtWebKit.so&#39;&gt;</span>
+<span class="sd">    &gt;&gt;&gt; qt_backend.set_qt_backend(&#39;PySide&#39;) # changing backend</span>
+<span class="sd">    WARNING:root:set_qt_backend: a different backend, PyQt4, has already be set, and PySide is now requested</span>
+<span class="sd">    &gt;&gt;&gt; from soma.qt_gui.qt_backend import QtWebKit</span>
+<span class="sd">    &gt;&gt;&gt; QtWebKit</span>
+<span class="sd">    &lt;module &#39;PyQt4.QtWebKit&#39; from &#39;/usr/lib/python2.7/dist-packages/PyQt4/QtWebKit.so&#39;&gt;</span>
+
+<span class="sd">    In the above example, we are still using the QtWebKit from PyQt4.</span>
+<span class="sd">    Now:</span>
+
+<span class="sd">    &gt;&gt;&gt; QtWebKit = qt_backend.import_qt_submodule(&#39;QtWebKit&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; QtWebKit</span>
+<span class="sd">    &lt;module &#39;PySide.QtWebKit&#39; from &#39;/usr/lib/python2.7/dist-packages/PySide/QtWebKit.so&#39;&gt;</span>
+
+<span class="sd">    We are now actually using PySide.</span>
+<span class="sd">    Note that it is generally a bad idea to mix both...</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">        submodule: str (mandatory)</span>
+<span class="sd">            submodule name, ex: QtWebKit</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">        the loaded submodule</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="nb">__import__</span><span class="p">(</span><span class="n">qt_backend</span> <span class="o">+</span> <span class="s1">&#39;.&#39;</span> <span class="o">+</span> <span class="n">submodule</span><span class="p">)</span>
+    <span class="n">mod</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">[</span><span class="n">qt_backend</span> <span class="o">+</span> <span class="s1">&#39;.&#39;</span> <span class="o">+</span> <span class="n">submodule</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">mod</span></div>
+
+
+<span class="k">def</span> <span class="nf">_iconset</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prop</span><span class="p">):</span>
+    <span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">QtGui</span>
+    <span class="k">return</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QIcon</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_basedirectory</span><span class="p">,</span>
+                                    <span class="n">prop</span><span class="o">.</span><span class="n">text</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\\</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="se">\\\\</span><span class="s2">&quot;</span><span class="p">))</span>
+
+
+<span class="k">def</span> <span class="nf">_pixmap</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prop</span><span class="p">):</span>
+    <span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">QtGui</span>
+    <span class="k">return</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QPixmap</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_basedirectory</span><span class="p">,</span>
+                                      <span class="n">prop</span><span class="o">.</span><span class="n">text</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\\</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="se">\\\\</span><span class="s2">&quot;</span><span class="p">))</span>
+
+
+<div class="viewcode-block" id="loadUi"><a class="viewcode-back" href="../../../api.html#soma.qt_gui.qt_backend.loadUi">[docs]</a><span class="k">def</span> <span class="nf">loadUi</span><span class="p">(</span><span class="n">ui_file</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Load a ``.ui`` file and returns the widget instance.</span>
+
+<span class="sd">    This function is a replacement of PyQt4.uic.loadUi. The only difference is</span>
+<span class="sd">    that relative icon or pixmap file names that are stored in the ``*.ui``</span>
+<span class="sd">    file are considered to be relative to the directory containing the ui file.</span>
+<span class="sd">    With PyQt4.uic.loadUi, relative file names are considered relative to the</span>
+<span class="sd">    current working directory therefore if this directory is not the one</span>
+<span class="sd">    containing the ui file, icons cannot be loaded.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">QtGui</span>
+    <span class="k">if</span> <span class="n">get_qt_backend</span><span class="p">()</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;PyQt4&#39;</span><span class="p">,</span> <span class="s1">&#39;PyQt5&#39;</span><span class="p">):</span>
+        <span class="c1"># the problem is corrected in version &gt; 4.7.2,</span>
+        <span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">QtCore</span>
+        <span class="k">if</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">PYQT_VERSION</span> <span class="o">&gt;</span> <span class="mh">0x040702</span><span class="p">:</span>
+            <span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">uic</span>
+            <span class="k">return</span> <span class="n">uic</span><span class="o">.</span><span class="n">loadUi</span><span class="p">(</span><span class="n">ui_file</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># needed import and def</span>
+            <span class="kn">from</span> <span class="nn">.uic.Loader</span> <span class="kn">import</span> <span class="n">loader</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="nb">globals</span><span class="p">(),</span> <span class="s1">&#39;partial&#39;</span><span class="p">):</span>
+                <span class="kn">from</span> <span class="nn">soma.functiontools</span> <span class="kn">import</span> <span class="n">partial</span>
+
+            <span class="k">def</span> <span class="nf">_iconset</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prop</span><span class="p">):</span>
+                <span class="k">return</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QIcon</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_basedirectory</span><span class="p">,</span> <span class="n">prop</span><span class="o">.</span><span class="n">text</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\\</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="se">\\\\</span><span class="s2">&quot;</span><span class="p">))</span>
+
+            <span class="k">def</span> <span class="nf">_pixmap</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prop</span><span class="p">):</span>
+                <span class="k">return</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QPixmap</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_basedirectory</span><span class="p">,</span> <span class="n">prop</span><span class="o">.</span><span class="n">text</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\\</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="se">\\\\</span><span class="s2">&quot;</span><span class="p">))</span>
+            <span class="n">uiLoader</span> <span class="o">=</span> <span class="n">loader</span><span class="o">.</span><span class="n">DynamicUILoader</span><span class="p">()</span>
+            <span class="n">uiLoader</span><span class="o">.</span><span class="n">wprops</span><span class="o">.</span><span class="n">_basedirectory</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">ui_file</span><span class="p">))</span>
+            <span class="n">uiLoader</span><span class="o">.</span><span class="n">wprops</span><span class="o">.</span><span class="n">_iconset</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">_iconset</span><span class="p">,</span> <span class="n">uiLoader</span><span class="o">.</span><span class="n">wprops</span><span class="p">)</span>
+            <span class="n">uiLoader</span><span class="o">.</span><span class="n">wprops</span><span class="o">.</span><span class="n">_pixmap</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">_pixmap</span><span class="p">,</span> <span class="n">uiLoader</span><span class="o">.</span><span class="n">wprops</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">uiLoader</span><span class="o">.</span><span class="n">loadUi</span><span class="p">(</span><span class="n">ui_file</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="kn">from</span> <span class="nn">PySide.QtUiTools</span> <span class="kn">import</span> <span class="n">QUiLoader</span>
+        <span class="k">return</span> <span class="n">QUiLoader</span><span class="p">()</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">ui_file</span><span class="p">)</span>  <span class="c1"># , *args, **kwargs )</span></div>
+
+
+<div class="viewcode-block" id="loadUiType"><a class="viewcode-back" href="../../../api.html#soma.qt_gui.qt_backend.loadUiType">[docs]</a><span class="k">def</span> <span class="nf">loadUiType</span><span class="p">(</span><span class="n">uifile</span><span class="p">,</span> <span class="n">from_imports</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;PyQt4 / PySide abstraction to uic.loadUiType.</span>
+<span class="sd">    Not implemented for PySide, actually, because PySide does not have this</span>
+<span class="sd">    feature.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">if</span> <span class="n">get_qt_backend</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;PyQt5&#39;</span><span class="p">:</span>
+        <span class="kn">from</span> <span class="nn">PyQt5</span> <span class="kn">import</span> <span class="n">uic</span>
+        <span class="k">return</span> <span class="n">uic</span><span class="o">.</span><span class="n">loadUiType</span><span class="p">(</span><span class="n">uifile</span><span class="p">,</span> <span class="n">from_imports</span><span class="o">=</span><span class="n">from_imports</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">get_qt_backend</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;PyQt4&#39;</span><span class="p">:</span>
+        <span class="c1"># the parameter from_imports doesn&#39;t exist in our version of PyQt</span>
+        <span class="kn">from</span> <span class="nn">PyQt4</span> <span class="kn">import</span> <span class="n">uic</span>
+        <span class="k">return</span> <span class="n">uic</span><span class="o">.</span><span class="n">loadUiType</span><span class="p">(</span><span class="n">uifile</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s1">&#39;loadUiType does not work with PySide&#39;</span><span class="p">)</span></div>
+        <span class="c1"># ui = loadUi(uifile)</span>
+        <span class="c1"># return ui.__class__, QtGui.QWidget # FIXME</span>
+
+
+<div class="viewcode-block" id="getOpenFileName"><a class="viewcode-back" href="../../../api.html#soma.qt_gui.qt_backend.getOpenFileName">[docs]</a><span class="k">def</span> <span class="nf">getOpenFileName</span><span class="p">(</span><span class="n">parent</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">caption</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">directory</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="nb">filter</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span>
+                    <span class="n">selectedFilter</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;PyQt4 / PySide compatible call to QFileDialog.getOpenFileName&#39;&#39;&#39;</span>
+    <span class="n">set_qt_backend</span><span class="p">(</span><span class="n">compatible_qt5</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">QtGui</span>
+    <span class="k">if</span> <span class="n">get_qt_backend</span><span class="p">()</span> <span class="ow">in</span><span class="p">(</span><span class="s1">&#39;PyQt4&#39;</span><span class="p">,</span> <span class="s1">&#39;PyQt5&#39;</span><span class="p">):</span>
+        <span class="n">kwargs</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="c1"># kwargs are used because passing None or &#39;&#39; as selectedFilter</span>
+        <span class="c1"># does not work, at least in PyQt 4.10</span>
+        <span class="c1"># On the other side I don&#39;t know if this kwargs works with older</span>
+        <span class="c1"># sip/PyQt versions.</span>
+        <span class="k">if</span> <span class="n">selectedFilter</span><span class="p">:</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;selectedFilter&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">selectedFilter</span>
+        <span class="k">if</span> <span class="n">options</span><span class="p">:</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;options&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QFileDialog</span><span class="o">.</span><span class="n">Options</span><span class="p">(</span><span class="n">options</span><span class="p">)</span>
+        <span class="n">filename</span> <span class="o">=</span> <span class="n">get_qt_module</span><span class="p">()</span><span class="o">.</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QFileDialog</span><span class="o">.</span><span class="n">getOpenFileName</span><span class="p">(</span>
+            <span class="n">parent</span><span class="p">,</span> <span class="n">caption</span><span class="p">,</span> <span class="n">directory</span><span class="p">,</span> <span class="nb">filter</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">get_qt_backend</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;PyQt4&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">filename</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">filename</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="c1"># PyQt5 returns (filaname, filter)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">get_qt_module</span><span class="p">()</span><span class="o">.</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QFileDialog</span><span class="o">.</span><span class="n">getOpenFileName</span><span class="p">(</span>
+            <span class="n">parent</span><span class="p">,</span> <span class="n">caption</span><span class="p">,</span> <span class="n">directory</span><span class="p">,</span> <span class="nb">filter</span><span class="p">,</span> <span class="n">selectedFilter</span><span class="p">,</span>
+            <span class="n">QtGui</span><span class="o">.</span><span class="n">QFileDialog</span><span class="o">.</span><span class="n">Options</span><span class="p">(</span><span class="n">options</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="getSaveFileName"><a class="viewcode-back" href="../../../api.html#soma.qt_gui.qt_backend.getSaveFileName">[docs]</a><span class="k">def</span> <span class="nf">getSaveFileName</span><span class="p">(</span><span class="n">parent</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">caption</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">directory</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="nb">filter</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span>
+                    <span class="n">selectedFilter</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;PyQt4 / PySide compatible call to QFileDialog.getSaveFileName&#39;&#39;&#39;</span>
+    <span class="n">set_qt_backend</span><span class="p">(</span><span class="n">compatible_qt5</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">QtGui</span>
+    <span class="k">if</span> <span class="n">get_qt_backend</span><span class="p">()</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;PyQt4&#39;</span><span class="p">,</span> <span class="s1">&#39;PyQt5&#39;</span><span class="p">):</span>
+        <span class="n">kwargs</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="c1"># kwargs are used because passing None or &#39;&#39; as selectedFilter</span>
+        <span class="c1"># does not work, at least in PyQt 4.10</span>
+        <span class="c1"># On the other side I don&#39;t know if this kwargs works with older</span>
+        <span class="c1"># sip/PyQt versions.</span>
+        <span class="k">if</span> <span class="n">selectedFilter</span><span class="p">:</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;selectedFilter&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">selectedFilter</span>
+        <span class="k">if</span> <span class="n">options</span><span class="p">:</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;options&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QFileDialog</span><span class="o">.</span><span class="n">Options</span><span class="p">(</span><span class="n">options</span><span class="p">)</span>
+        <span class="n">filename</span> <span class="o">=</span> <span class="n">get_qt_module</span><span class="p">()</span><span class="o">.</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QFileDialog</span><span class="o">.</span><span class="n">getSaveFileName</span><span class="p">(</span>
+            <span class="n">parent</span><span class="p">,</span> <span class="n">caption</span><span class="p">,</span> <span class="n">directory</span><span class="p">,</span> <span class="nb">filter</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">get_qt_backend</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;PyQt4&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">filename</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">filename</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="c1"># PyQt5 returns (filaname, filter)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">get_qt_module</span><span class="p">()</span><span class="o">.</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QFileDialog</span><span class="o">.</span><span class="n">getSaveFileName</span><span class="p">(</span>
+            <span class="n">parent</span><span class="p">,</span> <span class="n">caption</span><span class="p">,</span> <span class="n">directory</span><span class="p">,</span> <span class="nb">filter</span><span class="p">,</span> <span class="n">selectedFilter</span><span class="p">,</span> <span class="n">options</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="getExistingDirectory"><a class="viewcode-back" href="../../../api.html#soma.qt_gui.qt_backend.getExistingDirectory">[docs]</a><span class="k">def</span> <span class="nf">getExistingDirectory</span><span class="p">(</span><span class="n">parent</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">caption</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">directory</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;PyQt4 / PySide compatible call to QFileDialog.getExistingDirectory&#39;&#39;&#39;</span>
+    <span class="n">set_qt_backend</span><span class="p">(</span><span class="n">compatible_qt5</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">QtGui</span>
+    <span class="k">if</span> <span class="n">get_qt_backend</span><span class="p">()</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;PyQt4&#39;</span><span class="p">,</span> <span class="s1">&#39;PyQt5&#39;</span><span class="p">):</span>
+        <span class="n">kwargs</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="n">options</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;options&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QFileDialog</span><span class="o">.</span><span class="n">Options</span><span class="p">(</span><span class="n">options</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">get_qt_module</span><span class="p">()</span><span class="o">.</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QFileDialog</span><span class="o">.</span><span class="n">getExistingDirectory</span><span class="p">(</span>
+            <span class="n">parent</span><span class="p">,</span> <span class="n">caption</span><span class="p">,</span> <span class="n">directory</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">options</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">get_qt_module</span><span class="p">()</span><span class="o">.</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QFileDialog</span><span class="o">.</span><span class="n">getExistingDirectory</span><span class="p">(</span>
+                <span class="n">parent</span><span class="p">,</span> <span class="n">caption</span><span class="p">,</span> <span class="n">directory</span><span class="p">,</span>
+                <span class="n">QtGui</span><span class="o">.</span><span class="n">QFileDialog</span><span class="o">.</span><span class="n">Options</span><span class="p">(</span><span class="n">options</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">get_qt_module</span><span class="p">()</span><span class="o">.</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QFileDialog</span><span class="o">.</span><span class="n">getExistingDirectory</span><span class="p">(</span>
+                <span class="n">parent</span><span class="p">,</span> <span class="n">caption</span><span class="p">,</span> <span class="n">directory</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="init_matplotlib_backend"><a class="viewcode-back" href="../../../api.html#soma.qt_gui.qt_backend.init_matplotlib_backend">[docs]</a><span class="k">def</span> <span class="nf">init_matplotlib_backend</span><span class="p">(</span><span class="n">force</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Initialize Matplotlib to use Qt, and the appropriate Qt/Python binding</span>
+<span class="sd">    (PySide or PyQt) according to the configured/loaded toolkit.</span>
+<span class="sd">    Moreover, the appropriate FigureCanvas type is set in the current module,</span>
+<span class="sd">    and returned by this function.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    force: bool</span>
+<span class="sd">        if False, if the backend is already initialized with a different value,</span>
+<span class="sd">        then raise an exception. If True (the default), force the new</span>
+<span class="sd">        backend in matplotlib. If matplotlib does not support the force</span>
+<span class="sd">        parameter, then the backend will not be forced.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="kn">import</span> <span class="nn">inspect</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="kn">import</span> <span class="nn">matplotlib</span>
+    <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+        <span class="c1"># if matplotlib cannot be found, don&#39;t do anything.</span>
+        <span class="k">return</span>
+
+    <span class="n">mpl_ver</span> <span class="o">=</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">matplotlib</span><span class="o">.</span><span class="n">__version__</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[:</span><span class="mi">2</span><span class="p">]]</span>
+    <span class="n">qt_backend</span> <span class="o">=</span> <span class="n">get_qt_backend</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">qt_backend</span> <span class="o">==</span> <span class="s1">&#39;PyQt5&#39;</span><span class="p">:</span>
+        <span class="n">guiBackend</span> <span class="o">=</span> <span class="s1">&#39;Qt5Agg&#39;</span>
+        <span class="n">mpl_backend_mod</span> <span class="o">=</span> <span class="s1">&#39;matplotlib.backends.backend_qt5agg&#39;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">guiBackend</span> <span class="o">=</span> <span class="s1">&#39;Qt4Agg&#39;</span>
+        <span class="n">mpl_backend_mod</span> <span class="o">=</span> <span class="s1">&#39;matplotlib.backends.backend_qt4agg&#39;</span>
+    <span class="k">if</span> <span class="s1">&#39;matplotlib.backends&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span> <span class="ow">or</span> <span class="n">force</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">six</span><span class="o">.</span><span class="n">PY3</span><span class="p">:</span>
+            <span class="n">argspec</span> <span class="o">=</span><span class="n">inspect</span><span class="o">.</span><span class="n">getfullargspec</span><span class="p">(</span><span class="n">matplotlib</span><span class="o">.</span><span class="n">use</span><span class="p">)</span>
+            <span class="k">if</span> <span class="s1">&#39;force&#39;</span> <span class="ow">in</span> <span class="n">argspec</span><span class="o">.</span><span class="n">args</span> <span class="ow">or</span> <span class="s1">&#39;force&#39;</span> <span class="ow">in</span> <span class="n">argspec</span><span class="o">.</span><span class="n">kwonlyargs</span><span class="p">:</span>
+                <span class="n">matplotlib</span><span class="o">.</span><span class="n">use</span><span class="p">(</span><span class="n">guiBackend</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="n">force</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">matplotlib</span><span class="o">.</span><span class="n">use</span><span class="p">(</span><span class="n">guiBackend</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="s1">&#39;force&#39;</span> <span class="ow">in</span> <span class="n">inspect</span><span class="o">.</span><span class="n">getargspec</span><span class="p">(</span><span class="n">matplotlib</span><span class="o">.</span><span class="n">use</span><span class="p">)</span><span class="o">.</span><span class="n">args</span><span class="p">:</span>
+                <span class="n">matplotlib</span><span class="o">.</span><span class="n">use</span><span class="p">(</span><span class="n">guiBackend</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="n">force</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">matplotlib</span><span class="o">.</span><span class="n">use</span><span class="p">(</span><span class="n">guiBackend</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">matplotlib</span><span class="o">.</span><span class="n">get_backend</span><span class="p">()</span> <span class="o">!=</span> <span class="n">guiBackend</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+            <span class="s1">&#39;Mismatch between Qt version and matplotlib backend: &#39;</span>
+            <span class="s1">&#39;matplotlib uses &#39;</span> <span class="o">+</span> <span class="n">matplotlib</span><span class="o">.</span><span class="n">get_backend</span><span class="p">()</span> <span class="o">+</span> <span class="s1">&#39; but &#39;</span>
+            <span class="o">+</span> <span class="n">guiBackend</span> <span class="o">+</span> <span class="s1">&#39; is required.&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">qt_backend</span> <span class="o">==</span> <span class="s1">&#39;PySide&#39;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="s1">&#39;backend.qt4&#39;</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">matplotlib</span><span class="o">.</span><span class="n">rcParams</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
+            <span class="c1"># some versions (&gt;=1.1, &lt;3) of matplotlib have this rcParams setting</span>
+            <span class="n">matplotlib</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s1">&#39;backend.qt4&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;PySide&#39;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">qt_backend</span> <span class="o">==</span> <span class="s1">&#39;PyQt5&#39;</span><span class="p">:</span>
+            <span class="n">rc_key</span> <span class="o">=</span> <span class="s1">&#39;backend.qt5&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">rc_key</span> <span class="o">=</span> <span class="s1">&#39;backend.qt4&#39;</span>
+        <span class="k">if</span> <span class="n">rc_key</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">matplotlib</span><span class="o">.</span><span class="n">rcParams</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
+            <span class="c1"># some versions (&gt;=1.1, &lt;3) of matplotlib have this rcParams setting</span>
+            <span class="n">matplotlib</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="n">rc_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">qt_backend</span>
+    <span class="nb">__import__</span><span class="p">(</span><span class="n">mpl_backend_mod</span><span class="p">)</span>
+    <span class="n">backend_mod</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">[</span><span class="n">mpl_backend_mod</span><span class="p">]</span>
+    <span class="n">FigureCanvas</span> <span class="o">=</span> <span class="n">backend_mod</span><span class="o">.</span><span class="n">FigureCanvasQTAgg</span>
+    <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">[</span><span class="vm">__name__</span><span class="p">]</span><span class="o">.</span><span class="n">FigureCanvas</span> <span class="o">=</span> <span class="n">FigureCanvas</span>
+    <span class="k">return</span> <span class="n">mpl_backend_mod</span></div>
+
+
+<span class="n">traits_ui_handler_initialized</span> <span class="o">=</span> <span class="kc">False</span>
+
+
+<div class="viewcode-block" id="init_traitsui_handler"><a class="viewcode-back" href="../../../api.html#soma.qt_gui.qt_backend.init_traitsui_handler">[docs]</a><span class="k">def</span> <span class="nf">init_traitsui_handler</span><span class="p">():</span>
+    <span class="sd">&#39;&#39;&#39; Setup handler for traits notification in Qt GUI.</span>
+<span class="sd">    This function needs to be called before using traits notification which</span>
+<span class="sd">    trigger GUI modification from non-principal threads.</span>
+
+<span class="sd">    **WARNING**: depending on the Qt bindings (PyQt or PySide), this function</span>
+<span class="sd">    may instantiate a QApplication. It seems that when using PyQt4,</span>
+<span class="sd">    QApplication is not instantiated, whereas when using PySide, it is.</span>
+<span class="sd">    This means that after this function has been called, one must check if</span>
+<span class="sd">    the application has been created before recreating it:</span>
+
+<span class="sd">    ::</span>
+
+<span class="sd">        app = QtGui.QApplication.instance()</span>
+<span class="sd">        if not app:</span>
+<span class="sd">            app = QtGui.QApplication(sys.argv)</span>
+
+<span class="sd">    This behaviour is triggered somewhere in the traitsui.qt4.toolkit module,</span>
+<span class="sd">    we cannot change it easily.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">global</span> <span class="n">traits_ui_handler_initialized</span>
+    <span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">QtCore</span><span class="p">,</span> <span class="n">QtGui</span>
+    <span class="k">if</span> <span class="n">traits_ui_handler_initialized</span><span class="p">:</span>
+        <span class="k">return</span> <span class="c1"># already done</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">get_qt_backend</span><span class="p">()</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;PyQt4&#39;</span><span class="p">,</span> <span class="s1">&#39;PySide&#39;</span><span class="p">):</span>
+            <span class="kn">from</span> <span class="nn">traitsui.qt4</span> <span class="kn">import</span> <span class="n">toolkit</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># if using Qt5 we must not import traitsui.qt4, which would cause</span>
+            <span class="c1"># a crash. Then use the code taken from traitsui.qt4.toolkit</span>
+            <span class="c1"># in a qt-independent manner</span>
+            <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="s1">&#39;traitsui doesn</span><span class="se">\&#39;</span><span class="s1">t provide a PyQt5 backend&#39;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+        <span class="c1"># copy of the code from traitsui.qt4.toolkit</span>
+
+        <span class="kn">from</span> <span class="nn">traits.trait_notifiers</span> <span class="kn">import</span> <span class="n">set_ui_handler</span>
+
+        <span class="c1">#-------------------------------------------------------------------------------</span>
+        <span class="c1">#  Handles UI notification handler requests that occur on a thread other than</span>
+        <span class="c1">#  the UI thread:</span>
+        <span class="c1">#-------------------------------------------------------------------------------</span>
+        <span class="n">_QT_TRAITS_EVENT</span> <span class="o">=</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">QEvent</span><span class="o">.</span><span class="n">Type</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">QEvent</span><span class="o">.</span><span class="n">registerEventType</span><span class="p">())</span>
+
+        <span class="k">class</span> <span class="nc">_CallAfter</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">QObject</span><span class="p">):</span>
+            <span class="sd">&quot;&quot;&quot; This class dispatches a handler so that it executes in the main GUI</span>
+<span class="sd">                thread (similar to the wx function).</span>
+<span class="sd">            &quot;&quot;&quot;</span>
+
+            <span class="c1"># The list of pending calls.</span>
+            <span class="n">_calls</span> <span class="o">=</span> <span class="p">[]</span>
+
+            <span class="c1"># The mutex around the list of pending calls.</span>
+            <span class="n">_calls_mutex</span> <span class="o">=</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">QMutex</span><span class="p">()</span>
+
+            <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">handler</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">):</span>
+                <span class="sd">&quot;&quot;&quot; Initialise the call.</span>
+<span class="sd">                &quot;&quot;&quot;</span>
+                <span class="n">QtCore</span><span class="o">.</span><span class="n">QObject</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+                <span class="c1"># Save the details of the call.</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_handler</span> <span class="o">=</span> <span class="n">handler</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_args</span> <span class="o">=</span> <span class="n">args</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_kwds</span> <span class="o">=</span> <span class="n">kwds</span>
+
+                <span class="c1"># Add this to the list.</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_calls_mutex</span><span class="o">.</span><span class="n">lock</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_calls</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_calls_mutex</span><span class="o">.</span><span class="n">unlock</span><span class="p">()</span>
+
+                <span class="c1"># Move to the main GUI thread.</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">moveToThread</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QApplication</span><span class="o">.</span><span class="n">instance</span><span class="p">()</span><span class="o">.</span><span class="n">thread</span><span class="p">())</span>
+
+                <span class="c1"># Post an event to be dispatched on the main GUI thread. Note that</span>
+                <span class="c1"># we do not call QTimer.singleShot, which would be simpler, because</span>
+                <span class="c1"># that only works on QThreads. We want regular Python threads to work.</span>
+                <span class="n">event</span> <span class="o">=</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">QEvent</span><span class="p">(</span><span class="n">_QT_TRAITS_EVENT</span><span class="p">)</span>
+                <span class="n">QtGui</span><span class="o">.</span><span class="n">QApplication</span><span class="o">.</span><span class="n">instance</span><span class="p">()</span><span class="o">.</span><span class="n">postEvent</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">)</span>
+
+            <span class="k">def</span> <span class="nf">event</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span>
+                <span class="sd">&quot;&quot;&quot; QObject event handler.</span>
+<span class="sd">                &quot;&quot;&quot;</span>
+                <span class="k">if</span> <span class="n">event</span><span class="o">.</span><span class="n">type</span><span class="p">()</span> <span class="o">==</span> <span class="n">_QT_TRAITS_EVENT</span><span class="p">:</span>
+                    <span class="c1"># Invoke the handler</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_handler</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_args</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_kwds</span><span class="p">)</span>
+
+                    <span class="c1"># We cannot remove from self._calls here. QObjects don&#39;t like being</span>
+                    <span class="c1"># garbage collected during event handlers (there are tracebacks,</span>
+                    <span class="c1"># plus maybe a memory leak, I think).</span>
+                    <span class="n">QtCore</span><span class="o">.</span><span class="n">QTimer</span><span class="o">.</span><span class="n">singleShot</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_finished</span><span class="p">)</span>
+
+                    <span class="k">return</span> <span class="kc">True</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">QObject</span><span class="o">.</span><span class="n">event</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">)</span>
+
+            <span class="k">def</span> <span class="nf">_finished</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+                <span class="sd">&quot;&quot;&quot; Remove the call from the list, so it can be garbage collected.</span>
+<span class="sd">                &quot;&quot;&quot;</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_calls_mutex</span><span class="o">.</span><span class="n">lock</span><span class="p">()</span>
+                <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calls</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_calls</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="bp">self</span><span class="p">)]</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_calls_mutex</span><span class="o">.</span><span class="n">unlock</span><span class="p">()</span>
+
+        <span class="k">def</span> <span class="nf">ui_handler</span> <span class="p">(</span> <span class="n">handler</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span> <span class="p">):</span>
+            <span class="sd">&quot;&quot;&quot; Handles UI notification handler requests that occur on a thread other</span>
+<span class="sd">                than the UI thread.</span>
+<span class="sd">            &quot;&quot;&quot;</span>
+            <span class="n">_CallAfter</span><span class="p">(</span><span class="n">handler</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">)</span>
+
+        <span class="c1"># Tell the traits notification handlers to use this UI handler</span>
+        <span class="n">set_ui_handler</span><span class="p">(</span> <span class="n">ui_handler</span> <span class="p">)</span></div>
+
+<div class="viewcode-block" id="qimage_to_np"><a class="viewcode-back" href="../../../api.html#soma.qt_gui.qt_backend.qimage_to_np">[docs]</a><span class="k">def</span> <span class="nf">qimage_to_np</span><span class="p">(</span><span class="n">qimage</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Utility function to transorm a Qt QImage into a numpy array suitable</span>
+<span class="sd">    for matplotlib imshow() for instance.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+    <span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">Qt</span>
+    <span class="n">w</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="n">qimage</span><span class="o">.</span><span class="n">width</span><span class="p">(),</span> <span class="n">qimage</span><span class="o">.</span><span class="n">height</span><span class="p">()</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">qimage</span><span class="p">,</span> <span class="n">Qt</span><span class="o">.</span><span class="n">QPixmap</span><span class="p">):</span>
+        <span class="n">qimage</span> <span class="o">=</span> <span class="n">qimage</span><span class="o">.</span><span class="n">toImage</span><span class="p">()</span>
+    <span class="c1"># sip.voidptr (qimage.bits()) asarray method is only available</span>
+    <span class="c1"># in sip &gt;= 4.15</span>
+    <span class="c1">#aim = aim = np.array(qimage.bits().asarray(w * h * 4)).reshape((h, w, 4))</span>
+    <span class="n">b</span> <span class="o">=</span> <span class="n">qimage</span><span class="o">.</span><span class="n">bits</span><span class="p">()</span>
+    <span class="n">b</span><span class="o">.</span><span class="n">setsize</span><span class="p">(</span><span class="n">w</span> <span class="o">*</span> <span class="n">h</span> <span class="o">*</span> <span class="mi">4</span><span class="p">)</span>
+    <span class="n">aim</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">b</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="n">h</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
+    <span class="c1"># TODO: handle different pixel formats</span>
+    <span class="n">aim</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">:</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">flip</span><span class="p">(</span><span class="n">aim</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">:</span><span class="mi">3</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">aim</span></div>
+
+<div class="viewcode-block" id="imshow_widget"><a class="viewcode-back" href="../../../api.html#soma.qt_gui.qt_backend.imshow_widget">[docs]</a><span class="k">def</span> <span class="nf">imshow_widget</span><span class="p">(</span><span class="n">widget</span><span class="p">,</span> <span class="n">figure</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">show</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Display a shapshot of a QWidget into a Matplotlib figure using</span>
+<span class="sd">    pylab.imshow(). This is useful to use the sphinx_gallery module for</span>
+<span class="sd">    documentation.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">Qt</span>
+    <span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span>
+    <span class="n">Qt</span><span class="o">.</span><span class="n">QApplication</span><span class="o">.</span><span class="n">instance</span><span class="p">()</span><span class="o">.</span><span class="n">processEvents</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">Qt</span><span class="o">.</span><span class="n">QT_VERSION</span> <span class="o">&gt;=</span> <span class="mh">0x050000</span><span class="p">:</span>
+        <span class="n">im</span> <span class="o">=</span> <span class="n">widget</span><span class="o">.</span><span class="n">grab</span><span class="p">()</span>  <span class="c1"># Qt5 only</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">im</span> <span class="o">=</span> <span class="n">Qt</span><span class="o">.</span><span class="n">QPixmap</span><span class="o">.</span><span class="n">grabWidget</span><span class="p">(</span><span class="n">widget</span><span class="p">)</span>  <span class="c1"># Qt4 only</span>
+    <span class="n">aim</span> <span class="o">=</span> <span class="n">qimage_to_np</span><span class="p">(</span><span class="n">im</span><span class="p">)</span>
+    <span class="n">plot</span> <span class="o">=</span> <span class="n">pyplot</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">aim</span><span class="p">,</span> <span class="n">figure</span><span class="o">=</span><span class="n">figure</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">figure</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">axes</span> <span class="o">=</span> <span class="n">figure</span><span class="o">.</span><span class="n">axes</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">axes</span> <span class="o">=</span> <span class="n">pyplot</span><span class="o">.</span><span class="n">axes</span><span class="p">()</span>
+    <span class="n">axes</span><span class="o">.</span><span class="n">get_xaxis</span><span class="p">()</span><span class="o">.</span><span class="n">set_visible</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">axes</span><span class="o">.</span><span class="n">get_yaxis</span><span class="p">()</span><span class="o">.</span><span class="n">set_visible</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">show</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">figure</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">figure</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">pyplot</span><span class="o">.</span><span class="n">show</span><span class="p">(</span><span class="n">block</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">plot</span></div>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">Soma-base 5.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">soma.qt_gui.qt_backend</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2011, IFR49.org.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.5.4.
+    </div>
+  </body>
+</html>

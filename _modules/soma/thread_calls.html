@@ -1,0 +1,369 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>soma.thread_calls &#8212; Soma-base 5.1.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css" />
+    
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Soma-base 5.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">soma.thread_calls</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for soma.thread_calls</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+
+<span class="c1">#  This software and supporting documentation are distributed by</span>
+<span class="c1">#      Institut Federatif de Recherche 49</span>
+<span class="c1">#      CEA/NeuroSpin, Batiment 145,</span>
+<span class="c1">#      91191 Gif-sur-Yvette cedex</span>
+<span class="c1">#      France</span>
+<span class="c1">#</span>
+<span class="c1"># This software is governed by the CeCILL-B license under</span>
+<span class="c1"># French law and abiding by the rules of distribution of free software.</span>
+<span class="c1"># You can  use, modify and/or redistribute the software under the</span>
+<span class="c1"># terms of the CeCILL-B license as circulated by CEA, CNRS</span>
+<span class="c1"># and INRIA at the following URL &quot;http://www.cecill.info&quot;.</span>
+<span class="c1">#</span>
+<span class="c1"># As a counterpart to the access to the source code and  rights to copy,</span>
+<span class="c1"># modify and redistribute granted by the license, users are provided only</span>
+<span class="c1"># with a limited warranty  and the software&#39;s author,  the holder of the</span>
+<span class="c1"># economic rights,  and the successive licensors  have only  limited</span>
+<span class="c1"># liability.</span>
+<span class="c1">#</span>
+<span class="c1"># In this respect, the user&#39;s attention is drawn to the risks associated</span>
+<span class="c1"># with loading,  using,  modifying and/or developing or reproducing the</span>
+<span class="c1"># software by the user in light of its specific status of free software,</span>
+<span class="c1"># that may mean  that it is complicated to manipulate,  and  that  also</span>
+<span class="c1"># therefore means  that it is reserved for developers  and  experienced</span>
+<span class="c1"># professionals having in-depth computer knowledge. Users are therefore</span>
+<span class="c1"># encouraged to load and test the software&#39;s suitability as regards their</span>
+<span class="c1"># requirements in conditions enabling the security of their systems and/or</span>
+<span class="c1"># data to be ensured and,  more generally, to use and operate it in the</span>
+<span class="c1"># same conditions as regards security.</span>
+<span class="c1">#</span>
+<span class="c1"># The fact that you are presently reading this means that you have had</span>
+<span class="c1"># knowledge of the CeCILL-B license and that you accept its terms.</span>
+
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">This module is useful whenever you need to be sure that a function (more</span>
+<span class="sd">exactly anything that can be called by python) is executed in a particular</span>
+<span class="sd">thread.</span>
+
+<span class="sd">For exemple, if you use PyMat (which is an interface between Python and a Matlab,</span>
+<span class="sd">see U{http://claymore.engineer.gvsu.edu/~steriana/Python} for more information)</span>
+<span class="sd">it is necessary that all calls to pymat.eval are done by the same thread that</span>
+<span class="sd">called pymat.open. If you want to use PyMat in a multi-threaded application,</span>
+<span class="sd">you will have to build appropriate calling mechanism as the one proposed in</span>
+<span class="sd">this module.</span>
+
+<span class="sd">The main idea is to use a list containing functions to be called with their</span>
+<span class="sd">parameters. A single thread is used to get entries from the list and execute</span>
+<span class="sd">the corresponding functions. Any thread can put a call request on the list</span>
+<span class="sd">either asynchonously (the requesting thread continues to run without waiting</span>
+<span class="sd">for the call to be done) or synchronously (the requesting thread is stopped</span>
+<span class="sd">until the call is done and the result available).</span>
+
+<span class="sd">* author: Yann Cointepas</span>
+<span class="sd">* organization: NeuroSpin</span>
+<span class="sd">* license: `CeCILL B &lt;http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html&gt;`_</span>
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">absolute_import</span>
+<span class="n">__docformat__</span> <span class="o">=</span> <span class="s2">&quot;restructuredtext en&quot;</span>
+
+<span class="kn">import</span> <span class="nn">threading</span>
+<span class="kn">import</span> <span class="nn">time</span>
+
+
+<div class="viewcode-block" id="SingleThreadCalls"><a class="viewcode-back" href="../../api.html#soma.thread_calls.SingleThreadCalls">[docs]</a><span class="k">class</span> <span class="nc">SingleThreadCalls</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Allows the registration of functions that are going to be called from a</span>
+<span class="sd">    single thread. This single thread must continuously call</span>
+<span class="sd">    :meth:`processFunctions`.</span>
+
+<span class="sd">    Registration can be blocking (see :meth:`call`) or non blocking (see</span>
+<span class="sd">    :meth:`push`).</span>
+
+<span class="sd">    Blocking registration waits for the function to be processed and returns</span>
+<span class="sd">    its result (or raises its exception). Non blocking registration puts the</span>
+<span class="sd">    function in the list and returns immediately, ignoring any return value or</span>
+<span class="sd">    exception.</span>
+
+<span class="sd">    Example::</span>
+
+<span class="sd">        stc = SingleThreadCall()</span>
+<span class="sd">        processingThread = threading.Thread(target=stc.processingLoop)</span>
+<span class="sd">        stc.setProcessingThread(processingThread)</span>
+<span class="sd">        processingThread.start()</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">thread</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        The thread passed in parameter is the processing thread of this</span>
+<span class="sd">        SingleThreadCalls. When started (which is not been done by</span>
+<span class="sd">        :class:`SingleThreadCall`) it must continuously call</span>
+<span class="sd">        :meth:`processFunctions` to execute the functions that have been</span>
+<span class="sd">        registered with :meth:`call` and :meth:`push`.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        thread: :class:`threading.Thread` instance or *None*</span>
+<span class="sd">            Processing thread. If *None*, :func:`threading.currentThread`</span>
+<span class="sd">            is used.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_queue</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="n">thread</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">thread</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">currentThread</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_thread</span> <span class="o">=</span> <span class="n">thread</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_condition</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Condition</span><span class="p">()</span>
+
+<div class="viewcode-block" id="SingleThreadCalls.setProcessingThread"><a class="viewcode-back" href="../../api.html#soma.thread_calls.SingleThreadCalls.setProcessingThread">[docs]</a>    <span class="k">def</span> <span class="nf">setProcessingThread</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">thread</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Defines the thread that processes the functions. The behaviour of</span>
+<span class="sd">        :meth:`call` and :meth:`push` is different if called from the</span>
+<span class="sd">        processing thread or from another one.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        thread: :class:`threading.Thread`</span>
+<span class="sd">            Processing thread</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_condition</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_thread</span> <span class="o">=</span> <span class="n">thread</span>
+        <span class="k">finally</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_condition</span><span class="o">.</span><span class="n">release</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="SingleThreadCalls.call"><a class="viewcode-back" href="../../api.html#soma.thread_calls.SingleThreadCalls.call">[docs]</a>    <span class="k">def</span> <span class="nf">call</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">function</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Registers a function call and waits for the processing thread to call</span>
+<span class="sd">        it.</span>
+
+<span class="sd">        Returns the result of the function. If an exception is raised during</span>
+<span class="sd">        the execution of the function, this exception is also raised by</span>
+<span class="sd">        :meth:`call`.</span>
+<span class="sd">        Therefore :meth:`call` behaves like a direct call to the function.</span>
+
+<span class="sd">        It is possible to use :meth:`call` from the processing thread. In this</span>
+<span class="sd">        case, no registration is done (the function is executed immedialey).</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        function: callable</span>
+<span class="sd">            function to execute</span>
+<span class="sd">        args:</span>
+<span class="sd">            parameters of the function</span>
+<span class="sd">        kwargs:</span>
+<span class="sd">            keyword parameters of the function</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        any type</span>
+<span class="sd">            the result of the function call</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="n">threading</span><span class="o">.</span><span class="n">currentThread</span><span class="p">()</span> <span class="ow">is</span> <span class="bp">self</span><span class="o">.</span><span class="n">_thread</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">function</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">semaphore</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Semaphore</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">semaphore</span><span class="o">.</span><span class="n">_result</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="n">semaphore</span><span class="o">.</span><span class="n">_exception</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_condition</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_queue</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_executeAndNotify</span><span class="p">,</span> <span class="p">(</span><span class="n">semaphore</span><span class="p">,</span> <span class="n">function</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">),</span> <span class="p">{}))</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_condition</span><span class="o">.</span><span class="n">notify</span><span class="p">()</span>
+            <span class="k">finally</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_condition</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
+            <span class="n">semaphore</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">semaphore</span><span class="o">.</span><span class="n">_exception</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">e</span> <span class="o">=</span> <span class="n">semaphore</span><span class="o">.</span><span class="n">_exception</span>
+                <span class="n">semaphore</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
+                <span class="k">raise</span> <span class="n">e</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">semaphore</span><span class="o">.</span><span class="n">_result</span>
+        <span class="k">return</span> <span class="n">result</span></div>
+
+    <span class="k">def</span> <span class="nf">_executeAndNotify</span><span class="p">(</span><span class="n">semaphore</span><span class="p">,</span> <span class="n">function</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">function</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="n">semaphore</span><span class="o">.</span><span class="n">_result</span> <span class="o">=</span> <span class="n">result</span>
+            <span class="n">semaphore</span><span class="o">.</span><span class="n">_exception</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="n">semaphore</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">semaphore</span><span class="o">.</span><span class="n">_exception</span> <span class="o">=</span> <span class="n">e</span>
+            <span class="n">semaphore</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
+    <span class="n">_executeAndNotify</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">_executeAndNotify</span><span class="p">)</span>
+
+<div class="viewcode-block" id="SingleThreadCalls.push"><a class="viewcode-back" href="../../api.html#soma.thread_calls.SingleThreadCalls.push">[docs]</a>    <span class="k">def</span> <span class="nf">push</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">function</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Same as the :meth:`call` method but always puts the function on the</span>
+<span class="sd">        queue and returns immediatly. If :meth:`push` is called from the</span>
+<span class="sd">        processing thread, the function is called immediately (*i.e.*</span>
+<span class="sd">        synchronously).</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        function: callable</span>
+<span class="sd">            function to execute</span>
+<span class="sd">        args:</span>
+<span class="sd">            parameters of the function</span>
+<span class="sd">        kwargs:</span>
+<span class="sd">            keyword parameters of the function</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        None:</span>
+<span class="sd">            push() does not return anything.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="n">threading</span><span class="o">.</span><span class="n">currentThread</span><span class="p">()</span> <span class="ow">is</span> <span class="bp">self</span><span class="o">.</span><span class="n">_thread</span><span class="p">:</span>
+            <span class="n">function</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_condition</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_queue</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">function</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">))</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_condition</span><span class="o">.</span><span class="n">notify</span><span class="p">()</span>
+            <span class="k">finally</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_condition</span><span class="o">.</span><span class="n">release</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="SingleThreadCalls.stop"><a class="viewcode-back" href="../../api.html#soma.thread_calls.SingleThreadCalls.stop">[docs]</a>    <span class="k">def</span> <span class="nf">stop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Tells the processing thread to finish the processing of functions in the</span>
+<span class="sd">        queue and then stop all processing. This call pushes a special value on</span>
+<span class="sd">        the function list. All functions that are on the list before this value</span>
+<span class="sd">        will be processed but functions registered after the special value will be</span>
+<span class="sd">        ignored.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_condition</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_queue</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_condition</span><span class="o">.</span><span class="n">notify</span><span class="p">()</span>
+        <span class="k">finally</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_condition</span><span class="o">.</span><span class="n">release</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="SingleThreadCalls.processFunctions"><a class="viewcode-back" href="../../api.html#soma.thread_calls.SingleThreadCalls.processFunctions">[docs]</a>    <span class="k">def</span> <span class="nf">processFunctions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">blocking</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        This method extracts all functions (along with their parameters) from</span>
+<span class="sd">        the queue and execute them. It returns the number of function executed</span>
+<span class="sd">        *None* if :meth:`self.stop() &lt;stop&gt;` has been called (in that case the</span>
+<span class="sd">        processing loop must end).</span>
+
+<span class="sd">        The processing thread must continuoulsy call this method until *None*</span>
+<span class="sd">        is returned.</span>
+
+<span class="sd">        .. seealso:: :meth:`processingLoop`</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        blocking: bool</span>
+<span class="sd">            if *blocking* is *False* (the default), *processFunctions*</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        int:</span>
+<span class="sd">            * Returns 0 immediately if it cannot access the function list (for</span>
+<span class="sd">              example if it is locked by another thread that is registering a</span>
+<span class="sd">              function).</span>
+<span class="sd">            * If *blocking* is *True*, *processFunctions* waits until the</span>
+<span class="sd">              function list is available, and returns the number of function</span>
+<span class="sd">              called</span>
+<span class="sd">            * If :meth:`stop` has been called, *None* is returned</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_condition</span><span class="o">.</span><span class="n">acquire</span><span class="p">(</span><span class="n">blocking</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">actions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_queue</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_queue</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">finally</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_condition</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">for</span> <span class="n">action</span> <span class="ow">in</span> <span class="n">actions</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">action</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="kc">None</span>
+                <span class="n">function</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span> <span class="o">=</span> <span class="n">action</span>
+                <span class="n">function</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+                <span class="n">result</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">return</span> <span class="n">result</span>
+        <span class="k">return</span> <span class="mi">0</span></div>
+
+<div class="viewcode-block" id="SingleThreadCalls.processingLoop"><a class="viewcode-back" href="../../api.html#soma.thread_calls.SingleThreadCalls.processingLoop">[docs]</a>    <span class="k">def</span> <span class="nf">processingLoop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Continuously executes :meth:`processFunctions` until it returns *None*</span>
+
+<span class="sd">        .. seealso:: :meth:`processFunctions`</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">actionCount</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_condition</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">processFunctions</span><span class="p">()</span>
+        <span class="k">while</span> <span class="n">actionCount</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_condition</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+            <span class="n">actionCount</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">processFunctions</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_condition</span><span class="o">.</span><span class="n">release</span><span class="p">()</span></div></div>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Soma-base 5.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">soma.thread_calls</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2011, IFR49.org.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.5.4.
+    </div>
+  </body>
+</html>

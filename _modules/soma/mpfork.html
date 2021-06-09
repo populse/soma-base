@@ -1,0 +1,278 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>soma.mpfork &#8212; Soma-base 5.1.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css" />
+    
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Soma-base 5.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">soma.mpfork</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for soma.mpfork</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!usr/bin/env python</span>
+<span class="c1"># -*- coding: utf-8 -*-</span>
+
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">Run worker functions in separate processes.</span>
+
+<span class="sd">The use case is somewhat similar to what can be done using either :class:`queue.Queue &lt;Queue.Queue&gt;` and threads, or using :mod:`multiprocessing`. That is: run a number of independent job functions, dispatched over a number of worker threads/processes.</span>
+
+<span class="sd">The mpfork module is useful in cases the above methods cannot work:</span>
+
+<span class="sd">* threading in python is globally mainly inefficient because of the GIL.</span>
+<span class="sd">* :mod:`multiprocessing` makes heavy use of pickles to pass objects and parameters, and there are cases we are using objects which cannot be pickled, or which pickling generates heavy IO traffic (large data objects)</span>
+
+<span class="sd">The method here is based on the queue / thread schema, but uses fork() to actually execute the workers in a separate process. Only results are passed through pickles, so the worker return results must be picklable, but not the input arguments and objects.</span>
+
+<span class="sd">Use:</span>
+
+<span class="sd">* allocate a :class:`Queue &lt;Queue.Queue&gt;`</span>
+<span class="sd">* allocate a results list with the exact size of the jobs number</span>
+<span class="sd">* allocate a set of worker threads (typically one per processor or core). The function :func:`allocate_workers` can do this for you.</span>
+<span class="sd">* fill the queue with jobs, each being a tuple (job_index, function, args, kwargs, results_list)</span>
+<span class="sd">* add a number of empty jobs (None) to the queue, one per allocated worker: this will be the marker for the end of processing in each worker thread. It is necessary to explicitly add these empty jobs since an empty queue is not the signal for the end of processing: it can be re-filled at any time.</span>
+<span class="sd">* jobs run in workers</span>
+<span class="sd">* join the queue</span>
+<span class="sd">* join the worker threads</span>
+<span class="sd">* the result list gets the return data for each job</span>
+
+<span class="sd">::</span>
+
+<span class="sd">    njobs = 10</span>
+<span class="sd">    q = queue.Queue()</span>
+<span class="sd">    res = [None] * njobs</span>
+<span class="sd">    workers = allocate_workers(q, 0) # one per core</span>
+<span class="sd">    for i in range(njobs):</span>
+<span class="sd">        job = (i, sum, ((i, i), ), {}, res)</span>
+<span class="sd">        q.put(job)</span>
+
+<span class="sd">    # add as many empty jobs as the workers number to end them</span>
+<span class="sd">    for i in range(len(workers)):</span>
+<span class="sd">        q.put(None)</span>
+
+<span class="sd">    # wait for every job to complete</span>
+<span class="sd">    q.join()</span>
+<span class="sd">    # terminate all threads</span>
+<span class="sd">    for w in workers:</span>
+<span class="sd">        w.join()</span>
+
+<span class="sd">    print(&#39;result:&#39;, res)</span>
+
+<span class="sd">In case of error, the job result will be an exception with stack information: (exception type, exception instance, stack_info)</span>
+
+
+<span class="sd">Availability: Unix</span>
+<span class="sd">&#39;&#39;&#39;</span>
+
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">print_function</span>
+
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">absolute_import</span>
+<span class="kn">import</span> <span class="nn">multiprocessing</span>
+<span class="kn">import</span> <span class="nn">threading</span>
+<span class="kn">import</span> <span class="nn">queue</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">tempfile</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">from</span> <span class="nn">six.moves</span> <span class="kn">import</span> <span class="nb">range</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">cpickle</span> <span class="k">as</span> <span class="nn">pickle</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">pickle</span>
+
+<div class="viewcode-block" id="run_job"><a class="viewcode-back" href="../../api.html#soma.mpfork.run_job">[docs]</a><span class="k">def</span> <span class="nf">run_job</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39; Internal function, runs the function in a remote process.</span>
+<span class="sd">    Uses fork() to perform it.</span>
+
+<span class="sd">    Availability: Unix</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">out_file</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">mkstemp</span><span class="p">()</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="n">out_file</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">pid</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">fork</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">pid</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="c1"># parent: wait for the child</span>
+        <span class="n">pid</span><span class="p">,</span> <span class="n">status</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">waitpid</span><span class="p">(</span><span class="n">pid</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="c1"># read output file</span>
+        <span class="c1">#print(&#39;read from&#39;, os.getpid(), &#39;:&#39;, out_file[1])</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">stat</span><span class="p">(</span><span class="n">out_file</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">.</span><span class="n">st_size</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="c1"># child did not write anything</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">unlink</span><span class="p">(</span><span class="n">out_file</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+            <span class="k">raise</span> <span class="ne">OSError</span><span class="p">(</span><span class="s1">&#39;child did not output anything&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">status</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">unlink</span><span class="p">(</span><span class="n">out_file</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;subprocess error: </span><span class="si">%d</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">status</span><span class="p">)</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="n">out_file</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="s1">&#39;rb&#39;</span><span class="p">))</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">unlink</span><span class="p">(</span><span class="n">out_file</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="c1"># traceback objects cannot be pickled...</span>
+        <span class="c1">#if isinstance(result, tuple) and len(result) == 3 \</span>
+                <span class="c1">#and isinstance(result[1], Exception):</span>
+            <span class="c1">## result is an axception with call stack: reraise it</span>
+            <span class="c1">#raise result[0], result[1], result[2]</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="ne">Exception</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">result</span>
+        <span class="k">return</span> <span class="n">result</span>
+
+    <span class="c1"># child process</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1">#print(&#39;exec in&#39;, os.getpid(), &#39;:&#39;, f, args, kwargs)</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">f</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="c1">#print(&#39;OK&#39;)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="c1"># traceback objects cannot be pickled...</span>
+            <span class="c1">#result = (type(e), e, sys.exc_info()[2])</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">e</span>
+        <span class="c1">#print(&#39;write:&#39;, out_file[1], &#39;:&#39;, result)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">pickle</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="nb">open</span><span class="p">(</span><span class="n">out_file</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="s1">&#39;wb&#39;</span><span class="p">),</span> <span class="n">protocol</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;pickle failed:&#39;</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">for object:&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">result</span><span class="p">))</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="c1"># sys.exit() is not enough</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">_exit</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="worker"><a class="viewcode-back" href="../../api.html#soma.mpfork.worker">[docs]</a><span class="k">def</span> <span class="nf">worker</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39; Internal function: worker thread loop:</span>
+<span class="sd">    * pick a job in the queue q</span>
+<span class="sd">    * execute it in a remote process (using run_job())</span>
+<span class="sd">    * stopre the result in the result list</span>
+<span class="sd">    * start again with another job</span>
+
+<span class="sd">    The loop ends when a job in the queue is None.</span>
+
+<span class="sd">    .. warning::</span>
+<span class="sd">        Here we are making use of fork() (Unix only) inside a thread. Some systems do not behave wel in this situation.</span>
+<span class="sd">        See :func:`the os.fork() doc &lt;os.fork&gt;`</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="n">item</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">item</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">q</span><span class="o">.</span><span class="n">task_done</span><span class="p">()</span>
+            <span class="k">break</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1">#print(&#39;run item in&#39;, os.getpid(), &#39;:&#39;, item[:-1])</span>
+            <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+            <span class="n">i</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">argsi</span><span class="p">,</span> <span class="n">kwargsi</span><span class="p">,</span> <span class="n">res</span> <span class="o">=</span> <span class="n">item</span>
+            <span class="n">argsi</span> <span class="o">=</span> <span class="n">argsi</span> <span class="o">+</span> <span class="n">args</span>
+            <span class="n">kwargs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="n">kwargs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">kwargsi</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="n">run_job</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="o">*</span><span class="n">argsi</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+                <span class="c1">#print(&#39;result:&#39;, i, result)</span>
+                <span class="n">res</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">result</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="n">res</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">e</span><span class="p">),</span> <span class="n">e</span><span class="p">,</span> <span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">()[</span><span class="mi">2</span><span class="p">])</span>
+                <span class="nb">print</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+        <span class="k">finally</span><span class="p">:</span>
+            <span class="c1">#print(&#39;task done in&#39;, os.getpid(), &#39;:&#39;, i, f)</span>
+            <span class="n">q</span><span class="o">.</span><span class="n">task_done</span><span class="p">()</span>
+            <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="allocate_workers"><a class="viewcode-back" href="../../api.html#soma.mpfork.allocate_workers">[docs]</a><span class="k">def</span> <span class="nf">allocate_workers</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">nworker</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39; Utility finction to allocate worker threads.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    q: :class:`Queue &lt;Queue.Queue&gt;` instance</span>
+<span class="sd">        the jobs queue which will fed with jobs for processing</span>
+<span class="sd">    nworker: int</span>
+<span class="sd">        number of worker threads (jobs which will run in parallel). A positive</span>
+<span class="sd">        number (1, 2...) will be used as is, 0 means all available CPU cores</span>
+<span class="sd">        (see :func:`multiprocessing.cpu_count`), and a negative number means</span>
+<span class="sd">        all CPU cores except this given number.</span>
+<span class="sd">    args, kwargs:</span>
+<span class="sd">        additional arguments will be pased to the jobs function(s) after</span>
+<span class="sd">        individual jobs arguments: they are args common to all jobs (if any)</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    workers: list</span>
+<span class="sd">        workers list, each is a :class:`thread &lt;threading.Thread&gt;` instance</span>
+<span class="sd">        running the worker loop function. Threads are already started (ie.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">if</span> <span class="n">nworker</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">nworker</span> <span class="o">=</span> <span class="n">multiprocessing</span><span class="o">.</span><span class="n">cpu_count</span><span class="p">()</span>
+    <span class="k">elif</span> <span class="n">nworker</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">nworker</span> <span class="o">=</span> <span class="n">multiprocessing</span><span class="o">.</span><span class="n">cpu_count</span><span class="p">()</span> <span class="o">+</span> <span class="n">nworker</span>
+        <span class="k">if</span> <span class="n">nworker</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">nworker</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">workers</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nworker</span><span class="p">):</span>
+        <span class="n">w</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Thread</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="n">worker</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="p">)</span> <span class="o">+</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="o">=</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">w</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+        <span class="n">workers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">w</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">workers</span></div>
+
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Soma-base 5.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">soma.mpfork</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2011, IFR49.org.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.5.4.
+    </div>
+  </body>
+</html>

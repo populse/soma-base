@@ -1,0 +1,159 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>soma.utils.find_library &#8212; Soma-base 5.1.0 documentation</title>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css" />
+    
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">Soma-base 5.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">soma.utils.find_library</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for soma.utils.find_library</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">&#39;&#39;&#39; replacement for :func:`ctypes.util.find_library`.</span>
+<span class="sd">Provides a better version of :func:`find_library`, and allows to patch the</span>
+<span class="sd">:mod:`ctypes` module to use our version: see :func:`patch_ctypes_find_library`.</span>
+<span class="sd">&#39;&#39;&#39;</span>
+
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">absolute_import</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">ctypes.util</span>
+<span class="kn">import</span> <span class="nn">glob</span>
+
+<span class="n">ctypes_find_library</span> <span class="o">=</span> <span class="n">ctypes</span><span class="o">.</span><span class="n">util</span><span class="o">.</span><span class="n">find_library</span>
+
+<div class="viewcode-block" id="find_library"><a class="viewcode-back" href="../../../api.html#soma.utils.find_library.find_library">[docs]</a><span class="k">def</span> <span class="nf">find_library</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39; :func:`ctypes.util.find_library` is broken on linux at least: it relies</span>
+<span class="sd">    on ``ldconfig``, which only searches system paths, not user paths nor</span>
+<span class="sd">    ``LD_LIBRARY_PATH``, or alternatively uses ``gcc``, which is not always</span>
+<span class="sd">    installed nor configured.</span>
+
+<span class="sd">    Here we are looking in ``[[DY]LD_LIBRARY_]PATH`` (depending on the system)</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">def</span> <span class="nf">sorted_match</span><span class="p">(</span><span class="n">filenames</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">filenames</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="c1"># probably not the best</span>
+
+    <span class="n">exts</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;.so&#39;</span><span class="p">]</span>
+    <span class="n">patterns</span> <span class="o">=</span> <span class="p">[</span><span class="n">ext</span> <span class="o">+</span> <span class="s1">&#39;.*&#39;</span> <span class="k">for</span> <span class="n">ext</span> <span class="ow">in</span> <span class="n">exts</span><span class="p">]</span>
+    <span class="n">fname</span> <span class="o">=</span> <span class="s1">&#39;lib&#39;</span> <span class="o">+</span> <span class="n">name</span>
+    <span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">platform</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;linux&#39;</span><span class="p">):</span>
+        <span class="n">envar</span> <span class="o">=</span> <span class="s1">&#39;LD_LIBRARY_PATH&#39;</span>
+    <span class="k">elif</span> <span class="n">sys</span><span class="o">.</span><span class="n">platform</span> <span class="o">==</span> <span class="s1">&#39;darwin&#39;</span><span class="p">:</span>
+        <span class="n">envar</span> <span class="o">=</span> <span class="s1">&#39;DYLD_LIBRARY_PATH&#39;</span>
+        <span class="n">exts</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;.dylib&#39;</span><span class="p">]</span>
+        <span class="n">patterns</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;.*&#39;</span> <span class="o">+</span> <span class="n">ext</span> <span class="k">for</span> <span class="n">ext</span> <span class="ow">in</span> <span class="n">exts</span><span class="p">]</span>
+    <span class="k">elif</span> <span class="n">sys</span><span class="o">.</span><span class="n">platform</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;win&#39;</span><span class="p">):</span>
+        <span class="n">envar</span> <span class="o">=</span> <span class="s1">&#39;PATH&#39;</span>
+        <span class="n">exts</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;.dll&#39;</span><span class="p">,</span> <span class="s1">&#39;.DLL&#39;</span><span class="p">]</span>
+        <span class="n">patterns</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;.*&#39;</span> <span class="o">+</span> <span class="n">ext</span> <span class="k">for</span> <span class="n">ext</span> <span class="ow">in</span> <span class="n">exts</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># other undetermined system (bsd, othe unix...?), assume ELF</span>
+        <span class="n">envar</span> <span class="o">=</span> <span class="s1">&#39;LD_LIBRARY_PATH&#39;</span>
+    <span class="n">paths</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">envar</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">paths</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># no path: fallback to ctypes</span>
+        <span class="k">return</span> <span class="n">ctypes_find_library</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+
+    <span class="n">paths</span> <span class="o">=</span> <span class="n">paths</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">pathsep</span><span class="p">)</span>
+    <span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="n">fname</span> <span class="o">+</span> <span class="n">ext</span> <span class="k">for</span> <span class="n">ext</span> <span class="ow">in</span> <span class="n">exts</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="n">name</span> <span class="o">+</span> <span class="n">ext</span> <span class="k">for</span> <span class="n">ext</span> <span class="ow">in</span> <span class="n">exts</span><span class="p">]</span>
+    <span class="n">patterns</span> <span class="o">=</span> <span class="p">[</span><span class="n">fname</span> <span class="o">+</span> <span class="n">pattern</span> <span class="k">for</span> <span class="n">pattern</span> <span class="ow">in</span> <span class="n">patterns</span><span class="p">]</span> \
+        <span class="o">+</span> <span class="p">[</span><span class="n">name</span> <span class="o">+</span> <span class="n">pattern</span> <span class="k">for</span> <span class="n">pattern</span> <span class="ow">in</span> <span class="n">patterns</span><span class="p">]</span>
+    <span class="n">found</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">paths</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">tname</span> <span class="ow">in</span> <span class="n">names</span><span class="p">:</span>
+            <span class="n">filename</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">tname</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span>
+                <span class="n">found</span> <span class="o">=</span> <span class="n">filename</span>
+                <span class="k">break</span>
+        <span class="k">for</span> <span class="n">tname</span> <span class="ow">in</span> <span class="n">patterns</span><span class="p">:</span>
+            <span class="n">filenames</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">tname</span><span class="p">))</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">filenames</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">found</span> <span class="o">=</span> <span class="n">sorted_match</span><span class="p">(</span><span class="n">filenames</span><span class="p">)</span>
+                <span class="k">break</span>
+
+    <span class="k">if</span> <span class="n">found</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">realpath</span><span class="p">(</span><span class="n">found</span><span class="p">))</span>
+
+    <span class="c1"># not found: fallback to ctypes</span>
+    <span class="k">return</span> <span class="n">ctypes_find_library</span><span class="p">(</span><span class="n">name</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="patch_ctypes_find_library"><a class="viewcode-back" href="../../../api.html#soma.utils.find_library.patch_ctypes_find_library">[docs]</a><span class="k">def</span> <span class="nf">patch_ctypes_find_library</span><span class="p">():</span>
+    <span class="sd">&#39;&#39;&#39; replace :func:`ctypes.util.find_library` by our version</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">if</span> <span class="n">ctypes</span><span class="o">.</span><span class="n">util</span><span class="o">.</span><span class="n">find_library</span> <span class="ow">is</span> <span class="n">ctypes_find_library</span><span class="p">:</span>
+        <span class="n">ctypes</span><span class="o">.</span><span class="n">util</span><span class="o">.</span><span class="n">find_library</span> <span class="o">=</span> <span class="n">find_library</span></div>
+
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">Soma-base 5.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">soma.utils.find_library</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2011, IFR49.org.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.5.4.
+    </div>
+  </body>
+</html>

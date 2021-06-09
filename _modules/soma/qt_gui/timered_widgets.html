@@ -1,0 +1,280 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>soma.qt_gui.timered_widgets &#8212; Soma-base 5.1.0 documentation</title>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css" />
+    
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">Soma-base 5.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">soma.qt_gui.timered_widgets</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for soma.qt_gui.timered_widgets</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+
+<span class="c1">#  This software and supporting documentation are distributed by</span>
+<span class="c1">#      Institut Federatif de Recherche 49</span>
+<span class="c1">#      CEA/NeuroSpin, Batiment 145,</span>
+<span class="c1">#      91191 Gif-sur-Yvette cedex</span>
+<span class="c1">#      France</span>
+<span class="c1">#</span>
+<span class="c1"># This software is governed by the CeCILL license version 2 under</span>
+<span class="c1"># French law and abiding by the rules of distribution of free software.</span>
+<span class="c1"># You can  use, modify and/or redistribute the software under the</span>
+<span class="c1"># terms of the CeCILL license version 2 as circulated by CEA, CNRS</span>
+<span class="c1"># and INRIA at the following URL &quot;http://www.cecill.info&quot;.</span>
+<span class="c1">#</span>
+<span class="c1"># As a counterpart to the access to the source code and  rights to copy,</span>
+<span class="c1"># modify and redistribute granted by the license, users are provided only</span>
+<span class="c1"># with a limited warranty  and the software&#39;s author,  the holder of the</span>
+<span class="c1"># economic rights,  and the successive licensors  have only  limited</span>
+<span class="c1"># liability.</span>
+<span class="c1">#</span>
+<span class="c1"># In this respect, the user&#39;s attention is drawn to the risks associated</span>
+<span class="c1"># with loading,  using,  modifying and/or developing or reproducing the</span>
+<span class="c1"># software by the user in light of its specific status of free software,</span>
+<span class="c1"># that may mean  that it is complicated to manipulate,  and  that  also</span>
+<span class="c1"># therefore means  that it is reserved for developers  and  experienced</span>
+<span class="c1"># professionals having in-depth computer knowledge. Users are therefore</span>
+<span class="c1"># encouraged to load and test the software&#39;s suitability as regards their</span>
+<span class="c1"># requirements in conditions enabling the security of their systems and/or</span>
+<span class="c1"># data to be ensured and,  more generally, to use and operate it in the</span>
+<span class="c1"># same conditions as regards security.</span>
+<span class="c1">#</span>
+<span class="c1"># The fact that you are presently reading this means that you have had</span>
+<span class="c1"># knowledge of the CeCILL license version 2 and that you accept its terms.</span>
+
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">QLineEditModificationTimer and TimeredQLineEdit classes associate a</span>
+<span class="sd">QtCore.QTimer to a QtGui.QLineEdit in order to signal user</span>
+<span class="sd">modification only after an inactivity period.</span>
+
+<span class="sd">* author: Yann Cointepas</span>
+<span class="sd">* organization: NeuroSpin</span>
+<span class="sd">* license: `CeCILL B &lt;http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html&gt;`_</span>
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">absolute_import</span>
+<span class="n">__docformat__</span> <span class="o">=</span> <span class="s2">&quot;restructuredtext en&quot;</span>
+
+<span class="kn">from</span> <span class="nn">soma.qt_gui.qt_backend</span> <span class="kn">import</span> <span class="n">QtCore</span><span class="p">,</span> <span class="n">QtGui</span><span class="p">,</span> <span class="n">Qt</span>
+<span class="kn">from</span> <span class="nn">soma.qt_gui.predef_lineedit</span> <span class="kn">import</span> <span class="n">QPredefLineEdit</span>
+<span class="kn">import</span> <span class="nn">weakref</span>
+
+<span class="c1">#-------------------------------------------------------------------------</span>
+
+
+<div class="viewcode-block" id="QLineEditModificationTimer"><a class="viewcode-back" href="../../../api.html#soma.qt_gui.timered_widgets.QLineEditModificationTimer">[docs]</a><span class="k">class</span> <span class="nc">QLineEditModificationTimer</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">QObject</span><span class="p">):</span>
+
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    A QLineEditModificationTimer instance is accociated to a</span>
+<span class="sd">    QtGui.QLineEdit instance, it listens all user modification (Qt</span>
+<span class="sd">    signal &#39;textChanged( const QString &amp; )&#39;) and emits a</span>
+<span class="sd">    signal &#39;userModification()&#39; when timerInterval milliseconds passed</span>
+<span class="sd">    since the last user modification.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="c1"># Default timer interval in milliseconds</span>
+    <span class="n">defaultTimerInterval</span> <span class="o">=</span> <span class="mi">2000</span>
+    <span class="n">userModification</span> <span class="o">=</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">Signal</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qLineEdit</span><span class="p">,</span> <span class="n">timerInterval</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        .. seealso:: :class:`TimeredQLineEdit`</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        qLineEdit: (QtGui.QLineEdit instance)</span>
+<span class="sd">            widget associated with this QLineEditModificationTimer.</span>
+<span class="sd">        timerInterval: (milliseconds)</span>
+<span class="sd">            minimum inactivity period before emitting</span>
+<span class="sd">            userModification signal. Default value is</span>
+<span class="sd">            QLineEditModificationTimer.defaultTimerInterval</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="n">QtCore</span><span class="o">.</span><span class="n">QObject</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="c1"># QLineEdit&lt;qt.QLineEdit&gt; instance associated with this</span>
+        <span class="c1"># QLineEditModificationTimer</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qLineEdit</span> <span class="o">=</span> <span class="n">weakref</span><span class="o">.</span><span class="n">proxy</span><span class="p">(</span><span class="n">qLineEdit</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">timerInterval</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">timerInterval</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">defaultTimerInterval</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># minimum inactivity period before emitting C{userModification}</span>
+            <span class="c1"># signal.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">timerInterval</span> <span class="o">=</span> <span class="n">timerInterval</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__timer</span> <span class="o">=</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">QTimer</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__timer</span><span class="o">.</span><span class="n">setSingleShot</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__internalModification</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qLineEdit</span><span class="o">.</span><span class="n">textChanged</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_userModification</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qLineEdit</span><span class="o">.</span><span class="n">editingFinished</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_noMoreUserModification</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__timer</span><span class="o">.</span><span class="n">timeout</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">modificationTimeout</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qLineEdit</span><span class="o">.</span><span class="n">textChanged</span><span class="o">.</span><span class="n">disconnect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_userModification</span><span class="p">)</span>
+        <span class="c1"># emit a last signal if modifs have been done</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qLineEdit</span><span class="o">.</span><span class="n">editingFinished</span><span class="o">.</span><span class="n">disconnect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_noMoreUserModification</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__timer</span><span class="o">.</span><span class="n">timeout</span><span class="o">.</span><span class="n">disconnect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">modificationTimeout</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_userModification</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">__internalModification</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__timer</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">timerInterval</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">modificationTimeout</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">userModification</span><span class="o">.</span><span class="n">emit</span><span class="p">()</span>  <span class="c1"># self.qLineEdit.text())</span>
+
+    <span class="k">def</span> <span class="nf">_noMoreUserModification</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__timer</span><span class="o">.</span><span class="n">isActive</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__timer</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">userModification</span><span class="o">.</span><span class="n">emit</span><span class="p">()</span>  <span class="c1"># self.qLineEdit.text())</span>
+
+<div class="viewcode-block" id="QLineEditModificationTimer.stopInternalModification"><a class="viewcode-back" href="../../../api.html#soma.qt_gui.timered_widgets.QLineEditModificationTimer.stopInternalModification">[docs]</a>    <span class="k">def</span> <span class="nf">stopInternalModification</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Stop emitting ``userModification`` signal when associated</span>
+<span class="sd">        :pyqt:`QLineEdit &lt;QtGui/QLineEdit.html&gt;` is modified.</span>
+
+<span class="sd">        .. seealso:: :meth:`startInternalModification`</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__internalModification</span> <span class="o">=</span> <span class="kc">False</span></div>
+
+<div class="viewcode-block" id="QLineEditModificationTimer.startInternalModification"><a class="viewcode-back" href="../../../api.html#soma.qt_gui.timered_widgets.QLineEditModificationTimer.startInternalModification">[docs]</a>    <span class="k">def</span> <span class="nf">startInternalModification</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Restart emitting C{userModification} signal when associated</span>
+<span class="sd">        :pyqt:`QLineEdit &lt;QtGui/QLineEdit.html&gt;` is modified.</span>
+
+<span class="sd">        .. seealso:: :meth:`stopInternalModification`</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__internalModification</span> <span class="o">=</span> <span class="kc">True</span></div>
+
+<div class="viewcode-block" id="QLineEditModificationTimer.stop"><a class="viewcode-back" href="../../../api.html#soma.qt_gui.timered_widgets.QLineEditModificationTimer.stop">[docs]</a>    <span class="k">def</span> <span class="nf">stop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Stop the timer if it is active.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__timer</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="QLineEditModificationTimer.isActive"><a class="viewcode-back" href="../../../api.html#soma.qt_gui.timered_widgets.QLineEditModificationTimer.isActive">[docs]</a>    <span class="k">def</span> <span class="nf">isActive</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Returns True if the timer is active, or False otherwise.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__timer</span><span class="o">.</span><span class="n">isActive</span><span class="p">()</span></div></div>
+
+
+<span class="c1">#-------------------------------------------------------------------------</span>
+<div class="viewcode-block" id="TimeredQLineEdit"><a class="viewcode-back" href="../../../api.html#soma.qt_gui.timered_widgets.TimeredQLineEdit">[docs]</a><span class="k">class</span> <span class="nc">TimeredQLineEdit</span><span class="p">(</span><span class="n">QPredefLineEdit</span><span class="p">):</span>
+
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Create a QLineEdit instance that has an private attribute</span>
+<span class="sd">    containing a QLineEditModificationTimer associated to self. Whenever</span>
+<span class="sd">    the internal QLineEditModificationTimer emits a userModification</span>
+<span class="sd">    signal, this signal is also emited by the TimeredQLineEdit instance.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="n">userModification</span> <span class="o">=</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">Signal</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        All non keyword parameters of the constructor are passed to</span>
+<span class="sd">        :pyqt:`QLineEdit &lt;QtGui/QLineEdit.html&gt;` constructor. An optional</span>
+<span class="sd">        *timerInterval* keyword parameter can be given, it is passed to</span>
+<span class="sd">        :class:`QLineEditModificationTimer` constructor. At the time this class</span>
+<span class="sd">        was created, :pyqt:`QLineEdit &lt;QtGui/QLineEdit.html&gt;` constructor did</span>
+<span class="sd">        not accept keyword parameters.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">timerInterval</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;timerInterval&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">kwargs</span><span class="p">:</span>
+            <span class="nb">super</span><span class="p">(</span><span class="n">TimeredQLineEdit</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">super</span><span class="p">(</span><span class="n">TimeredQLineEdit</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__timer</span> <span class="o">=</span> <span class="n">QLineEditModificationTimer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                                                  <span class="n">timerInterval</span><span class="o">=</span><span class="n">timerInterval</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__timer</span><span class="o">.</span><span class="n">userModification</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">userModification</span><span class="p">)</span>
+
+<div class="viewcode-block" id="TimeredQLineEdit.stopInternalModification"><a class="viewcode-back" href="../../../api.html#soma.qt_gui.timered_widgets.TimeredQLineEdit.stopInternalModification">[docs]</a>    <span class="k">def</span> <span class="nf">stopInternalModification</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        .. seealso:: :meth:`QLineEditModificationTimer.stopInternalModification`</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__timer</span><span class="o">.</span><span class="n">stopInternalModification</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="TimeredQLineEdit.startInternalModification"><a class="viewcode-back" href="../../../api.html#soma.qt_gui.timered_widgets.TimeredQLineEdit.startInternalModification">[docs]</a>    <span class="k">def</span> <span class="nf">startInternalModification</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        .. seealso:: :meth:`QLineEditModificationTimer.startInternalModification`</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__timer</span><span class="o">.</span><span class="n">startInternalModification</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="TimeredQLineEdit.close"><a class="viewcode-back" href="../../../api.html#soma.qt_gui.timered_widgets.TimeredQLineEdit.close">[docs]</a>    <span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__timer</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">TimeredQLineEdit</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
+
+    <span class="k">def</span> <span class="nf">set_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">TimeredQLineEdit</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">set_value</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">userModification</span><span class="o">.</span><span class="n">emit</span><span class="p">()</span></div>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">Soma-base 5.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">soma.qt_gui.timered_widgets</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2011, IFR49.org.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.5.4.
+    </div>
+  </body>
+</html>

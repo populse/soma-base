@@ -1,0 +1,495 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>soma.qt_gui.io &#8212; Soma-base 5.1.0 documentation</title>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css" />
+    
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">Soma-base 5.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">soma.qt_gui.io</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for soma.qt_gui.io</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="c1">#  This software and supporting documentation are distributed by</span>
+<span class="c1">#      Institut Federatif de Recherche 49</span>
+<span class="c1">#      CEA/NeuroSpin, Batiment 145,</span>
+<span class="c1">#      91191 Gif-sur-Yvette cedex</span>
+<span class="c1">#      France</span>
+<span class="c1">#</span>
+<span class="c1"># This software is governed by the CeCILL license version 2 under</span>
+<span class="c1"># French law and abiding by the rules of distribution of free software.</span>
+<span class="c1"># You can  use, modify and/or redistribute the software under the</span>
+<span class="c1"># terms of the CeCILL license version 2 as circulated by CEA, CNRS</span>
+<span class="c1"># and INRIA at the following URL &quot;http://www.cecill.info&quot;.</span>
+<span class="c1">#</span>
+<span class="c1"># As a counterpart to the access to the source code and  rights to copy,</span>
+<span class="c1"># modify and redistribute granted by the license, users are provided only</span>
+<span class="c1"># with a limited warranty  and the software&#39;s author,  the holder of the</span>
+<span class="c1"># economic rights,  and the successive licensors  have only  limited</span>
+<span class="c1"># liability.</span>
+<span class="c1">#</span>
+<span class="c1"># In this respect, the user&#39;s attention is drawn to the risks associated</span>
+<span class="c1"># with loading,  using,  modifying and/or developing or reproducing the</span>
+<span class="c1"># software by the user in light of its specific status of free software,</span>
+<span class="c1"># that may mean  that it is complicated to manipulate,  and  that  also</span>
+<span class="c1"># therefore means  that it is reserved for developers  and  experienced</span>
+<span class="c1"># professionals having in-depth computer knowledge. Users are therefore</span>
+<span class="c1"># encouraged to load and test the software&#39;s suitability as regards their</span>
+<span class="c1"># requirements in conditions enabling the security of their systems and/or</span>
+<span class="c1"># data to be ensured and,  more generally, to use and operate it in the</span>
+<span class="c1"># same conditions as regards security.</span>
+<span class="c1">#</span>
+<span class="c1"># The fact that you are presently reading this means that you have had</span>
+<span class="c1"># knowledge of the CeCILL license version 2 and that you accept its terms.</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Utils for socket communication</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">print_function</span>
+
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">absolute_import</span>
+<span class="kn">import</span> <span class="nn">threading</span>
+<span class="kn">import</span> <span class="nn">socket</span>
+<span class="kn">import</span> <span class="nn">errno</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+
+<span class="kn">import</span> <span class="nn">six</span>
+<span class="kn">import</span> <span class="nn">six.moves.queue</span> <span class="k">as</span> <span class="nn">queue</span>
+
+<span class="kn">from</span> <span class="nn">soma.qt_gui.qt_backend.QtCore</span> <span class="kn">import</span> <span class="n">QObject</span><span class="p">,</span> <span class="n">QSocketNotifier</span>
+
+
+<div class="viewcode-block" id="Socket"><a class="viewcode-back" href="../../../api.html#soma.qt_gui.io.Socket">[docs]</a><span class="k">class</span> <span class="nc">Socket</span><span class="p">(</span><span class="n">QObject</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Opens a connection to a socket server and provides methods to read from and write to socket streams.</span>
+<span class="sd">    To handle specific message format, redefine readMessage method. By default it reads a line on the socket.</span>
+<span class="sd">    To process messages, redefine processMessage method. By default it prints the message to standard output.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    dest: string</span>
+<span class="sd">        socket server machine</span>
+<span class="sd">    port: int</span>
+<span class="sd">        port that the socket server listens</span>
+<span class="sd">    socket: socket.socket</span>
+<span class="sd">        python socket object</span>
+<span class="sd">    socketnotifier: qt.QSocketNotifier</span>
+<span class="sd">        the notifier sends a signal when there&#39;s something to read on the</span>
+<span class="sd">        socket.</span>
+<span class="sd">    readLock: threading.Lock</span>
+<span class="sd">        lock to prevent threads from reading at the same time on the socket</span>
+<span class="sd">    writeLock: threading.Lock</span>
+<span class="sd">        lock to prevent threads from writing at the same time on the socket</span>
+<span class="sd">    lock: threading.RLock</span>
+<span class="sd">        lock to prevent concurrent access on object data because it can be used</span>
+<span class="sd">        by multiple threads. At least principal thread and reading messages</span>
+<span class="sd">        thread when it not possible to use a QSocketNotifier.</span>
+<span class="sd">    initialized: bool</span>
+<span class="sd">        indicates if the connection is correctly opened</span>
+<span class="sd">    notifyenabled: bool</span>
+<span class="sd">        indicates if message received on the socket must be processed.</span>
+
+<span class="sd">    loopRetry: int</span>
+<span class="sd">        class attribute: max number of connection tries</span>
+<span class="sd">    defaultPort: int</span>
+<span class="sd">        class attribute: default port for socket server</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">loopRetry</span> <span class="o">=</span> <span class="mi">60</span>      <span class="c1"># Retry to connect 60 times (1 minute)</span>
+    <span class="n">defaultPort</span> <span class="o">=</span> <span class="mi">50007</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        host: string</span>
+<span class="sd">            socket server machine (localhost if it is current machine)</span>
+<span class="sd">        port: int</span>
+<span class="sd">            port that the socket server listens</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Socket</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dest</span> <span class="o">=</span> <span class="n">host</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">port</span> <span class="o">=</span> <span class="n">port</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">socket</span> <span class="o">=</span> <span class="n">socket</span><span class="o">.</span><span class="n">socket</span><span class="p">(</span><span class="n">socket</span><span class="o">.</span><span class="n">AF_INET</span><span class="p">,</span> <span class="n">socket</span><span class="o">.</span><span class="n">SOCK_STREAM</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">socketnotifier</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="c1"># We are in a multi threaded environnement, so only one thread can</span>
+        <span class="c1"># use the socket at the same time</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">readLock</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Lock</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">writeLock</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Lock</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lock</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">RLock</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">initialized</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">notifyenabled</span> <span class="o">=</span> <span class="mi">1</span>
+
+<div class="viewcode-block" id="Socket.initialize"><a class="viewcode-back" href="../../../api.html#soma.qt_gui.io.Socket.initialize">[docs]</a>    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Connects the socket to the server and sets the frame to read data from the socket.</span>
+<span class="sd">        Two methods for reading:</span>
+
+<span class="sd">        - reading thread</span>
+<span class="sd">        - QSocketNotifier (not possible on windows platform)</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        port: int</span>
+<span class="sd">            port that the socket server listens</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">initialized</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="k">if</span> <span class="n">port</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">port</span> <span class="o">=</span> <span class="n">port</span>
+        <span class="c1"># We have to retry connecting because it can take time for the socket</span>
+        <span class="c1"># server to start</span>
+        <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">while</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">Socket</span><span class="o">.</span><span class="n">loopRetry</span><span class="p">:</span>
+            <span class="c1"># using socket.htons to convert port number is useless</span>
+            <span class="c1"># because Python take care of this</span>
+            <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">socket</span><span class="o">.</span><span class="n">connect_ex</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">dest</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">port</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">res</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="c1"># retry to connect</span>
+                <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">socket</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">socket</span> <span class="o">=</span> <span class="n">socket</span><span class="o">.</span><span class="n">socket</span><span class="p">(</span><span class="n">socket</span><span class="o">.</span><span class="n">AF_INET</span><span class="p">,</span>
+                                            <span class="n">socket</span><span class="o">.</span><span class="n">SOCK_STREAM</span><span class="p">)</span>
+                <span class="n">i</span> <span class="o">=</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># Connection successful, exit from the while loop</span>
+                <span class="k">break</span>
+
+        <span class="k">if</span> <span class="n">findPlatform</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;windows&#39;</span><span class="p">:</span>
+            <span class="c1"># on windows, QSocketNotifier seems to make the socket fail</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">usethread</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">usethread</span> <span class="o">=</span> <span class="mi">1</span>  <span class="c1"># 0 # QSocketNotifier seems to create problems when it is not used in qt main thread (application freeze)</span>
+        <span class="c1"># sets the frame to read from the socket</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">usethread</span><span class="p">:</span>
+            <span class="c1"># reading thread</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">readthread</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Thread</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">readForever</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">readthread</span><span class="o">.</span><span class="n">setDaemon</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>  <span class="c1"># don&#39;t block when exiting program</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_messages</span> <span class="o">=</span> <span class="n">queue</span><span class="o">.</span><span class="n">Queue</span><span class="p">(</span><span class="mi">500</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">socket</span><span class="o">.</span><span class="n">setblocking</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">initialized</span> <span class="o">=</span> <span class="mi">1</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">readthread</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># QSocketNotifier that signals that data is enable for reading</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">socketnotifier</span> <span class="o">=</span> <span class="n">QSocketNotifier</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">socket</span><span class="o">.</span><span class="n">fileno</span><span class="p">(),</span> <span class="n">QSocketNotifier</span><span class="o">.</span><span class="n">Read</span><span class="p">)</span>  <span class="c1"># , self )</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">socketnotifier</span><span class="o">.</span><span class="n">activated</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">messageHandler</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">socketnotifier</span><span class="o">.</span><span class="n">setEnabled</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">initialized</span> <span class="o">=</span> <span class="mi">1</span></div>
+
+<div class="viewcode-block" id="Socket.messageHandler"><a class="viewcode-back" href="../../../api.html#soma.qt_gui.io.Socket.messageHandler">[docs]</a>    <span class="k">def</span> <span class="nf">messageHandler</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        This method is called when a message is received on the socket.</span>
+<span class="sd">        Gets and processes the message.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">excep</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getMessage</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">excep</span> <span class="o">=</span> <span class="n">e</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">processMessage</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="n">excep</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Socket.getMessage"><a class="viewcode-back" href="../../../api.html#soma.qt_gui.io.Socket.getMessage">[docs]</a>    <span class="k">def</span> <span class="nf">getMessage</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">30</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Called by message handler to gets the last received message.</span>
+<span class="sd">        If socket communication is managed by a QSocketNotifier, the message is not yet read, so this method read it.</span>
+<span class="sd">        If reading is in another process, the message is already read and it is in messages queue.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">initialized</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">usethread</span><span class="p">:</span>
+        <span class="c1"># block until a message arrives in queue</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">lock</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">msg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_messages</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">timeout</span><span class="p">)</span>
+                <span class="k">except</span> <span class="n">queue</span><span class="o">.</span><span class="n">Empty</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">IOError</span><span class="p">(</span>
+                        <span class="n">errno</span><span class="o">.</span><span class="n">ETIMEDOUT</span><span class="p">,</span>  <span class="s1">&#39;socket communication timed out&#39;</span><span class="p">)</span>
+            <span class="k">finally</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">lock</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">readMessage</span><span class="p">(</span><span class="n">timeout</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">IOError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">errno</span> <span class="o">==</span> <span class="n">errno</span><span class="o">.</span><span class="n">EPIPE</span><span class="p">:</span>
+                    <span class="c1"># The socket has been closed</span>
+                    <span class="c1"># Return to avoid infinite loop</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+                <span class="k">raise</span>
+        <span class="k">return</span> <span class="n">msg</span></div>
+
+<div class="viewcode-block" id="Socket.processMessage"><a class="viewcode-back" href="../../../api.html#soma.qt_gui.io.Socket.processMessage">[docs]</a>    <span class="k">def</span> <span class="nf">processMessage</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">,</span> <span class="n">excep</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Processes a message received on the socket.</span>
+<span class="sd">        This method only print the message. To do some specific treatment, subclass Socket and redefine this method.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;message received :&quot;</span><span class="p">,</span> <span class="n">msg</span><span class="p">,</span> <span class="n">excep</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Socket.send"><a class="viewcode-back" href="../../../api.html#soma.qt_gui.io.Socket.send">[docs]</a>    <span class="k">def</span> <span class="nf">send</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Sends data to the connected socket.</span>
+<span class="sd">        @type msg: string</span>
+<span class="sd">        @param msg: the message to send.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">initialized</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="n">totalsent</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">msglen</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+        <span class="c1"># Send the message atomically (send is not thread-safe)</span>
+        <span class="n">close</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">writeLock</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
+        <span class="c1"># sendall() only appeared in python 2.1.12</span>
+        <span class="c1"># self.socket.sendall( msg )</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="s1">&#39;encode&#39;</span><span class="p">):</span>
+            <span class="c1"># encode to bytes (python3)</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="n">msg</span><span class="o">.</span><span class="n">encode</span><span class="p">()</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">while</span> <span class="n">n</span> <span class="o">&lt;</span> <span class="n">msglen</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">n</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">socket</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">msg</span><span class="p">[</span><span class="n">n</span><span class="p">:])</span>
+                <span class="k">except</span> <span class="n">socket</span><span class="o">.</span><span class="n">error</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">errno</span> <span class="o">==</span> <span class="n">errno</span><span class="o">.</span><span class="n">EWOULDBLOCK</span><span class="p">:</span>
+                        <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.02</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">close</span> <span class="o">=</span> <span class="kc">True</span>
+                        <span class="k">break</span>
+        <span class="k">finally</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">writeLock</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">close</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="Socket.readForever"><a class="viewcode-back" href="../../../api.html#soma.qt_gui.io.Socket.readForever">[docs]</a>    <span class="k">def</span> <span class="nf">readForever</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Reading loop to handle reading messages from the socket.</span>
+<span class="sd">        Used only if QSocketNotifier cannot be used.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">while</span> <span class="bp">self</span><span class="o">.</span><span class="n">initialized</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">readMessage</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">lock</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_messages</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+                <span class="k">finally</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">lock</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">notifyenabled</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">messageHandler</span><span class="p">()</span>
+            <span class="k">except</span> <span class="ne">IOError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">errno</span> <span class="o">!=</span> <span class="n">errno</span><span class="o">.</span><span class="n">ETIMEDOUT</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+                    <span class="c1"># raise</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">initialized</span><span class="p">:</span>
+                <span class="k">break</span></div>
+
+<div class="viewcode-block" id="Socket.readLine"><a class="viewcode-back" href="../../../api.html#soma.qt_gui.io.Socket.readLine">[docs]</a>    <span class="k">def</span> <span class="nf">readLine</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timeout</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Reads a line of data from the socket (a string followed by ``&#39;\\n&#39;``).</span>
+<span class="sd">        self.readLock must be acquired before calling this method.</span>
+<span class="sd">        If data cannot be read before timeout (in seconds), an IOError exception is raised.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        timeout: int</span>
+<span class="sd">            max time to wait before reading the message.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="sa">b</span><span class="s1">&#39;&#39;</span>
+        <span class="n">char</span> <span class="o">=</span> <span class="sa">b</span><span class="s1">&#39;&#39;</span>
+        <span class="n">waitedTime</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="c1"># Receive the message atomically</span>
+        <span class="k">while</span> <span class="n">char</span> <span class="o">!=</span> <span class="sa">b</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">char</span> <span class="o">!=</span> <span class="sa">b</span><span class="s1">&#39;&#39;</span><span class="p">:</span>
+                <span class="n">msg</span> <span class="o">+=</span> <span class="n">char</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">char</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">socket</span><span class="o">.</span><span class="n">recv</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+                <span class="n">waitedTime</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="k">if</span> <span class="n">char</span> <span class="o">==</span> <span class="sa">b</span><span class="s1">&#39;</span><span class="se">\0</span><span class="s1">&#39;</span> <span class="ow">or</span> <span class="n">char</span> <span class="o">==</span> <span class="sa">b</span><span class="s1">&#39;&#39;</span><span class="p">:</span>
+                    <span class="n">e</span> <span class="o">=</span> <span class="ne">IOError</span><span class="p">(</span>
+                        <span class="n">errno</span><span class="o">.</span><span class="n">EPIPE</span><span class="p">,</span> <span class="s1">&#39;socket communication interrupted&#39;</span><span class="p">)</span>
+                    <span class="k">raise</span> <span class="n">e</span>
+            <span class="k">except</span> <span class="n">socket</span><span class="o">.</span><span class="n">error</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">errno</span> <span class="o">==</span> <span class="n">errno</span><span class="o">.</span><span class="n">EWOULDBLOCK</span><span class="p">:</span>
+                    <span class="n">char</span> <span class="o">=</span> <span class="sa">b</span><span class="s1">&#39;&#39;</span>
+                    <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.02</span><span class="p">)</span>
+                    <span class="n">waitedTime</span> <span class="o">+=</span> <span class="mf">0.02</span>
+                    <span class="k">if</span> <span class="n">waitedTime</span> <span class="o">&gt;=</span> <span class="n">timeout</span><span class="p">:</span>
+                        <span class="k">raise</span> <span class="ne">IOError</span><span class="p">(</span>
+                            <span class="n">errno</span><span class="o">.</span><span class="n">ETIMEDOUT</span><span class="p">,</span> <span class="s1">&#39;socket communication timed out&#39;</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">IOError</span><span class="p">(</span>
+                        <span class="n">errno</span><span class="o">.</span><span class="n">EPIPE</span><span class="p">,</span> <span class="s1">&#39;socket communication interrupted&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">six</span><span class="o">.</span><span class="n">ensure_str</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Socket.readMessage"><a class="viewcode-back" href="../../../api.html#soma.qt_gui.io.Socket.readMessage">[docs]</a>    <span class="k">def</span> <span class="nf">readMessage</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">30</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Reads a message from the socket. This method only gets the readlock and reads a line.</span>
+<span class="sd">        To read specific message formats, subclass Socket and redefine this method.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        timeout: int</span>
+<span class="sd">            max time to wait before reading the message.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        message: string</span>
+<span class="sd">            the message received from the socket</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">readLock</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">readLine</span><span class="p">(</span><span class="n">timeout</span><span class="p">)</span>
+        <span class="k">finally</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">readLock</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">msg</span></div>
+
+<div class="viewcode-block" id="Socket.findFreePort"><a class="viewcode-back" href="../../../api.html#soma.qt_gui.io.Socket.findFreePort">[docs]</a>    <span class="k">def</span> <span class="nf">findFreePort</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Try to find the first unused port.</span>
+<span class="sd">        @rtype: int</span>
+<span class="sd">        @return: numero of a free port</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">port</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">startport</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">port</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">startport</span> <span class="o">=</span> <span class="n">Socket</span><span class="o">.</span><span class="n">defaultPort</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">tmpsocket</span> <span class="o">=</span> <span class="n">socket</span><span class="o">.</span><span class="n">socket</span><span class="p">(</span><span class="n">socket</span><span class="o">.</span><span class="n">AF_INET</span><span class="p">,</span>
+                                  <span class="n">socket</span><span class="o">.</span><span class="n">SOCK_STREAM</span><span class="p">)</span>
+        <span class="k">while</span> <span class="n">res</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">res</span> <span class="o">=</span> <span class="n">tmpsocket</span><span class="o">.</span><span class="n">connect_ex</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">dest</span><span class="p">,</span> <span class="n">startport</span><span class="p">))</span>
+            <span class="n">tmpsocket</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">res</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">startport</span>
+            <span class="n">tmpsocket</span> <span class="o">=</span> <span class="n">socket</span><span class="o">.</span><span class="n">socket</span><span class="p">(</span><span class="n">socket</span><span class="o">.</span><span class="n">AF_INET</span><span class="p">,</span>
+                                      <span class="n">socket</span><span class="o">.</span><span class="n">SOCK_STREAM</span><span class="p">)</span>
+            <span class="n">startport</span> <span class="o">+=</span> <span class="mi">1</span></div>
+
+<div class="viewcode-block" id="Socket.disableHandler"><a class="viewcode-back" href="../../../api.html#soma.qt_gui.io.Socket.disableHandler">[docs]</a>    <span class="k">def</span> <span class="nf">disableHandler</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Disables reading from the socket.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">notifyenabled</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">socketnotifier</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">socketnotifier</span><span class="o">.</span><span class="n">setEnabled</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Socket.enableHandler"><a class="viewcode-back" href="../../../api.html#soma.qt_gui.io.Socket.enableHandler">[docs]</a>    <span class="k">def</span> <span class="nf">enableHandler</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Enables reading from the socket.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">notifyenabled</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">socketnotifier</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">socketnotifier</span><span class="o">.</span><span class="n">setEnabled</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="fm">__del__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Closes the connection when the object is deleted</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+<div class="viewcode-block" id="Socket.close"><a class="viewcode-back" href="../../../api.html#soma.qt_gui.io.Socket.close">[docs]</a>    <span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Closes the connection.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">initialized</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">initialized</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">disableHandler</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">socketnotifier</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">socket</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">usethread</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">readthread</span> <span class="o">!=</span> <span class="n">threading</span><span class="o">.</span><span class="n">currentThread</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">readthread</span><span class="o">.</span><span class="n">join</span><span class="p">()</span></div></div>
+
+
+<div class="viewcode-block" id="findPlatform"><a class="viewcode-back" href="../../../api.html#soma.qt_gui.io.findPlatform">[docs]</a><span class="k">def</span> <span class="nf">findPlatform</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Identify platform, possible return values are :</span>
+<span class="sd">      - &#39;windows&#39;: Windows</span>
+<span class="sd">      - &#39;linux&#39;: Linux</span>
+<span class="sd">      - &#39;sunos&#39;: SunOS (Solaris)</span>
+<span class="sd">      - &#39;darwin&#39;: Darwin (MacOS X)</span>
+<span class="sd">      - None: unknown</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">platform</span><span class="p">[:</span><span class="mi">3</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;win&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s1">&#39;windows&#39;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">platform</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;linux&#39;</span><span class="p">)</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s1">&#39;linux&#39;</span>
+        <span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">platform</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;sunos&#39;</span><span class="p">)</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s1">&#39;sunos&#39;</span>
+        <span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">platform</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;darwin&#39;</span><span class="p">)</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s1">&#39;darwin&#39;</span>
+        <span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">platform</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;irix&#39;</span><span class="p">)</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s1">&#39;irix&#39;</span>
+        <span class="k">return</span> <span class="n">sys</span><span class="o">.</span><span class="n">platform</span></div>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">Soma-base 5.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">soma.qt_gui.io</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2011, IFR49.org.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.5.4.
+    </div>
+  </body>
+</html>

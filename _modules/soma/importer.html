@@ -1,0 +1,449 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>soma.importer &#8212; Soma-base 5.1.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css" />
+    
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Soma-base 5.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">soma.importer</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for soma.importer</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+
+<span class="c1">#  This software and supporting documentation are distributed by</span>
+<span class="c1">#      Institut Federatif de Recherche 49</span>
+<span class="c1">#      CEA/NeuroSpin, Batiment 145,</span>
+<span class="c1">#      91191 Gif-sur-Yvette cedex</span>
+<span class="c1">#      France</span>
+<span class="c1">#</span>
+<span class="c1"># This software is governed by the CeCILL-B license under</span>
+<span class="c1"># French law and abiding by the rules of distribution of free software.</span>
+<span class="c1"># You can  use, modify and/or redistribute the software under the</span>
+<span class="c1"># terms of the CeCILL-B license as circulated by CEA, CNRS</span>
+<span class="c1"># and INRIA at the following URL &quot;http://www.cecill.info&quot;.</span>
+<span class="c1">#</span>
+<span class="c1"># As a counterpart to the access to the source code and  rights to copy,</span>
+<span class="c1"># modify and redistribute granted by the license, users are provided only</span>
+<span class="c1"># with a limited warranty  and the software&#39;s author,  the holder of the</span>
+<span class="c1"># economic rights,  and the successive licensors  have only  limited</span>
+<span class="c1"># liability.</span>
+<span class="c1">#</span>
+<span class="c1"># In this respect, the user&#39;s attention is drawn to the risks associated</span>
+<span class="c1"># with loading,  using,  modifying and/or developing or reproducing the</span>
+<span class="c1"># software by the user in light of its specific status of free software,</span>
+<span class="c1"># that may mean  that it is complicated to manipulate,  and  that  also</span>
+<span class="c1"># therefore means  that it is reserved for developers  and  experienced</span>
+<span class="c1"># professionals having in-depth computer knowledge. Users are therefore</span>
+<span class="c1"># encouraged to load and test the software&#39;s suitability as regards their</span>
+<span class="c1"># requirements in conditions enabling the security of their systems and/or</span>
+<span class="c1"># data to be ensured and,  more generally, to use and operate it in the</span>
+<span class="c1"># same conditions as regards security.</span>
+<span class="c1">#</span>
+<span class="c1"># The fact that you are presently reading this means that you have had</span>
+<span class="c1"># knowledge of the CeCILL-B license and that you accept its terms.</span>
+
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">Utility classes and functions for Python import and sip namespace renaming.</span>
+
+<span class="sd">* author: Yann Cointepas</span>
+<span class="sd">* organization: NeuroSpin</span>
+<span class="sd">* license: `CeCILL B &lt;http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html&gt;`_</span>
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">absolute_import</span>
+<span class="n">__docformat__</span> <span class="o">=</span> <span class="s2">&quot;restructuredtext en&quot;</span>
+
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">imp</span>
+<span class="kn">import</span> <span class="nn">types</span>
+<span class="kn">import</span> <span class="nn">six</span>
+<span class="kn">import</span> <span class="nn">importlib</span>
+
+<span class="kn">from</span> <span class="nn">soma.functiontools</span> <span class="kn">import</span> <span class="n">partial</span>
+<span class="kn">from</span> <span class="nn">soma.singleton</span> <span class="kn">import</span> <span class="n">Singleton</span>
+
+
+<span class="c1"># list of namespace objects that should not be patched to avoid a side effect</span>
+<span class="c1"># in sip imported namespaces: we must not access their attributes during</span>
+<span class="c1"># imports.</span>
+<span class="n">__namespaces__</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;soma&#39;</span><span class="p">,</span> <span class="s1">&#39;aims&#39;</span><span class="p">,</span> <span class="s1">&#39;carto&#39;</span><span class="p">,</span> <span class="s1">&#39;anatomist&#39;</span><span class="p">]</span>
+
+
+<div class="viewcode-block" id="ExtendedImporter"><a class="viewcode-back" href="../../api.html#soma.importer.ExtendedImporter">[docs]</a><span class="k">class</span> <span class="nc">ExtendedImporter</span><span class="p">(</span><span class="n">Singleton</span><span class="p">):</span>
+
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">      ExtendedImporter is used to import external modules in a module managing rules that allow ro rename and delete or do anything else on the imported package. As imported packages could modify each others, all the registered rules are applied after each import using this ExtendedImporter.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">extendedModules</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+
+<div class="viewcode-block" id="ExtendedImporter.importInModule"><a class="viewcode-back" href="../../api.html#soma.importer.ExtendedImporter.importInModule">[docs]</a>    <span class="k">def</span> <span class="nf">importInModule</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">moduleName</span><span class="p">,</span> <span class="nb">globals</span><span class="p">,</span> <span class="nb">locals</span><span class="p">,</span> <span class="n">importedModuleName</span><span class="p">,</span>
+                       <span class="n">namespacesList</span><span class="o">=</span><span class="p">[],</span> <span class="n">handlersList</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        This method is used to import a module applying rules (rename rule, delete rule, ...) .</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        moduleName: string</span>
+<span class="sd">            name of the module to import into (destination, not where to find</span>
+<span class="sd">            it).</span>
+<span class="sd">        globals: dict</span>
+<span class="sd">            globals dictionary of the module to import into.</span>
+<span class="sd">        locals: dict</span>
+<span class="sd">            locals dictionary of the module to import into.</span>
+<span class="sd">        importedModuleName: string</span>
+<span class="sd">            name of the imported module. Normally relative to the current</span>
+<span class="sd">            calling module package.</span>
+<span class="sd">        namespacesList: list</span>
+<span class="sd">            a list of rules concerned namespaces for the imported module.</span>
+<span class="sd">        handlersList: list</span>
+<span class="sd">            a list of handlers to apply during the import of the module.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">handlersList</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="c1"># Add default handler</span>
+            <span class="n">handlersList</span> <span class="o">=</span> <span class="p">[</span><span class="n">GenericHandlers</span><span class="o">.</span><span class="n">moveChildren</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">moduleName</span><span class="p">:</span>
+            <span class="n">moduleName</span> <span class="o">=</span> <span class="nb">locals</span><span class="p">[</span><span class="s1">&#39;__name__&#39;</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="n">moduleName</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">):</span>
+            <span class="n">moduleName</span> <span class="o">=</span> <span class="nb">locals</span><span class="p">[</span><span class="s1">&#39;__name__&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">moduleName</span>
+
+        <span class="n">package</span> <span class="o">=</span> <span class="nb">locals</span><span class="p">[</span><span class="s1">&#39;__package__&#39;</span><span class="p">]</span> <span class="ow">or</span> <span class="nb">locals</span><span class="p">[</span><span class="s1">&#39;__name__&#39;</span><span class="p">]</span>
+
+        <span class="c1"># Import the module</span>
+        <span class="c1"># Note : Pyro overloads __import__ method and usual keyword &#39;level&#39; of</span>
+        <span class="c1"># __builtin__.__import__ is not supported</span>
+        <span class="n">importedModule</span> <span class="o">=</span> <span class="n">importlib</span><span class="o">.</span><span class="n">import_module</span><span class="p">(</span><span class="s1">&#39;.&#39;</span> <span class="o">+</span> <span class="n">importedModuleName</span><span class="p">,</span>
+                                                 <span class="n">package</span><span class="p">)</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">[</span><span class="n">importedModuleName</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span> <span class="o">=</span> <span class="n">importedModule</span>
+
+        <span class="c1"># Add the extended module to the list if not already exists</span>
+        <span class="k">if</span> <span class="n">moduleName</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">extendedModules</span><span class="p">:</span>
+            <span class="n">extendedModule</span> <span class="o">=</span> <span class="n">ExtendedModule</span><span class="p">(</span><span class="n">moduleName</span><span class="p">,</span> <span class="nb">globals</span><span class="p">,</span> <span class="nb">locals</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">extendedModules</span><span class="p">[</span><span class="n">moduleName</span><span class="p">]</span> <span class="o">=</span> <span class="n">extendedModule</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">extendedModule</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">extendedModules</span><span class="p">[</span><span class="n">moduleName</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">namespacesList</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">extendedModule</span><span class="o">.</span><span class="n">addHandlerRules</span><span class="p">(</span>
+                <span class="n">importedModule</span><span class="p">,</span> <span class="n">handlersList</span><span class="p">,</span> <span class="n">importedModuleName</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">namespace</span> <span class="ow">in</span> <span class="n">namespacesList</span><span class="p">:</span>
+                <span class="n">extendedModule</span><span class="o">.</span><span class="n">addHandlerRules</span><span class="p">(</span>
+                    <span class="n">importedModule</span><span class="p">,</span> <span class="n">handlersList</span><span class="p">,</span> <span class="n">namespace</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">applyRules</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="ExtendedImporter.applyRules"><a class="viewcode-back" href="../../api.html#soma.importer.ExtendedImporter.applyRules">[docs]</a>    <span class="k">def</span> <span class="nf">applyRules</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        This method apply rules for each extended module.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">for</span> <span class="n">extendedModule</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">extendedModules</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="n">extendedModule</span><span class="o">.</span><span class="n">applyRules</span><span class="p">()</span></div></div>
+
+
+<div class="viewcode-block" id="ExtendedModule"><a class="viewcode-back" href="../../api.html#soma.importer.ExtendedModule">[docs]</a><span class="k">class</span> <span class="nc">ExtendedModule</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Register a series of rules to apply during the import process of the</span>
+<span class="sd">    extended module. An extended module is able to refer to other modules and</span>
+<span class="sd">    to apply rules to these other modules. The extended module manages the</span>
+<span class="sd">    globals and locals variables declared for the module.</span>
+
+<span class="sd">    Each rule contains the module to which it refers, and the handlers to call</span>
+<span class="sd">    for the rule to apply. The calling order is the registering order.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">moduleName</span><span class="p">,</span> <span class="nb">globals</span><span class="p">,</span> <span class="nb">locals</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rules</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="vm">__name__</span> <span class="o">=</span> <span class="n">moduleName</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">globals</span> <span class="o">=</span> <span class="nb">globals</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">locals</span> <span class="o">=</span> <span class="nb">locals</span>
+
+<div class="viewcode-block" id="ExtendedModule.addHandlerRules"><a class="viewcode-back" href="../../api.html#soma.importer.ExtendedModule.addHandlerRules">[docs]</a>    <span class="k">def</span> <span class="nf">addHandlerRules</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">,</span> <span class="n">handlersList</span><span class="o">=</span><span class="p">[],</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        This method is used to add handler rules (renaming rule, deleting rule, ...) .</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        module: module</span>
+<span class="sd">            module object to apply rules to.</span>
+<span class="sd">        handlersList: list</span>
+<span class="sd">            a list of handlers to the module.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">for</span> <span class="n">handler</span> <span class="ow">in</span> <span class="n">handlersList</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">addPartialRules</span><span class="p">(</span>
+                <span class="n">module</span><span class="p">,</span> <span class="p">[</span><span class="n">partial</span><span class="p">(</span><span class="n">handler</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)])</span></div>
+
+<div class="viewcode-block" id="ExtendedModule.addPartialRules"><a class="viewcode-back" href="../../api.html#soma.importer.ExtendedModule.addPartialRules">[docs]</a>    <span class="k">def</span> <span class="nf">addPartialRules</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">,</span> <span class="n">partialsList</span><span class="o">=</span><span class="p">[]):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        This method is used to add handler rules (renaming rule, deleting rule, ...) .</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        module: module</span>
+<span class="sd">            module object to apply rules to.</span>
+<span class="sd">        partialsList: list</span>
+<span class="sd">            a list of :func:`functools.partial` objects that will be called</span>
+<span class="sd">            during the import of the module.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="n">module</span>
+
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">rules</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">rules</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+
+        <span class="k">for</span> <span class="n">handler</span> <span class="ow">in</span> <span class="n">partialsList</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">handler</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">rules</span><span class="p">[</span><span class="n">key</span><span class="p">]:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">rules</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">handler</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ExtendedModule.applyRules"><a class="viewcode-back" href="../../api.html#soma.importer.ExtendedModule.applyRules">[docs]</a>    <span class="k">def</span> <span class="nf">applyRules</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Apply the :func:`functools.partial` handler rules (renaming rule, deleting rule, ...) for the :class:`ExtendedModule`.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">for</span> <span class="n">referedModule</span><span class="p">,</span> <span class="n">partialsList</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">rules</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">handler</span> <span class="ow">in</span> <span class="n">partialsList</span><span class="p">:</span>
+                <span class="c1"># Call the handlers list for the found object</span>
+                <span class="n">handler</span><span class="o">.</span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">referedModule</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="GenericHandlers"><a class="viewcode-back" href="../../api.html#soma.importer.GenericHandlers">[docs]</a><span class="k">class</span> <span class="nc">GenericHandlers</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Static generic handlers used as import rules.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+<div class="viewcode-block" id="GenericHandlers.moveChildren"><a class="viewcode-back" href="../../api.html#soma.importer.GenericHandlers.moveChildren">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">moveChildren</span><span class="p">(</span><span class="n">namespace</span><span class="p">,</span> <span class="n">extendedModule</span><span class="p">,</span> <span class="n">referedModule</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        This static method is used to move child objects of a refered module to the extended module.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        namespace: string</span>
+<span class="sd">            namespace of the referedModule to get objects to move from.</span>
+<span class="sd">        extendedModule: ExtendedModule</span>
+<span class="sd">            :class:`ExtendedModule` object into which move objects.</span>
+<span class="sd">        referedModule: module</span>
+<span class="sd">            refered module object to get objects to move from.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="c1"># during this whole function we should avoid tu use</span>
+        <span class="c1"># getattr(mobject, something) (directly or indirectly) because it</span>
+        <span class="c1"># breaks things in sip imports later.</span>
+
+        <span class="c1"># Get module names</span>
+        <span class="n">newName</span> <span class="o">=</span> <span class="n">extendedModule</span><span class="o">.</span><span class="vm">__name__</span>
+
+        <span class="c1"># Get extended module locals declaration</span>
+        <span class="nb">locals</span> <span class="o">=</span> <span class="n">extendedModule</span><span class="o">.</span><span class="n">locals</span>
+
+        <span class="c1"># Get the old object in module</span>
+        <span class="n">mobject</span> <span class="o">=</span> <span class="n">ExtendedImporterHelper</span><span class="o">.</span><span class="n">getModuleObject</span><span class="p">(</span>
+            <span class="n">referedModule</span><span class="p">,</span> <span class="n">namespace</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">mobject</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+
+            <span class="c1"># Changes child objects locals declaration</span>
+            <span class="k">for</span> <span class="n">childName</span> \
+                    <span class="ow">in</span> <span class="nb">object</span><span class="o">.</span><span class="fm">__getattribute__</span><span class="p">(</span><span class="n">mobject</span><span class="p">,</span> <span class="s1">&#39;__dict__&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                <span class="c1"># in sip &gt;= 4.8, obj.__dict__[key] and getattr(obj, key)</span>
+                <span class="c1"># do *not* return the same thing for functions !</span>
+                <span class="n">childObject</span> <span class="o">=</span> <span class="nb">object</span><span class="o">.</span><span class="fm">__getattribute__</span><span class="p">(</span><span class="n">mobject</span><span class="p">,</span> <span class="n">childName</span><span class="p">)</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">childName</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;__&quot;</span><span class="p">):</span>
+
+                    <span class="nb">locals</span><span class="p">[</span><span class="n">childName</span><span class="p">]</span> <span class="o">=</span> <span class="n">childObject</span>
+
+            <span class="c1"># Changes child objects module, recursively and avoiding loops</span>
+            <span class="n">stack</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">done</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="p">(</span><span class="n">childName</span><span class="p">,</span> <span class="n">childObject</span><span class="p">)</span> <span class="ow">in</span> <span class="n">six</span><span class="o">.</span><span class="n">iteritems</span><span class="p">(</span><span class="nb">locals</span><span class="p">):</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">childName</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;__&quot;</span><span class="p">):</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="n">mod</span> <span class="o">=</span> <span class="nb">object</span><span class="o">.</span><span class="fm">__getattribute__</span><span class="p">(</span><span class="n">childObject</span><span class="p">,</span>
+                                                      <span class="s1">&#39;__module__&#39;</span><span class="p">)</span>
+                        <span class="k">if</span> <span class="n">mod</span> <span class="o">==</span> <span class="n">referedModule</span><span class="o">.</span><span class="vm">__name__</span><span class="p">:</span>
+                            <span class="n">stack</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">childObject</span><span class="p">)</span>
+                    <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+                        <span class="k">pass</span>
+
+            <span class="c1"># set new module on objects</span>
+
+            <span class="k">while</span> <span class="n">stack</span><span class="p">:</span>
+                <span class="n">childObject</span> <span class="o">=</span> <span class="n">stack</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+                <span class="n">done</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">childObject</span><span class="p">)</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">name</span> <span class="o">=</span> <span class="nb">object</span><span class="o">.</span><span class="fm">__getattribute__</span><span class="p">(</span><span class="n">childObject</span><span class="p">,</span> <span class="s1">&#39;__name__&#39;</span><span class="p">)</span>
+                    <span class="n">mod</span> <span class="o">=</span> <span class="nb">object</span><span class="o">.</span><span class="fm">__getattribute__</span><span class="p">(</span><span class="n">childObject</span><span class="p">,</span> <span class="s1">&#39;__module__&#39;</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="c1"># skip namespace objects</span>
+                    <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">__namespaces__</span><span class="p">:</span>
+                        <span class="n">childObject</span><span class="o">.</span><span class="vm">__module__</span> <span class="o">=</span> <span class="n">newName</span>
+                <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                    <span class="k">pass</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">d</span> <span class="o">=</span> <span class="nb">object</span><span class="o">.</span><span class="fm">__getattribute__</span><span class="p">(</span><span class="n">childObject</span><span class="p">,</span> <span class="s1">&#39;__dict__&#39;</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">d</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="n">y</span> <span class="o">=</span> <span class="nb">object</span><span class="o">.</span><span class="fm">__getattribute__</span><span class="p">(</span><span class="n">childObject</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+                        <span class="k">if</span> <span class="ow">not</span> <span class="n">x</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span> <span class="s1">&#39;__&#39;</span> <span class="p">)</span> \
+                                <span class="ow">and</span> <span class="n">y</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">stack</span> <span class="ow">and</span> <span class="n">y</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">done</span><span class="p">:</span>
+                            <span class="n">stack</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+                    <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+                        <span class="k">pass</span></div>
+
+    <span class="c1"># Declare a function to delete non generics Reader/Writer objects</span>
+<div class="viewcode-block" id="GenericHandlers.removeChildren"><a class="viewcode-back" href="../../api.html#soma.importer.GenericHandlers.removeChildren">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">removeChildren</span><span class="p">(</span><span class="n">namespace</span><span class="p">,</span> <span class="n">prefixes</span><span class="p">,</span> <span class="n">extendedModule</span><span class="p">,</span> <span class="n">referedModule</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        This static method is used to remove children from the extended module.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        namespace: string</span>
+<span class="sd">            namespace of the referedModule.</span>
+<span class="sd">        prefixes: list</span>
+<span class="sd">            list of prefixes of objects to remove.</span>
+<span class="sd">        extendedModule: ExtendedModule</span>
+<span class="sd">            :class:`ExtendedModule` object to remove objects from.</span>
+<span class="sd">        referedModule: module</span>
+<span class="sd">            refered module object.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="nb">locals</span> <span class="o">=</span> <span class="n">extendedModule</span><span class="o">.</span><span class="n">locals</span>
+
+        <span class="c1"># Remove Reader and Writer classes because a generic class</span>
+        <span class="c1"># to manage it exists</span>
+        <span class="n">to_remove</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="nb">locals</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">key</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;__&#39;</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">prefix</span> <span class="ow">in</span> <span class="n">prefixes</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">key</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">prefix</span><span class="p">):</span>
+                        <span class="n">to_remove</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">to_remove</span><span class="p">:</span>
+            <span class="k">del</span> <span class="nb">locals</span><span class="p">[</span><span class="n">key</span><span class="p">]</span></div></div>
+
+
+<div class="viewcode-block" id="ExtendedImporterHelper"><a class="viewcode-back" href="../../api.html#soma.importer.ExtendedImporterHelper">[docs]</a><span class="k">class</span> <span class="nc">ExtendedImporterHelper</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Static methods declared to help extended import process.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+<div class="viewcode-block" id="ExtendedImporterHelper.getModuleObject"><a class="viewcode-back" href="../../api.html#soma.importer.ExtendedImporterHelper.getModuleObject">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">getModuleObject</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        This static method is used to get an object contained in the namespace of a module.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        name: string</span>
+<span class="sd">            complete name including namespace of the object to get.</span>
+<span class="sd">        module: module</span>
+<span class="sd">            module object to get objects from.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        object:</span>
+<span class="sd">            Object found in the module or None if no object was found.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="c1"># Split the name of the object</span>
+        <span class="c1"># but keep the 1st element unsplit like the module name</span>
+        <span class="c1"># if needed.</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">module</span>
+
+        <span class="n">names</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">names</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="ow">and</span> <span class="n">module</span><span class="o">.</span><span class="vm">__name__</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">names</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+            <span class="n">names</span> <span class="o">=</span> <span class="n">names</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+        <span class="n">obj</span> <span class="o">=</span> <span class="n">module</span>
+        <span class="k">while</span> <span class="n">names</span><span class="p">:</span>
+            <span class="n">mname</span> <span class="o">=</span> <span class="n">names</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">mname</span><span class="p">):</span>
+                <span class="k">return</span> <span class="kc">None</span>
+            <span class="n">obj</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">mname</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">obj</span></div></div>
+
+
+<div class="viewcode-block" id="execfile"><a class="viewcode-back" href="../../api.html#soma.importer.execfile">[docs]</a><span class="k">def</span> <span class="nf">execfile</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="nb">globals</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="nb">locals</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39; Replacement for python2 execfile()</span>
+<span class="sd">    six.exec_() needs an open file, hence this wrapper for convenience.</span>
+<span class="sd">    Files are open with UTF-8 encoding on python3.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">fopts</span> <span class="o">=</span> <span class="p">{}</span> <span class="k">if</span> <span class="n">six</span><span class="o">.</span><span class="n">PY2</span> <span class="k">else</span> <span class="p">{</span><span class="s1">&#39;encoding&#39;</span><span class="p">:</span> <span class="s1">&#39;utf-8&#39;</span><span class="p">}</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="o">**</span><span class="n">fopts</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">six</span><span class="o">.</span><span class="n">exec_</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="nb">globals</span><span class="p">,</span> <span class="nb">locals</span><span class="p">)</span></div>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Soma-base 5.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">soma.importer</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2011, IFR49.org.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.5.4.
+    </div>
+  </body>
+</html>

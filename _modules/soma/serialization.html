@@ -1,0 +1,212 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>soma.serialization &#8212; Soma-base 5.1.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css" />
+    
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Soma-base 5.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">soma.serialization</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for soma.serialization</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">absolute_import</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">six</span>
+
+
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">Framework to serialize/deserialize Python objects in JSON. The main</span>
+<span class="sd">feature of this framework is that deserialization of a JSON value requires</span>
+<span class="sd">no other information than the JSON itself. It is not necessary to know the</span>
+<span class="sd">class of the object to deserialize. This imposes that the serialization</span>
+<span class="sd">contains a reference to a factory that is responsible to build the Python</span>
+<span class="sd">object given its JSON.</span>
+<span class="sd">&#39;&#39;&#39;</span>
+
+<div class="viewcode-block" id="JSONSerializable"><a class="viewcode-back" href="../../api.html#soma.serialization.JSONSerializable">[docs]</a><span class="k">class</span> <span class="nc">JSONSerializable</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Instances of classes deriving from `JSONSerializable` can be serialized</span>
+<span class="sd">    in a JSON compatible object with :meth:`to_json` method. This JSON object</span>
+<span class="sd">    contains a reference to a factory as well as the full state of the </span>
+<span class="sd">    instance. Calling the factory with the state of the instance makes it</span>
+<span class="sd">    possible to recreate the instance (this is what function :func:`from_json`</span>
+<span class="sd">    is doing). A typical usage of this serialization system is to store the</span>
+<span class="sd">    JSON serialization of an instance in a configuration file (or database)</span>
+<span class="sd">    and latter (possibly in another Python instance) recreate the same</span>
+<span class="sd">    instance. This is an alternative to pickle allowing to use a standard</span>
+<span class="sd">    representation format (JSON) and to have full control on instances</span>
+<span class="sd">    creation.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+<div class="viewcode-block" id="JSONSerializable.to_json"><a class="viewcode-back" href="../../api.html#soma.serialization.JSONSerializable.to_json">[docs]</a>    <span class="k">def</span> <span class="nf">to_json</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Return a JSON serialization of self. The returned object can be given</span>
+<span class="sd">        to :func:`from_json` to create another instance that is eqivalent to</span>
+<span class="sd">        self.</span>
+<span class="sd">        Here, equivalent means that all attributes values are the same and the</span>
+<span class="sd">        methods called with the same parameters give the same results.</span>
+
+<span class="sd">        See :func:`from_json` to have insight of what is a JSON serialization</span>
+<span class="sd">        object.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></div></div>
+
+<div class="viewcode-block" id="to_json"><a class="viewcode-back" href="../../api.html#soma.serialization.to_json">[docs]</a><span class="k">def</span> <span class="nf">to_json</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Return a JSON serialization of an object.</span>
+<span class="sd">    Standard types (None, bool, int, float, str, etc.) are using</span>
+<span class="sd">    json.dumps whereas other type of object must define a to_json</span>
+<span class="sd">    method returning the serialization.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">serializer</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="nb">object</span><span class="p">,</span> <span class="s1">&#39;to_json&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">serializer</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">object</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Cannot serialize in JSON object of type </span><span class="si">{0}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="nb">object</span><span class="p">)))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">serializer</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="from_json"><a class="viewcode-back" href="../../api.html#soma.serialization.from_json">[docs]</a><span class="k">def</span> <span class="nf">from_json</span><span class="p">(</span><span class="n">json_serialization</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Takes a JSON serialization object (typically created by a</span>
+<span class="sd">    :meth:`JSONSerializable.to_json` method) and create and return the</span>
+<span class="sd">    corresponding instance.</span>
+<span class="sd">    </span>
+<span class="sd">    A JSON serialization object can have one of the following structures:</span>
+<span class="sd">    - A simple string containing a factory reference</span>
+<span class="sd">    - A list with one, two or three of the following items:</span>
+
+<span class="sd">        - factory: a mandatory item containing a reference to a factory</span>
+<span class="sd">          (see :func:`find_factory`)</span>
+<span class="sd">        - args: an optional item containing a list of parameters values</span>
+<span class="sd">          for the factory</span>
+<span class="sd">        - kwargs: an optional item containing a dictionary of parameters</span>
+<span class="sd">          for the factory</span>
+<span class="sd">    </span>
+<span class="sd">    A reference to a factory identifies a :class:`callable` (e.g a function or</span>
+<span class="sd">    a class) in a Python module. It is a string containing the module name</span>
+<span class="sd">    and the callable name separated by a dot. For instance </span>
+<span class="sd">    ``&#39;catidb.data_models.catidb_3_4&#39;`` would identify the *catidb_3_4*</span>
+<span class="sd">    callable in the *catidb.data_models* module.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">if</span> <span class="n">json_serialization</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">json_serialization</span><span class="p">,</span> <span class="n">six</span><span class="o">.</span><span class="n">string_types</span><span class="p">):</span>
+        <span class="n">callable</span> <span class="o">=</span> <span class="n">find_factory</span><span class="p">(</span><span class="n">json_serialization</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">callable</span><span class="p">()</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">json_serialization</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">json_serialization</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="n">callable</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span> <span class="o">=</span> <span class="n">json_serialization</span>
+            <span class="n">callable</span> <span class="o">=</span> <span class="n">find_factory</span><span class="p">(</span><span class="n">callable</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">callable</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">json_serialization</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="n">callable</span><span class="p">,</span> <span class="n">args_or_kwargs</span> <span class="o">=</span> <span class="n">json_serialization</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">args_or_kwargs</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+                <span class="n">callable</span> <span class="o">=</span> <span class="n">find_factory</span><span class="p">(</span><span class="n">callable</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">callable</span><span class="p">(</span><span class="o">*</span><span class="n">args_or_kwargs</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">args_or_kwargs</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+                <span class="n">callable</span> <span class="o">=</span> <span class="n">find_factory</span><span class="p">(</span><span class="n">callable</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">callable</span><span class="p">(</span><span class="o">**</span><span class="n">args_or_kwargs</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">json_serialization</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">callable</span> <span class="o">=</span> <span class="n">find_factory</span><span class="p">(</span><span class="n">json_serialization</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="k">return</span> <span class="n">callable</span><span class="p">()</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Object is not a valid JSON serialization: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="nb">repr</span><span class="p">(</span><span class="n">json_serialization</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="find_factory"><a class="viewcode-back" href="../../api.html#soma.serialization.find_factory">[docs]</a><span class="k">def</span> <span class="nf">find_factory</span><span class="p">(</span><span class="n">reference</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Finds a factory callable given its reference. The reference is simply</span>
+<span class="sd">    a string containing a module name and the name of fatory in that module</span>
+<span class="sd">    separated by a dot. For instance ``&#39;my_packages.my_module.my_factory&#39;``</span>
+<span class="sd">    would refer to the item *my_factory* in the module</span>
+<span class="sd">    ``my_packages.my_module``.</span>
+<span class="sd">    This funcion simply loads the module and returns the module attribute with</span>
+<span class="sd">    the factory name.</span>
+<span class="sd">    </span>
+<span class="sd">    :class:`exceptions.ValueError` is raised if the factory cannot be found.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">split</span> <span class="o">=</span> <span class="n">reference</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">split</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1"> is not a valid reference to a factory&#39;</span> <span class="o">%</span> <span class="n">reference</span><span class="p">)</span>
+    <span class="n">module_name</span><span class="p">,</span> <span class="n">item_name</span> <span class="o">=</span> <span class="n">split</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="nb">__import__</span><span class="p">(</span><span class="n">module_name</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{0}</span><span class="s1"> is not a valid reference to a factory: </span><span class="si">{1}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">reference</span><span class="p">,</span> <span class="n">e</span><span class="p">))</span>
+    <span class="n">module</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">[</span><span class="n">module_name</span><span class="p">]</span>
+    <span class="n">factory</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">item_name</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">factory</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{0}</span><span class="s1"> is not a valid reference to a factory: module </span><span class="si">{1}</span><span class="s1"> has no attribute </span><span class="si">{2}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">reference</span><span class="p">,</span> <span class="n">module_name</span><span class="p">,</span> <span class="n">item_name</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">factory</span></div>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Soma-base 5.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">soma.serialization</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2011, IFR49.org.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.5.4.
+    </div>
+  </body>
+</html>

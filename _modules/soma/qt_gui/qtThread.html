@@ -1,0 +1,398 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>soma.qt_gui.qtThread &#8212; Soma-base 5.1.0 documentation</title>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css" />
+    
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">Soma-base 5.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">soma.qt_gui.qtThread</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for soma.qt_gui.qtThread</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="c1">#  This software and supporting documentation are distributed by</span>
+<span class="c1">#      Institut Federatif de Recherche 49</span>
+<span class="c1">#      CEA/NeuroSpin, Batiment 145,</span>
+<span class="c1">#      91191 Gif-sur-Yvette cedex</span>
+<span class="c1">#      France</span>
+<span class="c1">#</span>
+<span class="c1"># This software is governed by the CeCILL license version 2 under</span>
+<span class="c1"># French law and abiding by the rules of distribution of free software.</span>
+<span class="c1"># You can  use, modify and/or redistribute the software under the</span>
+<span class="c1"># terms of the CeCILL license version 2 as circulated by CEA, CNRS</span>
+<span class="c1"># and INRIA at the following URL &quot;http://www.cecill.info&quot;.</span>
+<span class="c1">#</span>
+<span class="c1"># As a counterpart to the access to the source code and  rights to copy,</span>
+<span class="c1"># modify and redistribute granted by the license, users are provided only</span>
+<span class="c1"># with a limited warranty  and the software&#39;s author,  the holder of the</span>
+<span class="c1"># economic rights,  and the successive licensors  have only  limited</span>
+<span class="c1"># liability.</span>
+<span class="c1">#</span>
+<span class="c1"># In this respect, the user&#39;s attention is drawn to the risks associated</span>
+<span class="c1"># with loading,  using,  modifying and/or developing or reproducing the</span>
+<span class="c1"># software by the user in light of its specific status of free software,</span>
+<span class="c1"># that may mean  that it is complicated to manipulate,  and  that  also</span>
+<span class="c1"># therefore means  that it is reserved for developers  and  experienced</span>
+<span class="c1"># professionals having in-depth computer knowledge. Users are therefore</span>
+<span class="c1"># encouraged to load and test the software&#39;s suitability as regards their</span>
+<span class="c1"># requirements in conditions enabling the security of their systems and/or</span>
+<span class="c1"># data to be ensured and,  more generally, to use and operate it in the</span>
+<span class="c1"># same conditions as regards security.</span>
+<span class="c1">#</span>
+<span class="c1"># The fact that you are presently reading this means that you have had</span>
+<span class="c1"># knowledge of the CeCILL license version 2 and that you accept its terms.</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">This module enables to make a function to be executed in qt thread (main thread).</span>
+<span class="sd">It is useful when you want to call qt functions from another thread.</span>
+<span class="sd">It enables to do thread safe calls because all tasks sent are executed in the same thread (qt main thread).</span>
+
+<span class="sd">* author: Dominique Geffroy</span>
+<span class="sd">* organization: NeuroSpin</span>
+<span class="sd">* license: `CeCILL B &lt;http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html&gt;`_</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">print_function</span>
+
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">absolute_import</span>
+<span class="n">__docformat__</span> <span class="o">=</span> <span class="s2">&quot;restructuredtext en&quot;</span>
+
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">threading</span>
+<span class="kn">import</span> <span class="nn">six</span>
+<span class="kn">from</span> <span class="nn">soma.qt_gui.qt_backend.QtCore</span> <span class="kn">import</span> <span class="n">QObject</span><span class="p">,</span> <span class="n">QTimer</span><span class="p">,</span> <span class="n">QEvent</span><span class="p">,</span> <span class="n">QCoreApplication</span>
+<span class="kn">from</span> <span class="nn">soma</span> <span class="kn">import</span> <span class="n">singleton</span>
+
+
+<div class="viewcode-block" id="FakeQtThreadCall"><a class="viewcode-back" href="../../../api.html#soma.qt_gui.qtThread.FakeQtThreadCall">[docs]</a><span class="k">class</span> <span class="nc">FakeQtThreadCall</span><span class="p">(</span><span class="n">QObject</span><span class="p">):</span>
+
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Fake QtThreadCall that behave as if always used from main thread.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">def</span> <span class="nf">isInMainThread</span><span class="p">():</span>
+        <span class="k">return</span> <span class="kc">True</span>
+    <span class="n">isInMainThread</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">isInMainThread</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">push</span><span class="p">(</span><span class="n">function</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">kwargs</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">kwargs</span><span class="p">:</span>
+            <span class="n">function</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">function</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="n">push</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">push</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">call</span><span class="p">(</span><span class="n">function</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">kwargs</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">kwargs</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">function</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">function</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="n">call</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">call</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="QtThreadCall"><a class="viewcode-back" href="../../../api.html#soma.qt_gui.qtThread.QtThreadCall">[docs]</a><span class="k">class</span> <span class="nc">QtThreadCall</span><span class="p">(</span><span class="n">singleton</span><span class="o">.</span><span class="n">Singleton</span><span class="p">,</span> <span class="n">QObject</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    This object enables to send tasks to be executed by qt thread (main thread).</span>
+<span class="sd">    This object must be initialized in qt thread.</span>
+<span class="sd">    It starts a QTimer and periodically execute tasks in its actions list.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    lock: RLock</span>
+<span class="sd">        lock to prevent concurrent access to actions list</span>
+<span class="sd">    actions: list</span>
+<span class="sd">        tasks to execute</span>
+<span class="sd">    mainThread: Thread</span>
+<span class="sd">        current thread at object initialisation</span>
+<span class="sd">    timer: QTimer</span>
+<span class="sd">        timer to wake this object periodically</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__singleton_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># QObject.__init__( self, None )</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">QtThreadCall</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__singleton_init__</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lock</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">RLock</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">actions</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="c1"># look for the main thread</span>
+        <span class="n">mainthreadfound</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">for</span> <span class="n">thread</span> <span class="ow">in</span> <span class="n">threading</span><span class="o">.</span><span class="n">enumerate</span><span class="p">():</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">thread</span><span class="p">,</span> <span class="n">threading</span><span class="o">.</span><span class="n">_MainThread</span><span class="p">):</span>
+                <span class="n">mainthreadfound</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">mainThread</span> <span class="o">=</span> <span class="n">thread</span>
+                <span class="k">break</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">mainthreadfound</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Warning: main thread not found&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mainThread</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">currentThread</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_postEvent</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">class</span> <span class="nc">QtThreadCallEvent</span><span class="p">(</span><span class="n">QEvent</span><span class="p">):</span>
+
+            <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qthreadcall</span><span class="p">):</span>
+                <span class="n">QEvent</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">QEvent</span><span class="o">.</span><span class="n">Type</span><span class="p">(</span><span class="n">QEvent</span><span class="o">.</span><span class="n">User</span> <span class="o">+</span> <span class="mi">24</span><span class="p">))</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">qthreadcall</span> <span class="o">=</span> <span class="n">qthreadcall</span>
+        <span class="n">QCoreApplication</span><span class="o">.</span><span class="n">instance</span><span class="p">()</span><span class="o">.</span><span class="n">postEvent</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                                              <span class="n">QtThreadCallEvent</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
+
+<div class="viewcode-block" id="QtThreadCall.event"><a class="viewcode-back" href="../../../api.html#soma.qt_gui.qtThread.QtThreadCall.event">[docs]</a>    <span class="k">def</span> <span class="nf">event</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">e</span><span class="p">):</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">type</span><span class="p">()</span> <span class="o">==</span> <span class="n">QEvent</span><span class="o">.</span><span class="n">User</span> <span class="o">+</span> <span class="mi">24</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">doAction</span><span class="p">()</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="n">QObject</span><span class="o">.</span><span class="n">event</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="QtThreadCall.push"><a class="viewcode-back" href="../../../api.html#soma.qt_gui.qtThread.QtThreadCall.push">[docs]</a>    <span class="k">def</span> <span class="nf">push</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">function</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Add a function call to the actions list. the call is executed immediatly if current thread is main thread. Otherwise it will be executed some time in the main thread (asynchronously to the current thread). The function return value is ignored and will be lost.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        function: function</span>
+<span class="sd">            the function to call in main thread.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">isInMainThread</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">kwargs</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">function</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">function</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">lock</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">actions</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">function</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">))</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_postEvent</span><span class="p">()</span>
+            <span class="k">finally</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">lock</span><span class="o">.</span><span class="n">release</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="QtThreadCall.call"><a class="viewcode-back" href="../../../api.html#soma.qt_gui.qtThread.QtThreadCall.call">[docs]</a>    <span class="k">def</span> <span class="nf">call</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">function</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Send the function call to be executed in the qt main thread and wait for the result. The result will be returned to the calling thread.</span>
+
+<span class="sd">        .. warning::</span>
+
+<span class="sd">            If returned objects are thread-depenendent (typically, Qt widgets),</span>
+<span class="sd">            they must be destroyed within the thread which created them, namely</span>
+<span class="sd">            the main thread. The :class:`MainThreadLife` object wrapper may be</span>
+<span class="sd">            helpful for this.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        function: function</span>
+<span class="sd">            the function to call in main thread.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        function call result</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">isInMainThread</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">kwargs</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">function</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">function</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">semaphore</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Semaphore</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">lock</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">actions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_callAndWakeUp</span><span class="p">,</span> <span class="p">(</span><span class="n">semaphore</span><span class="p">,</span> <span class="n">function</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">),</span> <span class="p">{}))</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_postEvent</span><span class="p">()</span>
+            <span class="k">finally</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">lock</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
+            <span class="n">semaphore</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
+                              <span class="c1"># block until semaphore is released in</span>
+                              <span class="c1"># _callAndWakeUp method</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">semaphore</span><span class="o">.</span><span class="n">_mainThreadActionResult</span>
+            <span class="n">exception</span> <span class="o">=</span> <span class="n">semaphore</span><span class="o">.</span><span class="n">_mainThreadActionException</span>
+            <span class="k">if</span> <span class="n">exception</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">six</span><span class="o">.</span><span class="n">reraise</span><span class="p">(</span><span class="o">*</span><span class="n">exception</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">result</span></div>
+
+    <span class="k">def</span> <span class="nf">_callAndWakeUp</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">semaphore</span><span class="p">,</span> <span class="n">function</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Call the function, set the result in semaphore attributes and release the semaphore.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        semaphore: threading.Semaphore</span>
+<span class="sd">            thread which has added this task is blocked on this semaphore. function call&#39;s result will be kept in this semaphore attributes.</span>
+<span class="sd">        function: function</span>
+<span class="sd">            the function to call in main thread.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">semaphore</span><span class="o">.</span><span class="n">_mainThreadActionResult</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">semaphore</span><span class="o">.</span><span class="n">_mainThreadActionException</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">kwargs</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">semaphore</span><span class="o">.</span><span class="n">_mainThreadActionResult</span> <span class="o">=</span> <span class="n">function</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">semaphore</span><span class="o">.</span><span class="n">_mainThreadActionResult</span> <span class="o">=</span> <span class="n">function</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>  <span class="c1"># noqa: E722</span>
+            <span class="n">semaphore</span><span class="o">.</span><span class="n">_mainThreadActionException</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">()</span>
+        <span class="n">semaphore</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
+                          <span class="c1"># release the semaphore to unblock the thread which</span>
+                          <span class="c1"># waits for the function call&#39;s result</span>
+
+<div class="viewcode-block" id="QtThreadCall.isInMainThread"><a class="viewcode-back" href="../../../api.html#soma.qt_gui.qtThread.QtThreadCall.isInMainThread">[docs]</a>    <span class="k">def</span> <span class="nf">isInMainThread</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        boolean: True if the current thread is the main thread</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># return threading.currentThread().getName() == &#39;MainThread&#39;</span>
+        <span class="k">return</span> <span class="n">threading</span><span class="o">.</span><span class="n">currentThread</span><span class="p">()</span> <span class="ow">is</span> <span class="bp">self</span><span class="o">.</span><span class="n">mainThread</span></div>
+
+<div class="viewcode-block" id="QtThreadCall.doAction"><a class="viewcode-back" href="../../../api.html#soma.qt_gui.qtThread.QtThreadCall.doAction">[docs]</a>    <span class="k">def</span> <span class="nf">doAction</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        This method is called each time the timer timeout.</span>
+<span class="sd">        It executes all functions in actions list.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lock</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">actions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">actions</span>
+            <span class="c1"># print(&quot;actions to do&quot;, self.actions)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">actions</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">finally</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">lock</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
+        <span class="k">for</span> <span class="p">(</span><span class="n">function</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">)</span> <span class="ow">in</span> <span class="n">actions</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">kwargs</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">function</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">function</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="k">except</span><span class="p">:</span>  <span class="c1"># noqa: E722</span>
+                <span class="c1"># Should call a customizable function here</span>
+                <span class="k">raise</span></div></div>
+
+
+<div class="viewcode-block" id="MainThreadLife"><a class="viewcode-back" href="../../../api.html#soma.qt_gui.qtThread.MainThreadLife">[docs]</a><span class="k">class</span> <span class="nc">MainThreadLife</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;This wrapper class ensures the contained object is deleted in the main</span>
+<span class="sd">    thread, and not in the current non-GUI thread. The principle is the</span>
+<span class="sd">    following:</span>
+
+<span class="sd">    * acquire a lock</span>
+<span class="sd">    * pass the object to something in the main thread</span>
+<span class="sd">    * the main thread waits on the lock while holding a reference on the object</span>
+<span class="sd">    * we delete the object in the calling thread</span>
+<span class="sd">    * the lock is releasd from the calling thread</span>
+<span class="sd">    * now the main thread can go on, and del / release the ref on the object:</span>
+<span class="sd">      it is the last ref on it, so it is actually deleted there.</span>
+
+<span class="sd">    .. warning::</span>
+
+<span class="sd">        The thing is only working if no other reference is held anywhere on the underlying object, otherwise we do not control its deletion.</span>
+
+<span class="sd">    Ex:</span>
+
+<span class="sd">    ::</span>
+
+<span class="sd">        # from a secondary thread</span>
+
+<span class="sd">        widget = QtThreadCall().call(Qt.QWidget)</span>
+<span class="sd">        # widget.show() # should crash</span>
+<span class="sd">        QtThreadCall().push(widget.show)</span>
+<span class="sd">        # ... use it ...</span>
+<span class="sd">        # del widget # should crash</span>
+
+<span class="sd">    ::</span>
+
+<span class="sd">        # from a secondary thread</span>
+
+<span class="sd">        widget = MainThreadLife(QtThreadCall().call(Qt.QWidget))</span>
+<span class="sd">        QtThreadCall().push(widget.ref().show)</span>
+<span class="sd">        # ... use it ...</span>
+<span class="sd">        del widget # OK</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj_life</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">MainThreadLife</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">obj_life</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_obj_life</span> <span class="o">=</span> <span class="n">obj_life</span>
+
+    <span class="k">def</span> <span class="fm">__del__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">threading</span><span class="o">.</span><span class="n">currentThread</span><span class="p">(),</span> <span class="n">threading</span><span class="o">.</span><span class="n">_MainThread</span><span class="p">)</span> \
+                <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;_obj_life&#39;</span><span class="p">):</span>
+            <span class="n">lock</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Lock</span><span class="p">()</span>
+            <span class="n">lock</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
+            <span class="n">QtThreadCall</span><span class="p">()</span><span class="o">.</span><span class="n">push</span><span class="p">(</span><span class="n">MainThreadLife</span><span class="o">.</span><span class="n">delInMainThread</span><span class="p">,</span> <span class="n">lock</span><span class="p">,</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">_obj_life</span><span class="p">)</span>
+            <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">_obj_life</span>
+            <span class="n">lock</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
+
+<div class="viewcode-block" id="MainThreadLife.ref"><a class="viewcode-back" href="../../../api.html#soma.qt_gui.qtThread.MainThreadLife.ref">[docs]</a>    <span class="k">def</span> <span class="nf">ref</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Access the underlying object&#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_obj_life</span></div>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">delInMainThread</span><span class="p">(</span><span class="n">lock</span><span class="p">,</span> <span class="n">thing</span><span class="p">):</span>
+        <span class="c1"># wait for the lock to be released in the process thread</span>
+        <span class="n">lock</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
+        <span class="n">lock</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
+        <span class="c1"># now the process thread should have removed its reference on thing:</span>
+        <span class="c1"># we can safely delete it fom here, in the main thread.</span>
+        <span class="k">del</span> <span class="n">thing</span> <span class="c1"># probably useless</span></div>
+
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">Soma-base 5.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">soma.qt_gui.qtThread</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2011, IFR49.org.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.5.4.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,1560 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>soma.notification &#8212; Soma-base 5.1.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css" />
+    
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Soma-base 5.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">soma.notification</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for soma.notification</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+
+<span class="c1">#  This software and supporting documentation are distributed by</span>
+<span class="c1">#      Institut Federatif de Recherche 49</span>
+<span class="c1">#      CEA/NeuroSpin, Batiment 145,</span>
+<span class="c1">#      91191 Gif-sur-Yvette cedex</span>
+<span class="c1">#      France</span>
+<span class="c1">#</span>
+<span class="c1"># This software is governed by the CeCILL-B license under</span>
+<span class="c1"># French law and abiding by the rules of distribution of free software.</span>
+<span class="c1"># You can  use, modify and/or redistribute the software under the</span>
+<span class="c1"># terms of the CeCILL-B license as circulated by CEA, CNRS</span>
+<span class="c1"># and INRIA at the following URL &quot;http://www.cecill.info&quot;.</span>
+<span class="c1">#</span>
+<span class="c1"># As a counterpart to the access to the source code and  rights to copy,</span>
+<span class="c1"># modify and redistribute granted by the license, users are provided only</span>
+<span class="c1"># with a limited warranty  and the software&#39;s author,  the holder of the</span>
+<span class="c1"># economic rights,  and the successive licensors  have only  limited</span>
+<span class="c1"># liability.</span>
+<span class="c1">#</span>
+<span class="c1"># In this respect, the user&#39;s attention is drawn to the risks associated</span>
+<span class="c1"># with loading,  using,  modifying and/or developing or reproducing the</span>
+<span class="c1"># software by the user in light of its specific status of free software,</span>
+<span class="c1"># that may mean  that it is complicated to manipulate,  and  that  also</span>
+<span class="c1"># therefore means  that it is reserved for developers  and  experienced</span>
+<span class="c1"># professionals having in-depth computer knowledge. Users are therefore</span>
+<span class="c1"># encouraged to load and test the software&#39;s suitability as regards their</span>
+<span class="c1"># requirements in conditions enabling the security of their systems and/or</span>
+<span class="c1"># data to be ensured and,  more generally, to use and operate it in the</span>
+<span class="c1"># same conditions as regards security.</span>
+<span class="c1">#</span>
+<span class="c1"># The fact that you are presently reading this means that you have had</span>
+<span class="c1"># knowledge of the CeCILL-B license and that you accept its terms.</span>
+
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">This module provides a notification system that can be used to register</span>
+<span class="sd">callbacks (*i.e* Python callables) that will all be called by a single</span>
+<span class="sd">:meth:`Notifier.notify` call.</span>
+
+<span class="sd">* author: Yann Cointepas, Dominique Geffroy</span>
+<span class="sd">* organization: NeuroSpin</span>
+<span class="sd">* license: `CeCILL B &lt;http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html&gt;`_</span>
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">absolute_import</span>
+<span class="n">__docformat__</span> <span class="o">=</span> <span class="s2">&quot;restructuredtext en&quot;</span>
+
+<span class="kn">import</span> <span class="nn">six</span>
+<span class="kn">from</span> <span class="nn">six.moves</span> <span class="kn">import</span> <span class="nb">range</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+
+<span class="kn">from</span> <span class="nn">soma.translation</span> <span class="kn">import</span> <span class="n">translate</span> <span class="k">as</span> <span class="n">_</span>
+<span class="kn">from</span> <span class="nn">soma.functiontools</span> <span class="kn">import</span> <span class="n">checkParameterCount</span><span class="p">,</span> <span class="n">numberOfParameterRange</span>
+<span class="kn">from</span> <span class="nn">soma.undefined</span> <span class="kn">import</span> <span class="n">Undefined</span>
+<span class="kn">from</span> <span class="nn">soma.sorted_dictionary</span> <span class="kn">import</span> <span class="n">SortedDictionary</span>
+
+<span class="c1">#-------------------------------------------------------------------------</span>
+
+
+<div class="viewcode-block" id="Notifier"><a class="viewcode-back" href="../../api.html#soma.notification.Notifier">[docs]</a><span class="k">class</span> <span class="nc">Notifier</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Register a series of functions (or Notifier instances) which are all called</span>
+<span class="sd">    whith the :meth:`notify` method. The calling order is the registering</span>
+<span class="sd">    order. If a Notifier is registered, its :meth:`notify` method is called</span>
+<span class="sd">    whenever *self.notify()* is called.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parameterCount</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        parameterCount: int</span>
+<span class="sd">            if not None, each registered function must be callable with that</span>
+<span class="sd">            number of arguments (checking is done on registration).</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_listeners</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_parameterCount</span> <span class="o">=</span> <span class="n">parameterCount</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_delayedNotification</span> <span class="o">=</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="Notifier.add"><a class="viewcode-back" href="../../api.html#soma.notification.Notifier.add">[docs]</a>    <span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">listener</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Register a callable or a Notifier that will be called whenever</span>
+<span class="sd">        :meth:`notify` is called. If the notifier has a *parameterCount*,</span>
+<span class="sd">        :func:`checkParameterCount &lt;soma.utils.functiontools.checkParameterCount&gt;` is used to verify that</span>
+<span class="sd">        *listener* can be called with *parameterCount* parameters.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        listener: Python callable (function, method, *etc*.) or :class:`Notifier` instance</span>
+<span class="sd">            item to add to the notification list.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="k">if</span> <span class="n">listener</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_listeners</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parameterCount</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">listener</span><span class="p">,</span> <span class="n">Notifier</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="n">listener</span><span class="o">.</span><span class="n">_parameterCount</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> \
+                       <span class="n">listener</span><span class="o">.</span><span class="n">_parameterCount</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parameterCount</span><span class="p">:</span>
+                        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="n">_</span><span class="p">(</span><span class="s1">&#39;Impossible to register a notifier with&#39;</span>
+                                             <span class="s1">&#39;</span><span class="si">%(other)d</span><span class="s1"> parameter(s) to a notifier &#39;</span>
+                                             <span class="s1">&#39;with </span><span class="si">%(self)d</span><span class="s1"> parameter(s)&#39;</span><span class="p">)</span>
+                                           <span class="o">%</span> <span class="p">{</span><span class="s1">&#39;self&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parameterCount</span><span class="p">,</span>
+                                              <span class="s1">&#39;other&#39;</span><span class="p">:</span> <span class="n">listener</span><span class="o">.</span><span class="n">_parameterCount</span><span class="p">})</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">checkParameterCount</span><span class="p">(</span><span class="n">listener</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parameterCount</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_listeners</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">listener</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Notifier.remove"><a class="viewcode-back" href="../../api.html#soma.notification.Notifier.remove">[docs]</a>    <span class="k">def</span> <span class="nf">remove</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">listener</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Remove an item from the notification list. Do nothing if *listener* is</span>
+<span class="sd">        not in the list.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        listener: Python callable or :class:`Notifier` instance</span>
+<span class="sd">            item previously registered with :meth:`add`.</span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        bool:</span>
+<span class="sd">            *True* if a listener has been removed, *False* otherwise.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_listeners</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">listener</span><span class="p">)</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">return</span> <span class="n">result</span></div>
+
+<div class="viewcode-block" id="Notifier.notify"><a class="viewcode-back" href="../../api.html#soma.notification.Notifier.notify">[docs]</a>    <span class="k">def</span> <span class="nf">notify</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Calls all the registered items in the notification list. All the</span>
+<span class="sd">        parameters given to :meth:`notify` are passed to the items in the list.</span>
+<span class="sd">        For items in the list that are :class:`Notifier` instance, their</span>
+<span class="sd">        :meth:`notify` method is called</span>
+
+<span class="sd">        .. seealso:: :meth:`delayNotification`, :meth:`restartNotification`</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_delayedNotification</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># if self._listeners: print &#39;!notify!&#39;, self, &#39;:&#39;, args, &#39;(&#39; + str(len( self._listeners )), &#39;listeners)&#39;</span>
+            <span class="c1"># Iterate on a copy of self._listeners because this list can be modified</span>
+            <span class="c1"># by a listener during notification loop.</span>
+            <span class="k">for</span> <span class="n">listener</span> <span class="ow">in</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_listeners</span><span class="p">):</span>
+                <span class="c1"># print &#39;!notify!  --&gt;&#39;, listener</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">listener</span><span class="p">,</span> <span class="n">Notifier</span><span class="p">):</span>
+                    <span class="n">listener</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">listener</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_delayedNotificationIgnoreDoubles</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">args</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_delayedNotification</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_delayedNotification</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_delayedNotification</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">args</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Notifier.delayNotification"><a class="viewcode-back" href="../../api.html#soma.notification.Notifier.delayNotification">[docs]</a>    <span class="k">def</span> <span class="nf">delayNotification</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ignoreDoubles</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Stop notification until :meth:`restartNotification` is called. After a</span>
+<span class="sd">        call to :meth`delayNotification`, all calls to :meth:`notify` will only</span>
+<span class="sd">        store the notification parameters until :meth:`restartNotification` is</span>
+<span class="sd">        called.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        ignoreDoubles: bool</span>
+<span class="sd">            If *True* (the default), all calls to :meth:`notify` with</span>
+<span class="sd">            the same parameters as a previous call will be ignored (*i.e.*</span>
+<span class="sd">            notification will be done only once for two identical calls).</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_delayedNotification</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_delayedNotificationIgnoreDoubles</span> <span class="o">=</span> <span class="n">ignoreDoubles</span></div>
+
+<div class="viewcode-block" id="Notifier.restartNotification"><a class="viewcode-back" href="../../api.html#soma.notification.Notifier.restartNotification">[docs]</a>    <span class="k">def</span> <span class="nf">restartNotification</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Restart notifications that have been delayed by</span>
+<span class="sd">        :meth:`delayNotification`. All the calls to :meth:`notify` that have</span>
+<span class="sd">        been done between the call to :meth:`delayNotification` and the call to</span>
+<span class="sd">        :meth:`restartNotification`, are applied immediately.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">delayedNotification</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_delayedNotification</span>
+        <span class="k">if</span> <span class="n">delayedNotification</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_delayedNotification</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">for</span> <span class="n">args</span> <span class="ow">in</span> <span class="n">delayedNotification</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span></div></div>
+
+
+<span class="c1">#-------------------------------------------------------------------------</span>
+<div class="viewcode-block" id="ReorderedCall"><a class="viewcode-back" href="../../api.html#soma.notification.ReorderedCall">[docs]</a><span class="k">class</span> <span class="nc">ReorderedCall</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    **todo:** documentation</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">function</span><span class="p">,</span> <span class="n">parametersOrder</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_function</span> <span class="o">=</span> <span class="n">function</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_order</span> <span class="o">=</span> <span class="n">parametersOrder</span>
+
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_function</span><span class="p">(</span><span class="o">*</span><span class="p">[</span><span class="n">args</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_order</span><span class="p">])</span></div>
+
+
+<span class="c1">#-------------------------------------------------------------------------</span>
+<div class="viewcode-block" id="VariableParametersNotifier"><a class="viewcode-back" href="../../api.html#soma.notification.VariableParametersNotifier">[docs]</a><span class="k">class</span> <span class="nc">VariableParametersNotifier</span><span class="p">(</span><span class="n">Notifier</span><span class="p">):</span>
+
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    This class is a notifier that can register functions with various arguments</span>
+<span class="sd">    count.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mainParameters</span><span class="p">,</span> <span class="o">*</span><span class="n">otherParameters</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        .. seealso:: :class:`Notifier`</span>
+
+<span class="sd">        **todo** documentation</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">Notifier</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">mainParameters</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__parameters</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">mainParameters</span><span class="p">):</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">mainParameters</span><span class="p">)))</span>
+        <span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__min</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">mainParameters</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__max</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">mainParameters</span><span class="p">)</span>
+        <span class="c1"># Converting to list because it has the index method (which tuple has</span>
+        <span class="c1"># not)</span>
+        <span class="n">mainParameters</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">mainParameters</span><span class="p">)</span>
+        <span class="n">main</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">mainParameters</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">otherParameters</span><span class="p">:</span>
+            <span class="n">other</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">other</span> <span class="o">-</span> <span class="n">main</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="n">_</span><span class="p">(</span><span class="s1">&#39;Invalid parameters definition (</span><span class="si">%(other)s</span><span class="s1"> is&#39;</span>
+                                     <span class="s1">&#39; not a subset of </span><span class="si">%(main)s</span><span class="s1">)&#39;</span><span class="p">)</span> <span class="o">%</span>
+                                   <span class="p">{</span><span class="s1">&#39;other&#39;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">other</span><span class="p">),</span> <span class="s1">&#39;main&#39;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">main</span><span class="p">)})</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">__parameters</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="n">_</span><span class="p">(</span><span class="s1">&#39;Invalid parameters definition (several sets&#39;</span>
+                                     <span class="s1">&#39; of </span><span class="si">%d</span><span class="s1"> parameters defined)&#39;</span><span class="p">)</span> <span class="o">%</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">p</span><span class="p">),))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__parameters</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">p</span><span class="p">)]</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">mainParameters</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">p</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__min</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__min</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">mainParameters</span><span class="p">))</span>
+
+<div class="viewcode-block" id="VariableParametersNotifier.add"><a class="viewcode-back" href="../../api.html#soma.notification.VariableParametersNotifier.add">[docs]</a>    <span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">listener</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        .. seealso:: :meth:`Notifier.add`</span>
+
+<span class="sd">        **todo:** documentation</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">listener</span><span class="p">,</span> <span class="n">Notifier</span><span class="p">):</span>
+            <span class="n">realListener</span> <span class="o">=</span> <span class="n">listener</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">min</span><span class="p">,</span> <span class="nb">max</span> <span class="o">=</span> <span class="n">numberOfParameterRange</span><span class="p">(</span><span class="n">listener</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">max</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">paramCount</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__max</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">paramCount</span> <span class="o">=</span> <span class="nb">max</span>
+            <span class="n">paramOrder</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__parameters</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">paramCount</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">paramOrder</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="n">_</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%(f)s</span><span class="s1"> has an invalid parameter count &#39;</span>
+                                     <span class="s1">&#39;(</span><span class="si">%(c)d</span><span class="s1">)&#39;</span><span class="p">)</span> <span class="o">%</span>
+                                   <span class="p">{</span><span class="s1">&#39;f&#39;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">listener</span><span class="p">),</span> <span class="s1">&#39;c&#39;</span><span class="p">:</span> <span class="n">paramCount</span><span class="p">})</span>
+            <span class="n">realListener</span> <span class="o">=</span> <span class="n">ReorderedCall</span><span class="p">(</span><span class="n">listener</span><span class="p">,</span> <span class="n">paramOrder</span><span class="p">)</span>
+        <span class="n">Notifier</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">realListener</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="VariableParametersNotifier.remove"><a class="viewcode-back" href="../../api.html#soma.notification.VariableParametersNotifier.remove">[docs]</a>    <span class="k">def</span> <span class="nf">remove</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">listener</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        .. seealso:: :meth:`Notifier.remove`</span>
+
+<span class="sd">        **todo:** documentation</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_listeners</span><span class="p">)):</span>
+            <span class="n">c</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_listeners</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="k">if</span> <span class="p">(</span> <span class="nb">isinstance</span><span class="p">(</span> <span class="n">c</span><span class="p">,</span> <span class="n">ReorderedCall</span> <span class="p">)</span> <span class="ow">and</span> <span class="n">c</span><span class="o">.</span><span class="n">_function</span> <span class="o">==</span> <span class="n">listener</span> <span class="p">)</span> <span class="ow">or</span> \
+                    <span class="n">c</span> <span class="o">==</span> <span class="n">listener</span><span class="p">:</span>
+                <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">_listeners</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="kc">False</span></div></div>
+
+
+<span class="c1">#-------------------------------------------------------------------------</span>
+<div class="viewcode-block" id="ObservableAttributes"><a class="viewcode-back" href="../../api.html#soma.notification.ObservableAttributes">[docs]</a><span class="k">class</span> <span class="nc">ObservableAttributes</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    ObservableAttributes allows to track modification of attributes at</span>
+<span class="sd">    runtime. By registering callbacks, it is possible to be warn of the</span>
+<span class="sd">    modification (setting and deletion) of any attribute of the instance.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+
+        <span class="c1">#: VariableParametersNotifier instance notified whenever any attribute</span>
+        <span class="c1">#: is modified. Use self.onAttributeChange to register a function on</span>
+        <span class="c1">#: this notifier.</span>
+<span class="c1">#    self.__dict__[ &#39;_onAnyAttributeChange&#39; ] = \</span>
+<span class="c1">#      self._createAttributeNotifier()</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">ObservableAttributes</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="s1">&#39;_onAnyAttributeChange&#39;</span><span class="p">,</span>
+                                                      <span class="bp">self</span><span class="o">.</span><span class="n">_createAttributeNotifier</span><span class="p">())</span>
+
+        <span class="c1">#: Dictionary whose keys are attribute names and values are</span>
+        <span class="c1">#: L{VariableParametersNotifier} instances. Whenever an attribute is</span>
+        <span class="c1">#: modified, the corresponding L{VariableParametersNotifier} is notified.</span>
+        <span class="c1">#: Use L{self.onAttributeChange} to register a function on these notifiers.</span>
+<span class="c1">#    self.__dict__[ &#39;_onAttributeChange&#39; ] = {}</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">ObservableAttributes</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span>
+            <span class="s1">&#39;_onAttributeChange&#39;</span><span class="p">,</span> <span class="p">{})</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">ObservableAttributes</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_createAttributeNotifier</span><span class="p">():</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Static method creating a :class:`VariableParametersNotifier` instance</span>
+<span class="sd">        for attribute modification notification.</span>
+
+<span class="sd">        see :meth:`notifyAttributeChange`.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="n">VariableParametersNotifier</span><span class="p">(</span>
+            <span class="p">(</span><span class="s1">&#39;object&#39;</span><span class="p">,</span> <span class="s1">&#39;attributeName&#39;</span><span class="p">,</span> <span class="s1">&#39;newValue&#39;</span><span class="p">,</span> <span class="s1">&#39;oldValue&#39;</span><span class="p">),</span>
+            <span class="p">(),</span>
+            <span class="p">(</span><span class="s1">&#39;newValue&#39;</span><span class="p">,</span> <span class="p">),</span>
+            <span class="p">(</span><span class="s1">&#39;newValue&#39;</span><span class="p">,</span> <span class="s1">&#39;oldValue&#39;</span><span class="p">),</span>
+            <span class="p">(</span><span class="s1">&#39;attributeName&#39;</span><span class="p">,</span> <span class="s1">&#39;newValue&#39;</span><span class="p">,</span> <span class="s1">&#39;oldValue&#39;</span><span class="p">),</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="ObservableAttributes.notifyAttributeChange"><a class="viewcode-back" href="../../api.html#soma.notification.ObservableAttributes.notifyAttributeChange">[docs]</a>    <span class="k">def</span> <span class="nf">notifyAttributeChange</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">oldValue</span><span class="o">=</span><span class="n">Undefined</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        First, calls functions registered for modification of the attribute</span>
+<span class="sd">        named *name*, then call functions registered for modification of any</span>
+<span class="sd">        attribute.</span>
+
+<span class="sd">        .. seealso:: :meth:`onAttributeChange`</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="c1"># Notify the change of this attribute</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;_onAttributeChange&#39;</span><span class="p">):</span>
+            <span class="n">notifier</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_onAttributeChange</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">notifier</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">notifier</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">oldValue</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;_onAnyAttributeChange&#39;</span><span class="p">):</span>
+            <span class="c1"># Notify the change of one attribute</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_onAnyAttributeChange</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">oldValue</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Changes the value of attribute *name* then calls</span>
+<span class="sd">        :meth:`notifyAttributeChange`.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">oldValue</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">Undefined</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">ObservableAttributes</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="o">!=</span> <span class="n">oldValue</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">notifyAttributeChange</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">oldValue</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__delattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Deletes the attribute *name* then calls :meth:`notifyAttributeChange`</span>
+<span class="sd">        with ``newValue = :class:`Undefined` ``.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">oldValue</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">Undefined</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">ObservableAttributes</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__delattr__</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">notifyAttributeChange</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">Undefined</span><span class="p">,</span> <span class="n">oldValue</span><span class="p">)</span>
+        <span class="c1"># Delete notifier for the deleted attribute</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_onAttributeChange</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
+<div class="viewcode-block" id="ObservableAttributes.onAttributeChange"><a class="viewcode-back" href="../../api.html#soma.notification.ObservableAttributes.onAttributeChange">[docs]</a>    <span class="k">def</span> <span class="nf">onAttributeChange</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">first</span><span class="p">,</span> <span class="n">second</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Registers a function to be called when an attribute is modified or</span>
+<span class="sd">        deleted. To call the function for any attribute modification, use the</span>
+<span class="sd">        following syntax::</span>
+
+<span class="sd">            instance.onAttributeChange(function)</span>
+
+<span class="sd">        To register a function for a named attribute, use the following</span>
+<span class="sd">        syntax::</span>
+
+<span class="sd">            instance.onAttributeChange(attributeName, function)</span>
+
+<span class="sd">        The registered function can have 0 to 4 parameters. Depending on its</span>
+<span class="sd">        number of parameters, it will be called with the following values:</span>
+
+<span class="sd">        - 4 parameters: (object, attributeName, newValue, oldValue)</span>
+<span class="sd">        - 3 parameters: (attributeName, newValue, oldValue)</span>
+<span class="sd">        - 2 parameters: (newValue, oldValue)</span>
+<span class="sd">        - 1 parameter: (newValue)</span>
+
+<span class="sd">        Where:</span>
+
+<span class="sd">        - **object** is the object whose attribute has been modified or</span>
+<span class="sd">          deleted.</span>
+<span class="sd">        - **attributeName** is the name of the modified or deleted attribute.</span>
+<span class="sd">        - **newValue** is the value of the attribute after modification or</span>
+<span class="sd">          ``Undefined`` if the attribute has been deleted.</span>
+<span class="sd">        - **oldValue** is the value of the attribute before modification. If</span>
+<span class="sd">          the attribute was not defined, ``oldValue = Undefined``.</span>
+
+<span class="sd">        If the function accepts a variable number of parameters, it will be</span>
+<span class="sd">        called with the maximum number of arguments possible.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="n">second</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;_onAnyAttributeChange&#39;</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_onAnyAttributeChange</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">first</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;_onAttributeChange&#39;</span><span class="p">):</span>
+                <span class="n">notifier</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_onAttributeChange</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">first</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">notifier</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">notifier</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_createAttributeNotifier</span><span class="p">()</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_onAttributeChange</span><span class="p">[</span><span class="n">first</span><span class="p">]</span> <span class="o">=</span> <span class="n">notifier</span>
+                <span class="n">notifier</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">second</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ObservableAttributes.removeOnAttributeChange"><a class="viewcode-back" href="../../api.html#soma.notification.ObservableAttributes.removeOnAttributeChange">[docs]</a>    <span class="k">def</span> <span class="nf">removeOnAttributeChange</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">first</span><span class="p">,</span> <span class="n">second</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Remove a function previously registered with :meth:`onAttributeChange`.</span>
+<span class="sd">        To remove a function, the arguments of :meth:`removeOnAttributeChange`</span>
+<span class="sd">        must be the same as those passed to :meth:`onAttributeChange` to</span>
+<span class="sd">        register the function.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="n">second</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_onAnyAttributeChange</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">first</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_onAttributeChange</span><span class="p">[</span><span class="n">first</span><span class="p">]</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">second</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">result</span></div>
+
+<div class="viewcode-block" id="ObservableAttributes.delayAttributeNotification"><a class="viewcode-back" href="../../api.html#soma.notification.ObservableAttributes.delayAttributeNotification">[docs]</a>    <span class="k">def</span> <span class="nf">delayAttributeNotification</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ignoreDoubles</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Stop attribute modification notification until</span>
+<span class="sd">        :meth:`restartAttributeNotification` is called. After a call to</span>
+<span class="sd">        :meth:`delayAttributeNotification`, all modification notification will</span>
+<span class="sd">        only be stored until :meth:`restartAttributeNotification` is called.</span>
+<span class="sd">        This call is recursive on all attributes values that are instance of</span>
+<span class="sd">        :class:`ObservableAttributes`.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        ignoreDoubles: bool</span>
+<span class="sd">            If True (False is the default), all notification with the same</span>
+<span class="sd">            parameters as a previous notification will be ignored (*i.e.* notification will be done only once for two identical events).</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_delayAttributeNotification</span><span class="p">(</span>
+            <span class="n">ignoreDoubles</span><span class="o">=</span><span class="n">ignoreDoubles</span><span class="p">,</span> <span class="n">checkedObjects</span><span class="o">=</span><span class="nb">set</span><span class="p">())</span></div>
+
+    <span class="k">def</span> <span class="nf">_delayAttributeNotification</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ignoreDoubles</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                                    <span class="n">checkedObjects</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">checkedObjects</span> <span class="o">==</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">checkedObjects</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">notifier</span> <span class="ow">in</span> <span class="n">six</span><span class="o">.</span><span class="n">iteritems</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_onAttributeChange</span><span class="p">):</span>
+            <span class="n">notifier</span><span class="o">.</span><span class="n">delayNotification</span><span class="p">(</span><span class="n">ignoreDoubles</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_onAnyAttributeChange</span><span class="o">.</span><span class="n">delayNotification</span><span class="p">(</span><span class="n">ignoreDoubles</span><span class="p">)</span>
+
+        <span class="c1"># Recursively delay notification</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">dir</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">Undefined</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">ObservableAttributes</span><span class="p">):</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">checkedObjects</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="c1"># This allow to not recursively call</span>
+                    <span class="c1"># _delayAttributeNotification</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">checkedObjects</span><span class="p">:</span>
+                        <span class="n">value</span><span class="o">.</span><span class="n">_delayAttributeNotification</span><span class="p">(</span>
+                            <span class="n">ignoreDoubles</span><span class="o">=</span><span class="n">ignoreDoubles</span><span class="p">,</span> <span class="n">checkedObjects</span><span class="o">=</span><span class="n">checkedObjects</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">value</span><span class="o">.</span><span class="n">_delayAttributeNotification</span><span class="p">(</span>
+                        <span class="n">ignoreDoubles</span><span class="o">=</span><span class="n">ignoreDoubles</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">checkedObjects</span> <span class="o">==</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">checkedObjects</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+
+<div class="viewcode-block" id="ObservableAttributes.restartAttributeNotification"><a class="viewcode-back" href="../../api.html#soma.notification.ObservableAttributes.restartAttributeNotification">[docs]</a>    <span class="k">def</span> <span class="nf">restartAttributeNotification</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Restarts notifications that have been delayed by</span>
+<span class="sd">        :meth:`delayAttributeNotification`. All the modifications that happened</span>
+<span class="sd">        between the call to :meth:`delayAttributeNotification` and the call to</span>
+<span class="sd">        :meth:`restartAttributeNotification`, are notified immediately.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_restartAttributeNotification</span><span class="p">(</span><span class="n">checkedObjects</span><span class="o">=</span><span class="nb">set</span><span class="p">())</span></div>
+
+    <span class="k">def</span> <span class="nf">_restartAttributeNotification</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">checkedObjects</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">checkedObjects</span> <span class="o">==</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">checkedObjects</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">notifier</span> <span class="ow">in</span> <span class="n">six</span><span class="o">.</span><span class="n">iteritems</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_onAttributeChange</span><span class="p">):</span>
+            <span class="n">notifier</span><span class="o">.</span><span class="n">restartNotification</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_onAnyAttributeChange</span><span class="o">.</span><span class="n">restartNotification</span><span class="p">()</span>
+        <span class="c1"># Recursively restart notification</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">dir</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">Undefined</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">ObservableAttributes</span><span class="p">):</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">checkedObjects</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="c1"># This allow to not recursively call</span>
+                    <span class="c1"># _delayAttributeNotification</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">checkedObjects</span><span class="p">:</span>
+                        <span class="n">value</span><span class="o">.</span><span class="n">restartAttributeNotification</span><span class="p">()</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">value</span><span class="o">.</span><span class="n">_delayAttributeNotification</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">checkedObjects</span> <span class="o">==</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">checkedObjects</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span></div>
+
+<span class="c1">#----------------------------------------------------------------------------</span>
+
+
+<div class="viewcode-block" id="ObservableList"><a class="viewcode-back" href="../../api.html#soma.notification.ObservableList">[docs]</a><span class="k">class</span> <span class="nc">ObservableList</span><span class="p">(</span><span class="nb">list</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A list that notifies its changes to registred listeners.</span>
+<span class="sd">    Inherits from python list and contains an instance of :class:`Notifier`</span>
+<span class="sd">    (:attr:`onChangeNotifier`).</span>
+
+<span class="sd">    Example::</span>
+
+<span class="sd">        l = ObservableList()</span>
+<span class="sd">        l.addListener(update)</span>
+<span class="sd">        l.append(e)</span>
+
+<span class="sd">    * calls :meth:`onChangeNotifier.notify(INSERT_ACTION, [e], len(l)) &lt;Notifier.notify&gt;`</span>
+<span class="sd">    * calls ``update(INSERT_ACTION, [e], len(l))``</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    INSERT_ACTION: int</span>
+<span class="sd">        used to notify insertion of new elements  in the list</span>
+<span class="sd">    REMOVE_ACTION: int</span>
+<span class="sd">        used to notify elements deletion</span>
+<span class="sd">    MODIFY_ACTION: int</span>
+<span class="sd">        used to notify elements modification</span>
+
+<span class="sd">    onChangeNotifier: Notifier</span>
+<span class="sd">        the Notifier&#39;s notify method is called when the list</span>
+<span class="sd">        has changed.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># actions to notify</span>
+    <span class="n">INSERT_ACTION</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">REMOVE_ACTION</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">MODIFY_ACTION</span> <span class="o">=</span> <span class="mi">2</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">content</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        content: list</span>
+<span class="sd">            elements to initialize the list content</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># call a super class method can be done two different ways:</span>
+        <span class="c1"># - superClass.method(self, ...)</span>
+        <span class="c1"># - super(superClass, self).method(...)</span>
+        <span class="c1"># It&#39;s better to use the second way because if derived class inherits from several classes,</span>
+        <span class="c1"># super will try to find the method in other super classes before</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">ObservableList</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="c1"># views can register update callbacks on this notifier</span>
+        <span class="c1"># to be aware of any change in the model</span>
+        <span class="c1"># On change, this object calls Notifier.notify(args)</span>
+        <span class="c1"># which calls every registred function with args</span>
+        <span class="c1"># args = action (insert, remove, modify), elems list, position</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">onChangeNotifier</span> <span class="o">=</span> <span class="n">Notifier</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">content</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">content</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__getinitargs__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns the args to pass to the __init__ method to construct this</span>
+<span class="sd">        object.</span>
+<span class="sd">        It is useful to save an :class:`ObservableList` object to :mod:`minf`</span>
+<span class="sd">        format.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        tuple:</span>
+<span class="sd">            arg content to pass to the __init__ method for creating a copy of this object</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">content</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">content</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">content</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__reduce__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;This method is redefined for enable deepcopy of this object (and</span>
+<span class="sd">        potentially pickle).</span>
+<span class="sd">        It gives the arguments to pass to the init method of the object when</span>
+<span class="sd">        creating a copy</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        tuple:</span>
+<span class="sd">            class name, init args, state, iterator on elements to copy,</span>
+<span class="sd">            dictionary iterator</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># class name, init args, parameters for setstate, elements iterator,</span>
+        <span class="c1"># dictionary iterator</span>
+        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">,</span> <span class="p">(),</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span> <span class="kc">None</span><span class="p">)</span>
+
+<div class="viewcode-block" id="ObservableList.addListener"><a class="viewcode-back" href="../../api.html#soma.notification.ObservableList.addListener">[docs]</a>    <span class="k">def</span> <span class="nf">addListener</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">listener</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Registers the listener callback method in the notifier.</span>
+<span class="sd">        The method must take 3 arguments: action, elems list, position</span>
+
+<span class="sd">        *action* should be one of:</span>
+
+<span class="sd">        - INSERT_ACTION: elems have been inserted at position in the list</span>
+<span class="sd">        - REMOVE_ACTION: elems have been removed [at position] in the list</span>
+<span class="sd">        - MODIFY_ACTION: at position, some elements have been replaced by</span>
+<span class="sd">          elems</span>
+
+<span class="sd">        The position given in the notify method will be between 0 and</span>
+<span class="sd">        ``len(self)``</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        listener: function</span>
+<span class="sd">            function to call to notify changes</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">onChangeNotifier</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">listener</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ObservableList.append"><a class="viewcode-back" href="../../api.html#soma.notification.ObservableList.append">[docs]</a>    <span class="k">def</span> <span class="nf">append</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">elem</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Adds the element at the end of the list.</span>
+<span class="sd">        Notifies an insert action.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">index</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">ObservableList</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">elem</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">onChangeNotifier</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">INSERT_ACTION</span><span class="p">,</span> <span class="p">[</span><span class="n">elem</span><span class="p">],</span> <span class="n">index</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ObservableList.extend"><a class="viewcode-back" href="../../api.html#soma.notification.ObservableList.extend">[docs]</a>    <span class="k">def</span> <span class="nf">extend</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">l</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Adds the content of the list l at the end of current list.</span>
+<span class="sd">        Notifies an insert action. &quot;&quot;&quot;</span>
+        <span class="n">index</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">ObservableList</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">l</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">onChangeNotifier</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">INSERT_ACTION</span><span class="p">,</span> <span class="n">l</span><span class="p">,</span> <span class="n">index</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ObservableList.insert"><a class="viewcode-back" href="../../api.html#soma.notification.ObservableList.insert">[docs]</a>    <span class="k">def</span> <span class="nf">insert</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pos</span><span class="p">,</span> <span class="n">elem</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Inserts elem at position pos in the list.</span>
+<span class="sd">        Notifies an insert action.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getPositiveIndex</span><span class="p">(</span><span class="n">pos</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">ObservableList</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">pos</span><span class="p">,</span> <span class="n">elem</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">onChangeNotifier</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">INSERT_ACTION</span><span class="p">,</span> <span class="p">[</span><span class="n">elem</span><span class="p">],</span> <span class="n">index</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ObservableList.remove"><a class="viewcode-back" href="../../api.html#soma.notification.ObservableList.remove">[docs]</a>    <span class="k">def</span> <span class="nf">remove</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">elem</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Removes the first occurence of elem in the list.</span>
+
+<span class="sd">        Notifies a remove action. &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">ObservableList</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">elem</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">onChangeNotifier</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">REMOVE_ACTION</span><span class="p">,</span> <span class="p">[</span><span class="n">elem</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="ObservableList.pop"><a class="viewcode-back" href="../../api.html#soma.notification.ObservableList.pop">[docs]</a>    <span class="k">def</span> <span class="nf">pop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pos</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Removes the element at position pos or the last element if pos is</span>
+<span class="sd">        *None*.</span>
+
+<span class="sd">        Notifies a remove action.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        object:</span>
+<span class="sd">            the removed element</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">pos</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getPositiveIndex</span><span class="p">(</span><span class="n">pos</span><span class="p">)</span>
+            <span class="n">elem</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">ObservableList</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">pos</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">index</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+            <span class="n">elem</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">ObservableList</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">onChangeNotifier</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">REMOVE_ACTION</span><span class="p">,</span> <span class="p">[</span><span class="n">elem</span><span class="p">],</span> <span class="n">index</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">elem</span></div>
+
+<div class="viewcode-block" id="ObservableList.sort"><a class="viewcode-back" href="../../api.html#soma.notification.ObservableList.sort">[docs]</a>    <span class="k">def</span> <span class="nf">sort</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Sorts the list using key function key.</span>
+
+<span class="sd">        Notifies a modify action.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        key: function</span>
+<span class="sd">            key function: elem-&gt;key</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">ObservableList</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="n">key</span><span class="p">,</span> <span class="n">reverse</span><span class="o">=</span><span class="n">reverse</span><span class="p">)</span>
+        <span class="c1"># all the elements of the list could be modified</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">onChangeNotifier</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">MODIFY_ACTION</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ObservableList.reverse"><a class="viewcode-back" href="../../api.html#soma.notification.ObservableList.reverse">[docs]</a>    <span class="k">def</span> <span class="nf">reverse</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Inverses the order of the list.</span>
+<span class="sd">        Notifies a modify action.&quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">ObservableList</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">reverse</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">onChangeNotifier</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">MODIFY_ACTION</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="fm">__setitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Sets value to element at position key in the list.</span>
+
+<span class="sd">        Notifies a modify action::</span>
+
+<span class="sd">            l[key] = value</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getPositiveIndex</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">ObservableList</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__setitem__</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">onChangeNotifier</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">MODIFY_ACTION</span><span class="p">,</span> <span class="p">[</span><span class="n">value</span><span class="p">],</span> <span class="n">index</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__delitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Removes the element at position key in the list.</span>
+
+<span class="sd">        Notifies a remove action::</span>
+
+<span class="sd">            del l[key]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getPositiveIndex</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">ObservableList</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__delitem__</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">onChangeNotifier</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">REMOVE_ACTION</span><span class="p">,</span> <span class="p">[],</span> <span class="n">index</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__setslice__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">seq</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Sets values in seq to elements in the interval i,j.</span>
+
+<span class="sd">        If i and j are negative numbers, there are converted before this call</span>
+<span class="sd">        in ``index + len(self)``</span>
+
+<span class="sd">        Notifies a modify action:</span>
+
+<span class="sd">            l[i:j] = seq</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">indexI</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getIndexInRange</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+        <span class="n">indexJ</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getIndexInRange</span><span class="p">(</span><span class="n">j</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">ObservableList</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__setslice__</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">seq</span><span class="p">)</span>
+        <span class="c1"># if the interval is empty, action is insertion at the first position</span>
+        <span class="k">if</span> <span class="n">indexI</span> <span class="o">&gt;=</span> <span class="n">indexJ</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">onChangeNotifier</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">INSERT_ACTION</span><span class="p">,</span> <span class="n">seq</span><span class="p">,</span> <span class="n">indexI</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">lenSeq</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">seq</span><span class="p">)</span>
+            <span class="n">lenInter</span> <span class="o">=</span> <span class="n">indexJ</span> <span class="o">-</span> <span class="n">indexI</span>
+            <span class="c1"># if values sequence has same or lower length as the interval in the list,</span>
+            <span class="c1"># all values are written to the list from the first index</span>
+            <span class="c1"># the rest of the interval (if interval is longer than sequence) is</span>
+            <span class="c1"># left unchanged</span>
+            <span class="k">if</span> <span class="n">lenInter</span> <span class="o">&gt;=</span> <span class="n">lenSeq</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">onChangeNotifier</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">MODIFY_ACTION</span><span class="p">,</span> <span class="n">seq</span><span class="p">,</span> <span class="n">indexI</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># if the interval is shorter than the sequence of values,</span>
+                <span class="c1"># values in the interval are used to modify the list,</span>
+                <span class="c1"># the rest is inserted at indexJ position</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">onChangeNotifier</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">MODIFY_ACTION</span><span class="p">,</span> <span class="n">seq</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">lenInter</span><span class="p">],</span> <span class="n">indexI</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">onChangeNotifier</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">INSERT_ACTION</span><span class="p">,</span> <span class="n">seq</span><span class="p">[</span><span class="n">lenInter</span><span class="p">:</span><span class="n">lenSeq</span><span class="p">],</span> <span class="n">indexJ</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__delslice__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Removes elements in the interval i,j.</span>
+
+<span class="sd">        If i and j are negative numbers, there are converted before this call</span>
+<span class="sd">        in ``index + len(self)``.</span>
+
+<span class="sd">        Notifies a remove action::</span>
+
+<span class="sd">            del l[i:j]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">indexI</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getIndexInRange</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+        <span class="n">indexJ</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getIndexInRange</span><span class="p">(</span><span class="n">j</span><span class="p">)</span>
+        <span class="n">seq</span> <span class="o">=</span> <span class="bp">self</span><span class="p">[</span><span class="n">indexI</span><span class="p">:</span><span class="n">indexJ</span><span class="p">]</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">ObservableList</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__delslice__</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">)</span>
+        <span class="c1"># if the interval is empty, the list is not modified</span>
+        <span class="k">if</span> <span class="n">indexI</span> <span class="o">&lt;</span> <span class="n">indexJ</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">onChangeNotifier</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">REMOVE_ACTION</span><span class="p">,</span> <span class="n">seq</span><span class="p">,</span> <span class="n">indexI</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__iadd__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">l</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;``list += l`` &lt;=&gt; ``list.extend(l)``</span>
+
+<span class="sd">        Notifies insert action.&quot;&quot;&quot;</span>
+        <span class="n">index</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">newList</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">ObservableList</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__iadd__</span><span class="p">(</span><span class="n">l</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">onChangeNotifier</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">INSERT_ACTION</span><span class="p">,</span> <span class="n">l</span><span class="p">,</span> <span class="n">index</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">newList</span>
+
+    <span class="k">def</span> <span class="fm">__imul__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;``list *= n``</span>
+
+<span class="sd">        Notifies insert action.&quot;&quot;&quot;</span>
+        <span class="n">index</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">newList</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">ObservableList</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__imul__</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">onChangeNotifier</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">INSERT_ACTION</span><span class="p">,</span> <span class="bp">self</span><span class="p">[</span><span class="n">index</span><span class="p">:],</span> <span class="n">index</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">newList</span>
+
+<div class="viewcode-block" id="ObservableList.getPositiveIndex"><a class="viewcode-back" href="../../api.html#soma.notification.ObservableList.getPositiveIndex">[docs]</a>    <span class="k">def</span> <span class="nf">getPositiveIndex</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns an index between 0 and ``len(self)``</span>
+
+<span class="sd">        - if *i* is negative, it is replaced by ``len(self) + i``</span>
+<span class="sd">        - if *index* is again negative, it is replaced by 0</span>
+<span class="sd">        - if *index* is beyond ``len(self)`` it is replaced by ``len(self)``</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">l</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">index</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">l</span> <span class="o">+</span> <span class="n">i</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">index</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">l</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">index</span></div>
+
+<div class="viewcode-block" id="ObservableList.getIndexInRange"><a class="viewcode-back" href="../../api.html#soma.notification.ObservableList.getIndexInRange">[docs]</a>    <span class="k">def</span> <span class="nf">getIndexInRange</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns an index in the range of the list.</span>
+
+<span class="sd">        * if ``i &lt; 0`` returns 0</span>
+<span class="sd">        * if ``i &gt; len(self)``, returns ``len(self)``</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">index</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">l</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="o">&gt;</span> <span class="n">l</span><span class="p">:</span>
+                <span class="n">index</span> <span class="o">=</span> <span class="n">l</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">index</span> <span class="o">=</span> <span class="n">i</span>
+        <span class="k">return</span> <span class="n">index</span></div>
+
+<div class="viewcode-block" id="ObservableList.itemIndex"><a class="viewcode-back" href="../../api.html#soma.notification.ObservableList.itemIndex">[docs]</a>    <span class="k">def</span> <span class="nf">itemIndex</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns item&#39;s index in the list. It is different from the</span>
+<span class="sd">        :meth:`list.index` method that returns the index of the first element</span>
+<span class="sd">        that has the same value as *item*.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">it</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">it</span> <span class="ow">is</span> <span class="n">item</span><span class="p">:</span>
+                <span class="k">break</span>
+            <span class="n">i</span> <span class="o">=</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+            <span class="n">i</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="k">return</span> <span class="n">i</span></div></div>
+
+<span class="c1">#----------------------------------------------------------------------------</span>
+
+
+<div class="viewcode-block" id="ObservableSortedDictionary"><a class="viewcode-back" href="../../api.html#soma.notification.ObservableSortedDictionary">[docs]</a><span class="k">class</span> <span class="nc">ObservableSortedDictionary</span><span class="p">(</span><span class="n">SortedDictionary</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A sorted dictionary that notifies its changes.</span>
+<span class="sd">    Inherits from python list and contains an instance of</span>
+<span class="sd">    :class:`Notifier` (:attr:`onChangeNotifier`).</span>
+
+<span class="sd">    Example::</span>
+
+<span class="sd">        d=ObservableSortedDictionary()</span>
+<span class="sd">        d.addListener(update)</span>
+<span class="sd">        d.insert(index, key, e)</span>
+
+<span class="sd">    * calls :meth:`onChangeNotifier.notify(INSERT_ACTION, [e], index) &lt;Notifier.notify&gt;`</span>
+<span class="sd">    * calls ``update(INSERT_ACTION, [e], index)``</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    INSERT_ACTION: int</span>
+<span class="sd">        used to notify insertion of new elements  in the dictionary</span>
+<span class="sd">    REMOVE_ACTION: int</span>
+<span class="sd">        used to notify elements deletion</span>
+<span class="sd">    MODIFY_ACTION: int</span>
+<span class="sd">        used to notify elements modification</span>
+
+<span class="sd">    onChangeNotifier: Notifier</span>
+<span class="sd">        the Notifier&#39;s notify method is called when the dictionaty has changed.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># actions to notify</span>
+    <span class="n">INSERT_ACTION</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">REMOVE_ACTION</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">MODIFY_ACTION</span> <span class="o">=</span> <span class="mi">2</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Initialize the dictionary with a list of ( key, value ) pairs.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">onChangeNotifier</span> <span class="o">=</span> <span class="n">Notifier</span><span class="p">()</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">ObservableSortedDictionary</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__getinitargs__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns the args to pass to the __init__ method to construct this object.</span>
+<span class="sd">        It is useful to save ObservableList object to minf format.</span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        tuple:</span>
+<span class="sd">            arg content to pass to the __init__ method for creating a copy of</span>
+<span class="sd">            this object</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">content</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">content</span><span class="p">)</span>
+
+<div class="viewcode-block" id="ObservableSortedDictionary.addListener"><a class="viewcode-back" href="../../api.html#soma.notification.ObservableSortedDictionary.addListener">[docs]</a>    <span class="k">def</span> <span class="nf">addListener</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">listener</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Registers the listener callback method in the notifier.</span>
+<span class="sd">        The method must take 3 arguments: action, elems list, position</span>
+
+<span class="sd">        *action* should be one of:</span>
+
+<span class="sd">        - INSERT_ACTION: elems have been inserted at position in the dictionary</span>
+<span class="sd">        - REMOVE_ACTION: elems have been removed [at position] in the dict</span>
+<span class="sd">        - MODIFY_ACTION: at position, some elements have been replaced by elems</span>
+
+<span class="sd">        The position given in the notify method will be between 0 and len(self)</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        listener: function</span>
+<span class="sd">            function to call to notify changes</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">onChangeNotifier</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">listener</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="fm">__setitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="n">insertion</span> <span class="o">=</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">ObservableSortedDictionary</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__setitem__</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">insertion</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">onChangeNotifier</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">INSERT_ACTION</span><span class="p">,</span> <span class="p">[</span><span class="n">value</span><span class="p">],</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">onChangeNotifier</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">MODIFY_ACTION</span><span class="p">,</span> <span class="p">[</span><span class="n">value</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">sortedKeys</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">key</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="fm">__delitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="n">index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sortedKeys</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">ObservableSortedDictionary</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__delitem__</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">onChangeNotifier</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">REMOVE_ACTION</span><span class="p">,</span> <span class="p">[],</span> <span class="n">index</span><span class="p">)</span>
+
+<div class="viewcode-block" id="ObservableSortedDictionary.insert"><a class="viewcode-back" href="../../api.html#soma.notification.ObservableSortedDictionary.insert">[docs]</a>    <span class="k">def</span> <span class="nf">insert</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        inserts a (*key*, *value*) pair in the sorted dictionary before</span>
+<span class="sd">        position *index*. If *key* is already in the dictionary, a</span>
+<span class="sd">        :class:`KeyError &lt;exceptions.KeyError&gt;` is raised.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        key:</span>
+<span class="sd">            key to insert</span>
+<span class="sd">        value:</span>
+<span class="sd">            value associated to *key*</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        index: integer</span>
+<span class="sd">            index of C{key} in the sorted keys</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">ObservableSortedDictionary</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">onChangeNotifier</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">INSERT_ACTION</span><span class="p">,</span> <span class="p">[</span><span class="n">value</span><span class="p">],</span> <span class="n">index</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ObservableSortedDictionary.clear"><a class="viewcode-back" href="../../api.html#soma.notification.ObservableSortedDictionary.clear">[docs]</a>    <span class="k">def</span> <span class="nf">clear</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Removes all items from dictionary</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">ObservableSortedDictionary</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">onChangeNotifier</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">REMOVE_ACTION</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">()),</span> <span class="mi">0</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ObservableSortedDictionary.sort"><a class="viewcode-back" href="../../api.html#soma.notification.ObservableSortedDictionary.sort">[docs]</a>    <span class="k">def</span> <span class="nf">sort</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Sorts the dictionary using function *key* to compare keys.</span>
+
+<span class="sd">        Notifies a modify action.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        key: function</span>
+<span class="sd">            key function key-&gt;key</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">ObservableSortedDictionary</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="n">key</span><span class="p">,</span> <span class="n">reverse</span><span class="o">=</span><span class="n">reverse</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">onChangeNotifier</span><span class="o">.</span><span class="n">notify</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">MODIFY_ACTION</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">()),</span> <span class="mi">0</span><span class="p">)</span></div></div>
+
+
+<span class="c1">#----------------------------------------------------------------------------</span>
+<div class="viewcode-block" id="EditableTree"><a class="viewcode-back" href="../../api.html#soma.notification.EditableTree">[docs]</a><span class="k">class</span> <span class="nc">EditableTree</span><span class="p">(</span><span class="n">ObservableAttributes</span><span class="p">,</span> <span class="n">ObservableSortedDictionary</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot;The base class to model a tree of items.</span>
+<span class="sd">    This class can be derived to change implementation.</span>
+
+<span class="sd">    An EditableTree contains items which can be</span>
+
+<span class="sd">    - an item branch: it contains other items as children</span>
+<span class="sd">    - an item leaf: doesn&#39;t have children</span>
+
+<span class="sd">    The list of items is an :class:`ObservableSortedDictionary` which notifies</span>
+<span class="sd">    its changes to registred listeners.</span>
+
+<span class="sd">    If the tree is modifiable, new items can be added.</span>
+
+<span class="sd">    Every item is an :class:`EditableTree.Item`.</span>
+
+<span class="sd">    *EditableTree* is iterable over its items.</span>
+
+<span class="sd">    *EditableTree* also inherits from :class:`ObservableAttributes`, so</span>
+<span class="sd">    registred listeners can be notified of attributes value change.</span>
+
+<span class="sd">    To call a method when item list changes::</span>
+
+<span class="sd">      editableTree.addListener(callbackMethod)</span>
+
+<span class="sd">    To call a method when an item list changes at any depth in the tree::</span>
+
+<span class="sd">        editableTree.addListenerRec(callbackMethod)</span>
+
+<span class="sd">    To call a method when an attribute of the tree changes::</span>
+
+<span class="sd">        editableTree.onAttributeChange(attributeName, callbackMethod)</span>
+
+<span class="sd">    To call a method when an attribute changes at any depth in the tree::</span>
+
+<span class="sd">        editableTree.onAttributeChangeRec(attributeName, callbackMethod)</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    defaultName: string</span>
+<span class="sd">        default name of the tree</span>
+<span class="sd">    name: string</span>
+<span class="sd">        the name of the tree</span>
+<span class="sd">    id: string</span>
+<span class="sd">        tree identifier (a hash by default)</span>
+<span class="sd">    modifiable: bool</span>
+<span class="sd">        if *True*, new items can be added, items can be deleted and modified</span>
+<span class="sd">    unamed: bool</span>
+<span class="sd">        indicates if *name* parameter was none, so the tree has the default</span>
+<span class="sd">        name.</span>
+<span class="sd">    visible: bool</span>
+<span class="sd">        indicates if the tree is visible (if not it may be hidden in a</span>
+<span class="sd">        graphical representation)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">defaultName</span> <span class="o">=</span> <span class="s2">&quot;tree&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">modifiable</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">content</span><span class="o">=</span><span class="p">[],</span>
+                 <span class="n">visible</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">enabled</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        name: string</span>
+<span class="sd">            the name of the tree</span>
+<span class="sd">        id: string</span>
+<span class="sd">            tree identifier (a hash by default)</span>
+<span class="sd">        modifiable: bool</span>
+<span class="sd">            if *True*, new items can be added, items can be deleted and</span>
+<span class="sd">            modified</span>
+<span class="sd">        content: list</span>
+<span class="sd">            children items (:class:`EditableTree.Item`)</span>
+<span class="sd">        visible: bool</span>
+<span class="sd">            indicates if the tree is visible (if not it may be hidden in a</span>
+<span class="sd">            graphical representation)</span>
+<span class="sd">        enabled: bool</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">dictContent</span> <span class="o">=</span> <span class="p">[(</span><span class="n">i</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">content</span><span class="p">]</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">EditableTree</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">dictContent</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">defaultName</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">unamed</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">unamed</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">if</span> <span class="nb">id</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="nb">hash</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="nb">id</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">modifiable</span> <span class="o">=</span> <span class="n">modifiable</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">visible</span> <span class="o">=</span> <span class="n">visible</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">enabled</span> <span class="o">=</span> <span class="n">enabled</span>
+
+    <span class="k">def</span> <span class="nf">__getinitargs__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns the args to pass to the __init__ method to construct this object.</span>
+<span class="sd">        It is useful in order to save EditableTree object to minf format.</span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        tuple:</span>
+<span class="sd">            arg content to pass to the __init__ method for creating a copy of this object</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># elements in the tuple must be serializable with minf, so the content</span>
+        <span class="c1"># must be of type list</span>
+        <span class="n">content</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">modifiable</span><span class="p">,</span> <span class="n">content</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">visible</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">enabled</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="s2">&quot; (&quot;</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">+=</span> <span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot; &quot;</span>
+        <span class="n">s</span> <span class="o">+=</span> <span class="s2">&quot;)&quot;</span>
+        <span class="k">return</span> <span class="n">s</span>
+
+    <span class="k">def</span> <span class="fm">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">ObservableAttributes</span><span class="o">.</span><span class="fm">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+<div class="viewcode-block" id="EditableTree.add"><a class="viewcode-back" href="../../api.html#soma.notification.EditableTree.add">[docs]</a>    <span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Adds an item in the tree. If this item&#39;s id is already present in the</span>
+<span class="sd">        tree as a key, add the item&#39;s content in the corresponding key.</span>
+
+<span class="sd">        recursive method</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="n">item</span><span class="o">.</span><span class="n">id</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">item</span><span class="o">.</span><span class="n">isLeaf</span><span class="p">():</span>  <span class="c1"># if the item is a leaf and is already in the tree, nothing to do</span>
+                <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">item</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>  <span class="c1"># item is also a dictionary and contains several elements, add each value in the tree item</span>
+                    <span class="bp">self</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+            <span class="c1"># also set current name for the current object</span>
+            <span class="bp">self</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">item</span><span class="o">.</span><span class="n">name</span>
+        <span class="k">else</span><span class="p">:</span>  <span class="c1"># new item</span>
+            <span class="bp">self</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">item</span></div>
+
+<div class="viewcode-block" id="EditableTree.isDescendant"><a class="viewcode-back" href="../../api.html#soma.notification.EditableTree.isDescendant">[docs]</a>    <span class="k">def</span> <span class="nf">isDescendant</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns *True* if the current item is a child or a child&#39;s child...</span>
+<span class="sd">        of the item in parameter</span>
+
+<span class="sd">        Always *False* for the root of the tree&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="kc">False</span></div>
+
+    <span class="k">def</span> <span class="nf">isLeaf</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+<div class="viewcode-block" id="EditableTree.removeEmptyBranches"><a class="viewcode-back" href="../../api.html#soma.notification.EditableTree.removeEmptyBranches">[docs]</a>    <span class="k">def</span> <span class="nf">removeEmptyBranches</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;If a branch item doesn&#39;t contain any leaf or branch that contains</span>
+<span class="sd">        leaf recursivly, the item is removed from the tree. &quot;&quot;&quot;</span>
+        <span class="n">toRemove</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">child</span><span class="o">.</span><span class="n">isLeaf</span><span class="p">():</span>
+                <span class="n">child</span><span class="o">.</span><span class="n">removeEmptyBranches</span><span class="p">()</span>
+                <span class="k">if</span> <span class="nb">list</span><span class="p">(</span><span class="n">child</span><span class="o">.</span><span class="n">values</span><span class="p">())</span> <span class="o">==</span> <span class="p">[]:</span>  <span class="c1"># it isn&#39;t possible to remove an element during iteration on the list</span>
+                    <span class="n">toRemove</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                        <span class="n">child</span><span class="p">)</span>  <span class="c1"># so it&#39;s put on a remove list and will be removed from the tree outside the loop</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">toRemove</span><span class="p">:</span>
+            <span class="k">del</span> <span class="bp">self</span><span class="p">[</span><span class="n">item</span><span class="o">.</span><span class="n">id</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="EditableTree.sort"><a class="viewcode-back" href="../../api.html#soma.notification.EditableTree.sort">[docs]</a>    <span class="k">def</span> <span class="nf">sort</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Recursive sort of the tree: items are sorted in all branches.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">ObservableSortedDictionary</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_keyItems</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">item</span><span class="o">.</span><span class="n">isLeaf</span><span class="p">():</span>
+                <span class="n">item</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="n">key</span><span class="p">,</span> <span class="n">reverse</span><span class="o">=</span><span class="n">reverse</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_keyItems</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">id</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Key function</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">i1</span> <span class="o">=</span> <span class="bp">self</span><span class="p">[</span><span class="nb">id</span><span class="p">]</span>
+        <span class="c1"># names are translated in lowercase to make an alphabetical sort independant of the case</span>
+        <span class="c1"># by default (uppercase letters are &lt; to lowecase letters)</span>
+        <span class="n">n1</span> <span class="o">=</span> <span class="n">i1</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="c1"># print &quot;comp&quot;, i1.name,i1.isLeaf(), i2.name,i2.isLeaf(), res</span>
+        <span class="k">return</span> <span class="p">(</span><span class="ow">not</span> <span class="n">i1</span><span class="o">.</span><span class="n">isLeaf</span><span class="p">(),</span> <span class="n">n1</span><span class="p">)</span>
+
+<div class="viewcode-block" id="EditableTree.compItems"><a class="viewcode-back" href="../../api.html#soma.notification.EditableTree.compItems">[docs]</a>    <span class="k">def</span> <span class="nf">compItems</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">id1</span><span class="p">,</span> <span class="n">id2</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Comparison function</span>
+
+<span class="sd">        Returns:</span>
+
+<span class="sd">        - 1 if ``i1 &gt; i2``</span>
+<span class="sd">        - -1 if ``i1 &lt; i2``</span>
+<span class="sd">        - 0 if they are equal&quot;&quot;&quot;</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">i1</span> <span class="o">=</span> <span class="bp">self</span><span class="p">[</span><span class="n">id1</span><span class="p">]</span>
+        <span class="n">i2</span> <span class="o">=</span> <span class="bp">self</span><span class="p">[</span><span class="n">id2</span><span class="p">]</span>
+        <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="n">i1</span><span class="o">.</span><span class="n">isLeaf</span><span class="p">()</span> <span class="ow">and</span> <span class="n">i2</span><span class="o">.</span><span class="n">isLeaf</span><span class="p">()):</span>
+            <span class="c1"># if one item is a branch and the other is a leaf, the branch must</span>
+            <span class="c1"># be before the leaf</span>
+            <span class="n">res</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="k">elif</span> <span class="p">(</span><span class="n">i1</span><span class="o">.</span><span class="n">isLeaf</span><span class="p">()</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">i2</span><span class="o">.</span><span class="n">isLeaf</span><span class="p">()):</span>
+            <span class="n">res</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># names are translated in lowercase to make an alphabetical sort independant of the case</span>
+            <span class="c1"># by default (uppercase letters are &lt; to lowecase letters)</span>
+            <span class="n">n1</span> <span class="o">=</span> <span class="n">i1</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+            <span class="n">n2</span> <span class="o">=</span> <span class="n">i2</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">n1</span> <span class="o">&lt;</span> <span class="n">n2</span><span class="p">:</span>
+                <span class="n">res</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+            <span class="k">elif</span> <span class="n">n1</span> <span class="o">&gt;</span> <span class="n">n2</span><span class="p">:</span>
+                <span class="n">res</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="c1"># print &quot;comp&quot;, i1.name,i1.isLeaf(), i2.name,i2.isLeaf(), res</span>
+        <span class="k">return</span> <span class="n">res</span></div>
+
+<div class="viewcode-block" id="EditableTree.addListenerRec"><a class="viewcode-back" href="../../api.html#soma.notification.EditableTree.addListenerRec">[docs]</a>    <span class="k">def</span> <span class="nf">addListenerRec</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">listener</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Add a listener to the tree recursivly at every level.</span>
+<span class="sd">        The listener is added to the notifier of all branches of the tree.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">addListener</span><span class="p">(</span><span class="n">listener</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">item</span><span class="o">.</span><span class="n">isLeaf</span><span class="p">():</span>
+                <span class="n">item</span><span class="o">.</span><span class="n">addListenerRec</span><span class="p">(</span><span class="n">listener</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="EditableTree.onAttributeChangeRec"><a class="viewcode-back" href="../../api.html#soma.notification.EditableTree.onAttributeChangeRec">[docs]</a>    <span class="k">def</span> <span class="nf">onAttributeChangeRec</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attributeName</span><span class="p">,</span> <span class="n">listener</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Add a listener of the changes of this attribute value in the tree</span>
+<span class="sd">        recursivly at every level.</span>
+
+<span class="sd">        The listener is added to the attribute change notifier of all branches</span>
+<span class="sd">        of the tree.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">onAttributeChange</span><span class="p">(</span><span class="n">attributeName</span><span class="p">,</span> <span class="n">listener</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">item</span><span class="o">.</span><span class="n">isLeaf</span><span class="p">():</span>
+                <span class="n">item</span><span class="o">.</span><span class="n">onAttributeChangeRec</span><span class="p">(</span><span class="n">attributeName</span><span class="p">,</span> <span class="n">listener</span><span class="p">)</span></div>
+
+    <span class="c1">#-------------------------------------------------------------------------</span>
+<div class="viewcode-block" id="EditableTree.Item"><a class="viewcode-back" href="../../api.html#soma.notification.EditableTree.Item">[docs]</a>    <span class="k">class</span> <span class="nc">Item</span><span class="p">(</span><span class="n">ObservableAttributes</span><span class="p">):</span>
+
+        <span class="sd">&quot;&quot;&quot;Base element of an :class:`EditableTree`</span>
+
+<span class="sd">        *Item* inherits from :class:`ObservableAttributes`, so it can notify</span>
+<span class="sd">        registred listeners of attributes changes (for example :attr:`name`).</span>
+
+<span class="sd">        Attributes</span>
+<span class="sd">        ----------</span>
+<span class="sd">        icon: string</span>
+<span class="sd">            filename of the image that can be used to represent the item</span>
+<span class="sd">        name: string</span>
+<span class="sd">            Text representation of the item</span>
+<span class="sd">        movable: bool</span>
+<span class="sd">            True if the item can be moved in the tree</span>
+<span class="sd">        modifiable: bool</span>
+<span class="sd">            True if the item can changed (add children, change text, icon)</span>
+<span class="sd">        delEnabled: bool</span>
+<span class="sd">            True if deletion of the item is allowed</span>
+<span class="sd">        tooltip: string</span>
+<span class="sd">            description associated to the item</span>
+<span class="sd">        copyEnabled: bool</span>
+<span class="sd">            indicates if this item can be copied</span>
+<span class="sd">        visible: bool</span>
+<span class="sd">            indicates if current item is visible (if not it may be hidden in a</span>
+<span class="sd">            graphical representation)</span>
+<span class="sd">        enabled: bool</span>
+<span class="sd">            indicates if the item is enabled, it could be visible but disabled</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">icon</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">tooltip</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">copyEnabled</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">modifiable</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">delEnabled</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">visible</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">enabled</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+            <span class="nb">super</span><span class="p">(</span><span class="n">EditableTree</span><span class="o">.</span><span class="n">Item</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">icon</span> <span class="o">=</span> <span class="n">icon</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+            <span class="k">if</span> <span class="nb">id</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="nb">hash</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="nb">id</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">tooltip</span> <span class="o">=</span> <span class="n">tooltip</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">copyEnabled</span> <span class="o">=</span> <span class="n">copyEnabled</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">modifiable</span> <span class="o">=</span> <span class="n">modifiable</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">delEnabled</span> <span class="o">=</span> <span class="n">delEnabled</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">visible</span> <span class="o">=</span> <span class="n">visible</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">enabled</span> <span class="o">=</span> <span class="n">enabled</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">onChangeNotifier</span> <span class="o">=</span> <span class="n">Notifier</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">unamed</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="k">def</span> <span class="nf">__getinitargs__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+            <span class="sd">&quot;&quot;&quot;Returns the args to pass to the __init__ method to construct this object.</span>
+<span class="sd">            It is useful to save L{ObservableList} object to minf format.</span>
+<span class="sd">            Returns</span>
+<span class="sd">            -------</span>
+<span class="sd">            tuple:</span>
+<span class="sd">                arg content to pass to the __init__ method for creating a copy</span>
+<span class="sd">                of this object</span>
+<span class="sd">            &quot;&quot;&quot;</span>
+            <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">icon</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">tooltip</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">copyEnabled</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">modifiable</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">delEnabled</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">visible</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">enabled</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">__reduce__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+            <span class="sd">&quot;&quot;&quot;This method is redefined for enable deepcopy of this object (and</span>
+<span class="sd">            potentially pickle).</span>
+
+<span class="sd">            It gives the arguments to pass to the init method of the object when creating a copy</span>
+
+<span class="sd">            Returns</span>
+<span class="sd">            -------</span>
+<span class="sd">            tuple:</span>
+<span class="sd">                class name, init args, state, iterator on elements to copy,</span>
+<span class="sd">                dictionary iterator</span>
+<span class="sd">            &quot;&quot;&quot;</span>
+            <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">__getinitargs__</span><span class="p">(),</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span>
+
+<div class="viewcode-block" id="EditableTree.Item.isLeaf"><a class="viewcode-back" href="../../api.html#soma.notification.EditableTree.Item.isLeaf">[docs]</a>        <span class="k">def</span> <span class="nf">isLeaf</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+            <span class="sd">&quot;&quot;&quot;Must be redefined in subclasses to say if the item is a leaf&quot;&quot;&quot;</span>
+            <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="EditableTree.Item.setAllModificationsEnabled"><a class="viewcode-back" href="../../api.html#soma.notification.EditableTree.Item.setAllModificationsEnabled">[docs]</a>        <span class="k">def</span> <span class="nf">setAllModificationsEnabled</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">bool</span><span class="p">):</span>
+            <span class="sd">&quot;&quot;&quot;Recursivly enables or disables item&#39;s modification.&quot;&quot;&quot;</span>
+            <span class="c1"># self.copyEnabled=bool # copy is always enabled. there&#39;s no use to</span>
+            <span class="c1"># have 3 different booleans, an editable should be sufficient</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">modifiable</span> <span class="o">=</span> <span class="nb">bool</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">delEnabled</span> <span class="o">=</span> <span class="nb">bool</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">isLeaf</span><span class="p">():</span>
+                <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+                    <span class="n">child</span><span class="o">.</span><span class="n">setAllModificationsEnabled</span><span class="p">(</span><span class="nb">bool</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="EditableTree.Item.isDescendant"><a class="viewcode-back" href="../../api.html#soma.notification.EditableTree.Item.isDescendant">[docs]</a>        <span class="k">def</span> <span class="nf">isDescendant</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">):</span>
+            <span class="sd">&quot;&quot;&quot;Returns *True* if the current item is a child or a child&#39;s</span>
+<span class="sd">            child... of the item in parameter</span>
+<span class="sd">            &quot;&quot;&quot;</span>
+            <span class="n">found</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="c1"># print self.name, &quot;is descendant&quot;, item.name, &quot;? &quot;</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">item</span><span class="o">.</span><span class="n">isLeaf</span><span class="p">():</span>
+                <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">item</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+                    <span class="c1"># search self in item&#39;s children and recursively in</span>
+                    <span class="c1"># children&#39;s children (deep first search)</span>
+                    <span class="k">if</span> <span class="bp">self</span> <span class="o">==</span> <span class="n">child</span><span class="p">:</span>
+                        <span class="n">found</span> <span class="o">=</span> <span class="kc">True</span>
+                    <span class="k">elif</span> <span class="ow">not</span> <span class="n">child</span><span class="o">.</span><span class="n">isLeaf</span><span class="p">():</span>
+                        <span class="n">found</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">isDescendant</span><span class="p">(</span><span class="n">child</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">found</span><span class="p">:</span>
+                        <span class="k">break</span>
+            <span class="k">return</span> <span class="n">found</span></div></div>
+
+    <span class="c1">#-------------------------------------------------------------------------</span>
+<div class="viewcode-block" id="EditableTree.Branch"><a class="viewcode-back" href="../../api.html#soma.notification.EditableTree.Branch">[docs]</a>    <span class="k">class</span> <span class="nc">Branch</span><span class="p">(</span><span class="n">Item</span><span class="p">,</span> <span class="n">ObservableSortedDictionary</span><span class="p">):</span>
+
+        <span class="sd">&quot;&quot;&quot; A Branch is an :class:`Item &lt;EditableTree.Item&gt;` that can contain</span>
+<span class="sd">        other items.</span>
+
+<span class="sd">        It inherits from :class:`Item &lt;EditableTree.Item&gt;` and from</span>
+<span class="sd">        :class:`ObservableSortedDictionary`, so it can have children items.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">defaultName</span> <span class="o">=</span> <span class="s2">&quot;new&quot;</span>
+
+        <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">icon</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">tooltip</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">copyEnabled</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">modifiable</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">delEnabled</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">content</span><span class="o">=</span><span class="p">[],</span> <span class="n">visible</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">enabled</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+            <span class="sd">&quot;&quot;&quot;All parameters must have default values to be able to create new</span>
+<span class="sd">            elements automatically&quot;&quot;&quot;</span>
+            <span class="c1"># super(EditableTree.Branch, self).__init__(content)  #, name, icon, tooltip, copyEnabled, modifiable, delEnabled)</span>
+            <span class="c1"># EditableTree.Item.__init__(self, name, icon, tooltip,</span>
+            <span class="c1"># copyEnabled, modifiable, delEnabled)</span>
+            <span class="n">dictContent</span> <span class="o">=</span> <span class="p">[(</span><span class="n">i</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">content</span><span class="p">]</span>
+            <span class="nb">super</span><span class="p">(</span><span class="n">EditableTree</span><span class="o">.</span><span class="n">Branch</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="nb">id</span><span class="p">,</span> <span class="n">icon</span><span class="p">,</span> <span class="n">tooltip</span><span class="p">,</span>
+                                                      <span class="n">copyEnabled</span><span class="p">,</span> <span class="n">modifiable</span><span class="p">,</span> <span class="n">delEnabled</span><span class="p">,</span> <span class="n">visible</span><span class="p">,</span> <span class="n">enabled</span><span class="p">,</span> <span class="o">*</span><span class="n">dictContent</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">defaultName</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">unamed</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">unamed</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="k">def</span> <span class="nf">__getinitargs__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+            <span class="n">content</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+            <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">icon</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">tooltip</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">copyEnabled</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">modifiable</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">delEnabled</span><span class="p">,</span> <span class="n">content</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">visible</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">enabled</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">__reduce__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+            <span class="sd">&quot;&quot;&quot;This method is redefined for enable deepcopy of this object (and</span>
+<span class="sd">            potentially pickle).</span>
+<span class="sd">            It gives the arguments to pass to the init method of the object</span>
+<span class="sd">            when creating a copy</span>
+<span class="sd">            &quot;&quot;&quot;</span>
+            <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">__getinitargs__</span><span class="p">(),</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+            <span class="n">s</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="s2">&quot; (&quot;</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
+                <span class="n">s</span> <span class="o">+=</span> <span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot; &quot;</span>
+            <span class="n">s</span> <span class="o">+=</span> <span class="s2">&quot;)&quot;</span>
+            <span class="k">return</span> <span class="n">s</span>
+
+        <span class="k">def</span> <span class="fm">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">EditableTree</span><span class="o">.</span><span class="n">Item</span><span class="o">.</span><span class="fm">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+<div class="viewcode-block" id="EditableTree.Branch.isLeaf"><a class="viewcode-back" href="../../api.html#soma.notification.EditableTree.Branch.isLeaf">[docs]</a>        <span class="k">def</span> <span class="nf">isLeaf</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">False</span></div>
+
+<div class="viewcode-block" id="EditableTree.Branch.add"><a class="viewcode-back" href="../../api.html#soma.notification.EditableTree.Branch.add">[docs]</a>        <span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">):</span>
+            <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">            Adds an item in the tree. If this item&#39;s id is already present in</span>
+<span class="sd">            the tree as a key, add the item&#39;s content in the corresponding key.</span>
+
+<span class="sd">            recursive method</span>
+<span class="sd">            &quot;&quot;&quot;</span>
+            <span class="n">key</span> <span class="o">=</span> <span class="n">item</span><span class="o">.</span><span class="n">id</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">isLeaf</span><span class="p">():</span>  <span class="c1"># if the item is a leaf and is already in the tree, nothing to do</span>
+                    <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">item</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>  <span class="c1"># item is also a dictionary and contains several elements, add each value in the tree item</span>
+                        <span class="bp">self</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+
+                <span class="c1"># also set current name for the current object</span>
+                <span class="bp">self</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">item</span><span class="o">.</span><span class="n">name</span>
+
+            <span class="k">else</span><span class="p">:</span>  <span class="c1"># new item</span>
+                <span class="bp">self</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">item</span></div>
+
+<div class="viewcode-block" id="EditableTree.Branch.removeEmptyBranches"><a class="viewcode-back" href="../../api.html#soma.notification.EditableTree.Branch.removeEmptyBranches">[docs]</a>        <span class="k">def</span> <span class="nf">removeEmptyBranches</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+            <span class="n">toRemove</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">child</span><span class="o">.</span><span class="n">isLeaf</span><span class="p">():</span>
+                    <span class="n">child</span><span class="o">.</span><span class="n">removeEmptyBranches</span><span class="p">()</span>
+                    <span class="k">if</span> <span class="nb">list</span><span class="p">(</span><span class="n">child</span><span class="o">.</span><span class="n">values</span><span class="p">())</span> <span class="o">==</span> <span class="p">[]:</span>
+                        <span class="n">toRemove</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">child</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">toRemove</span><span class="p">:</span>
+                <span class="k">del</span> <span class="bp">self</span><span class="p">[</span><span class="n">item</span><span class="o">.</span><span class="n">id</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="EditableTree.Branch.sort"><a class="viewcode-back" href="../../api.html#soma.notification.EditableTree.Branch.sort">[docs]</a>        <span class="k">def</span> <span class="nf">sort</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+            <span class="sd">&quot;&quot;&quot;Recursive sort of the tree: items are sorted in all branches.</span>
+<span class="sd">            &quot;&quot;&quot;</span>
+            <span class="n">ObservableSortedDictionary</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_keyItems</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">item</span><span class="o">.</span><span class="n">isLeaf</span><span class="p">():</span>
+                    <span class="n">item</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="n">key</span><span class="p">,</span> <span class="n">reverse</span><span class="o">=</span><span class="n">reverse</span><span class="p">)</span></div>
+
+        <span class="k">def</span> <span class="nf">_keyItems</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">id</span><span class="p">):</span>
+            <span class="sd">&#39;&#39;&#39;Sorting key function&#39;&#39;&#39;</span>
+            <span class="n">i1</span> <span class="o">=</span> <span class="bp">self</span><span class="p">[</span><span class="nb">id</span><span class="p">]</span>
+            <span class="c1"># names are translated in lowercase to make an alphabetical sort independant of the case</span>
+            <span class="c1"># by default (uppercase letters are &lt; to lowecase letters)</span>
+            <span class="n">n1</span> <span class="o">=</span> <span class="n">i1</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+            <span class="c1"># print &quot;comp&quot;, i1.name,i1.isLeaf(), i2.name,i2.isLeaf(), res</span>
+            <span class="c1"># leafs must go after subtrees</span>
+            <span class="k">return</span> <span class="p">(</span><span class="ow">not</span> <span class="n">i1</span><span class="o">.</span><span class="n">isLeaf</span><span class="p">(),</span> <span class="n">n1</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="EditableTree.Branch.compItems"><a class="viewcode-back" href="../../api.html#soma.notification.EditableTree.Branch.compItems">[docs]</a>        <span class="k">def</span> <span class="nf">compItems</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">id1</span><span class="p">,</span> <span class="n">id2</span><span class="p">):</span>
+            <span class="sd">&quot;&quot;&quot;Comparison function</span>
+
+<span class="sd">            Returns</span>
+
+<span class="sd">            - 1 if i1 &gt; i2</span>
+<span class="sd">            - -1 if i1 &lt; i2</span>
+<span class="sd">            - 0 if they are equal&quot;&quot;&quot;</span>
+            <span class="n">res</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">i1</span> <span class="o">=</span> <span class="bp">self</span><span class="p">[</span><span class="n">id1</span><span class="p">]</span>
+            <span class="n">i2</span> <span class="o">=</span> <span class="bp">self</span><span class="p">[</span><span class="n">id2</span><span class="p">]</span>
+            <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="n">i1</span><span class="o">.</span><span class="n">isLeaf</span><span class="p">()</span> <span class="ow">and</span> <span class="n">i2</span><span class="o">.</span><span class="n">isLeaf</span><span class="p">()):</span>
+                <span class="c1"># if one item is a branch and the other is a leaf, the branch</span>
+                <span class="c1"># must be before the leaf</span>
+                <span class="n">res</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+            <span class="k">elif</span> <span class="p">(</span><span class="n">i1</span><span class="o">.</span><span class="n">isLeaf</span><span class="p">()</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">i2</span><span class="o">.</span><span class="n">isLeaf</span><span class="p">()):</span>
+                <span class="n">res</span> <span class="o">=</span> <span class="mi">1</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># names are translated in lowercase to make an alphabetical sort independant of the case</span>
+                <span class="c1"># by default (uppercase letters are &lt; to lowecase letters)</span>
+                <span class="n">n1</span> <span class="o">=</span> <span class="n">i1</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+                <span class="n">n2</span> <span class="o">=</span> <span class="n">i2</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+                <span class="k">if</span> <span class="n">n1</span> <span class="o">&lt;</span> <span class="n">n2</span><span class="p">:</span>
+                    <span class="n">res</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+                <span class="k">elif</span> <span class="n">n1</span> <span class="o">&gt;</span> <span class="n">n2</span><span class="p">:</span>
+                    <span class="n">res</span> <span class="o">=</span> <span class="mi">1</span>
+            <span class="c1"># print &quot;comp&quot;, i1.name,i1.isLeaf(), i2.name,i2.isLeaf(), res</span>
+            <span class="k">return</span> <span class="n">res</span></div>
+
+<div class="viewcode-block" id="EditableTree.Branch.addListenerRec"><a class="viewcode-back" href="../../api.html#soma.notification.EditableTree.Branch.addListenerRec">[docs]</a>        <span class="k">def</span> <span class="nf">addListenerRec</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">listener</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">addListener</span><span class="p">(</span><span class="n">listener</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">item</span><span class="o">.</span><span class="n">isLeaf</span><span class="p">():</span>
+                    <span class="n">item</span><span class="o">.</span><span class="n">addListenerRec</span><span class="p">(</span><span class="n">listener</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="EditableTree.Branch.onAttributeChangeRec"><a class="viewcode-back" href="../../api.html#soma.notification.EditableTree.Branch.onAttributeChangeRec">[docs]</a>        <span class="k">def</span> <span class="nf">onAttributeChangeRec</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attributeName</span><span class="p">,</span> <span class="n">listener</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">onAttributeChange</span><span class="p">(</span><span class="n">attributeName</span><span class="p">,</span> <span class="n">listener</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">item</span><span class="o">.</span><span class="n">isLeaf</span><span class="p">():</span>
+                    <span class="n">item</span><span class="o">.</span><span class="n">onAttributeChangeRec</span><span class="p">(</span><span class="n">attributeName</span><span class="p">,</span> <span class="n">listener</span><span class="p">)</span></div></div>
+
+    <span class="c1">#-------------------------------------------------------------------------</span>
+<div class="viewcode-block" id="EditableTree.Leaf"><a class="viewcode-back" href="../../api.html#soma.notification.EditableTree.Leaf">[docs]</a>    <span class="k">class</span> <span class="nc">Leaf</span><span class="p">(</span><span class="n">Item</span><span class="p">):</span>
+
+        <span class="sd">&quot;&quot;&quot;A tree item that cannot have children items&quot;&quot;&quot;</span>
+
+        <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;new&quot;</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">icon</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">tooltip</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">copyEnabled</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">modifiable</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">delEnabled</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">visible</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">enabled</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+            <span class="nb">super</span><span class="p">(</span><span class="n">EditableTree</span><span class="o">.</span><span class="n">Leaf</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+                <span class="n">name</span><span class="p">,</span> <span class="nb">id</span><span class="p">,</span> <span class="n">icon</span><span class="p">,</span> <span class="n">tooltip</span><span class="p">,</span> <span class="n">copyEnabled</span><span class="p">,</span> <span class="n">modifiable</span><span class="p">,</span> <span class="n">delEnabled</span><span class="p">,</span> <span class="n">visible</span><span class="p">,</span> <span class="n">enabled</span><span class="p">)</span>
+
+<div class="viewcode-block" id="EditableTree.Leaf.isLeaf"><a class="viewcode-back" href="../../api.html#soma.notification.EditableTree.Leaf.isLeaf">[docs]</a>        <span class="k">def</span> <span class="nf">isLeaf</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">True</span></div></div></div>
+
+    <span class="c1">#-------------------------------------------------------------------------</span>
+
+
+<div class="viewcode-block" id="ObservableNotifier"><a class="viewcode-back" href="../../api.html#soma.notification.ObservableNotifier">[docs]</a><span class="k">class</span> <span class="nc">ObservableNotifier</span><span class="p">(</span><span class="n">Notifier</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    This notifier can notify when the first listener is added and when the last</span>
+<span class="sd">    listener is removed.</span>
+
+<span class="sd">    It enables to use the notifier only when there are some listeners</span>
+<span class="sd">    registred.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    onAddFirstListener: :class:`Notifier`</span>
+<span class="sd">        register a listener on this notifier to be called when the first</span>
+<span class="sd">        listener is registred on ObservableNotifier</span>
+<span class="sd">    onRemoveLastListener: :class:`Notifier`</span>
+<span class="sd">        register a listener on this notifier to be called when the last</span>
+<span class="sd">        listener is removed from ObservableNotifier</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parameterCount</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        parameterCount: int</span>
+<span class="sd">            if not *None*, each registered function must be callable with that</span>
+<span class="sd">            number of arguments (checking is done on registration).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">Notifier</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parameterCount</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">onAddFirstListener</span> <span class="o">=</span> <span class="n">Notifier</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">onRemoveLastListener</span> <span class="o">=</span> <span class="n">Notifier</span><span class="p">()</span>
+
+<div class="viewcode-block" id="ObservableNotifier.add"><a class="viewcode-back" href="../../api.html#soma.notification.ObservableNotifier.add">[docs]</a>    <span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">listener</span><span class="p">):</span>
+        <span class="n">nbListenersBefore</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_listeners</span><span class="p">)</span>
+        <span class="n">Notifier</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">listener</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">nbListenersBefore</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>  <span class="c1"># before add : 0 listener, after : 1 listener -&gt; add first listener</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_listeners</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">onAddFirstListener</span><span class="o">.</span><span class="n">notify</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="ObservableNotifier.remove"><a class="viewcode-back" href="../../api.html#soma.notification.ObservableNotifier.remove">[docs]</a>    <span class="k">def</span> <span class="nf">remove</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">listener</span><span class="p">):</span>
+        <span class="n">nbListenersBefore</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_listeners</span><span class="p">)</span>
+        <span class="n">Notifier</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">listener</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">nbListenersBefore</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>  <span class="c1"># before add : 1 listener, after : 0 listener -&gt; remove last listener</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_listeners</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">onRemoveLastListener</span><span class="o">.</span><span class="n">notify</span><span class="p">()</span></div></div>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Soma-base 5.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">soma.notification</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2011, IFR49.org.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.5.4.
+    </div>
+  </body>
+</html>
