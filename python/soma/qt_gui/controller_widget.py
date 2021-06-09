@@ -535,11 +535,13 @@ class ControllerWidget(QtGui.QWidget):
                     # Close and schedule for deletation the control labels
                     if isinstance(control_label, tuple):
                         for label in control_label:
-                            label.close()
-                            label.deleteLater()
+                            if not sip.isdeleted(label):
+                                label.close()
+                                label.deleteLater()
                     elif control_label:
-                        control_label.close()
-                        control_label.deleteLater()
+                        if not sip.isdeleted(control_label):
+                            control_label.close()
+                            control_label.deleteLater()
 
                     # Store the controls to be removed
                     to_remove_controls.append(control_name)
