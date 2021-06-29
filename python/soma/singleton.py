@@ -40,6 +40,9 @@ Singleton pattern.
 - license: `CeCILL B <http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html>`_
 '''
 from __future__ import absolute_import
+
+import atexit
+
 __docformat__ = 'restructuredtext en'
 
 
@@ -83,6 +86,7 @@ class Singleton(object):
                                      '__singleton_init__', None)
             if singleton_init is not None:
                 singleton_init(*args, **kwargs)
+            atexit.register(cls.delete_singleton)
         return cls._singleton_instance
 
     def __init__(self, *args, **kwargs):
@@ -94,3 +98,9 @@ class Singleton(object):
 
     def __singleton_init__(self, *args, **kwargs):
         super(Singleton, self).__init__(*args, **kwargs)
+
+    @classmethod
+    def delete_singleton(cls):
+        if hasattr(cls, '_singleton_instance'):
+            del cls._singleton_instance
+
