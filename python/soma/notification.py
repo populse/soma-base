@@ -141,10 +141,15 @@ class Notifier(object):
             # by a listener during notification loop.
             for listener in tuple(self._listeners):
                 # print '!notify!  -->', listener
-                if isinstance(listener, Notifier):
-                    listener.notify(*args)
-                else:
-                    listener(*args)
+                try:
+                    if isinstance(listener, Notifier):
+                        listener.notify(*args)
+                    else:
+                        listener(*args)
+                except ReferenceError:
+                    # listener is deleted in a weak ref/proxy
+                    self._listeners.remove(listener)
+
         else:
             if self._delayedNotificationIgnoreDoubles:
                 if args not in self._delayedNotification:
