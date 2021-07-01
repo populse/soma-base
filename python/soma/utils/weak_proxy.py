@@ -76,3 +76,36 @@ def weak_proxy(obj, callback=None):
     wr._weakref = weakref.ref(real_obj)
     return wr
 
+
+class proxy_method(object):
+    ''' Indirect proxy for a bound method
+
+    It replaces a bound method, ie ``a.method`` with a proxy callable which
+    does not take a reference on ``a``.
+
+    Especially useful for callbacks.
+    If we want to set a notifier with a callback on a proxy object (without
+    adding a new reference on it), we can use proxy_method::
+
+        a = anatomist.Anatomist()
+        a.onCursorNotifier.onAddFirstListener.add(
+            partial(proxy_method(a, 'enableListening'),
+            "LinkedCursor", a.onCursorNotifier)))
+        del a
+
+    Without this mechanism, using::
+
+        a.onCursorNotifier.onAddFirstListener.add(
+            partial(a.enableListening, "LinkedCursor", a.onCursorNotifier)))
+
+    would increment the reference count on a, because ``a.enableListening``,
+    as a *bound method*, contains a reference to a, and will prevent the
+    deletion of ``a`` (here the Anatomist application)
+    '''
+    def __init__(self, obj, method):
+        self.proxy = weak_proxy(obj)
+        self.method = method
+
+    def __call__(self, *args, **kwargs):
+        return getattr(self.proxy, self.method)(*args, **kwargs)
+
