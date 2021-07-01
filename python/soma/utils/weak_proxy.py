@@ -102,7 +102,14 @@ class proxy_method(object):
     as a *bound method*, contains a reference to a, and will prevent the
     deletion of ``a`` (here the Anatomist application)
     '''
-    def __init__(self, obj, method):
+    def __init__(self, obj, method=None):
+        '''
+        The constructor takes as parameters, either the object and its method
+        name (as a string), or the bound method itself.
+        '''
+        if method is None:
+            method = obj.__name__
+            obj = obj.__self__
         self.proxy = weak_proxy(obj)
         self.method = method
 
