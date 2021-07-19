@@ -72,4 +72,3 @@ class QVTabWidget(Qt.QTabWidget):
         self.tabBar().tab_height = height
         self.tabBar().resize_optimal()
         self.resize(self.sizeHint())
-

@@ -632,4 +632,3 @@ class OneLineQTableWidget(QtGui.QTableWidget):
         if self.height() != mheight:
             self.setFixedHeight(mheight)
         super(OneLineQTableWidget, self).resizeEvent(event)
-

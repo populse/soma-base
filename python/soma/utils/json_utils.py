@@ -63,5 +63,3 @@ def from_json(value):
     elif code == '<set>':
         return set([from_json(x) for x in value[1:]])
     return [from_json(x) for x in value]
-
-

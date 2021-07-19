@@ -591,5 +591,3 @@ class GenericTableEditor(QWidget):
                           'separator': separator}  # , 'nbCols': nbCols}
             self.genericTableEditor.load_from_file(
                 file=None, fileStructure=structFile)
-
-

@@ -321,4 +321,3 @@ def relax_exists_constraint(trait):
     elif len(trait.inner_traits) > 0:
         for sub_c_trait in trait.inner_traits:
             relax_exists_constraint(sub_c_trait)
-

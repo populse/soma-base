@@ -124,4 +124,3 @@ if __name__ == '__main__':
     if len(sys.argv) >=4:
         timeout = int(sys.argv[3])
     sys.exit(_notebook_run(sys.argv[1], sys.argv[2], timeout=timeout))
-

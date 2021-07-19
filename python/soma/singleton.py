@@ -103,4 +103,3 @@ class Singleton(object):
     def delete_singleton(cls):
         if hasattr(cls, '_singleton_instance'):
             del cls._singleton_instance
-

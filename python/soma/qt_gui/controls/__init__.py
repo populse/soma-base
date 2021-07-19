@@ -66,4 +66,3 @@ controls["unknown"] = NonEditableControlWidget
 controls["Undefined"] = NonEditableControlWidget
 # nipype types
 controls["ImageFileSPM"] = FileControlWidget
-

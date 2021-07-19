@@ -208,4 +208,3 @@ class NonEditableControlWidget(object):
             synchronize with the controller
         """
         pass
-

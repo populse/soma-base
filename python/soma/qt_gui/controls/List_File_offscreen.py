@@ -110,4 +110,3 @@ class OffscreenListFileControlWidget(OffscreenListControlWidget):
             print('param:', control_instance.trait_name)
             print('value:', fnames)
             setattr(controller, control_instance.trait_name, fnames)
-

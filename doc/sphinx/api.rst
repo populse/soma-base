@@ -296,5 +296,3 @@ SubModule: ``uuid``
 
 .. automodule:: soma.uuid
     :members:
-
-

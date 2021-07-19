@@ -21,4 +21,3 @@ Sub-modules
     :maxdepth: 1
 
     api.rst
-

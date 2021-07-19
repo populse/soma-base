@@ -128,4 +128,3 @@ class BytesControlWidget(StrControlWidget):
             old_trait_value = getattr(controller_widget.controller,
                                       control_name)
             control_instance.set_value(old_trait_value)
-

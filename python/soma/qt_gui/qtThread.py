@@ -312,4 +312,3 @@ class MainThreadLife(object):
         # now the process thread should have removed its reference on thing:
         # we can safely delete it fom here, in the main thread.
         del thing # probably useless
-

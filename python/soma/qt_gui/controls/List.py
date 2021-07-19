@@ -1020,4 +1020,3 @@ class ListValuesEditor(QtGui.QDialog):
         if self.modified:
             return
         self.textedit.setText(self.text_repr())
-

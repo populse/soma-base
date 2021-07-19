@@ -76,4 +76,3 @@ class QPredefLineEdit(Qt.QLineEdit):
 
     def set_value(self, value):
         self.setText(self.text_repr(value))
-

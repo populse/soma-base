@@ -115,4 +115,3 @@ class proxy_method(object):
 
     def __call__(self, *args, **kwargs):
         return getattr(self.proxy, self.method)(*args, **kwargs)
-

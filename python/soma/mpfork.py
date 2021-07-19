@@ -1,4 +1,3 @@
-#!usr/bin/env python
 # -*- coding: utf-8 -*-
 
 '''
@@ -192,4 +191,3 @@ def allocate_workers(q, nworker=0, *args, **kwargs):
         w.start()
         workers.append(w)
     return workers
-

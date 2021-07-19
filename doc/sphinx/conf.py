@@ -251,4 +251,3 @@ intersphinx_mapping = {
   'python': ('https://docs.python.org/%d.%d' % sys.version_info[:2], None),
   'traits': ('https://docs.enthought.com/traits', None),
 }
-

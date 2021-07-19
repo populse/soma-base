@@ -73,4 +73,3 @@ def patch_ctypes_find_library():
     '''
     if ctypes.util.find_library is ctypes_find_library:
         ctypes.util.find_library = find_library
-
