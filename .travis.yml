@@ -33,10 +33,7 @@ install:
     - if [ ${TRAVIS_PYTHON_VERSION:0:1} == "2" ]; then pip install subprocess32; fi
     - if [ ${TRAVIS_PYTHON_VERSION:0:1} == "2" ]; then pip install importlib; fi
     - pip install codecov
-    # run code quality checks (skip them on Mac OS because Python 3 is not
-    # available there)
     - if [[ $TRAVIS_OS_NAME == linux ]]; then pip install pre-commit; fi
-    - if [[ $TRAVIS_OS_NAME == linux ]]; then pre-commit run --all-files; fi
     # to test notebooks
     - pip install jupyter nbconvert
     - if [[ "$TRAVIS_OS_NAME" = "linux" && "$TRAVIS_PYTHON_VERSION" == "3.5" ]]; then sudo apt-get install -y pandoc graphviz; pip install sphinx sphinx-gallery pandoc nbsphinx "PyQt5<5.13"; fi
@@ -49,6 +46,9 @@ install:
 
 script:
     - coverage run -m soma.tests.test_soma_base
+    # run code quality checks (skip them on Mac OS because Python 3 is not
+    # available there)
+    - if [[ $TRAVIS_OS_NAME == linux ]]; then pre-commit run --all-files; fi
 
 after_success:
     - codecov
