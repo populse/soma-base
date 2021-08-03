@@ -130,7 +130,7 @@ def worker(q, *args, **kwargs):
     The loop ends when a job in the queue is None.
 
     .. warning::
-        Here we are making use of fork() (Unix only) inside a thread. Some systems do not behave wel in this situation.
+        Here we are making use of fork() (Unix only) inside a thread. Some systems do not behave well in this situation.
         See :func:`the os.fork() doc <os.fork>`
     '''
     while True:
@@ -164,7 +164,7 @@ def allocate_workers(q, nworker=0, *args, **kwargs):
     Parameters
     ----------
     q: :class:`Queue <Queue.Queue>` instance
-        the jobs queue which will fed with jobs for processing
+        the jobs queue which will be fed with jobs for processing
     nworker: int
         number of worker threads (jobs which will run in parallel). A positive
         number (1, 2...) will be used as is, 0 means all available CPU cores
