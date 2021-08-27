@@ -26,14 +26,14 @@ install:
     - pip install numpy 'six>=1.13'
     - pip install traits
     - pip install argparse
-    - pip install pycrypto
+    - pip install pycryptodome
     - pip install pyyaml
     # module queue
     - pip install future
     - if [ ${TRAVIS_PYTHON_VERSION:0:1} == "2" ]; then pip install subprocess32; fi
     - if [ ${TRAVIS_PYTHON_VERSION:0:1} == "2" ]; then pip install importlib; fi
     - pip install codecov
-    - if [[ $TRAVIS_OS_NAME == linux ]]; then pip install pre-commit; fi
+    - if [[ $TRAVIS_OS_NAME == linux ]]; then pip install pre-commit~=1.0; fi
     # to test notebooks
     - pip install jupyter nbconvert
     - if [[ "$TRAVIS_OS_NAME" = "linux" && "$TRAVIS_PYTHON_VERSION" == "3.5" ]]; then sudo apt-get install -y pandoc graphviz; pip install sphinx sphinx-gallery pandoc nbsphinx "PyQt5<5.13"; fi
