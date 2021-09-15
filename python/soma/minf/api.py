@@ -239,8 +239,6 @@ def iterateMinf(source, targets=None, stop_on_error=True, exceptions=[]):
                     if hasattr(source, '_BufferAndFile__file'):
                         x = source._BufferAndFile__file
                     x = 'Error in iterateMinf while reading ' + str(x) + ': '
-                    msg = x + e.message
-                    # e.message = msg
                     # e.args = ( x + e.args[0], ) + e.args[1:]
                     print(x)
                     raise
