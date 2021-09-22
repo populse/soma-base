@@ -4,83 +4,41 @@ from collections import OrderedDict
 import inspect
 from typing import Union, List
 
-from pydantic import BaseModel
+from pydantic import create_model, Field, validate_model
 from pydantic.fields import ModelField
 
 from soma.undefined import undefined
 
 
-class Trait:
-    def __init__(self, type_, default=undefined, name=None, required=undefined, alias=None, **kwargs):
-        if required is undefined:
-            required = default is undefined
-        self.name = name
-        self.type_ = type_
-        self.default = default
-        self.required = required
-        self.alias = alias
-        for k, v in kwargs.items():
-            setattr(self, k, v)
-
-    @classmethod
-    def from_model_field(cls, model_field):
-        type_ = getattr(model_field.outer_type_, '__args__', None)
-        if isinstance(type_, tuple) and type_ and type_[0] is undefined.__class__:
-            type_ = type_[1]
-        return cls(
-            name=model_field.name,
-            type_=type_,
-            default=model_field.default,
-            required=model_field.required,
-            alias=model_field.alias,
-        )
 
 
-    def model_field(self, model_config, class_validators):
-        return ModelField(name=self.name, 
-                          type_=self.type_,
-                          model_config=model_config,
-                          class_validators=class_validators,
-                          required=self.required,
-                          default=self.default,
-                          alias=self.alias)
-
-    def clone(self, **kwargs):
-        for k, v in self.__dict__.items():
-            if k not in kwargs:
-                kwargs[k] = v
-        type_ = kwargs['type_']
-        if isinstance(type_, Controller):
-            type_ = type_.__class__()
-        kwargs['type_'] = type_
-        return self.__class__(**kwargs)
-
-
-class ControllerMeta(BaseModel.__class__):
-    def __new__(cls, name, bases, dict):
-        annotations = dict.get('__annotations__', {})
-        traits = OrderedDict()
-        for n in annotations:
-            if n not in dict:
-                dict[n] = undefined
-            t = annotations[n]
-            if isinstance(t, Trait):
-                t.name = n
-                traits[n] = t
-                annotations[n] = t.type_
-            annotations[n] = Union[undefined.__class__, annotations[n]]
-
-        result = super(ControllerMeta, cls).__new__(cls, name, bases, dict)
-        for name, field_model in result.__fields__.items():
-            if name not in traits:
-                trait = Trait.from_model_field(field_model)
-                trait.class_trait = True
-                traits[name] = trait
-        result.traits = traits
+class ControllerMeta(type):
+    def __new__(cls, name, bases, namespace):
+        result = super().__new__(cls, name, bases, namespace)
+        schema_classes = [i for i in result.__mro__ if hasattr(i, '__annotations__')]
+        schema_classes.reverse()
+        schema_dict = {}
+        for cls in schema_classes:
+            for attribute, annotation in cls.__annotations__.items():
+                default = getattr(cls, attribute, undefined)
+                if annotation.__name__ == 'Annotated':
+                    type_, field = annotation.__args__
+                    field = field[0]
+                    field.extra['class_field'] = True
+                    if default is not undefined:
+                        field.default = default
+                    schema_dict[attribute] = (type_, field)
+                else:
+                    if default is undefined:
+                        schema_dict[attribute] = (annotation, Field(..., class_field=True))
+                    else:
+                        schema_dict[attribute] = (annotation, Field(default, class_field=True))
+        result._schema = create_model(name, **schema_dict)
+        result._schema.__dict__
         return result
 
 
-class Controller(BaseModel, metaclass=ControllerMeta):
+class Controller(metaclass=ControllerMeta):
 
     """ A Controller contains some traits: attributes typing and observer
     (callback) pattern.
@@ -104,12 +62,6 @@ class Controller(BaseModel, metaclass=ControllerMeta):
     add_trait
     remove_trait
     """
-    class Config:
-        arbitrary_types_allowed = True
-        validate_assignment = True
-        extra = 'allow'
-
-
     class ValueEvent:
         def __init__(self):
             self.callbacks_mapping = {}
@@ -152,43 +104,41 @@ class Controller(BaseModel, metaclass=ControllerMeta):
     
 
     def __init__(self, *args, **kwargs):
-        class_traits = self.traits
-        super().__init__(*args, 
-                         on_attribute_change = self.ValueEvent(),
-                         traits=OrderedDict(),
-                         **kwargs)
-        self.__fields__ = self.__fields__.copy()
-        self.__fields_set__ = self.__fields_set__.copy()
-
-        for name, trait in class_traits.items():
-            self.traits[name] = trait
+        super().__init__()
+        values = dict(zip(self._schema.__fields__, args))
+        values.update(kwargs)
+        super().__setattr__('_model', self._schema(**values))
         self.enable_notification = True
     
     
     def __setattr__(self, name, value):
-        print('!Controller.setattr!', name, '=', repr(value))
-        if getattr(self, 'enable_notification', False) and name in self.__fields__:
-            old_value = getattr(self, name, undefined)
-            self._unnotified_setattr(name, value)
-            if old_value != value:
-                self.on_attribute_change.fire(name, value, old_value, self)
-        else:
-            self._unnotified_setattr(name, value)
-
-    def _unnotified_setattr(self, name, value):
-        trait = self.traits.get(name)
-        if trait and issubclass(trait.type_, Controller):
-            if isinstance(value, dict):
-                new_value = trait.type_()
-                for k, v in value.items():
-                    setattr(new_value, k, v)
-                print('!here!', repr(name), type(new_value))
-                super().__setattr__(name, new_value)
-                print('!done!')
+        if name in self._schema.__fields__:
+            if getattr(self, 'enable_notification', False):
+                old_value = getattr(self, name, undefined)
+                self._unnotified_setattr(name, value)
+                if old_value != value:
+                    self.on_attribute_change.fire(name, value, old_value, self)
             else:
-                super().__setattr__(name, value)
+                self._unnotified_setattr(name, value)
         else:
             super().__setattr__(name, value)
+    
+
+    def _unnotified_setattr(self, name, value):
+        setarrt(self._model, name, value)
+        # trait = self.traits.get(name)
+        # if trait and issubclass(trait.type_, Controller):
+        #     if isinstance(value, dict):
+        #         new_value = trait.type_()
+        #         for k, v in value.items():
+        #             setattr(new_value, k, v)
+        #         print('!here!', repr(name), type(new_value))
+        #         super().__setattr__(name, new_value)
+        #         print('!done!')
+        #     else:
+        #         super().__setattr__(name, value)
+        # else:
+        #     super().__setattr__(name, value)
 
 
     def user_traits(self):
