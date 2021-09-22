@@ -26,8 +26,8 @@ class Application(Singleton, Controller):
     # name = ReadOnly(desc='Name of the application')
     # version = ReadOnly()
 
-    #TODO: take into account attributes docstring (see PEP 258)
-    plugin_modules = List[str]
+    #TODO: make it possible to add metaattributes such as "desc"
+    plugin_modules : List[str]
     'List of Python module to load after application configuration'
 
     def __singleton_init__(self, name=None, version=None, *args, **kwargs):

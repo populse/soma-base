@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 
-from collections import namedtuple
-
+from soma.singleton import Singleton
 '''
-:attr:`Undefined` (or :attr:`undefined`) is a constant that can be used as
+attr:`undefined` is a constant that can be used as
 a special value different from any other Python value including *None*.
 
 Example::
@@ -15,7 +14,7 @@ Example::
 '''
 __docformat__ = "restructuredtext en"
 
-class UndefinedClass( namedtuple('Undefined',())):
+class UndefinedClass(Singleton):
     '''
     *UndefinedClass* instance is used to represent an undefined attribute
     value when *None* cannot be used because it can be a valid value.
@@ -32,5 +31,3 @@ class UndefinedClass( namedtuple('Undefined',())):
         return '<undefined>'
 
 Undefined = undefined = UndefinedClass()
-
-del UndefinedClass
