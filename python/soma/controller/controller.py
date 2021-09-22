@@ -384,7 +384,7 @@ class Controller(BaseModel, metaclass=ControllerMeta):
             # add a 'protected_parameters' trait bypassing the
             # Controller.add_trait mechanism (it will not be a "user_trait")
             self.add_trait(self, 
-                           Trait(typing.List[str],
+                           Trait(List[str],
                                  name='protected_parameters',
                                  default=[],
                                  hidden=True))
@@ -512,7 +512,7 @@ def controller_to_dict(item, exclude_undefined=False,
     elif isinstance(item, dict):
         result = dict_class()
         for name, value in item.items():
-            if (exclude_undefined and value is Undefined) \
+            if (exclude_undefined and value is undefined) \
                 or (exclude_none and value is None):
                 continue
             if exclude_empty and (value == [] or value == {}):
@@ -535,9 +535,9 @@ try:
 
     class JsonControllerEncoder(json.JSONEncoder):
         def default(self, obj):
-            if obj is Undefined:
+            if obj is undefined:
                 return {'__class__': '<undefined>'}
-            if isinstance(obj, traits.TraitSetObject):
+            if isinstance(obj, set):
                 return list(obj) # {'__class__': 'traits.TraitSetObject',
                         #'items': list(obj)}
             if not isinstance(obj, Controller):
@@ -567,7 +567,7 @@ try:
             if isinstance(obj, dict) and '__class__' in obj:
                 c = obj['__class__']
                 if c == '<undefined>':
-                    return Undefined
+                    return undefined
                 # Controller objects are decoded as dicts, without the
                 # __class__ item, because we cannot rebuild their traits in
                 # the general case. They should be converted later by
