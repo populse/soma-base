@@ -4,8 +4,6 @@ from typing import List
 import unittest
 
 from soma.controller import Controller, OpenKeyController, BaseOpenKeyController
-from soma.undefined import undefined
-
 
 class TestController(unittest.TestCase):
 
@@ -13,7 +11,7 @@ class TestController(unittest.TestCase):
         c1 = Controller()
         c1.add_trait(str, 'gogo')
         c1.add_trait(int, 'bozo', 12)
-        self.assertEqual(c1.gogo, undefined)
+        self.assertRaises(AttributeError, getattr, c1, 'gogo')
         self.assertEqual(c1.bozo, 12)
         self.assertEqual(list(c1.user_traits().keys()), ['gogo', 'bozo'])
         c1.gogo = 'blop krok'
@@ -44,17 +42,13 @@ class TestController(unittest.TestCase):
             ouioui: List[str]
 
         c1 = Babar()
-        self.assertEqual(c1.gargamel, undefined)
+        self.assertRaises(AttributeError, getattr, c1, 'gargamel')
         d = c1.export_to_dict()
-        self.assertEqual(d, {'hupdahup': 'barbatruc',
-                             'gargamel': undefined,
-                             'ouioui': undefined})
+        self.assertEqual(d, {'hupdahup': 'barbatruc'})
         c2 = Babar()
         c2.gargamel = 'schtroumpf'
-        c2.import_from_dict(d)
+        c2.import_from_dict(d, clear=True)
         self.assertEqual(c2.export_to_dict(), d)
-        d = c1.export_to_dict(exclude_undefined=True)
-        self.assertEqual(d, {'hupdahup': 'barbatruc'})
         c2.gargamel = 'schtroumpf'
         c2.import_from_dict(d)
         c2.ouioui = []
@@ -102,11 +96,8 @@ class TestController(unittest.TestCase):
         self.assertEqual(other_car.export_to_dict(), d)
         other_car = my_car.copy(with_values=False)
         self.assertEqual(other_car.export_to_dict(),
-                         {'wheels': undefined, 
-                          'engine': undefined,
-                          'driver': {'head': '', 'arms': '',
-                                     'legs': ''},
-                          'problems': undefined})
+                         {'driver': {'head': '', 'arms': '',
+                                     'legs': ''}})
 
         my_car.problems.fuel = 3.5
         self.assertEqual(my_car.problems.fuel, '3.5')
@@ -196,7 +187,7 @@ class TestController(unittest.TestCase):
         field = o.user_traits()['dynamic_list']
         self.assertEqual(field.alias, 'dynamic_list')
         self.assertEqual(field.outer_type_, List[int])
-        self.assertEqual(field.field_info.default, undefined)
+        self.assertEqual(field.field_info.default, ...)
         self.assertEqual(field.field_info.extra['class_field'], False)
 
     # def test_trait_utils1(self):

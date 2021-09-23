@@ -23,14 +23,15 @@ class ControllerMeta(type):
         for cls in schema_classes:
             for attribute, annotation in cls.__annotations__.items():
                 default = getattr(cls, attribute, undefined)
+                field_default = (... if default is undefined else default)
                 if annotation.__name__ == 'Annotated':
                     type_, field = annotation.__args__
                     field = field[0]
                     field.extra['class_field'] = True
-                    field.default = default
+                    field.default = field_default
                     schema_dict[attribute] = (type_, field)
                 else:
-                    schema_dict[attribute] = (annotation, Field(default, class_field=True))
+                    schema_dict[attribute] = (annotation, Field(field_default, class_field=True))
         result._schema = create_model(name, 
                                       __config__=SchemaConfig,
                                       **schema_dict)
@@ -162,15 +163,16 @@ class Controller(metaclass=ControllerMeta):
 
 
     def add_trait(self, type_, name=None, default=undefined, **kwargs):
+        field_default = (... if default is undefined else default)
         if type_.__name__ == 'Annotated':
             type_, field = type_.__args__
             field = field[0]
             field.extra['class_field'] = False
             field.extra.update(kwargs)
-            field.default = default
+            field.default = field_default
             self._schema_dict[name] = (type_, field)
         else:
-            self._schema_dict[name] = (type_, Field(default, class_field=False, **kwargs))
+            self._schema_dict[name] = (type_, Field(field_default, class_field=False, **kwargs))
         self._rebuild_model()
     
 
@@ -244,9 +246,7 @@ class Controller(metaclass=ControllerMeta):
             cleared, otherwise they are left in place.
         """
         if clear:
-            for trait_name in self.user_traits():
-                if trait_name not in state_dict:
-                    delattr(self, trait_name)
+            self._model =  self._schema.construct()
         for trait_name, value in state_dict.items():
             if value is undefined:
                 if getattr(self, trait_name, undefined) is not undefined:
@@ -261,7 +261,7 @@ class Controller(metaclass=ControllerMeta):
                     "item %s is not a trait in the Controller" % trait_name)
             if trait and isinstance(trait.outer_type_, type) \
                     and issubclass(trait.outer_type_, Controller):
-                controller = getattr(self, trait_name)
+                controller = getattr(self, trait_name, undefined)
                 if controller is undefined:
                     setattr(self, trait_name, value)
                 else:
@@ -427,6 +427,7 @@ class BaseOpenKeyController(Controller):
         else:
             super().__delattr__(name)
 
+#TODO: exclude_undefined is obsolete
 def controller_to_dict(item, exclude_undefined=False,
                        exclude_transient=False,
                        exclude_none=False,
@@ -458,10 +459,9 @@ def controller_to_dict(item, exclude_undefined=False,
             if exclude_transient and field.field_info.extra.get('transient', False):
                 continue
             value = getattr(item, name, undefined)
-            if (exclude_undefined and value is undefined) \
-                or (exclude_none and value is None):
-                continue
-            if exclude_empty and (value == [] or value == {}):
+            if value is undefined \
+                or (exclude_none and value is None) \
+                or (exclude_empty and value in ([], {})):
                 continue
             value = controller_to_dict(value,
                                        exclude_undefined=exclude_undefined,
