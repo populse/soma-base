@@ -204,8 +204,7 @@ class Controller(metaclass=ControllerMeta):
         super().__setattr__('_model', self._schema.construct(**values))
 
 
-    def export_to_dict(self, exclude_undefined=False,
-                       exclude_transient=False,
+    def export_to_dict(self, exclude_transient=False,
                        exclude_none=False,
                        exclude_empty=False,
                        dict_class=dict):
@@ -214,8 +213,6 @@ class Controller(metaclass=ControllerMeta):
 
         Parameters
         ----------
-        exclude_undefined: bool (optional)
-            if set, do not export Undefined values
         exclude_transient: bool (optional)
             if set, do not export values whose trait is marked "transcient"
         exclude_none: bool (optional)
@@ -226,7 +223,7 @@ class Controller(metaclass=ControllerMeta):
             use this type of mapping type to represent controllers. It should
             follow the mapping protocol API.
         """
-        return controller_to_dict(self, exclude_undefined=exclude_undefined,
+        return controller_to_dict(self,
                                   exclude_transient=exclude_transient,
                                   exclude_none=exclude_none,
                                   exclude_empty=exclude_empty,
@@ -427,8 +424,7 @@ class BaseOpenKeyController(Controller):
         else:
             super().__delattr__(name)
 
-#TODO: exclude_undefined is obsolete
-def controller_to_dict(item, exclude_undefined=False,
+def controller_to_dict(item,
                        exclude_transient=False,
                        exclude_none=False,
                        exclude_empty=False,
@@ -441,8 +437,6 @@ def controller_to_dict(item, exclude_undefined=False,
 
     Parameters
     ----------
-    exclude_undefined: bool (optional)
-        if set, do not export Undefined values
     exclude_transient: bool (optional)
         if set, do not export values whose trait is marked "transcient"
     exclude_none: bool (optional)
@@ -464,7 +458,6 @@ def controller_to_dict(item, exclude_undefined=False,
                 or (exclude_empty and value in ([], {})):
                 continue
             value = controller_to_dict(value,
-                                       exclude_undefined=exclude_undefined,
                                        exclude_transient=exclude_transient,
                                        exclude_none=exclude_none,
                                        exclude_empty=exclude_empty,
@@ -475,13 +468,11 @@ def controller_to_dict(item, exclude_undefined=False,
     elif isinstance(item, dict):
         result = dict_class()
         for name, value in item.items():
-            if (exclude_undefined and value is undefined) \
-                or (exclude_none and value is None):
+            if exclude_none and value is None:
                 continue
-            if exclude_empty and (value == [] or value == {}):
+            if exclude_empty and value in ([], {}):
                 continue
             value = controller_to_dict(value,
-                                       exclude_undefined=exclude_undefined,
                                        exclude_transient=exclude_transient,
                                        exclude_none=exclude_none,
                                        exclude_empty=exclude_empty,
@@ -505,8 +496,7 @@ try:
                         #'items': list(obj)}
             if not isinstance(obj, Controller):
                 return super(JsonControllerEncoder, self).default(obj)
-            d = obj.export_to_dict(exclude_undefined=True,
-                exclude_transient=True,
+            d = obj.export_to_dict(exclude_transient=True,
                 exclude_none=True,
                 exclude_empty=True,
                 dict_class=OrderedDict)
