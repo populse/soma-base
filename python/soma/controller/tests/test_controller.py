@@ -3,7 +3,7 @@
 from typing import List
 import unittest
 
-from soma.controller import Controller, OpenKeyController
+from soma.controller import Controller, OpenKeyController, BaseOpenKeyController
 from soma.undefined import undefined
 
 
@@ -13,7 +13,7 @@ class TestController(unittest.TestCase):
         c1 = Controller()
         c1.add_trait(str, 'gogo')
         c1.add_trait(int, 'bozo', 12)
-        self.assertRaises(AttributeError, getattr, c1, 'gogo')
+        self.assertEqual(c1.gogo, undefined)
         self.assertEqual(c1.bozo, 12)
         self.assertEqual(list(c1.user_traits().keys()), ['gogo', 'bozo'])
         c1.gogo = 'blop krok'
@@ -63,9 +63,9 @@ class TestController(unittest.TestCase):
 
     def test_controller4(self):
         class Driver(Controller):
-            head : str
-            arms : str
-            legs : str
+            head : str = ''
+            arms : str = ''
+            legs : str = ''
 
         class Car(Controller):
             wheels : str
@@ -81,13 +81,7 @@ class TestController(unittest.TestCase):
         my_car.driver.head = 'empty'
         my_car.driver.arms = 'heavy'
         my_car.driver.legs = 'short'
-        print()
-        print('-'*50)
-        print(my_car.traits['problems'].__dict__)
         my_car.problems = {'exhaust': 'smoking', 'windshield': 'cracked'}
-        print('-'*50)
-
-        print('!!!', my_car.problems.export_to_dict())
         d = my_car.export_to_dict()
         self.assertEqual(d, {'wheels': 'flat', 'engine': 'wind-broken',
                              'driver': {'head': 'empty', 'arms': 'heavy',
@@ -95,7 +89,7 @@ class TestController(unittest.TestCase):
                              'problems': {'exhaust': 'smoking',
                                           'windshield': 'cracked'}})
         self.assertTrue(isinstance(my_car.driver, Driver))
-        self.assertTrue(isinstance(my_car.problems, OpenKeyController))
+        self.assertTrue(isinstance(my_car.problems, BaseOpenKeyController))
         my_car.driver = {'head': 'smiling', 'legs': 'strong'}
         d = my_car.export_to_dict()
         self.assertEqual(d, {'wheels': 'flat', 'engine': 'wind-broken',
@@ -107,16 +101,17 @@ class TestController(unittest.TestCase):
         other_car = my_car.copy(with_values=True)
         self.assertEqual(other_car.export_to_dict(), d)
         other_car = my_car.copy(with_values=False)
-        #TODO: check appropriate behavior
         self.assertEqual(other_car.export_to_dict(),
-                         {'wheels': '', 'engine': '',
-                          'driver': {'head': 'empty', 'arms': 'heavy',
-                                     'legs': 'short'},
-                          'problems': {}})
+                         {'wheels': undefined, 
+                          'engine': undefined,
+                          'driver': {'head': '', 'arms': '',
+                                     'legs': ''},
+                          'problems': undefined})
 
-        #TODO: change exception type
-        self.assertRaises(traits.TraitError,
-                          setattr, my_car.problems, 'fuel', 3.5)
+        my_car.problems.fuel = 3.5
+        self.assertEqual(my_car.problems.fuel, '3.5')
+        self.assertRaises(ValueError,
+                          setattr, my_car.problems, 'fuel', {})
         del my_car.problems.fuel
         self.assertEqual(sorted(my_car.problems.user_traits().keys()),
                          ['exhaust', 'windshield'])
@@ -140,7 +135,7 @@ class TestController(unittest.TestCase):
         o.add_trait(int, 'dynamic_int', default=0)
         o.add_trait(str, 'dynamic_str', default='default', custom_attribute=True)
         o.add_trait(List[int], 'dynamic_list')
-        self.assertEqual(o.traits['dynamic_str'].custom_attribute, True)
+        self.assertEqual(o.user_traits()['dynamic_str'].field_info.extra['custom_attribute'], True)
 
         calls = []
         o.on_attribute_change.add(lambda: calls.append([]))
@@ -172,43 +167,37 @@ class TestController(unittest.TestCase):
             ['x', 'default', 'dynamic_str'],
             ['x', 'default', 'dynamic_str', o],
             ])
-        self.assertEqual(o.traits['dynamic_int'].__dict__, {
-            'alias': None,
-            'class_trait': False,
-            'default': 0,
-            'name': 'dynamic_int',
-            'required': False,
-            'type_': int})
-        self.assertEqual(o.traits['dynamic_str'].__dict__, {
-            'alias': None,
-            'class_trait': False,
-            'default': 'default',
-            'name': 'dynamic_str',
-            'required': False,
-            'custom_attribute': True,
-            'type_': str})
-        self.assertEqual(o.traits['static_dict'].__dict__, {
-            'alias': 'static_dict',
-            'class_trait': True,
-            'default': {},
-            'name': 'static_dict',
-            'required': False,
-            'type_': dict})
-        self.assertEqual(o.traits['static_list'].__dict__, {
-            'alias': 'static_list',
-            'class_trait': True,
-            'default': [],
-            'name': 'static_list',
-            'required': False,
-            'type_': list})
-        self.assertEqual(o.traits['dynamic_list'].__dict__, {
-            'alias': None,
-            'class_trait': False,
-            'default': undefined,
-            'name': 'dynamic_list',
-            'required': True,
-            'type_': List[int]})
 
+        field = o.user_traits()['dynamic_int']
+        self.assertEqual(field.alias, 'dynamic_int')
+        self.assertEqual(field.outer_type_, int)
+        self.assertEqual(field.field_info.default, 0)
+        self.assertEqual(field.field_info.extra['class_field'], False)
+        
+        field = o.user_traits()['dynamic_str']
+        self.assertEqual(field.alias, 'dynamic_str')
+        self.assertEqual(field.outer_type_, str)
+        self.assertEqual(field.field_info.default, 'default')
+        self.assertEqual(field.field_info.extra['class_field'], False)
+        self.assertEqual(field.field_info.extra['custom_attribute'], True)
+
+        field = o.user_traits()['static_dict']
+        self.assertEqual(field.alias, 'static_dict')
+        self.assertEqual(field.outer_type_, dict)
+        self.assertEqual(field.field_info.default, {})
+        self.assertEqual(field.field_info.extra['class_field'], True)
+
+        field = o.user_traits()['static_list']
+        self.assertEqual(field.alias, 'static_list')
+        self.assertEqual(field.outer_type_, list)
+        self.assertEqual(field.field_info.default, [])
+        self.assertEqual(field.field_info.extra['class_field'], True)
+
+        field = o.user_traits()['dynamic_list']
+        self.assertEqual(field.alias, 'dynamic_list')
+        self.assertEqual(field.outer_type_, List[int])
+        self.assertEqual(field.field_info.default, undefined)
+        self.assertEqual(field.field_info.extra['class_field'], False)
 
     # def test_trait_utils1(self):
     #     """ Method to test if we can build a string description for a trait.

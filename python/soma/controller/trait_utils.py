@@ -1,14 +1,6 @@
 # -*- coding: utf-8 -*-
-#
-# SOMA - Copyright (C) CEA, 2015
-# Distributed under the terms of the CeCILL-B license, as published by
-# the CEA-CNRS-INRIA. Refer to the LICENSE file or to
-# http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html
-# for details.
-#
 
 # System import
-from __future__ import absolute_import
 import sys
 import types
 from textwrap import wrap
@@ -16,12 +8,6 @@ import re
 import logging
 import six
 import importlib
-
-# Define the logger
-logger = logging.getLogger(__name__)
-
-# Trait import
-import traits.api
 
 # Global parameters
 _type_to_trait_id = {
@@ -138,31 +124,6 @@ def get_trait_desc(trait_name, trait, def_val=None, use_wrap=True):
     return manhelpstr
 
 
-def is_trait_value_defined(value):
-    """ Check if a trait value is valid.
-
-    Parameters
-    ----------
-    value: type (mandatory)
-        a value to test.
-
-    Returns
-    -------
-    out: bool
-        True if the value is valid,
-        False otherwise.
-    """
-    # Initialize the default value
-    is_valid = True
-
-    # Check if the trait value is not valid
-    if (value is None or value is traits.api.Undefined or
-       (isinstance(value, six.string_types) and value == "")):
-
-        is_valid = False
-
-    return is_valid
-
 
 def is_trait_pathname(trait):
     """ Check if the trait is a file or a directory.
@@ -178,6 +139,8 @@ def is_trait_pathname(trait):
         True if trait is a file or a directory,
         False otherwise.
     """
+    #TODO:
+    raise NotImplementedError()
     return (isinstance(trait.trait_type, traits.api.File) or
             isinstance(trait.trait_type, traits.api.Directory))
 
@@ -214,19 +177,11 @@ def trait_ids(trait, modules=set()):
     if main_id in _trait_cvt_table:
         main_id = _trait_cvt_table[main_id]
 
-    # Debug message
-    logger.debug("Trait with main id %s", main_id)
-
     # Search for inner traits
     inner_ids = []
 
     # Either case
     if main_id in ["Either", "TraitCompound"]:
-
-        # Debug message
-        logger.debug("A coumpound trait has been found %s", repr(
-            handler.handlers))
-
         # Build each trait compound description
         trait_description = []
         for sub_trait in handler.handlers:

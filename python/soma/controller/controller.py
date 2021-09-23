@@ -9,7 +9,9 @@ from pydantic.fields import ModelField
 
 from soma.undefined import undefined
 
-
+class SchemaConfig:
+    validate_assignment = True
+    arbitrary_types_allowed = True
 
 
 class ControllerMeta(type):
@@ -17,7 +19,7 @@ class ControllerMeta(type):
         result = super().__new__(cls, name, bases, namespace)
         schema_classes = [i for i in result.__mro__ if hasattr(i, '__annotations__')]
         schema_classes.reverse()
-        schema_dict = {}
+        schema_dict = OrderedDict()
         for cls in schema_classes:
             for attribute, annotation in cls.__annotations__.items():
                 default = getattr(cls, attribute, undefined)
@@ -25,16 +27,14 @@ class ControllerMeta(type):
                     type_, field = annotation.__args__
                     field = field[0]
                     field.extra['class_field'] = True
-                    if default is not undefined:
-                        field.default = default
+                    field.default = default
                     schema_dict[attribute] = (type_, field)
                 else:
-                    if default is undefined:
-                        schema_dict[attribute] = (annotation, Field(..., class_field=True))
-                    else:
-                        schema_dict[attribute] = (annotation, Field(default, class_field=True))
-        result._schema = create_model(name, **schema_dict)
-        result._schema.__dict__
+                    schema_dict[attribute] = (annotation, Field(default, class_field=True))
+        result._schema = create_model(name, 
+                                      __config__=SchemaConfig,
+                                      **schema_dict)
+        result._schema_dict = schema_dict
         return result
 
 
@@ -107,10 +107,20 @@ class Controller(metaclass=ControllerMeta):
         super().__init__()
         values = dict(zip(self._schema.__fields__, args))
         values.update(kwargs)
-        super().__setattr__('_model', self._schema(**values))
+        super().__setattr__('_model', self._schema.construct())
+        for n, v in values.items():
+            setattr(self._model, n, v)
+        super().__setattr__('on_attribute_change', self.ValueEvent())
         self.enable_notification = True
     
     
+    def __getattribute__(self, name):
+        if name in super().__getattribute__('_schema').__fields__:
+            return getattr(self._model, name)
+        else:
+            return super().__getattribute__     (name)
+
+
     def __setattr__(self, name, value):
         if name in self._schema.__fields__:
             if getattr(self, 'enable_notification', False):
@@ -125,20 +135,16 @@ class Controller(metaclass=ControllerMeta):
     
 
     def _unnotified_setattr(self, name, value):
-        setarrt(self._model, name, value)
-        # trait = self.traits.get(name)
-        # if trait and issubclass(trait.type_, Controller):
-        #     if isinstance(value, dict):
-        #         new_value = trait.type_()
-        #         for k, v in value.items():
-        #             setattr(new_value, k, v)
-        #         print('!here!', repr(name), type(new_value))
-        #         super().__setattr__(name, new_value)
-        #         print('!done!')
-        #     else:
-        #         super().__setattr__(name, value)
-        # else:
-        #     super().__setattr__(name, value)
+        field = self.user_traits().get(name)
+        if field and issubclass(field.outer_type_, Controller):
+            if isinstance(value, dict):
+                controller = field.outer_type_()
+                setattr(self._model, name, controller)
+                controller.import_from_dict(value)
+            else:
+                super().__setattr__(name, value)
+        else:
+            setattr(self._model, name, value)
 
 
     def user_traits(self):
@@ -152,23 +158,28 @@ class Controller(metaclass=ControllerMeta):
             defined by HasTraits or Controller). Returned values are
             sorted according to the 'order' trait meta-attribute.
         """
-        return self.traits
+        return self._model.__fields__
 
 
     def add_trait(self, type_, name=None, default=undefined, **kwargs):
-        if isinstance(type_, Trait):
-            trait = type_
+        if type_.__name__ == 'Annotated':
+            type_, field = type_.__args__
+            field = field[0]
+            field.extra['class_field'] = False
+            field.extra.update(kwargs)
+            field.default = default
+            self._schema_dict[name] = (type_, field)
         else:
-            trait = Trait(type_, name=name, default=default, **kwargs)
-        trait.class_trait = False
-        self.traits[name] = trait
-        mf = trait.model_field(model_config=self.__config__,
-                               class_validators=self.__validators__)
-        
-        self.__fields__[name] = mf
-        self.__fields_set__.add(name)
-        if default is not undefined:
-            setattr(self, name, default)
+            self._schema_dict[name] = (type_, Field(default, class_field=False, **kwargs))
+        self._rebuild_model()
+    
+
+    def _rebuild_model(self):
+        values = self._model.__dict__
+        self._schema = create_model(self.__class__.__name__, 
+                                      __config__=SchemaConfig,
+                                      **self._schema_dict)
+        self._model =  self._schema.construct(**values)
 
 
     def remove_trait(self, name):
@@ -179,12 +190,16 @@ class Controller(metaclass=ControllerMeta):
         name: str (mandatory)
             the trait name to remove.
         """
-        trait = self.traits[name]
-        if trait.class_trait:
-            raise TypeError('Cannot remove a class trait')
-        self.traits.pop(name)
-        self.__fields__.pop(name)
-        self.__fields_set__.remove(name)
+        field = self._model.__fields__[name]
+        if field.field_info.extra.get('class_trait', False):
+            raise ValueError('Cannot remove a class trait')
+        del self._schema_dict[name]
+        values = self._model.__dict__
+        values.pop(name, None)
+        self._schema = create_model(name, 
+                                      __config__=SchemaConfig,
+                                      **self._schema_dict)
+        super().__setattr__('_model', self._schema.construct(**values))
 
 
     def export_to_dict(self, exclude_undefined=False,
@@ -233,20 +248,26 @@ class Controller(metaclass=ControllerMeta):
                 if trait_name not in state_dict:
                     delattr(self, trait_name)
         for trait_name, value in state_dict.items():
-            trait = self.traits.get(trait_name)
+            if value is undefined:
+                if getattr(self, trait_name, undefined) is not undefined:
+                    delattr(self._model, trait_name)
+                continue
+            trait = self.user_traits().get(trait_name)
             if trait_name == 'protected_parameters' and trait is None:
-                self.add_trait(Trait(List[str], name='protected_parameters', default=[], hidden=True))
+                self.add_trait(List[str], name='protected_parameters', default=[], hidden=True)
                 trait = self.traits['protected_parameters']
-            if trait is None and not isinstance(self, _OpenKeyController):
+            if trait is None and not isinstance(self, BaseOpenKeyController):
                 raise KeyError(
                     "item %s is not a trait in the Controller" % trait_name)
-            if isinstance(trait.type_, type) \
-                    and issubclass(trait.type_, Controller):
-                controller = trait.type_.create_default_value(
-                    trait.trait_type.klass)
-                controller.import_from_dict(value)
+            if trait and isinstance(trait.outer_type_, type) \
+                    and issubclass(trait.outer_type_, Controller):
+                controller = getattr(self, trait_name)
+                if controller is undefined:
+                    setattr(self, trait_name, value)
+                else:
+                    controller.import_from_dict(value, clear=clear)
             else:
-                if value in (None, undefined):
+                if value is None:
                     # None / Undefined may be an acceptable value for many
                     # traits types
                     setattr(self, trait_name, value)
@@ -283,15 +304,10 @@ class Controller(metaclass=ControllerMeta):
             # if the Controller class is subclassed and needs init parameters
             initargs = self.__getinitargs__()
         copied = self.__class__(*initargs)
-        for name, trait in self.traits.items():
-            copied.add_trait(trait.clone(name=name))
-            if with_values:
-                setattr(copied, name, getattr(self, name))
-        if self.traits.get('protected_parameters'):
-            trait = self.traits['protected_parameters']
-            copied.add_trait(trait.clone(name='protected_parameters'))
-            if with_values:
-                copied.protected_parameters = self.protected_parameters
+        copied._schema_dict = self._schema_dict.copy()
+        copied._rebuild_model()
+        if with_values:
+            copied.import_from_dict(self.export_to_dict())
         return copied
 
 
@@ -307,10 +323,12 @@ class Controller(metaclass=ControllerMeta):
         traits_list: list
             New list of trait names. This list order will be kept.
         """
-        result = OrderedDict((i, self.traits.pop(i)) for i in traits_list)
-        for trait in sorted(self.traits.values(), key=lambda x: getattr(x, 'order', hash(x))):
-            result[trait.name] = trait
-        self.traits = result
+        new_schema = OrderedDict((i, self._schema_dict.pop(i)) for i in traits_list)
+        for k, v in sorted(self._schema_dict.items(), 
+                           key=lambda x: x[1].extra.get('order', hash(x[1]))):
+            new_schema[k] = v
+        self._schema_dict = new_schema
+        self._rebuild_model()
 
 
     def protect_parameter(self, param, state=True):
@@ -333,11 +351,10 @@ class Controller(metaclass=ControllerMeta):
         if not self.trait('protected_parameters'):
             # add a 'protected_parameters' trait bypassing the
             # Controller.add_trait mechanism (it will not be a "user_trait")
-            self.add_trait(self, 
-                           Trait(List[str],
-                                 name='protected_parameters',
-                                 default=[],
-                                 hidden=True))
+            self.add_trait(List[str],
+                           name='protected_parameters',
+                           default=[],
+                           hidden=True)
         protected = set(self.protected_parameters)
         protected.update([param])
         self.protected_parameters = sorted(protected)
@@ -361,10 +378,10 @@ class Controller(metaclass=ControllerMeta):
 
 class OpenKeyController:
     def __new__(cls, value_type=str):
-        return type('OpenKeyController({})'.format(value_type.__name__), (_OpenKeyController,), {'_value_trait': Trait(value_type)})
+        return type('OpenKeyController({})'.format(value_type.__name__), (BaseOpenKeyController,), {'_value_trait': value_type})
 
 
-class _OpenKeyController(Controller):
+class BaseOpenKeyController(Controller):
 
     """ A dictionary-like controller, with "open keys": items may be added
     on the fly, traits are created upon assignation.
@@ -398,18 +415,14 @@ class _OpenKeyController(Controller):
         super().__init__(*args, **kwargs)
 
     def __setattr__(self, name, value):
-        print('!OpenKeyController.setattr!', name, '=', repr(value))
         if not name.startswith('_') and name not in self.__dict__ \
-                and name not in self.traits \
+                and name not in self.user_traits() \
                 and not name in self._reserved_names:
-            vt = getattr(self, '_value_trait', None)
-            if vt:
-                cloned_trait = vt.clone(name=name)
-                self.add_trait(cloned_trait)
+            self.add_trait(self._value_trait, name=name)
         super().__setattr__(name, value)
 
     def __delattr__(self, name):
-        if self.trait(name):
+        if name in self.user_traits():
             self.remove_trait(name)
         else:
             super().__delattr__(name)
@@ -441,10 +454,10 @@ def controller_to_dict(item, exclude_undefined=False,
     """
     if isinstance(item, Controller):
         result = dict_class()
-        for name, trait in item.traits.items():
-            if exclude_transient and trait.transient:
+        for name, field in item.user_traits().items():
+            if exclude_transient and field.field_info.extra.get('transient', False):
                 continue
-            value = getattr(item, name)
+            value = getattr(item, name, undefined)
             if (exclude_undefined and value is undefined) \
                 or (exclude_none and value is None):
                 continue
@@ -457,7 +470,7 @@ def controller_to_dict(item, exclude_undefined=False,
                                        exclude_empty=exclude_empty,
                                        dict_class=dict_class)
             result[name] = value
-        if 'protected_parameters' in item.traits:
+        if 'protected_parameters' in item.user_traits():
             result['protected_parameters'] = item.protected_parameters
     elif isinstance(item, dict):
         result = dict_class()
