@@ -108,7 +108,7 @@ class ControllerBase:
         else:
             result = super().__getattribute__(name)
         if result is undefined:
-            raise AttributeError('{} object has no attribute {}'.format(repr(self), repr(name)))
+            raise AttributeError('{} object has no attribute {}'.format(repr(self.__name__), repr(name)))
         return result
 
     def __setattr__(self, name, value):
