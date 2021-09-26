@@ -3,28 +3,31 @@
 from typing import List
 import unittest
 
-from soma.controller import Controller, OpenKeyController, BaseOpenKeyController
+from soma.controller import controller, Controller, field
+from soma.undefined import undefined
+
 
 class TestController(unittest.TestCase):
 
     def test_controller(self):
         c1 = Controller()
-        c1.add_trait(str, 'gogo')
-        c1.add_trait(int, 'bozo', 12)
+        c1.add_field('gogo', str)
+        c1.add_field('bozo', int, 12)
         self.assertRaises(AttributeError, getattr, c1, 'gogo')
         self.assertEqual(c1.bozo, 12)
-        self.assertEqual(list(c1.user_traits().keys()), ['gogo', 'bozo'])
+        self.assertEqual([i.name for i in c1.fields()], ['gogo', 'bozo'])
         c1.gogo = 'blop krok'
         self.assertEqual(c1.gogo, 'blop krok')
-        d = c1.export_to_dict()
+        d = controller.asdict(c1)
         self.assertEqual(d, {'gogo': 'blop krok', 'bozo': 12})
-        c1.reorder_traits(['bozo', 'gogo'])
-        self.assertEqual(list(c1.user_traits().keys()), ['bozo', 'gogo'])
-        c1.reorder_traits(['gogo', 'bozo'])
-        self.assertEqual(list(c1.user_traits().keys()), ['gogo', 'bozo'])
+        c1.reorder_fields(['bozo', 'gogo'])
+        self.assertEqual([i.name for i in c1.fields()], ['bozo', 'gogo'])
+        c1.reorder_fields(['gogo', 'bozo'])
+        self.assertEqual([i.name for i in c1.fields()], ['gogo', 'bozo'])
 
     def test_controller2(self):
-        class Zuzur(Controller):
+        @controller
+        class Zuzur:
             glop: str = 'zut'
 
         c2 = Zuzur()
@@ -36,97 +39,100 @@ class TestController(unittest.TestCase):
         self.assertEqual(c3.glop, 'I am c3')
 
     def test_controller3(self):
-        class Babar(Controller):
+        @controller
+        class Babar:
             hupdahup: str = 'barbatruc'
             gargamel: str
             ouioui: List[str]
 
         c1 = Babar()
         self.assertRaises(AttributeError, getattr, c1, 'gargamel')
-        d = c1.export_to_dict()
+        d = controller.asdict(c1)
         self.assertEqual(d, {'hupdahup': 'barbatruc'})
         c2 = Babar()
         c2.gargamel = 'schtroumpf'
-        c2.import_from_dict(d, clear=True)
-        self.assertEqual(c2.export_to_dict(), d)
+        c2.import_dict(d, clear=True)
+        self.assertEqual(controller.asdict(c2), d)
         c2.gargamel = 'schtroumpf'
-        c2.import_from_dict(d)
+        c2.import_dict(d)
         c2.ouioui = []
-        self.assertEqual(c2.export_to_dict(exclude_empty=True),
+        self.assertEqual(controller.asdict(c2, exclude_empty=True),
                          {'hupdahup': 'barbatruc', 'gargamel': 'schtroumpf'})
 
-    def test_controller4(self):
-        class Driver(Controller):
-            head : str = ''
-            arms : str = ''
-            legs : str = ''
+#     def test_controller4(self):
+#         class Driver(Controller):
+#             head : str = ''
+#             arms : str = ''
+#             legs : str = ''
 
-        class Car(Controller):
-            wheels : str
-            engine : str
-            driver : Driver = Driver()
-#                                     desc='the guy who would better take a '
-#                                     'bus')
-            problems : OpenKeyController(str)
+#         class Car(Controller):
+#             wheels : str
+#             engine : str
+#             driver : Driver = Driver()
+# #                                     desc='the guy who would better take a '
+# #                                     'bus')
+#             problems : OpenKeyController(str)
 
-        my_car = Car()
-        my_car.wheels = 'flat'
-        my_car.engine = 'wind-broken'
-        my_car.driver.head = 'empty'
-        my_car.driver.arms = 'heavy'
-        my_car.driver.legs = 'short'
-        my_car.problems = {'exhaust': 'smoking', 'windshield': 'cracked'}
-        d = my_car.export_to_dict()
-        self.assertEqual(d, {'wheels': 'flat', 'engine': 'wind-broken',
-                             'driver': {'head': 'empty', 'arms': 'heavy',
-                                        'legs': 'short'},
-                             'problems': {'exhaust': 'smoking',
-                                          'windshield': 'cracked'}})
-        self.assertTrue(isinstance(my_car.driver, Driver))
-        self.assertTrue(isinstance(my_car.problems, BaseOpenKeyController))
-        my_car.driver = {'head': 'smiling', 'legs': 'strong'}
-        d = my_car.export_to_dict()
-        self.assertEqual(d, {'wheels': 'flat', 'engine': 'wind-broken',
-                             'driver': {'head': 'smiling', 'arms': '',
-                                        'legs': 'strong'},
-                             'problems': {'exhaust': 'smoking',
-                                          'windshield': 'cracked'}})
+#         my_car = Car()
+#         my_car.wheels = 'flat'
+#         my_car.engine = 'wind-broken'
+#         my_car.driver.head = 'empty'
+#         my_car.driver.arms = 'heavy'
+#         my_car.driver.legs = 'short'
+#         my_car.problems = {'exhaust': 'smoking', 'windshield': 'cracked'}
+#         d = my_car.export_to_dict()
+#         self.assertEqual(d, {'wheels': 'flat', 'engine': 'wind-broken',
+#                              'driver': {'head': 'empty', 'arms': 'heavy',
+#                                         'legs': 'short'},
+#                              'problems': {'exhaust': 'smoking',
+#                                           'windshield': 'cracked'}})
+#         self.assertTrue(isinstance(my_car.driver, Driver))
+#         self.assertTrue(isinstance(my_car.problems, BaseOpenKeyController))
+#         my_car.driver = {'head': 'smiling', 'legs': 'strong'}
+#         d = my_car.export_to_dict()
+#         self.assertEqual(d, {'wheels': 'flat', 'engine': 'wind-broken',
+#                              'driver': {'head': 'smiling', 'arms': '',
+#                                         'legs': 'strong'},
+#                              'problems': {'exhaust': 'smoking',
+#                                           'windshield': 'cracked'}})
 
-        other_car = my_car.copy(with_values=True)
-        self.assertEqual(other_car.export_to_dict(), d)
-        other_car = my_car.copy(with_values=False)
-        self.assertEqual(other_car.export_to_dict(),
-                         {'driver': {'head': '', 'arms': '',
-                                     'legs': ''}})
+#         other_car = my_car.copy(with_values=True)
+#         self.assertEqual(other_car.export_to_dict(), d)
+#         other_car = my_car.copy(with_values=False)
+#         self.assertEqual(other_car.export_to_dict(),
+#                          {'driver': {'head': '', 'arms': '',
+#                                      'legs': ''}})
 
-        my_car.problems.fuel = 3.5
-        self.assertEqual(my_car.problems.fuel, '3.5')
-        self.assertRaises(ValueError,
-                          setattr, my_car.problems, 'fuel', {})
-        del my_car.problems.fuel
-        self.assertEqual(sorted(my_car.problems.user_traits().keys()),
-                         ['exhaust', 'windshield'])
+#         my_car.problems.fuel = 3.5
+#         self.assertEqual(my_car.problems.fuel, '3.5')
+#         self.assertRaises(ValueError,
+#                           setattr, my_car.problems, 'fuel', {})
+#         del my_car.problems.fuel
+#         self.assertEqual(sorted(my_car.problems.user_traits().keys()),
+#                          ['exhaust', 'windshield'])
 
-        #TODO:
-        manhelp = get_trait_desc('driver', my_car.trait('driver'))
-        self.assertEqual(
-            manhelp[0],
-            "driver: a legal value (['ControllerTrait'] - mandatory)")
-        self.assertEqual(manhelp[1], "    the guy who would better take a bus")
+#         #TODO:
+#         manhelp = get_trait_desc('driver', my_car.trait('driver'))
+#         self.assertEqual(
+#             manhelp[0],
+#             "driver: a legal value (['ControllerTrait'] - mandatory)")
+#         self.assertEqual(manhelp[1], "    the guy who would better take a bus")
 
     def test_dynamic_controllers(self):
-        class C(Controller):
+        @controller
+        class C:
             static_int : int = 0
             static_str : str
-            static_list: list = []
-            static_dict: dict = {}
+            static_list: list = field(default_factory=lambda: [])
+            static_dict: dict = field(default_factory=lambda: {})
 
         o = C(static_str='')
 
-        o.add_trait(int, 'dynamic_int', default=0)
-        o.add_trait(str, 'dynamic_str', default='default', custom_attribute=True)
-        o.add_trait(List[int], 'dynamic_list')
-        self.assertEqual(o.user_traits()['dynamic_str'].field_info.extra['custom_attribute'], True)
+        o.add_field('dynamic_int', int, default=0)
+        o.add_field('dynamic_str', str, default='default', metadata=dict(custom_attribute=True))
+        o.add_field('dynamic_list', List[int])
+        print()
+        self.assertEqual(o.field('dynamic_str').metadata['custom_attribute'], True)
 
         calls = []
         o.on_attribute_change.add(lambda: calls.append([]))
@@ -159,36 +165,36 @@ class TestController(unittest.TestCase):
             ['x', 'default', 'dynamic_str', o],
             ])
 
-        field = o.user_traits()['dynamic_int']
-        self.assertEqual(field.alias, 'dynamic_int')
-        self.assertEqual(field.outer_type_, int)
-        self.assertEqual(field.field_info.default, 0)
-        self.assertEqual(field.field_info.extra['class_field'], False)
+        f = o.field('dynamic_int')
+        self.assertEqual(f.name, 'dynamic_int')
+        self.assertEqual(f.type.__args__[0], int)
+        self.assertEqual(f.default, 0)
+        self.assertEqual(f.metadata['class_field'], False)
         
-        field = o.user_traits()['dynamic_str']
-        self.assertEqual(field.alias, 'dynamic_str')
-        self.assertEqual(field.outer_type_, str)
-        self.assertEqual(field.field_info.default, 'default')
-        self.assertEqual(field.field_info.extra['class_field'], False)
-        self.assertEqual(field.field_info.extra['custom_attribute'], True)
+        f = o.field('dynamic_str')
+        self.assertEqual(f.name, 'dynamic_str')
+        self.assertEqual(f.type.__args__[0], str)
+        self.assertEqual(f.default, 'default')
+        self.assertEqual(f.metadata['class_field'], False)
+        self.assertEqual(f.metadata['custom_attribute'], True)
 
-        field = o.user_traits()['static_dict']
-        self.assertEqual(field.alias, 'static_dict')
-        self.assertEqual(field.outer_type_, dict)
-        self.assertEqual(field.field_info.default, {})
-        self.assertEqual(field.field_info.extra['class_field'], True)
+        f = o.field('static_dict')
+        self.assertEqual(f.name, 'static_dict')
+        self.assertEqual(f.type.__args__[0], dict)
+        self.assertEqual(f.default_factory(), {})
+        self.assertEqual(f.metadata['class_field'], True)
 
-        field = o.user_traits()['static_list']
-        self.assertEqual(field.alias, 'static_list')
-        self.assertEqual(field.outer_type_, list)
-        self.assertEqual(field.field_info.default, [])
-        self.assertEqual(field.field_info.extra['class_field'], True)
+        f = o.field('static_list')
+        self.assertEqual(f.name, 'static_list')
+        self.assertEqual(f.type.__args__[0], list)
+        self.assertEqual(f.default_factory(), [])
+        self.assertEqual(f.metadata['class_field'], True)
 
-        field = o.user_traits()['dynamic_list']
-        self.assertEqual(field.alias, 'dynamic_list')
-        self.assertEqual(field.outer_type_, List[int])
-        self.assertEqual(field.field_info.default, ...)
-        self.assertEqual(field.field_info.extra['class_field'], False)
+        f = o.field('dynamic_list')
+        self.assertEqual(f.name, 'dynamic_list')
+        self.assertEqual(f.type.__args__[0], List[int])
+        self.assertEqual(f.default, undefined)
+        self.assertEqual(f.metadata['class_field'], False)
 
     # def test_trait_utils1(self):
     #     """ Method to test if we can build a string description for a trait.
