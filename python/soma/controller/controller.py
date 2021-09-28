@@ -159,11 +159,11 @@ class Controller(metaclass=ControllerMeta, _allow_subclass=True):
             setattr(dyn_field, name, value)
         else:
             field = self.__dataclass_fields__[name]
-            field_type = field.type.__args__[0]
-            if isinstance(value, dict) and issubclass(field_type,Controller):
+            type = field_type(field)
+            if isinstance(value, dict) and issubclass(type,Controller):
                 controller = getattr(self, name, undefined)
                 if controller is undefined:
-                    controller = field_type()
+                    controller = type()
                     controller.import_dict(value)
                     value = controller
                 else:
@@ -215,7 +215,7 @@ class Controller(metaclass=ControllerMeta, _allow_subclass=True):
             field = self.field(name)
             if field:
                 # Field type is Union[real_type,UndefinedClass], get real type
-                type = field.type.__args__[0]
+                type = field_type(field)
                 if issubclass(type, Controller):
                     controller = getattr(self, name, undefined)
                     if controller is not undefined:
@@ -255,10 +255,12 @@ def controller(cls, class_field=True,
                                           metadata=metadata))
                 else:
                     setattr(cls, i, dataclasses.field(default=v, metadata={'class_field': class_field}))
-    return type(cls.__name__, 
-                (controller_base, dataclass(cls, config=_ModelsConfig, **kwargs)),
-                {},
-                _allow_subclass=True)
+    result = type(cls.__name__, 
+                  (controller_base, dataclass(cls, config=_ModelsConfig, **kwargs)),
+                  {},
+                  _allow_subclass=True)
+    result.__module__ = cls.__module__
+    return result
 
 
 def asdict(obj, dict_factory=dict, exclude_empty=False):
@@ -369,7 +371,45 @@ class EmptyOpenKeyController:
     pass
 
 
-def type_id(type_):
+def field(name=None, type_=None, **kwargs):
+    result = dataclasses.field(**kwargs)
+    if name is not None:
+        result.name = name
+    if type_ is not None:
+        result.type = Union[type_, type(undefined)]
+    return result
+controller.field = field
+
+
+def field_doc(field):
+    result = ['{} [{}]'.format(field.name, field_type_str(field))]
+    optional = field.metadata.get('optional')
+    if optional is None:
+        optional = (field.default is not dataclasses.MISSING or
+                    field.default_factory is not dataclasses.MISSING)
+    if not optional:
+        result.append(' mandatory')
+    default = field.default
+    if default is not dataclasses.MISSING:
+        result.append(' ({})'.format(repr(default)))
+    desc = field.metadata.get('desc')
+    if desc:
+        result.append(': ' + desc)
+    return ''.join(result)
+
+
+def field_type(field):
+    types = field.type.__args__[:-1]
+    if len(types) == 1:
+        return types[0]
+    else:
+        return Union.__getitem__(types)
+
+def field_type_str(field):
+    return type_str(field_type(field))
+
+
+def type_str(type_):
     final_mapping = {
         'List[Any]': 'list',
         'Tuple': 'tuple',
@@ -379,6 +419,8 @@ def type_id(type_):
         'Dict[Any,Any]': 'dict',
     }
     name = getattr(type_, '__name__', None)
+    if not name and getattr(type_, '__origin__') is Union:
+        name = 'Union'
     if not name:
         name = str(type_)
     module = getattr(type_, '__module__', None)
@@ -388,7 +430,7 @@ def type_id(type_):
     if args:
         result = '{}[{}]'.format(
             name,
-            ','.join(type_id(i) for i in args)
+            ','.join(type_str(i) for i in args)
         )
     else:
         result = name

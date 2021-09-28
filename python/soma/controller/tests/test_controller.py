@@ -1,9 +1,15 @@
 # -*- coding: utf-8 -*-
 
-from typing import List
+import dataclasses
+from typing import List, Union
 import unittest
 
-from soma.controller import controller, Controller, field, open_key_controller, OpenKeyController
+from soma.controller import (controller, 
+                             Controller,
+                             field,
+                             open_key_controller,
+                             OpenKeyController,
+                             field_doc)
 from soma.undefined import undefined
 
 
@@ -113,12 +119,10 @@ class TestController(unittest.TestCase):
         self.assertEqual([i.name for i in my_car.problems.fields()],
                          ['exhaust', 'windshield'])
 
-        #TODO:
-        manhelp = get_trait_desc('driver', my_car.trait('driver'))
+        manhelp = field_doc(my_car.field('driver'))
         self.assertEqual(
-            manhelp[0],
-            "driver: a legal value (['ControllerTrait'] - mandatory)")
-        self.assertEqual(manhelp[1], "    the guy who would better take a bus")
+            manhelp,
+            'driver [__main__.Driver]: the guy who would better take a bus')
 
     def test_dynamic_controllers(self):
         # New API forbid derivation of Controller class
@@ -213,77 +217,50 @@ class TestController(unittest.TestCase):
         self.assertEqual(o.new_controller.asdict(), {'first': '1', 'second': 'two'})
     
     
-    # def test_trait_utils1(self):
-    #     """ Method to test if we can build a string description for a trait.
-    #     """
-    #     #TODO: redefine how to add attributes to traits
-    #     trait = traits.CTrait(0)
-    #     trait.handler = traits.Float()
-    #     trait.ouptut = False
-    #     trait.optional = True
-    #     trait.desc = "bla"
-    #     manhelp = get_trait_desc("float_trait", trait, 5)
-    #     self.assertEqual(
-    #         manhelp[0],
-    #         "float_trait: a float (['Float'] - optional, default value: 5)")
-    #     self.assertEqual(manhelp[1], "    bla")
+    def test_field_doc(self):
+        f = controller.field(name='float_trait',
+                             type_=float,
+                             default=5,
+                             metadata={
+                                'desc': 'bla',
+                                'optional': True,
+                                'output': True,
+                             })
+        self.assertEqual(
+            field_doc(f),
+            'float_trait [float] (5): bla')
 
-    # def test_trait_utils2(self):
-    #     trait = traits.CTrait(0)
-    #     trait.handler = traits.Float()
-    #     trait.ouptut = True
-    #     trait.optional = False
-    #     manhelp = get_trait_desc("float_trait", trait, 5)
-    #     self.assertEqual(
-    #         manhelp[0],
-    #         "float_trait: a float (['Float'] - mandatory, default value: 5)")
-    #     self.assertEqual(manhelp[1], "    No description.")
+        f = controller.field(name='float_trait',
+                             type_=float,
+                             default=5,
+                             metadata={
+                                'optional': False,
+                                'output': True,
+                             })
+        self.assertEqual(
+            field_doc(f),
+            'float_trait [float] mandatory (5)')
 
-    # def test_trait_utils3(self):
-    #     class Blop(object):
-    #         pass
-    #     trait = traits.CTrait(0)
-    #     trait.handler = traits.Instance(Blop())
-    #     trait.ouptut = False
-    #     trait.optional = False
-    #     manhelp = get_trait_desc("blop", trait, None)
-    #     desc = ' '.join([x.strip() for x in manhelp[:-1]])
-    #     self.assertEqual(
-    #         desc,
-    #         "blop: a Blop or None (['Instance_%s.Blop'] - mandatory)"
-    #         % Blop.__module__)
-    #     self.assertEqual(manhelp[-1], "    No description.")
+        class Blop(object):
+            pass
+        f = controller.field(name='blop',
+                             type_=Blop,
+                             default=None,
+                             metadata={
+                                'output': False,
+                             })
+        self.assertEqual(
+            field_doc(f),
+            'blop [{}.Blop] (None)'.format(Blop.__module__))
 
-    # def test_trait_utils4(self):
-    #     trait = traits.Either(traits.Int(47), traits.Str("vovo")).as_ctrait()
-    #     trait.ouptut = False
-    #     trait.optional = False
-    #     manhelp = get_trait_desc("choice", trait, None)
-    #     desc = ' '.join([x.strip() for x in manhelp[:-1]])
-    #     self.assertTrue(
-    #         desc in ("choice: an integer (int or long) or a string "
-    #                  "(['Int', 'Str'] - mandatory)",
-    #                  "choice: an integer or a string "
-    #                  "(['Int', 'Str'] - mandatory)"))
-    #     self.assertEqual(manhelp[-1], "    No description.")
-
-
-    # def test_trait(self):
-    #     """ Method to test trait characterisitics: value, type.
-    #     """
-    #     self.assertTrue(is_trait_value_defined(5))
-    #     self.assertFalse(is_trait_value_defined(""))
-    #     self.assertFalse(is_trait_value_defined(None))
-    #     self.assertFalse(is_trait_value_defined(traits.Undefined))
-
-    #     trait = traits.CTrait(0)
-    #     trait.handler = traits.Float()
-    #     self.assertFalse(is_trait_pathname(trait))
-    #     for handler in [traits.File(), traits.Directory()]:
-    #         trait.handler = handler
-    #         self.assertTrue(is_trait_pathname(trait))
-
-
+        f = controller.field(name='choice',
+                             type_=Union[str,int],
+                             metadata={
+                                'output': False,
+                             })
+        self.assertEqual(
+            field_doc(f),
+            'choice [Union[str,int]] mandatory')
 
 
 def test():
