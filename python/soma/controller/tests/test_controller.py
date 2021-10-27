@@ -4,10 +4,8 @@ import dataclasses
 from typing import List, Union
 import unittest
 
-from soma.controller import (controller, 
-                             Controller,
+from soma.controller import (Controller,
                              field,
-                             open_key_controller,
                              OpenKeyController,
                              field_doc)
 from soma.undefined import undefined
@@ -32,8 +30,7 @@ class TestController(unittest.TestCase):
         self.assertEqual([i.name for i in c1.fields()], ['gogo', 'bozo'])
 
     def test_controller2(self):
-        @controller
-        class Zuzur:
+        class Zuzur(Controller):
             glop: str = 'zut'
 
         c2 = Zuzur()
@@ -45,8 +42,7 @@ class TestController(unittest.TestCase):
         self.assertEqual(c3.glop, 'I am c3')
 
     def test_controller3(self):
-        @controller
-        class Babar:
+        class Babar(Controller):
             hupdahup: str = 'barbatruc'
             gargamel: str
             ouioui: List[str]
@@ -66,14 +62,12 @@ class TestController(unittest.TestCase):
                          {'hupdahup': 'barbatruc', 'gargamel': 'schtroumpf'})
 
     def test_controller4(self):
-        @controller
-        class Driver:
+        class Driver(Controller):
             head : str = ''
             arms : str = ''
             legs : str = ''
 
-        @controller
-        class Car:
+        class Car(Controller):
             wheels : str
             engine : str
             driver : Driver = field(
@@ -125,11 +119,7 @@ class TestController(unittest.TestCase):
             'driver [__main__.Driver]: the guy who would better take a bus')
 
     def test_dynamic_controllers(self):
-        # New API forbid derivation of Controller class
-        self.assertRaises(TypeError, type, 'MyClass', (Controller,), {})
-
-        @controller
-        class C:
+        class C(Controller):
             static_int : int = 0
             static_str : str
             static_list: list = field(default_factory=lambda: [])
@@ -206,61 +196,78 @@ class TestController(unittest.TestCase):
 
 
     def test_open_key_controller(self):
-        @open_key_controller(value_type=OpenKeyController)
-        class ControllerOfController:
+        class ControllerOfController(OpenKeyController[OpenKeyController]):
             static : str = 'present'
         
         o = ControllerOfController()
         o.new_controller = {'first': 1,
                             'second': 'two'}
+        self.assertEqual(o.static, 'present')
         self.assertEqual([i.name for i in o.fields()], ['static', 'new_controller'])
         self.assertEqual(o.new_controller.asdict(), {'first': '1', 'second': 'two'})
     
     
     def test_field_doc(self):
-        f = controller.field(name='float_trait',
-                             type_=float,
-                             default=5,
-                             metadata={
-                                'desc': 'bla',
-                                'optional': True,
-                                'output': True,
-                             })
+        f = field(name='float_trait',
+                  type_=float,
+                  default=5,
+                  metadata={
+                      'desc': 'bla',
+                      'optional': True,
+                      'output': True})
         self.assertEqual(
             field_doc(f),
             'float_trait [float] (5): bla')
 
-        f = controller.field(name='float_trait',
-                             type_=float,
-                             default=5,
-                             metadata={
-                                'optional': False,
-                                'output': True,
-                             })
+        f = field(name='float_trait',
+                  type_=float,
+                  default=5,
+                  metadata={
+                      'optional': False,
+                      'output': True})
         self.assertEqual(
             field_doc(f),
             'float_trait [float] mandatory (5)')
 
         class Blop(object):
             pass
-        f = controller.field(name='blop',
-                             type_=Blop,
-                             default=None,
-                             metadata={
-                                'output': False,
-                             })
+        f = field(name='blop',
+                  type_=Blop,
+                  default=None,
+                  metadata={
+                      'output': False})
         self.assertEqual(
             field_doc(f),
             'blop [{}.Blop] (None)'.format(Blop.__module__))
 
-        f = controller.field(name='choice',
-                             type_=Union[str,int],
-                             metadata={
-                                'output': False,
-                             })
+        f = field(name='choice',
+                  type_=Union[str,int],
+                  metadata={
+                      'output': False})
         self.assertEqual(
             field_doc(f),
             'choice [Union[str,int]] mandatory')
+
+    def test_inheritance(self):
+        class Base(Controller):
+            base1: str
+            base2: str = 'base2'
+        
+        class Derived(Base):
+            derived1: str
+            derived2: str = 'derived2'
+        
+        o = Derived()
+        o.add_field('instance1', str)
+        o.add_field('instance2', str, default='instance2')
+        self.assertEqual([i.name for i in o.fields()], 
+                         ['base1', 'base2', 
+                          'derived1', 'derived2',
+                          'instance1', 'instance2'])
+        self.assertEqual(o.asdict(), 
+            {'base2': 'base2', 
+             'derived2': 'derived2',
+             'instance2': 'instance2'})
 
 
 def test():

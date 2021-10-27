@@ -63,20 +63,61 @@ class ValueEvent:
 
 
 class ControllerMeta(type):
-    def __new__(cls, name, bases, namespace,
-                _allow_subclass=False):
-        if not _allow_subclass:
-            raise TypeError('Cannot subclass Controller. Use @controller decorator instead.')
-        return super().__new__(cls, name, bases, namespace)
+    def __new__(cls, name, bases, namespace, class_field=True, ignore_metaclass=False):
+        if ignore_metaclass:
+            return super().__new__(cls, name, bases, namespace)
+        if not bases or not issubclass(bases[0], Controller):
+            raise TypeError('Controller must be the first base class')
+        controller_class = bases[0]
+        annotations = namespace.get('__annotations__')
+        if annotations:
+            for i in list(annotations):
+                type_ = annotations[i]
+                if isinstance(type_, dataclasses.Field):
+                    field_type = type_
+                    type_ = field_type.type
+                    del annotations[i]
+                else:
+                    field_type = None
+                    type_ = annotations[i] = Union[type_,type(undefined)]
+                if namespace.get(i, undefined) is undefined:
+                    namespace[i] = undefined
+                v = namespace.get(i)
+                if isinstance(v, dataclasses.Field):
+                    field_type = v
+                if field_type:
+                    metadata = field_type.metadata.copy()
+                    metadata['class_field'] = class_field
+                    annotations[i] = type_
+                    namespace[i] = field(
+                            default=field_type.default,
+                            default_factory=field_type.default_factory,
+                            repr=field_type.repr,
+                            hash=field_type.hash,
+                            init=field_type.init,
+                            compare=field_type.compare,
+                            metadata=metadata)
+                else:
+                    namespace[i] = dataclasses.field(default=v, metadata={'class_field': class_field})
+        controller_dataclass = getattr(controller_class, '_controller_dataclass', None)
+        if controller_dataclass:
+            bases = (controller_dataclass,) + bases[1:]
+        else:
+            bases = bases[1:]
+        cls = super().__new__(cls, name, bases, namespace)
+        module = cls.__module__
+        cls = dataclass(cls, config=_ModelsConfig)
+        cls = type(name, (controller_class, cls) , {'_controller_dataclass': cls}, ignore_metaclass=True)
+        cls.__module__ = module
+        return cls
 
 
-class Controller(metaclass=ControllerMeta, _allow_subclass=True):
+class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
     def __new__(cls, **kwargs):
         if cls is Controller:
             return EmptyController()
         return super().__new__(cls)
-
-
+    
     def __init__(self, **kwargs):
         object.__setattr__(self,'_dyn_fields', {})
         super().__init__()
@@ -93,10 +134,9 @@ class Controller(metaclass=ControllerMeta, _allow_subclass=True):
             field = type_
         else:
             # Dynamically create a class equivalent to:
-            # Without default if it is undefined
+            # (without default if it is undefined)
             #
-            # @controller(class_field=False)
-            # class {name}:
+            # class {name}(Controller):
             #     value: type_ = default
             namespace = {
                 '__annotations__': {
@@ -110,8 +150,7 @@ class Controller(metaclass=ControllerMeta, _allow_subclass=True):
                 kwargs['metadata'] = metadata
             if kwargs:
                 namespace[name] = dataclasses.field(**kwargs)
-            field_class = type(name, (), namespace)
-            field_class = controller(field_class, class_field=False)
+            field_class = type(name, (Controller,), namespace, class_field=False)
             field = field_class()
         super().__getattribute__('_dyn_fields')[name] = field
         
@@ -129,7 +168,7 @@ class Controller(metaclass=ControllerMeta, _allow_subclass=True):
         else:
             result = super().__getattribute__(name)
         if result is undefined:
-            raise AttributeError('{} object has no attribute {}'.format(repr(self.__name__), repr(name)))
+            raise AttributeError('{} object has no attribute {}'.format(repr(self.__class__), repr(name)))
         return result
 
     def __setattr__(self, name, value):
@@ -232,37 +271,6 @@ class Controller(metaclass=ControllerMeta, _allow_subclass=True):
         return result
         
 
-def controller(cls, class_field=True, 
-               controller_base=Controller, 
-               **kwargs):
-    annotations = getattr(cls, '__annotations__', None)
-    if annotations:
-        for i in list(annotations):
-            annotations[i] = Union[annotations[i],type(undefined)]
-            if getattr(cls, i, undefined) is undefined:
-                setattr(cls, i, undefined)
-            v = getattr(cls, i, None)
-            if v is not None:
-                if isinstance(v, dataclasses.Field):
-                    metadata = v.metadata.copy()
-                    metadata['class_field'] = class_field
-                    setattr(cls, i, dataclasses.field(default=v.default,
-                                          default_factory=v.default_factory,
-                                          repr=v.repr,
-                                          hash=v.hash,
-                                          init=v.init,
-                                          compare=v.compare,
-                                          metadata=metadata))
-                else:
-                    setattr(cls, i, dataclasses.field(default=v, metadata={'class_field': class_field}))
-    result = type(cls.__name__, 
-                  (controller_base, dataclass(cls, config=_ModelsConfig, **kwargs)),
-                  {},
-                  _allow_subclass=True)
-    result.__module__ = cls.__module__
-    return result
-
-
 def asdict(obj, dict_factory=dict, exclude_empty=False):
     if isinstance(obj, Controller):
         result = []
@@ -288,35 +296,26 @@ def asdict(obj, dict_factory=dict, exclude_empty=False):
         return copy.deepcopy(obj)
 
 
-@controller
-class EmptyController:
+class EmptyController(Controller):
     pass
 
 
 class OpenKeyControllerMeta(ControllerMeta):
     _cache = {}
-    
-    def __new__(cls, name, bases, namespace, value_type=None, _allow_subclass=False):
-        if value_type is not None:
-            namespace['_value_type'] = value_type
-        return super().__new__(cls, name, bases, namespace, _allow_subclass=_allow_subclass)
-
 
     def __getitem__(cls, value_type):
-        if value_type is cls._value_type:
+        cls_value_type = getattr(cls, '_value_type', None)
+        if value_type is cls_value_type:
             return cls
-        if cls._value_type is not OpenKeyController._value_type:
-            raise TypeError('Cannot set twice the value type of an OpenKeyController')
         result = cls._cache.get(value_type)
         if result is None:
             result = type('OpenKeyController_{}'.format(value_type.__name__), 
-                          (OpenKeyController,), {}, value_type=value_type,
-                          _allow_subclass=True)
+                          (OpenKeyController,), {'_value_type': value_type}, ignore_metaclass=True)
             cls._cache[value_type] = result
-        return result
+            return result
         
 
-class OpenKeyController(Controller, metaclass=OpenKeyControllerMeta, _allow_subclass=True):
+class OpenKeyController(Controller, metaclass=OpenKeyControllerMeta, ignore_metaclass=True):
 
     """ A dictionary-like controller, with "open keys": items may be added
     on the fly, traits are created upon assignation.
@@ -338,7 +337,6 @@ class OpenKeyController(Controller, metaclass=OpenKeyControllerMeta, _allow_subc
     {}
     """
     _reserved_names = {'enable_notification'}
-    _value_type = str
 
     def __new__(cls, **kwargs):
         if cls is OpenKeyController:
@@ -359,15 +357,7 @@ class OpenKeyController(Controller, metaclass=OpenKeyControllerMeta, _allow_subc
             super().__delattr__(name)
 
 
-def open_key_controller(cls=None, *, value_type=str, **kwargs):
-    if cls is None:
-        return partial(open_key_controller, value_type=value_type, **kwargs)
-    return controller(cls, controller_base=OpenKeyController[value_type], **kwargs)
-
-
-
-@open_key_controller
-class EmptyOpenKeyController:
+class EmptyOpenKeyController(OpenKeyController[str]):
     pass
 
 
@@ -378,7 +368,6 @@ def field(name=None, type_=None, **kwargs):
     if type_ is not None:
         result.type = Union[type_, type(undefined)]
     return result
-controller.field = field
 
 
 def field_doc(field):
