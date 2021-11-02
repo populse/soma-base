@@ -69,10 +69,14 @@ class ControllerMeta(type):
         if not bases or not issubclass(bases[0], Controller):
             raise TypeError('Controller must be the first base class')
         controller_class = bases[0]
-        annotations = namespace.get('__annotations__')
+        annotations = namespace.pop('__annotations__', None)
+        dataclass_namespace = {}
         if annotations:
+            dataclass_namespace['__annotations__'] = annotations
             for i in list(annotations):
                 type_ = annotations[i]
+                value = namespace.get(i, undefined)
+                dataclass_namespace[i] = value
                 if isinstance(type_, dataclasses.Field):
                     field_type = type_
                     type_ = field_type.type
@@ -80,16 +84,13 @@ class ControllerMeta(type):
                 else:
                     field_type = None
                     type_ = annotations[i] = Union[type_,type(undefined)]
-                if namespace.get(i, undefined) is undefined:
-                    namespace[i] = undefined
-                v = namespace.get(i)
-                if isinstance(v, dataclasses.Field):
-                    field_type = v
+                if isinstance(value, dataclasses.Field):
+                    field_type = value
                 if field_type:
                     metadata = field_type.metadata.copy()
                     metadata['class_field'] = class_field
                     annotations[i] = type_
-                    namespace[i] = field(
+                    dataclass_namespace[i] = field(
                             default=field_type.default,
                             default_factory=field_type.default_factory,
                             repr=field_type.repr,
@@ -98,18 +99,17 @@ class ControllerMeta(type):
                             compare=field_type.compare,
                             metadata=metadata)
                 else:
-                    namespace[i] = dataclasses.field(default=v, metadata={'class_field': class_field})
+                    dataclass_namespace[i] = dataclasses.field(default=value, metadata={'class_field': class_field})
         controller_dataclass = getattr(controller_class, '_controller_dataclass', None)
         if controller_dataclass:
-            bases = (controller_dataclass,) + bases[1:]
+            dataclass_bases = (controller_dataclass,)
         else:
-            bases = bases[1:]
-        cls = super().__new__(cls, name, bases, namespace)
-        module = cls.__module__
-        cls = dataclass(cls, config=_ModelsConfig)
-        cls = type(name, (controller_class, cls) , {'_controller_dataclass': cls}, ignore_metaclass=True)
-        cls.__module__ = module
-        return cls
+            dataclass_bases = ()
+        c = type(name + '_dataclass' , dataclass_bases, dataclass_namespace)
+        c = dataclass(c, config=_ModelsConfig)
+        namespace['_controller_dataclass'] = c
+        c = super().__new__(cls, name, bases + (c,) , namespace)
+        return c
 
 
 class Controller(metaclass=ControllerMeta, ignore_metaclass=True):

@@ -250,6 +250,9 @@ class TestController(unittest.TestCase):
 
     def test_inheritance(self):
         class Base(Controller):
+            def __init__(self, **kwargs):
+                super().__init__(**kwargs)
+            
             base1: str
             base2: str = 'base2'
         
@@ -257,6 +260,7 @@ class TestController(unittest.TestCase):
             derived1: str
             derived2: str = 'derived2'
         
+        o = Base()
         o = Derived()
         o.add_field('instance1', str)
         o.add_field('instance2', str, default='instance2')
@@ -270,11 +274,5 @@ class TestController(unittest.TestCase):
              'instance2': 'instance2'})
 
 
-def test():
-    suite = unittest.TestLoader().loadTestsFromTestCase(TestController)
-    runtime = unittest.TextTestRunner(verbosity=2).run(suite)
-    return runtime.wasSuccessful()
-
-
 if __name__ == "__main__":
-    test()
+    unittest.main()
