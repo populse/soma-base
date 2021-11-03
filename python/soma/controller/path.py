@@ -3,12 +3,22 @@ import dataclasses
 from soma.controller import field
 from soma.undefined import undefined
 
-def path(type, 
+def path(type,
+         dataset=undefined,
+         read=undefined,
+         write=False,
          default=undefined,
          default_factory=undefined,
          **metadata):
+    if read is undefined:
+        read = not write
+    if dataset is undefined:
+        dataset = ('output' if write else 'input')
     field_metadata = {
-        'format': f'path/{type}'
+        'format': f'path/{type}',
+        'dataset': dataset,
+        'read': read,
+        'write': write,
     }
     field_metadata.update(metadata)
     if default_factory is undefined:
