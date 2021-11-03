@@ -274,5 +274,25 @@ class TestController(unittest.TestCase):
              'instance2': 'instance2'})
 
 
+    def test_modify_metadata(self):
+        class C(Controller):        
+            s: field(type_=str,
+                     default='',
+                     metadata={'custom': 'value'})
+        
+        
+        o = C()
+        o.add_field('d', str, metadata={'another': 'value'})
+
+        o.field('s').metadata['new'] = 'value'
+        o.field('s').metadata['custom'] = 'modified'
+        o.field('d').metadata['new'] = 'value'
+        o.field('d').metadata['another'] = 'modified'
+        self.assertEqual(o.field('s').metadata, {'class_field': True, 
+            'custom': 'modified', 'new': 'value'})
+        self.assertEqual(o.field('d').metadata, {'class_field': False, 
+            'another': 'modified', 'new': 'value'})
+
+
 if __name__ == "__main__":
     unittest.main()

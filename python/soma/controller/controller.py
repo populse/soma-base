@@ -87,17 +87,26 @@ class ControllerMeta(type):
                 if isinstance(value, dataclasses.Field):
                     field_type = value
                 if field_type:
-                    metadata = field_type.metadata.copy()
+                    metadata = {}
+                    metadata.update(field_type.metadata)
                     metadata['class_field'] = class_field
                     annotations[i] = type_
+                    default=field_type.default
+                    default_factory=field_type.default_factory
+                    if default is dataclasses.MISSING and default_factory is dataclasses.MISSING:
+                        default = undefined
                     dataclass_namespace[i] = field(
-                            default=field_type.default,
-                            default_factory=field_type.default_factory,
+                            default=default,
+                            default_factory=default_factory,
                             repr=field_type.repr,
                             hash=field_type.hash,
                             init=field_type.init,
-                            compare=field_type.compare,
-                            metadata=metadata)
+                            compare=field_type.compare)
+                    # Metadata in dataclasses.Field is a type.MappingProxyType which
+                    # is a kind of read-only dictionary. Makes it a real dict by directly
+                    # setting it instead of passing it to field(). This way user can modify
+                    # fields metadata.
+                    dataclass_namespace[i].metadata = metadata
                 else:
                     dataclass_namespace[i] = dataclasses.field(default=value, metadata={'class_field': class_field})
         controller_dataclass = getattr(controller_class, '_controller_dataclass', None)
