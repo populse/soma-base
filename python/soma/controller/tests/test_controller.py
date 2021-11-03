@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import dataclasses
-from typing import List, Union
+from typing import List, Union, Literal
 import unittest
 
 from soma.controller import (Controller,
@@ -46,6 +46,7 @@ class TestController(unittest.TestCase):
             hupdahup: str = 'barbatruc'
             gargamel: str
             ouioui: List[str]
+            yes_or_no: Literal['yes', 'no']
 
         c1 = Babar()
         self.assertRaises(AttributeError, getattr, c1, 'gargamel')
@@ -60,6 +61,11 @@ class TestController(unittest.TestCase):
         c2.ouioui = []
         self.assertEqual(c2.asdict(exclude_empty=True),
                          {'hupdahup': 'barbatruc', 'gargamel': 'schtroumpf'})
+        c1.yes_or_no = 'yes'
+        c1.yes_or_no = 'no'
+        c1.yes_or_no = undefined
+        del c1.yes_or_no
+        self.assertRaises(Exception, setattr, c1, 'yes_or_no', 'bad value')
 
     def test_controller4(self):
         class Driver(Controller):
