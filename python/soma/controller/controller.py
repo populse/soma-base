@@ -93,8 +93,6 @@ class ControllerMeta(type):
                     annotations[i] = type_
                     default=field_type.default
                     default_factory=field_type.default_factory
-                    if default is dataclasses.MISSING and default_factory is dataclasses.MISSING:
-                        default = undefined
                     kwargs = dict(
                         default=default,
                         default_factory=default_factory,
@@ -396,6 +394,8 @@ def field(name=None, type_=None,
     elif kwargs:
         metadata = metadata.copy()
         metadata.update(kwargs)
+    if default is dataclasses.MISSING and default_factory is dataclasses.MISSING:
+        default = undefined
     result = dataclasses.field(
         default=default,
         default_factory=default_factory,
