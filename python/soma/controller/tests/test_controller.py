@@ -78,7 +78,7 @@ class TestController(unittest.TestCase):
             engine : str
             driver : Driver = field(
                 default_factory=lambda: Driver(),
-                metadata={'desc': 'the guy who would better take a bus'})
+                desc='the guy who would better take a bus')
             problems : OpenKeyController
 
         my_car = Car()
@@ -134,7 +134,7 @@ class TestController(unittest.TestCase):
         o = C(static_str='')
 
         o.add_field('dynamic_int', int, default=0)
-        o.add_field('dynamic_str', str, default='default', metadata=dict(custom_attribute=True))
+        o.add_field('dynamic_str', str, default='default', custom_attribute=True)
         o.add_field('dynamic_list', List[int])
         self.assertEqual(o.field('dynamic_str').metadata['custom_attribute'], True)
 
@@ -217,10 +217,9 @@ class TestController(unittest.TestCase):
         f = field(name='float_trait',
                   type_=float,
                   default=5,
-                  metadata={
-                      'desc': 'bla',
-                      'optional': True,
-                      'output': True})
+                  desc='bla',
+                  optional=True,
+                  output=True)
         self.assertEqual(
             field_doc(f),
             'float_trait [float] (5): bla')
@@ -228,9 +227,8 @@ class TestController(unittest.TestCase):
         f = field(name='float_trait',
                   type_=float,
                   default=5,
-                  metadata={
-                      'optional': False,
-                      'output': True})
+                  optional=False,
+                  output=True)
         self.assertEqual(
             field_doc(f),
             'float_trait [float] mandatory (5)')
@@ -284,11 +282,11 @@ class TestController(unittest.TestCase):
         class C(Controller):        
             s: field(type_=str,
                      default='',
-                     metadata={'custom': 'value'})
+                     custom='value')
         
         
         o = C()
-        o.add_field('d', str, metadata={'another': 'value'})
+        o.add_field('d', str, another='value')
 
         # Metadata of class fields are read-only
         self.assertRaises(TypeError, exec, "o.field('s').metadata['new'] = 'value'",

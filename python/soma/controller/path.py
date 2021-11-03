@@ -9,6 +9,7 @@ def path(type,
          write=False,
          default=undefined,
          default_factory=undefined,
+         doc=undefined,
          **metadata):
     if read is undefined:
         read = not write
@@ -20,6 +21,8 @@ def path(type,
         'read': read,
         'write': write,
     }
+    if doc is not undefined:
+        field_metadata['doc'] = doc
     field_metadata.update(metadata)
     if default_factory is undefined:
         default_factory = dataclasses.MISSING

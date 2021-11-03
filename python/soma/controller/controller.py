@@ -103,19 +103,24 @@ class ControllerMeta(type):
                         init=field_type.init,
                         compare=field_type.compare
                     )
-                    if class_field:
-                        # Metadata in dataclasses.Field is a type.MappingProxyType which
-                        # is a kind of read-only dictionary. This read-only behavior is kept
-                        # only for class fields (shared among all instances) 
-                        kwargs['metadata'] = metadata
-                    dataclass_namespace[i] = field(**kwargs)
-                    if not class_field:
-                        # For instance fields, make metadata a real dict by directly
-                        # setting the attribute instead of passing it to field(). This
-                        #  way user can modify instance fields metadata.
-                        dataclass_namespace[i].metadata = metadata
                 else:
-                    dataclass_namespace[i] = dataclasses.field(default=value, metadata={'class_field': class_field})
+                    kwargs = {
+                        'default': value,
+                    }
+                    metadata = {
+                        'class_field': class_field
+                    }
+                if class_field:
+                    # Metadata in dataclasses.Field is a type.MappingProxyType which
+                    # is a kind of read-only dictionary. This read-only behavior is kept
+                    # only for class fields (shared among all instances) 
+                    kwargs['metadata'] = metadata
+                dataclass_namespace[i] = field(**kwargs)
+                if not class_field:
+                    # For instance fields, make metadata a real dict by directly
+                    # setting the attribute instead of passing it to field(). This
+                    #  way user can modify instance fields metadata.
+                    dataclass_namespace[i].metadata = metadata
         controller_dataclass = getattr(controller_class, '_controller_dataclass', None)
         if controller_dataclass:
             dataclass_bases = (controller_dataclass,)
@@ -143,11 +148,11 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
         super().__setattr__('on_attribute_change', ValueEvent())
         super().__setattr__('enable_notification', True)
 
-    def add_field(self, name, type_, default=undefined, metadata=None):
+    def add_field(self, name, type_, default=undefined, metadata=None, **kwargs):
         if isinstance(type_, dataclasses.Field):
-            if default is not undefined or metadata is not None:
+            if default is not undefined or metadata or kwargs:
                 raise NotImplementedError('Cannot modify an existing field given to add_field()')
-            field = type_
+            field_instance = type_
         else:
             # Dynamically create a class equivalent to:
             # (without default if it is undefined)
@@ -159,16 +164,16 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
                     name: type_,
                 }
             }
-            kwargs = {}
+            field_kwargs = {}
             if default is not undefined:
-                kwargs['default'] = default
+                field_kwargs['default'] = default
             if metadata is not None:
-                kwargs['metadata'] = metadata
-            if kwargs:
-                namespace[name] = dataclasses.field(**kwargs)
+                field_kwargs['metadata'] = metadata
+            if field_kwargs:
+                namespace[name] = field(**field_kwargs, **kwargs)
             field_class = type(name, (Controller,), namespace, class_field=False)
-            field = field_class()
-        super().__getattribute__('_dyn_fields')[name] = field
+            field_instance = field_class()
+        super().__getattribute__('_dyn_fields')[name] = field_instance
         
     def remove_field(self, name):
         del self._dyn_fields[name]
@@ -377,8 +382,28 @@ class EmptyOpenKeyController(OpenKeyController[str]):
     pass
 
 
-def field(name=None, type_=None, **kwargs):
-    result = dataclasses.field(**kwargs)
+def field(name=None, type_=None, 
+         default=dataclasses.MISSING, 
+         default_factory=dataclasses.MISSING, 
+         init=True, 
+         repr=True,
+         hash=None, 
+         compare=True, 
+         metadata=None,
+         **kwargs):
+    if metadata is None:
+        metadata = kwargs
+    elif kwargs:
+        metadata = metadata.copy()
+        metadata.update(kwargs)
+    result = dataclasses.field(
+        default=default,
+        default_factory=default_factory,
+        init=init,
+        repr=repr,
+        hash=hash,
+        compare=compare,
+        metadata=metadata)
     if name is not None:
         result.name = name
     if type_ is not None:
