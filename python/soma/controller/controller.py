@@ -95,18 +95,25 @@ class ControllerMeta(type):
                     default_factory=field_type.default_factory
                     if default is dataclasses.MISSING and default_factory is dataclasses.MISSING:
                         default = undefined
-                    dataclass_namespace[i] = field(
-                            default=default,
-                            default_factory=default_factory,
-                            repr=field_type.repr,
-                            hash=field_type.hash,
-                            init=field_type.init,
-                            compare=field_type.compare)
-                    # Metadata in dataclasses.Field is a type.MappingProxyType which
-                    # is a kind of read-only dictionary. Makes it a real dict by directly
-                    # setting it instead of passing it to field(). This way user can modify
-                    # fields metadata.
-                    dataclass_namespace[i].metadata = metadata
+                    kwargs = dict(
+                        default=default,
+                        default_factory=default_factory,
+                        repr=field_type.repr,
+                        hash=field_type.hash,
+                        init=field_type.init,
+                        compare=field_type.compare
+                    )
+                    if class_field:
+                        # Metadata in dataclasses.Field is a type.MappingProxyType which
+                        # is a kind of read-only dictionary. This read-only behavior is kept
+                        # only for class fields (shared among all instances) 
+                        kwargs['metadata'] = metadata
+                    dataclass_namespace[i] = field(**kwargs)
+                    if not class_field:
+                        # For instance fields, make metadata a real dict by directly
+                        # setting the attribute instead of passing it to field(). This
+                        #  way user can modify instance fields metadata.
+                        dataclass_namespace[i].metadata = metadata
                 else:
                     dataclass_namespace[i] = dataclasses.field(default=value, metadata={'class_field': class_field})
         controller_dataclass = getattr(controller_class, '_controller_dataclass', None)

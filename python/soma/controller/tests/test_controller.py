@@ -290,12 +290,15 @@ class TestController(unittest.TestCase):
         o = C()
         o.add_field('d', str, metadata={'another': 'value'})
 
-        o.field('s').metadata['new'] = 'value'
-        o.field('s').metadata['custom'] = 'modified'
+        # Metadata of class fields are read-only
+        self.assertRaises(TypeError, exec, "o.field('s').metadata['new'] = 'value'",
+            locals=locals())
+        self.assertRaises(TypeError, exec, "o.field('s').metadata['custom'] = 'modified'",
+            locals=locals())
         o.field('d').metadata['new'] = 'value'
         o.field('d').metadata['another'] = 'modified'
         self.assertEqual(o.field('s').metadata, {'class_field': True, 
-            'custom': 'modified', 'new': 'value'})
+            'custom': 'value'})
         self.assertEqual(o.field('d').metadata, {'class_field': False, 
             'another': 'modified', 'new': 'value'})
 
