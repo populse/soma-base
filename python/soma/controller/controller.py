@@ -11,6 +11,7 @@ from pydantic.dataclasses import dataclass
 
 from soma.undefined import undefined
 
+from .field import field, field_type
 
 class _ModelsConfig:
     validate_assignment = True
@@ -86,12 +87,20 @@ class ControllerMeta(type):
                     type_ = annotations[i] = Union[type_,type(undefined)]
                 if isinstance(value, dataclasses.Field):
                     field_type = value
+                    value = undefined
                 if field_type:
                     metadata = {}
                     metadata.update(field_type.metadata)
                     metadata['class_field'] = class_field
                     annotations[i] = type_
-                    default=field_type.default
+                    if field_type.default is undefined:
+                        default = value
+                    elif value is not undefined and value is not field_type.default:
+                        raise TypeError('Two default values given for '
+                            f'field "{i}": {repr(value)} and '
+                            f'{repr(field_type.default)}')
+                    else:
+                        default=field_type.default
                     default_factory=field_type.default_factory
                     kwargs = dict(
                         default=default,
@@ -380,96 +389,3 @@ class EmptyOpenKeyController(OpenKeyController[str]):
     pass
 
 
-def field(name=None, type_=None, 
-         default=dataclasses.MISSING, 
-         default_factory=dataclasses.MISSING, 
-         init=True, 
-         repr=True,
-         hash=None, 
-         compare=True, 
-         metadata=None,
-         **kwargs):
-    if metadata is None:
-        metadata = kwargs
-    elif kwargs:
-        metadata = metadata.copy()
-        metadata.update(kwargs)
-    if default is dataclasses.MISSING and default_factory is dataclasses.MISSING:
-        default = undefined
-    result = dataclasses.field(
-        default=default,
-        default_factory=default_factory,
-        init=init,
-        repr=repr,
-        hash=hash,
-        compare=compare,
-        metadata=metadata)
-    if name is not None:
-        result.name = name
-    if type_ is not None:
-        result.type = Union[type_, type(undefined)]
-    return result
-
-
-def field_doc(field):
-    result = ['{} [{}]'.format(field.name, field_type_str(field))]
-    optional = field.metadata.get('optional')
-    if optional is None:
-        optional = (field.default is not dataclasses.MISSING or
-                    field.default_factory is not dataclasses.MISSING)
-    if not optional:
-        result.append(' mandatory')
-    default = field.default
-    if default is not dataclasses.MISSING:
-        result.append(' ({})'.format(repr(default)))
-    desc = field.metadata.get('desc')
-    if desc:
-        result.append(': ' + desc)
-    return ''.join(result)
-
-
-def field_type(field):
-    types = field.type.__args__[:-1]
-    if len(types) == 1:
-        return types[0]
-    else:
-        return Union.__getitem__(types)
-
-def field_type_str(field):
-    return type_str(field_type(field))
-
-
-def type_str(type_):
-    final_mapping = {
-        'List[Any]': 'list',
-        'Tuple': 'tuple',
-        'typing.Any': 'Any',
-        'Tuple[Any]': 'tuple',
-        'Dict': 'dict',
-        'Dict[Any,Any]': 'dict',
-    }
-    name = getattr(type_, '__name__', None)
-    if not name:
-        name = getattr(type_, '_name', None)
-    if name:
-        name = name
-    if not name and getattr(type_, '__origin__', None) is Union:
-        name = 'Union'
-    ignore_args = False
-    if not name:
-        name = str(type_)
-        if name.startswith('typing.'):
-            name = name[7:]
-            ignore_args = True
-    module = getattr(type_, '__module__', None)
-    if module and module not in {'builtins', 'typing'}:
-        name = '{}.{}'.format(module, name)
-    args = getattr(type_, '__args__', ())
-    if not ignore_args and args:
-        result = '{}[{}]'.format(
-            name,
-            ','.join(type_str(i) for i in args)
-        )
-    else:
-        result = name
-    return final_mapping.get(result, result)

@@ -185,6 +185,16 @@ def is_output(field):
     return (field.metadata.get('output', False)
             or field.metadata.get('write', False))
 
+def is_optional(field):
+    optional = field.metadata.get('optional', None)
+    if optional is None:
+        optional =  has_default(field)
+    return optional
+
+def has_default(field):
+    return (field.default not in (undefined, dataclasses.MISSING)
+            or field.default_factory is not dataclasses.MISSING)
+
 def is_list(field):
     t = field_type(field)
     return (getattr(t, '_name', None) == 'List'

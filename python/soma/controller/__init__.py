@@ -21,4 +21,6 @@ from .field import (
     is_directory,
     is_file,
     is_list,
-    is_output)
+    is_output,
+    is_optional,
+    has_default)
