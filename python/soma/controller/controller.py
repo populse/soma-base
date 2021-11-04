@@ -449,15 +449,23 @@ def type_str(type_):
         'Dict[Any,Any]': 'dict',
     }
     name = getattr(type_, '__name__', None)
-    if not name and getattr(type_, '__origin__') is Union:
+    if not name:
+        name = getattr(type_, '_name', None)
+    if name:
+        name = name
+    if not name and getattr(type_, '__origin__', None) is Union:
         name = 'Union'
+    ignore_args = False
     if not name:
         name = str(type_)
+        if name.startswith('typing.'):
+            name = name[7:]
+            ignore_args = True
     module = getattr(type_, '__module__', None)
     if module and module not in {'builtins', 'typing'}:
         name = '{}.{}'.format(module, name)
     args = getattr(type_, '__args__', ())
-    if args:
+    if not ignore_args and args:
         result = '{}[{}]'.format(
             name,
             ','.join(type_str(i) for i in args)

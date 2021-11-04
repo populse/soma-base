@@ -7,7 +7,22 @@ import unittest
 from soma.controller import (Controller,
                              field,
                              OpenKeyController,
-                             field_doc)
+                             field_doc, 
+                             Any,
+                             List,
+                             Literal,
+                             Tuple,
+                             Union,
+                             Dict,
+                             file,
+                             directory,
+                             is_path,
+                             is_directory,
+                             is_file,
+                             is_list,
+                             is_output,
+                             field_type_str)
+
 from soma.undefined import undefined
 
 
@@ -300,6 +315,308 @@ class TestController(unittest.TestCase):
         self.assertEqual(o.field('d').metadata, {'class_field': False, 
             'another': 'modified', 'new': 'value'})
 
+
+    def test_fields_for_processes(self):
+        class MyController(Controller):
+            dummy : str
+        
+        class C(Controller):
+            s: str
+            os: field(type_=str, output=True)
+            ls: List[str]
+            ols: field(type_=List[str], output=True)
+
+            i: int
+            oi: field(type_=int, output=True)
+            li: List[int]
+            oli: field(type_=List[int], output=True)
+
+            f: float
+            of: field(type_=float, output=True)
+            lf: List[float]
+            olf: field(type_=List[float], output=True)
+
+            e: Literal['one', 'two', 'three']
+            oe: field(type_=Literal['one', 'two', 'three'], output=True)
+            le: List[Literal['one', 'two', 'three']]
+            ole: field(type_=List[Literal['one', 'two', 'three']], output=True)
+            
+            f: file()
+            of: file(write=True)
+            lf: List[file()]
+            olf: List[file(write=True)]
+            
+            d: directory()
+            od: directory(write=True)
+            ld: List[directory()]
+            old: List[directory(write=True)]
+
+            u: Union[str, List[str]]
+            ou: field(type_=Union[str, List[str]], output=True)
+            lu: List[Union[str, List[str]]]
+            olu: field(type_=List[Union[str, List[str]]], output=True)
+
+            m: Dict
+            om: field(type_=dict, output=True)
+            lm: List[dict]
+            olm: field(type_=List[dict], output=True)
+            mt: Dict[str, List[int]]
+
+            l: list
+            ll: List[List[str]]
+
+            o: MyController
+            lo: List[MyController]
+
+        o = C()
+        d = {
+            f.name: {
+                'name': f.name,
+                'str': field_type_str(f),
+                'list': is_list(f),
+                'path':is_path(f),
+                'file': is_file(f),
+                'directory': is_directory(f),
+                'output': is_output(f),
+            }
+            for f in o.fields()
+        }
+        expected = {
+            'd': {'directory': True,
+                'file': False,
+                'list': False,
+                'name': 'd',
+                'output': False,
+                'path': True,
+                'str': 'directory'},
+            'e': {'directory': False,
+                'file': False,
+                'list': False,
+                'name': 'e',
+                'output': False,
+                'path': False,
+                'str': "Literal['one','two','three']"},
+            'f': {'directory': False,
+                'file': True,
+                'list': False,
+                'name': 'f',
+                'output': False,
+                'path': True,
+                'str': 'file'},
+            'i': {'directory': False,
+                'file': False,
+                'list': False,
+                'name': 'i',
+                'output': False,
+                'path': False,
+                'str': 'int'},
+            'ld': {'directory': True,
+                    'file': False,
+                    'list': True,
+                    'name': 'ld',
+                    'output': False,
+                    'path': True,
+                    'str': 'List[directory]'},
+            'le': {'directory': False,
+                    'file': False,
+                    'list': True,
+                    'name': 'le',
+                    'output': False,
+                    'path': False,
+                    'str': "list[Literal['one','two','three']]"},
+            'lf': {'directory': False,
+                    'file': True,
+                    'list': True,
+                    'name': 'lf',
+                    'output': False,
+                    'path': True,
+                    'str': 'List[file]'},
+            'li': {'directory': False,
+                    'file': False,
+                    'list': True,
+                    'name': 'li',
+                    'output': False,
+                    'path': False,
+                    'str': 'list[int]'},
+            'ls': {'directory': False,
+                    'file': False,
+                    'list': True,
+                    'name': 'ls',
+                    'output': False,
+                    'path': False,
+                    'str': 'list[str]'},
+            'lu': {'directory': False,
+                    'file': False,
+                    'list': True,
+                    'name': 'lu',
+                    'output': False,
+                    'path': False,
+                    'str': 'list[Union[str,list[str]]]'},
+            'od': {'directory': True,
+                    'file': False,
+                    'list': False,
+                    'name': 'od',
+                    'output': True,
+                    'path': True,
+                    'str': 'directory'},
+            'oe': {'directory': False,
+                    'file': False,
+                    'list': False,
+                    'name': 'oe',
+                    'output': True,
+                    'path': False,
+                    'str': "Literal['one','two','three']"},
+            'of': {'directory': False,
+                    'file': True,
+                    'list': False,
+                    'name': 'of',
+                    'output': True,
+                    'path': True,
+                    'str': 'file'},
+            'oi': {'directory': False,
+                    'file': False,
+                    'list': False,
+                    'name': 'oi',
+                    'output': True,
+                    'path': False,
+                    'str': 'int'},
+            'old': {'directory': True,
+                    'file': False,
+                    'list': True,
+                    'name': 'old',
+                    'output': True,
+                    'path': True,
+                    'str': 'List[directory]'},
+            'ole': {'directory': False,
+                    'file': False,
+                    'list': True,
+                    'name': 'ole',
+                    'output': True,
+                    'path': False,
+                    'str': "list[Literal['one','two','three']]"},
+            'olf': {'directory': False,
+                    'file': True,
+                    'list': True,
+                    'name': 'olf',
+                    'output': True,
+                    'path': True,
+                    'str': 'List[file]'},
+            'oli': {'directory': False,
+                    'file': False,
+                    'list': True,
+                    'name': 'oli',
+                    'output': True,
+                    'path': False,
+                    'str': 'list[int]'},
+            'ols': {'directory': False,
+                    'file': False,
+                    'list': True,
+                    'name': 'ols',
+                    'output': True,
+                    'path': False,
+                    'str': 'list[str]'},
+            'olu': {'directory': False,
+                    'file': False,
+                    'list': True,
+                    'name': 'olu',
+                    'output': True,
+                    'path': False,
+                    'str': 'list[Union[str,list[str]]]'},
+            'os': {'directory': False,
+                    'file': False,
+                    'list': False,
+                    'name': 'os',
+                    'output': True,
+                    'path': False,
+                    'str': 'str'},
+            'ou': {'directory': False,
+                    'file': False,
+                    'list': False,
+                    'name': 'ou',
+                    'output': True,
+                    'path': False,
+                    'str': 'Union[str,list[str]]'},
+            's': {'directory': False,
+                'file': False,
+                'list': False,
+                'name': 's',
+                'output': False,
+                'path': False,
+                'str': 'str'},
+            'u': {'directory': False,
+                'file': False,
+                'list': False,
+                'name': 'u',
+                'output': False,
+                'path': False,
+                'str': 'Union[str,list[str]]'},
+            'm': {'directory': False,
+                'file': False,
+                'list': False,
+                'name': 'm',
+                'output': False,
+                'path': False,
+                'str': 'dict'},
+            'om': {'directory': False,
+                'file': False,
+                'list': False,
+                'name': 'om',
+                'output': True,
+                'path': False,
+                'str': 'dict'},
+            'lm': {'directory': False,
+                'file': False,
+                'list': True,
+                'name': 'lm',
+                'output': False,
+                'path': False,
+                'str': 'list[dict]'},
+            'olm': {'directory': False,
+                'file': False,
+                'list': True,
+                'name': 'olm',
+                'output': True,
+                'path': False,
+                'str': 'list[dict]'},
+            'mt': {'directory': False,
+                'file': False,
+                'list': False,
+                'name': 'mt',
+                'output': False,
+                'path': False,
+                'str': 'dict[str,list[int]]'},
+            'l': {'directory': False,
+                'file': False,
+                'list': True,
+                'name': 'l',
+                'output': False,
+                'path': False,
+                'str': 'list'},
+            'll': {'directory': False,
+                'file': False,
+                'list': True,
+                'name': 'll',
+                'output': False,
+                'path': False,
+                'str': 'list[list[str]]'},
+            'o': {'directory': False,
+                'file': False,
+                'list': False,
+                'name': 'o',
+                'output': False,
+                'path': False,
+                'str': '__main__.MyController'},
+            'lo': {'directory': False,
+                'file': False,
+                'list': True,
+                'name': 'lo',
+                'output': False,
+                'path': False,
+                'str': 'list[__main__.MyController]'},
+        }
+        for n, i in d.items():
+            self.assertEqual(d[n], expected[n])
+        self.assertEqual(len(d), len(expected))
 
 if __name__ == "__main__":
     unittest.main()
