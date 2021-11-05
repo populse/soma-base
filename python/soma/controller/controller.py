@@ -19,7 +19,28 @@ class _ModelsConfig:
 
         
 
-class ValueEvent:
+class Event:
+    def __init__(self):
+        self.callbacks = []
+
+    def add(self, callback, ):
+        self.callbacks.append(callback)
+
+
+    def remove(self, callback):
+        self.callbacks.remove(callback)
+
+
+    def fire(self, *args, **kwargs):
+        for callback in self.callbacks:
+            callback(*args, **kwargs)
+    
+    @property
+    def has_callback(self):
+        return bool(self.callbacks)
+
+
+class AttributeValueEvent(Event):
     def __init__(self):
         self.callbacks_mapping = {}
         self.callbacks = {}
@@ -61,7 +82,6 @@ class ValueEvent:
     @property
     def has_callback(self):
         return bool(self.callbacks)
-
 
 class ControllerMeta(type):
     def __new__(cls, name, bases, namespace, class_field=True, ignore_metaclass=False):
@@ -152,7 +172,7 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
         object.__setattr__(self,'_dyn_fields', {})
         for k, v in kwargs.items():
             setattr(self, k, v)
-        super().__setattr__('on_attribute_change', ValueEvent())
+        super().__setattr__('on_attribute_change', AttributeValueEvent())
         super().__setattr__('enable_notification', True)
 
     def add_field(self, name, type_, default=undefined, metadata=None, **kwargs):

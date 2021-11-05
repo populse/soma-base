@@ -2,6 +2,7 @@
 
 from .controller import (Controller,
                          asdict,
+                         Event,
                          OpenKeyController)
 from .field import (
     field,
