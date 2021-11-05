@@ -11,22 +11,44 @@ from typing import (
     Literal,
     Union,
     Dict,
+    Set,
 )
 
 def field(name=None, type_=None, 
          default=dataclasses.MISSING, 
          default_factory=dataclasses.MISSING, 
-         init=True, 
-         repr=True,
+         init=None, 
+         repr=None,
          hash=None, 
-         compare=True, 
+         compare=None, 
          metadata=None,
          **kwargs):
-    if metadata is None:
+    if isinstance(type_, dataclasses.Field):
+        if default is dataclasses.MISSING:
+            default = type_.default
+        if default_factory is dataclasses.MISSING:
+            default_factory = type_.default_factory
+        if init is None:
+            init = type_.init
+        if repr is None:
+            repr = type_.repr
+        if hash is None:
+            init = type_.hash
+        if compare is None:
+            init = type_.compare
+        if metadata is None:
+            metadata = type_.metadata
+    elif metadata is None:
         metadata = kwargs
     elif kwargs:
         metadata = metadata.copy()
         metadata.update(kwargs)
+    if init is None:
+        init=True
+    if repr is None:
+        repr = True
+    if compare is None:
+        compare = True
     if default is dataclasses.MISSING and default_factory is dataclasses.MISSING:
         default = undefined
     result = dataclasses.field(
@@ -93,10 +115,14 @@ def type_str(type_):
         name = getattr(type_, '_name', None)
         if name == 'List':
             name = 'list'
-        if name == 'Dict':
+        elif name == 'Dict':
             name = 'dict'
             args = getattr(type_, '__args__', None)
             ignore_args = args == Dict.__args__
+        elif name == 'Set':
+            name = 'set'
+            args = getattr(type_, '__args__', None)
+            ignore_args = args == Set.__args__
     if name:
         name = name
     if not name and getattr(type_, '__origin__', None) is Union:
@@ -190,6 +216,12 @@ def is_optional(field):
     if optional is None:
         optional =  has_default(field)
     return optional
+
+def set_optional(field, optional):
+    if optional is None:
+        field.metadata.pop('optional', None)
+    else:
+        field.metadata['optional'] = bool(optional)
 
 def has_default(field):
     return (field.default not in (undefined, dataclasses.MISSING)

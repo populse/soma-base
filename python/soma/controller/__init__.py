@@ -15,6 +15,7 @@ from .field import (
     Tuple,
     Union,
     Dict,
+    Set,
     file,
     directory,
     is_path,
@@ -23,4 +24,5 @@ from .field import (
     is_list,
     is_output,
     is_optional,
+    set_optional,
     has_default)

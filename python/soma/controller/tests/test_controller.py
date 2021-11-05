@@ -14,6 +14,7 @@ from soma.controller import (Controller,
                              Tuple,
                              Union,
                              Dict,
+                             Set,
                              file,
                              directory,
                              is_path,
@@ -375,6 +376,10 @@ class TestController(unittest.TestCase):
             o: MyController
             lo: List[MyController]
 
+            Set: Set
+            Set_str: Set[str]
+            set: set
+
         o = C()
         d = {
             f.name: {
@@ -658,6 +663,29 @@ class TestController(unittest.TestCase):
                 'output': False,
                 'path': False,
                 'str': 'list[__main__.MyController]'},
+
+            'set': {'directory': False,
+                'file': False,
+                'list': False,
+                'name': 'set',
+                'output': False,
+                'path': False,
+                'str': 'set'},
+            'Set': {'directory': False,
+                'file': False,
+                'list': False,
+                'name': 'Set',
+                'output': False,
+                'path': False,
+                'str': 'set'},
+            'Set_str': {
+                'directory': False,
+                'file': False,
+                'list': False,
+                'name': 'Set_str',
+                'output': False,
+                'path': False,
+                'str': 'set[str]'},
         }
         for n, i in d.items():
             self.assertEqual(d[n], expected[n])
