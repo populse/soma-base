@@ -1,29 +1,13 @@
 # -*- coding: utf-8 -*-
-#
-# SOMA - Copyright (C) CEA, 2015
-# Distributed under the terms of the CeCILL-B license, as published by
-# the CEA-CNRS-INRIA. Refer to the LICENSE file or to
-# http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html
-# for details.
-#
 
-# System import
-from __future__ import absolute_import
-from __future__ import print_function
-import logging
 import re
 import sys
-import traits.api as traits
-import six
 
-# Define the logger
-logger = logging.getLogger(__name__)
-
-# Soma import
-from soma.qt_gui.qt_backend import QtCore, QtGui
-from .Str import StrControlWidget
 import sip
 
+from soma.qt_gui.qt_backend import QtCore, QtGui
+from .Str import StrControlWidget
+from soma.undefined import undefined
 
 class FloatControlWidget(StrControlWidget):
 
@@ -54,9 +38,9 @@ class FloatControlWidget(StrControlWidget):
         # Get the control current value: format the float string
         # Valid float strings are: +1, -1, 1, 1.1
         control_text = control_instance.text()
-        if type(control_text) not in (str, six.text_type):
+        if not isinstance(control_text, str):
             # old QString with PyQt API v1
-            control_text = six.text_type(control_text)
+            control_text = str(control_text)
         control_value = control_text.replace(".", "", 1)
         control_value = re.sub("^([-+])", "", control_value, count=1)
 
@@ -92,7 +76,7 @@ class FloatControlWidget(StrControlWidget):
                           reset_invalid_value=False, *args, **kwarg):
         """ Update one element of the controller.
 
-        At the end the controller trait value with the name 'control_name'
+        At the end the controller field value with the name 'control_name'
         will match the controller widget user parameters defined in
         'control_instance'.
 
@@ -112,39 +96,33 @@ class FloatControlWidget(StrControlWidget):
 
             # Get the control value
             if control_instance.text() == "":
-                new_trait_value = traits.Undefined
+                new_value = undefined
             else:
-                new_trait_value = float(control_instance.text())
+                new_value = float(control_instance.text())
 
-            protected = controller_widget.controller.is_parameter_protected(
-                control_name)
+            protected = controller_widget.controller.field(
+                control_name).metadata.get('protected', False)
             # value is manually modified: protect it
             if getattr(controller_widget.controller, control_name) \
-                    != new_trait_value:
-                controller_widget.controller.protect_parameter(control_name)
-            # Set the control value to the controller associated trait
+                    != new_value:
+                controller_widget.controller.set_metadata(control_name, 'protected', True)
+            # Set the control value to the controller associated field
             try:
                 setattr(controller_widget.controller, control_name,
-                        new_trait_value)
-                logger.debug(
-                    "'FloatControlWidget' associated controller trait '{0}' "
-                    "has been updated with value '{1}'.".format(
-                        control_name, new_trait_value))
+                        new_value)
                 return
-            except traits.TraitError as e:
-                print(e, file=sys.stderr)
+            except ValidationError:
                 if not protected:
-                    controller_widget.controller.unprotect_parameter(
-                        control_name)
+                    controller_widget.controller.set_metadata(control_name, 'protected', False)
 
         if reset_invalid_value:
             # invalid, reset GUI to older value
-            old_trait_value = getattr(controller_widget.controller,
+            old_value = getattr(controller_widget.controller,
                                       control_name)
-            if old_trait_value is traits.Undefined:
+            if old_value is undefined:
                 control_instance.setText("")
             else:
-                control_instance.setText(six.text_type(old_trait_value))
+                control_instance.setText(str(old_value))
 
     @staticmethod
     def update_controller_widget(controller_widget, control_name,
@@ -152,7 +130,7 @@ class FloatControlWidget(StrControlWidget):
         """ Update one element of the controller widget.
 
         At the end the controller widget user editable parameter with the
-        name 'control_name' will match the controller trait value with the same
+        name 'control_name' will match the controller field value with the same
         name.
 
         Parameters
@@ -178,14 +156,12 @@ class FloatControlWidget(StrControlWidget):
                                           control_instance)
             return
 
-        # Get the trait value
+        # Get the field value
         new_controller_value = getattr(
-            controller_widget.controller, control_name, traits.Undefined)
+            controller_widget.controller, control_name, undefined)
 
-        # Set the trait value to the float control
-        if new_controller_value is traits.Undefined:
+        # Set the field value to the float control
+        if new_controller_value is undefined:
             control_instance.setText("")
         else:
-            control_instance.setText(six.text_type(new_controller_value))
-        logger.debug("'FloatControlWidget' has been updated with value "
-                     "'{0}'.".format(new_controller_value))
+            control_instance.setText(str(new_controller_value))

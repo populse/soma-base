@@ -1,11 +1,4 @@
 # -*- coding: utf-8 -*-
-#
-# Soma-base - Copyright (C) CEA, 2013
-# Distributed under the terms of the CeCILL-B license, as published by
-# the CEA-CNRS-INRIA. Refer to the LICENSE file or to
-# http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html
-# for details.
-#
 
 '''Compatibility module for PyQt and PySide. Currently supports PyQt4,
 PySide, and PyQt5.
@@ -38,12 +31,9 @@ appropriate Qt backend, so that the use of the backend selection is more
 transparent.
 '''
 
-from __future__ import absolute_import
-import logging
 import sys
 import os
 import imp
-import six
 
 
 # make qt_backend a fake module package, with Qt modules as sub-modules
@@ -275,8 +265,8 @@ def set_qt_backend(backend=None, pyqt_api=1, compatible_qt5=None):
         else:
             backend = qt_backend
     if qt_backend is not None and qt_backend != backend:
-        logging.warn('set_qt_backend: a different backend, %s, has already '
-                     'be set, and %s is now requested' % (qt_backend, backend))
+        print(f'WARNING: set_qt_backend: a different backend, {qt_backend}, has already '
+              f'be set, and {backend} is now requested', sys.stderr)
     if backend == 'PyQt4':  # and sys.modules.get('PyQt4') is None:
         import sip
         if pyqt_api == 2:
@@ -331,7 +321,7 @@ def patch_pyside_modules(modules):
         Qt = imp.new_module('PySide.Qt')
         sys.modules['PySide.Qt'] = Qt
     for mod in modules:
-        for key, item in six.iteritems(mod.__dict__):
+        for key, item in mod.__dict__.iteritems():
             if not key.startswith('__') and key not in Qt.__dict__:
                 setattr(Qt, key, item)
 
@@ -605,17 +595,11 @@ def init_matplotlib_backend(force=True):
         guiBackend = 'Qt4Agg'
         mpl_backend_mod = 'matplotlib.backends.backend_qt4agg'
     if 'matplotlib.backends' not in sys.modules or force:
-        if six.PY3:
-            argspec =inspect.getfullargspec(matplotlib.use)
-            if 'force' in argspec.args or 'force' in argspec.kwonlyargs:
-                matplotlib.use(guiBackend, force=force)
-            else:
-                matplotlib.use(guiBackend)
+        argspec =inspect.getfullargspec(matplotlib.use)
+        if 'force' in argspec.args or 'force' in argspec.kwonlyargs:
+            matplotlib.use(guiBackend, force=force)
         else:
-            if 'force' in inspect.getargspec(matplotlib.use).args:
-                matplotlib.use(guiBackend, force=force)
-            else:
-                matplotlib.use(guiBackend)
+            matplotlib.use(guiBackend)
     elif matplotlib.get_backend() != guiBackend:
         raise RuntimeError(
             'Mismatch between Qt version and matplotlib backend: '
@@ -640,119 +624,6 @@ def init_matplotlib_backend(force=True):
     return mpl_backend_mod
 
 
-traits_ui_handler_initialized = False
-
-
-def init_traitsui_handler():
-    ''' Setup handler for traits notification in Qt GUI.
-    This function needs to be called before using traits notification which
-    trigger GUI modification from non-principal threads.
-
-    **WARNING**: depending on the Qt bindings (PyQt or PySide), this function
-    may instantiate a QApplication. It seems that when using PyQt4,
-    QApplication is not instantiated, whereas when using PySide, it is.
-    This means that after this function has been called, one must check if
-    the application has been created before recreating it:
-
-    ::
-
-        app = QtGui.QApplication.instance()
-        if not app:
-            app = QtGui.QApplication(sys.argv)
-
-    This behaviour is triggered somewhere in the traitsui.qt4.toolkit module,
-    we cannot change it easily.
-    '''
-    global traits_ui_handler_initialized
-    from . import QtCore, QtGui
-    if traits_ui_handler_initialized:
-        return # already done
-
-    try:
-        if get_qt_backend() in ('PyQt4', 'PySide'):
-            from traitsui.qt4 import toolkit
-        else:
-            # if using Qt5 we must not import traitsui.qt4, which would cause
-            # a crash. Then use the code taken from traitsui.qt4.toolkit
-            # in a qt-independent manner
-            raise ImportError('traitsui doesn\'t provide a PyQt5 backend')
-    except Exception:
-        # copy of the code from traitsui.qt4.toolkit
-
-        from traits.trait_notifiers import set_ui_handler
-
-        #-------------------------------------------------------------------------------
-        #  Handles UI notification handler requests that occur on a thread other than
-        #  the UI thread:
-        #-------------------------------------------------------------------------------
-        _QT_TRAITS_EVENT = QtCore.QEvent.Type(QtCore.QEvent.registerEventType())
-
-        class _CallAfter(QtCore.QObject):
-            """ This class dispatches a handler so that it executes in the main GUI
-                thread (similar to the wx function).
-            """
-
-            # The list of pending calls.
-            _calls = []
-
-            # The mutex around the list of pending calls.
-            _calls_mutex = QtCore.QMutex()
-
-            def __init__(self, handler, *args, **kwds):
-                """ Initialise the call.
-                """
-                QtCore.QObject.__init__(self)
-
-                # Save the details of the call.
-                self._handler = handler
-                self._args = args
-                self._kwds = kwds
-
-                # Add this to the list.
-                self._calls_mutex.lock()
-                self._calls.append(self)
-                self._calls_mutex.unlock()
-
-                # Move to the main GUI thread.
-                self.moveToThread(QtGui.QApplication.instance().thread())
-
-                # Post an event to be dispatched on the main GUI thread. Note that
-                # we do not call QTimer.singleShot, which would be simpler, because
-                # that only works on QThreads. We want regular Python threads to work.
-                event = QtCore.QEvent(_QT_TRAITS_EVENT)
-                QtGui.QApplication.instance().postEvent(self, event)
-
-            def event(self, event):
-                """ QObject event handler.
-                """
-                if event.type() == _QT_TRAITS_EVENT:
-                    # Invoke the handler
-                    self._handler(*self._args, **self._kwds)
-
-                    # We cannot remove from self._calls here. QObjects don't like being
-                    # garbage collected during event handlers (there are tracebacks,
-                    # plus maybe a memory leak, I think).
-                    QtCore.QTimer.singleShot(0, self._finished)
-
-                    return True
-                else:
-                    return QtCore.QObject.event(self, event)
-
-            def _finished(self):
-                """ Remove the call from the list, so it can be garbage collected.
-                """
-                self._calls_mutex.lock()
-                del self._calls[self._calls.index(self)]
-                self._calls_mutex.unlock()
-
-        def ui_handler ( handler, *args, **kwds ):
-            """ Handles UI notification handler requests that occur on a thread other
-                than the UI thread.
-            """
-            _CallAfter(handler, *args, **kwds)
-
-        # Tell the traits notification handlers to use this UI handler
-        set_ui_handler( ui_handler )
 
 def qimage_to_np(qimage):
     '''

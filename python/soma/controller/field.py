@@ -5,10 +5,11 @@ import dataclasses
 
 from soma.undefined import undefined
 
+# Import allsupported types from typing
 from typing import (
     Any,
-    Tuple,
     Literal,
+    Tuple,
     Union,
     Dict,
     Set,
@@ -66,23 +67,6 @@ def field(name=None, type_=None,
     return result
 
 
-def field_doc(field):
-    result = ['{} [{}]'.format(field.name, field_type_str(field))]
-    optional = field.metadata.get('optional')
-    if optional is None:
-        optional = (field.default not in (undefined, dataclasses.MISSING) or
-                    field.default_factory is not dataclasses.MISSING)
-    if not optional:
-        result.append(' mandatory')
-    default = field.default
-    if default not in (undefined, dataclasses.MISSING):
-        result.append(' ({})'.format(repr(default)))
-    desc = field.metadata.get('desc')
-    if desc:
-        result.append(': ' + desc)
-    return ''.join(result)
-
-
 def field_type(field):
     types = field.type.__args__[:-1]
     if len(types) == 1:
@@ -94,20 +78,21 @@ def field_type_str(field):
     if is_path(field):
         path_type = field.metadata['format'].split('/')[1]
         if is_list(field):
-            return f'List[{path_type}]'
+            return f'list[{path_type}]'
         else:
             return path_type
     return type_str(field_type(field))
 
 
 def type_str(type_):
+    from soma.controller import Controller
+
     final_mapping = {
-        'List[Any]': 'list',
-        'Tuple': 'tuple',
-        'typing.Any': 'Any',
-        'Tuple[Any]': 'tuple',
-        'Dict': 'dict',
-        'Dict[Any,Any]': 'dict',
+        'list[any]': 'list',
+        'typing.any': 'Any',
+        'tuple[any]': 'tuple',
+        'dict[any,any]': 'dict',
+        'controller[Controller]': 'controller',
     }
     name = getattr(type_, '__name__', None)
     ignore_args = False
@@ -126,24 +111,69 @@ def type_str(type_):
     if name:
         name = name
     if not name and getattr(type_, '__origin__', None) is Union:
-        name = 'Union'
+        name = 'union'
     if not name:
         name = str(type_).replace(' ', '')
         if name.startswith('typing.'):
             name = name[7:]
             ignore_args = True
     module = getattr(type_, '__module__', None)
-    if module and module not in {'builtins', 'typing'}:
-        name = '{}.{}'.format(module, name)
+    controller = isinstance(type_, type) and issubclass(type_, Controller)
+    if module and module not in {'builtins', 'typing', 'soma.controller.controller'}:
+        name = f'{module}.{name}'
     args = getattr(type_, '__args__', ())
     if not ignore_args and args:
-        result = '{}[{}]'.format(
-            name,
-            ','.join(type_str(i) for i in args)
-        )
+        result = f'{name.lower()}[{",".join(type_str(i) for i in args)}]'
     else:
-        result = name
+        if controller:
+            result = f'controller[{name}]'
+        else:
+            result = name.lower()
     return final_mapping.get(result, result)
+
+
+def literal_values(type):
+    return type.__args__
+
+
+def field_literal_values(field):
+    return literal_values(field_type(field))
+
+
+def parse_type_str(type_str):
+    '''
+    Returns a tuple with two elements:
+    - The main type name
+    - A (possibly empty) list of parameter types
+
+    Examples:
+    'str' -> ('str', [])
+    'List[str]' -> ('List', ['str'])
+    'union[list[str],Dict[str,controller[Test]]]' -> ('union', ['list[str]', 'Dict[str,controller[Test]]'])
+    '''
+    p = re.compile('(^[^\[\],]*)(?:\[(.*)\])?$')
+    type, inner = p.match(type_str).groups()
+    if inner:
+        p = re.compile(r'\[[^\[\]]*\]')
+        substitution = {}
+        i = 0
+        while True:
+            c = 0
+            new_inner = []
+            for m in p.finditer(inner):
+                skey = f's{i}'
+                i += 1
+                substitution[skey] = m.group(0).format(**substitution)
+                new_inner += [inner[c:m.start()], f'{{{skey}}}']
+                c = m.end()
+            if new_inner:
+                new_inner.append(inner[c:])
+                inner = ''.join(new_inner)
+            else:
+                return (type, [i.format(**substitution) for i in inner.split(',')])
+    else:
+        return (type, [])
+
 
 class ListMeta(type):
     def __getitem__(cls, type):
@@ -207,21 +237,13 @@ def is_file(field):
 def is_directory(field):
     return field.metadata.get('format', '') == 'path/directory'
 
+def is_input(field):
+    return (not field.metadata.get('output', False)
+            and field.metadata.get('read', True))
+
 def is_output(field):
     return (field.metadata.get('output', False)
             or field.metadata.get('write', False))
-
-def is_optional(field):
-    optional = field.metadata.get('optional', None)
-    if optional is None:
-        optional =  has_default(field)
-    return optional
-
-def set_optional(field, optional):
-    if optional is None:
-        field.metadata.pop('optional', None)
-    else:
-        field.metadata['optional'] = bool(optional)
 
 def has_default(field):
     return (field.default not in (undefined, dataclasses.MISSING)

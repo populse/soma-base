@@ -1,34 +1,15 @@
 # -*- coding: utf-8 -*-
-#
-# SOMA - Copyright (C) CEA, 2015
-# Distributed under the terms of the CeCILL-B license, as published by
-# the CEA-CNRS-INRIA. Refer to the LICENSE file or to
-# http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html
-# for details.
-#
 
-# System import
-from __future__ import absolute_import
 import os
-import logging
 from functools import partial
-from traits.api import Instance
-import six
 
-# Define the logger
-logger = logging.getLogger(__name__)
-
-# Soma import
 from soma.qt_gui.qt_backend import QtGui, QtCore
 from soma.utils.functiontools import SomaPartial
-from soma.controller import trait_ids
 from soma.controller import Controller
 from soma.sorted_dictionary import OrderedDict
 from soma.qt_gui.controller_widget import ControllerWidget, weak_proxy
-import traits.api as traits
 import sip
 
-# Qt import
 try:
     _fromUtf8 = QtCore.QString.fromUtf8
 except AttributeError:
@@ -78,12 +59,12 @@ class DictControlWidget(object):
         # Go through all the controller widget controls
         controller_widget = control_instance.controller_widget
         for control_name, control_groups \
-                in six.iteritems(controller_widget._controls):
+                in controller_widget._controls.items():
 
             if not control_groups:
                 continue
             # Unpack the control item
-            trait, control_class, control_instance, control_label \
+            field, control_class, control_instance, control_label \
                 = next(iter(control_groups.values()))
 
             # Call the current control specific check method
@@ -111,7 +92,7 @@ class DictControlWidget(object):
     @staticmethod
     def add_callback(callback, control_instance):
         """ Method to add a callback to the control instance when the dict
-        trait is modified
+        field is modified
 
         Parameters
         ----------
@@ -124,20 +105,19 @@ class DictControlWidget(object):
         pass
 
     @staticmethod
-    def create_widget(parent, control_name, control_value, trait,
-                      label_class=None, user_data=None):
+    def create_widget(parent, controller, field,
+                      label_class=None):
         """ Method to create the dict widget.
 
         Parameters
         ----------
         parent: QWidget (mandatory)
             the parent widget
-        control_name: str (mandatory)
-            the name of the control we want to create
-        control_value: dict of items (mandatory)
-            the default control value
-        trait: Tait (mandatory)
-            the trait associated to the control
+        controller: Controller (mandatory)
+            Controller instance containing the field to create a widget
+            for.
+        field: Field (mandatory)
+            the controller field associated to the control
         label_class: Qt widget class (optional, default: None)
             the label widget will be an instance of this class. Its constructor
             will be called using 2 arguments: the label string and the parent
@@ -156,7 +136,7 @@ class DictControlWidget(object):
             raise Exception(
                 "Expect two inner traits in Dict control. Trait '{0}' "
                 "inner traits are '{1}'.".format(
-                    control_name, trait.inner_traits))
+                    field.name, trait.inner_traits))
         inner_trait = trait.handler.inner_traits()[1]
 
         # Create the dict widget: a frame
@@ -191,7 +171,7 @@ class DictControlWidget(object):
         # Create a new controller that contains length 'control_value' inner
         # trait elements
         controller = DictController()
-        for name, inner_control_values in six.iteritems(control_value):
+        for name, inner_control_values in control_value.items():
             controller.add_trait(str(name), inner_trait)
             setattr(controller, str(name), inner_control_values)
 
@@ -218,13 +198,11 @@ class DictControlWidget(object):
         resize_button.clicked.connect(resize_hook)
         # Add dict item callback
         add_hook = partial(
-            DictControlWidget.add_dict_item, parent, control_name, frame)
+            DictControlWidget.add_dict_item, parent, field.name, frame)
         add_button.clicked.connect(add_hook)
 
         # Create the label associated with the dict widget
-        control_label = trait.label
-        if control_label is None:
-            control_label = control_name
+        control_label = controller.metadata(field.name, 'label', field.name)
         if label_class is None:
             label_class = QtGui.QLabel
         if control_label is not None:
@@ -233,7 +211,7 @@ class DictControlWidget(object):
             label = None
 
         controller_widget.main_controller_def = (DictControlWidget, parent,
-                                                 control_name, frame)
+                                                 field.name, frame)
         return (frame, (label, tool_widget))
 
     @staticmethod
@@ -261,12 +239,12 @@ class DictControlWidget(object):
             (name, getattr(control_instance.controller, name))
             for name in control_instance.controller.user_traits()])
 
-        protected = controller_widget.controller.is_parameter_protected(
-            control_name)
+        protected = controller_widget.controller.field(
+            control_name).metadata.get('protected', False)
         # value is manually modified: protect it
         if getattr(controller_widget.controller, control_name) \
                 != new_trait_value:
-            controller_widget.controller.protect_parameter(control_name)
+            controller_widget.controller.field(control_name).metadata['protected'] = True
         # Update the 'control_name' parent controller value
         try:
             setattr(controller_widget.controller, control_name,
@@ -275,11 +253,7 @@ class DictControlWidget(object):
             print('invalid value set in dict %s:' % control_name,
                   new_trait_value)
             if not protected:
-                controller_widget.controller.unprotect_parameter(control_name)
-        logger.debug(
-            "'DictControlWidget' associated controller trait '{0}' has "
-            "been updated with value '{1}'.".format(
-                control_name, new_trait_value))
+                controller_widget.controller.field(control_name).metadata['protected'] = False
 
     @classmethod
     def update_controller_widget(cls, controller_widget, control_name,
@@ -355,7 +329,7 @@ class DictControlWidget(object):
                     user_traits_changed = True
 
             # Update the controller associated with the current control
-            for trait_name, value in six.iteritems(trait_value):
+            for trait_name, value in trait_value.items():
                 setattr(control_instance.controller, trait_name, value)
 
             # Connect the inner dict controller
@@ -365,17 +339,14 @@ class DictControlWidget(object):
             if user_traits_changed:
                 control_instance.controller.user_traits_changed = True
 
-                logger.debug(
-                    "'DictControlWidget' inner controller has been updated:"
-                    "old size '{0}', new size '{1}'.".format(
-                        len(widget_traits), len(trait_value)))
-
             # Restore the previous dict controller connection status
             if was_connected:
                 cls.connect(controller_widget, control_name, control_instance)
 
         else:
-            logger.error("oups")
+            pass
+            # FIXME
+            # logger.error("oups")
             # print cls, controller_widget, control_name, control_instance
             # print control_instance.controller
             # print control_instance.controller.user_traits()
@@ -416,9 +387,6 @@ class DictControlWidget(object):
                 # And add the callback on each user trait
                 control_instance.controller.on_trait_change(
                     dict_controller_hook, trait_name)
-                logger.debug("Item '{0}' of a 'DictControlWidget', add "
-                             "a callback on inner controller trait "
-                             "'{0}'.".format(control_name, trait_name))
 
             # Update the dict controller widget.
             # Hook: function that will be called to update the specific widget
@@ -435,15 +403,13 @@ class DictControlWidget(object):
             # Update the dict connection status
             control_instance._controller_connections = (
                 dict_controller_hook, controller_hook)
-            logger.debug("Add 'Dict' connection: {0}.".format(
-                control_instance._controller_connections))
 
             # Connect also all dict items
             inner_controls = control_instance.controller_widget._controls
             for (inner_control_name,
-                 inner_control_groups) in six.iteritems(inner_controls):
+                 inner_control_groups) in inner_controlsitems():
                 for group, inner_control \
-                        in six.iteritems(inner_control_groups):
+                        in inner_control_groupsitems():
 
                     # Unpack the control item
                     inner_control_instance = inner_control[2]
@@ -498,9 +464,9 @@ class DictControlWidget(object):
             # Disconnect also all dict items
             inner_controls = control_instance.controller_widget._controls
             for (inner_control_name,
-                 inner_control_groups) in six.iteritems(inner_controls):
+                 inner_control_groups) in inner_controls.items():
                 for group, inner_control \
-                        in six.iteritems(inner_control_groups):
+                        in inner_control_groups.items():
 
                     # Unpack the control item
                     inner_control_instance = inner_control[2]
@@ -553,9 +519,6 @@ class DictControlWidget(object):
 
         # update interface
         control_instance.controller_widget.update_controls()
-
-        logger.debug("Add 'DictControlWidget' '{0}' new trait "
-                     "callback.".format(trait_name))
 
     @staticmethod
     def expand_or_collapse(control_instance, resize_button):

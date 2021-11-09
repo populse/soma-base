@@ -6,9 +6,10 @@ from .controller import (Controller,
                          OpenKeyController)
 from .field import (
     field,
-    field_doc,
     field_type,
     field_type_str,
+    literal_values,
+    field_literal_values,
     type_str,
     Any,
     List,
@@ -23,7 +24,6 @@ from .field import (
     is_directory,
     is_file,
     is_list,
+    is_input,
     is_output,
-    is_optional,
-    set_optional,
     has_default)

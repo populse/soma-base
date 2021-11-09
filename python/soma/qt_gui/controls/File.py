@@ -1,30 +1,13 @@
 # -*- coding: utf-8 -*-
-#
-# SOMA - Copyright (C) CEA, 201
-# Distributed under the terms of the CeCILL-B license, as published by
-# the CEA-CNRS-INRIA. Refer to the LICENSE file or to
-# http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html
-# for details.
-#
 
-# System import
-from __future__ import absolute_import
-import logging
 import os
 from functools import partial
-import traits.api as traits
-import sys
-import six
 
-# Define the logger
-logger = logging.getLogger(__name__)
-
-# Soma import
 from soma.qt_gui.qt_backend import QtGui, QtCore
 from soma.qt_gui import qt_backend
 from soma.utils.functiontools import SomaPartial
 from soma.qt_gui.timered_widgets import TimeredQLineEdit
-from soma.qt_gui.controller_widget import get_ref, weak_proxy
+from soma.utils.weak_proxy import weak_proxy
 import sip
 
 
@@ -241,16 +224,16 @@ class FileControlWidget(object):
             # Get the control value
             #if new_trait_value is not traits.Undefined:
             new_trait_value = control_instance.path.value()
-            protected = controller_widget.controller.is_parameter_protected(
-                control_name)
+            protected = controller_widget.controller.field(
+                control_name).metadata.get('protected', False)
             # value is manually modified: protect it
             if getattr(controller_widget.controller, control_name) \
                     != new_trait_value:
-                controller_widget.controller.protect_parameter(control_name)
+                controller_widget.controller.field(control_name).metadata['protected'] = True
             # Set the control value to the controller associated trait
             try:
                 if new_trait_value not in (None, traits.Undefined):
-                    new_trait_value = six.text_type(new_trait_value)
+                    new_trait_value = str(new_trait_value)
                 setattr(controller_widget.controller, control_name,
                         new_trait_value)
                 fail = False
@@ -258,13 +241,8 @@ class FileControlWidget(object):
                 print(e)
                 if not protected:
                     # resgtore protected state after abortion
-                    controller_widget.controller.unprotect_parameter(
-                        control_name)
+                    controller_widget.controller.fied(control_name).metadata['protected'] = False
 
-            logger.debug(
-                "'FileControlWidget' associated controller trait '{0}' has"
-                " been updated with value '{1}'.".format(
-                    control_name, new_trait_value))
         if fail and reset_invalid_value:
             # invalid, reset GUI to older value
             old_trait_value = getattr(controller_widget.controller,
@@ -308,9 +286,7 @@ class FileControlWidget(object):
             controller_widget.controller, control_name, "")
 
         # Set the trait value to the string control
-        control_instance.path.setText(six.text_type(new_controller_value))
-        logger.debug("'FileControlWidget' has been updated with value "
-                     "'{0}'.".format(new_controller_value))
+        control_instance.path.setText(str(new_controller_value))
 
     @classmethod
     def connect(cls, controller_widget, control_name, control_instance):
@@ -368,8 +344,6 @@ class FileControlWidget(object):
             # Store the trait - control connection we just build
             control_instance._controller_connections = (
                 widget_hook, widget_hook2, controller_hook)
-            logger.debug("Add 'File' connection: {0}.".format(
-                control_instance._controller_connections))
 
             # Update the control connection status
             control_instance.connected = True
@@ -436,7 +410,7 @@ class FileControlWidget(object):
         current_control_value = os.getcwd()
         if FileControlWidget.is_valid(control_instance):
             current_control_value \
-                = six.text_type(control_instance.path.text())
+                = str(control_instance.path.text())
 
         # get widget via a __self__ in a method, because control_instance may
         # be a weakproxy.
@@ -463,4 +437,4 @@ class FileControlWidget(object):
                 QtGui.QFileDialog.DontUseNativeDialog)
 
         # Set the selected file path to the path sub control
-        control_instance.path.set_value(six.text_type(fname))
+        control_instance.path.set_value(str(fname))

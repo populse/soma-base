@@ -1,34 +1,22 @@
 # -*- coding: utf-8 -*-
-#
-# SOMA - Copyright (C) CEA, 2015
-# Distributed under the terms of the CeCILL-B license, as published by
-# the CEA-CNRS-INRIA. Refer to the LICENSE file or to
-# http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html
-# for details.
-#
-
-from __future__ import print_function
-
-# System import
-from __future__ import absolute_import
 import sys
-import logging
-
-# Trait import
-from traits.api import *
 
 # Soma import
-from soma.qt_gui.qt_backend import QtGui, QtCore
+from soma.qt_gui.qt_backend import QtGui
 from soma.qt_gui.controller_widget import (
     ControllerWidget, ScrollControllerWidget)
 
 # Soma import
-from soma.controller import Controller
+from soma.controller import (Controller,
+                             Literal,
+                             List,
+                             file,
+                             directory)
 
 
 class Point(Controller):
-    x = Float()
-    y = Float()
+    x : float
+    y : float
 
 
 class TestControls(Controller):
@@ -38,22 +26,22 @@ class TestControls(Controller):
 
     # Global parameters
     # Traits we want to parametrized thanks to control widgets
-    enum = Enum("1", "2", "3")
-    i = Int()
-    s = Str()
-    f = Float()
-    b = Bool()
-    fp = File()
-    dp = Directory()
-    l = List(Float())
-    ll = List(List(Float()))
-    lll = List(List(List(Str())))
+    enum : Literal['1', '2', '3']
+    i: int
+    s: str
+    f: float
+    b: bool
+    # fp: file()
+    # dp: directory()
+    # l: List[float]
+    # ll: List[List[float]]
+    # lll = List[List[List[str]]]
 
     def __init__(self):
         """" Initialize the TestControls class.
         """
         # Inheritance
-        super(TestControls, self).__init__()
+        super().__init__()
 
         # Set some default values
         self.l = [3.2, 0.5]
@@ -62,10 +50,6 @@ class TestControls(Controller):
 
 
 if __name__ == "__main__":
-
-    # Set the logging level
-    logging.basicConfig(level=logging.INFO)
-
     # Create a qt applicaction
     app = QtGui.QApplication(sys.argv)
 

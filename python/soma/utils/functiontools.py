@@ -4,10 +4,9 @@
 Utility classes and functions for Python callable.
 '''
 
-from six.moves import zip
-import six
 __docformat__ = "restructuredtext en"
 
+from functools import partial
 import inspect
 # handle deprecation of getargspec in python3
 getfullargspec = getattr(inspect, 'getfullargspec', inspect.getargspec)
@@ -20,57 +19,8 @@ class Empty(object):
     pass
 
 #-------------------------------------------------------------------------
-
-
-class SomaPartial(object):
-
-    '''
-    This is a reimplementation of :py:func:`functools.partial`, which adds
-    compatibility with the :py:mod:`traits` module.
-
-    See the documentation of :py:func:`functools.partial` for details:
-    https://docs.python.org/library/functools.html#functools.partial
-
-    Example::
-
-        from soma.functiontools import partial
-
-        def f(a, b, c):
-            return (a, b, c)
-
-        g = partial(f, 'a', c='c')
-        g('b') # calls f('a', 'b', c='c')
-    '''
-
-    def __init__(self, function, *args, **kwargs):
-        self.func = function
-        self.args = args
-        self.keywords = kwargs
-
-    def __call__(self, *args, **kwargs):
-        merged_kwargs = self.keywords.copy()
-        merged_kwargs.update(kwargs)
-        return self.func(*(self.args + args), **merged_kwargs)
-
-    @property
-    def func_code(self):
-        '''
-        This property make SomaPartial useable with traits module. The method
-        on_trait_change is requiring that the function has a func_code.co_argcount
-        attribute.
-        '''
-        result = Empty()
-        result.co_argcount = numberOfParameterRange(self)[0]
-        return result
-
-    @property
-    def __code__(self):
-        return self.func_code
-
-try:
-    from functools import partial
-except ImportError:
-    partial = SomaPartial
+# Obsolete, kept fonly or backward compatibility. Do not use it.
+SomaPartial = partial
 
 #-------------------------------------------------------------------------
 

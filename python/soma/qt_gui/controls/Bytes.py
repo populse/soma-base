@@ -1,24 +1,5 @@
 # -*- coding: utf-8 -*-
-#
-# SOMA - Copyright (C) CEA, 2015
-# Distributed under the terms of the CeCILL-B license, as published by
-# the CEA-CNRS-INRIA. Refer to the LICENSE file or to
-# http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html
-# for details.
-#
 
-# System import
-from __future__ import absolute_import
-import logging
-from functools import partial
-import traits.api as traits
-import sys
-import six
-
-# Define the logger
-logger = logging.getLogger(__name__)
-
-# Soma import
 from soma.qt_gui.qt_backend import QtGui, QtCore
 from soma.utils.functiontools import SomaPartial
 from soma.qt_gui.timered_widgets import TimeredQLineEdit
@@ -108,21 +89,17 @@ class BytesControlWidget(StrControlWidget):
         if BytesControlWidget.is_valid(control_instance):
 
             # Get the control value
-            new_trait_value = control_instance.value()
-            if new_trait_value not in (traits.Undefined, None):
-                new_trait_value = six.ensure_binary(new_trait_value)
+            new_value = control_instance.value()
+            if new_value not in (undefined, None):
+                new_value = new_value.encode()
 
             # value is manually modified: protect it
             if getattr(controller_widget.controller, control_name) \
-                    != new_trait_value:
-                controller_widget.controller.protect_parameter(control_name)
+                    != new_value:
+                controller_widget.controller.set_metadata(control_name, 'protected', True)
             # Set the control value to the controller associated trait
             setattr(controller_widget.controller, control_name,
-                    new_trait_value)
-            logger.debug(
-                "'BytesControlWidget' associated controller trait '{0}' has "
-                "been updated with value '{1}'.".format(
-                    control_name, new_trait_value))
+                    new_value)
         elif reset_invalid_value:
             # invalid, reset GUI to older value
             old_trait_value = getattr(controller_widget.controller,

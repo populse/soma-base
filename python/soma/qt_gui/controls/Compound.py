@@ -1,34 +1,15 @@
 # -*- coding: utf-8 -*-
-#
-# SOMA - Copyright (C) CEA, 2015
-# Distributed under the terms of the CeCILL-B license, as published by
-# the CEA-CNRS-INRIA. Refer to the LICENSE file or to
-# http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html
-# for details.
-#
-
-# System import
-from __future__ import absolute_import
-import logging
 from functools import partial
-import sys
-import six
 
-# Define the logger
-logger = logging.getLogger(__name__)
-
-# Soma import
 from soma.qt_gui.qt_backend import Qt
 from soma.utils.functiontools import SomaPartial
 from soma.utils.weak_proxy import weak_proxy
-from soma.controller.trait_utils import trait_ids
-import traits.api as traits
 import sip
 
 
 class CompoundControlWidget(object):
 
-    """ Control to select a value from compound/either traits.
+    """ Control to select a value from Union fields.
     """
 
     @staticmethod
@@ -82,20 +63,19 @@ class CompoundControlWidget(object):
         pass
 
     @staticmethod
-    def create_widget(parent, control_name, control_value, trait,
-                      label_class=None, user_data=None):
+    def create_widget(parent, controller, field,
+                      label_class=None):
         """ Create the widget.
 
         Parameters
         ----------
         parent: QWidget (mandatory)
             the parent widget
-        control_name: str (mandatory)
-            the name of the control we want to create
-        control_value: str (mandatory)
-            the default control value, here the enum values
-        trait: Tait (mandatory)
-            the trait associated to the control
+        controller: Controller (mandatory)
+            Controller instance containing the field to create a widget
+            for.
+        field: Field (mandatory)
+            the controller field associated to the control
         label_class: Qt widget class (optional, default: None)
             the label widget will be an instance of this class. Its constructor
             will be called using 2 arguments: the label string and the parent
@@ -110,7 +90,7 @@ class CompoundControlWidget(object):
         # Create the widget that will be used to select a value
         widget = Qt.QWidget(parent)
 
-        # we have a combobox for the trait type, and one of the control types
+        # we have a combobox for the field type, and one of the control types
         # implementations depending on it
 
         layout = Qt.QVBoxLayout()
@@ -126,14 +106,13 @@ class CompoundControlWidget(object):
         widget.user_data = user_data
 
         # get compound types
-        types = trait_ids(trait)
+        main_type, types = parse_type_str(field_type_str(field))
         for t in types:
             widget.type_combo.addItem(t)
         widget.type_combo.setCurrentIndex(0)
 
         widget.compound_widget = None
-        widget.trait = trait  # we need to access it later
-        widget.trait_name = control_name
+        widget.field = field  # we need to access it later
         widget.compound_label = None
 
         type_id = CompoundControlWidget.type_id_for(trait.handler.handlers,
@@ -150,9 +129,7 @@ class CompoundControlWidget(object):
         widget.optional = trait.optional
 
         # Create the label associated with the enum widget
-        control_label = trait.label
-        if control_label is None:
-            control_label = control_name
+        control_label = controller.metadata(field.name, 'label', field.name)
         if label_class is None:
             label_class = Qt.QLabel
         if control_label is not None:
@@ -162,33 +139,7 @@ class CompoundControlWidget(object):
 
         return (widget, label)
 
-    @staticmethod
-    def as_ctrait(thandler):
-        if hasattr(thandler, 'as_ctrait'):
-            return thandler.as_ctrait()
-
-        if hasattr(thandler, 'aType'):
-            ttype = thandler.aType
-        elif hasattr(thandler, 'aClass'):
-            ttype = thandler.aClass
-        else:
-            ttype = thandler
-
-        if isinstance(ttype, type):
-            if ttype.__name__ == 'str':
-                ttype = traits.Str()
-            elif ttype.__name__ == 'bytes':
-                ttype = traits.Bytes()
-            elif ttype.__name__ == 'unicode':
-                ttype = traits.Unicode()
-            #else:
-                #ttype = ttype()
-
-        if hasattr(ttype, 'as_ctrait'):
-            ttype = ttype.as_ctrait()
-
-        return ttype
-
+ 
     @staticmethod
     def create_compound_widget(widget):
         control_widget = widget.parent()
@@ -222,7 +173,7 @@ class CompoundControlWidget(object):
                     widget.compound_label.deleteLater()
         widget.compound_label = None
 
-        trait = widget.trait
+        field = widget.field
         thandler = trait.handler.handlers[widget.current_type_id]
         ttype = CompoundControlWidget.as_ctrait(thandler)
         # Create the control instance and associated label
@@ -328,9 +279,6 @@ class CompoundControlWidget(object):
         if type_id != control_instance.current_type_id:
             control_instance.type_combo.setCurrentIndex(type_id)
 
-        logger.debug("'CompoundControlWidget' has been updated with value "
-                     "'{0}'.".format(new_controller_value))
-
     @staticmethod
     def type_id_for(handlers, value):
         i = 0
@@ -383,9 +331,7 @@ class CompoundControlWidget(object):
 
         # Store the trait - control connection we just build
         control_instance._controller_connections = (controller_hook, )
-        logger.debug("Add 'Compound' connection: {0} / {1}".format(
-            control_name, control_instance))
-
+ 
     @staticmethod
     def disconnect(controller_widget, control_name, control_instance):
         """ Disconnect an 'Enum' controller trait and an 'EnumControlWidget'

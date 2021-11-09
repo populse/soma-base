@@ -1,27 +1,13 @@
 # -*- coding: utf-8 -*-
-#
-# SOMA - Copyright (C) CEA, 2015
-# Distributed under the terms of the CeCILL-B license, as published by
-# the CEA-CNRS-INRIA. Refer to the LICENSE file or to
-# http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html
-# for details.
-#
 
-# System import
-from __future__ import absolute_import
-import logging
-import sys
 import os
-import six
 
-# Soma import
 from soma.qt_gui.qt_backend import QtGui, QtCore
 from soma.functiontools import partial
 from soma.qt_gui.controller_widget import ControllerWidget
 from soma.qt_gui.controller_widget import weak_proxy
 import sip
 
-# Qt import
 try:
     _fromUtf8 = QtCore.QString.fromUtf8
 except AttributeError:
@@ -29,9 +15,6 @@ except AttributeError:
 
 QtCore.QResource.registerResource(os.path.join(os.path.dirname(
     os.path.dirname(__file__)), 'resources', 'widgets_icons.rcc'))
-
-# Define the logger
-logger = logging.getLogger(__name__)
 
 
 class ControllerControlWidget(object):
@@ -67,12 +50,12 @@ class ControllerControlWidget(object):
         # Go through all the controller widget controls
         controller_widget = control_instance.controller_widget
         for control_name, control_groups \
-                in six.iteritems(controller_widget._controls):
+                in controller_widget._controls.items():
 
             if not control_groups:
                 continue
             # Unpack the control item
-            trait, control_class, control_instance, control_label \
+            field, control_class, control_instance, control_label \
                 = next(iter(control_groups.values()))
 
             # Call the current control specific check method
@@ -100,7 +83,7 @@ class ControllerControlWidget(object):
     @staticmethod
     def add_callback(callback, control_instance):
         """ Method to add a callback to the control instance when the controller
-        trait is modified
+        field is modified
 
         Parameters
         ----------
@@ -113,20 +96,19 @@ class ControllerControlWidget(object):
         pass
 
     @staticmethod
-    def create_widget(parent, control_name, control_value, trait,
-                      label_class=None, user_data=None):
+    def create_widget(parent, controller, field,
+                      label_class=None):
         """ Method to create the controller widget.
 
         Parameters
         ----------
         parent: QWidget (mandatory)
             the parent widget
-        control_name: str (mandatory)
-            the name of the control we want to create
-        control_value: instance of Controller (mandatory)
-            the default control value
-        trait: Tait (mandatory)
-            the trait associated to the control
+        controller: Controller (mandatory)
+            Controller instance containing the field to create a widget
+            for.
+        field: Field (mandatory)
+            the controller field associated to the control
         label_class: Qt widget class (optional, default: None)
             the label widget will be an instance of this class. Its constructor
             will be called using 2 arguments: the label string and the parent
@@ -182,17 +164,18 @@ class ControllerControlWidget(object):
             # Add list item callback
             add_hook = partial(
                 ControllerControlWidget.add_item, weak_proxy(parent),
-                control_name, weak_proxy(frame))
+                field.name, weak_proxy(frame))
             add_button.clicked.connect(add_hook)
 
         # Create the associated controller widget
+        control_value = getattr(controller, field.name, undefined)
         controller_widget = ControllerWidget(control_value, parent=frame,
                                              live=True,
                                              editable_labels=editable_labels,
                                              user_data=user_data)
 
         # Store some parameters in the list widget
-        frame.trait = trait
+        frame.field = field
         frame.controller = control_value
         frame.controller_widget = controller_widget
         frame.connected = False
@@ -207,13 +190,11 @@ class ControllerControlWidget(object):
             weak_proxy(resize_button))
         resize_button.clicked.connect(resize_hook)
 
-        if getattr(trait, 'expanded') is False:
+        if not field.metadata.get('expanded', True):
             ControllerControlWidget.set_expanded(frame, resize_button, False)
 
         # Create the label associated with the controller widget
-        control_label = trait.label
-        if control_label is None:
-            control_label = control_name
+        control_label = controller.metadata(field.name, 'label', field.name)
         if label_class is None:
             label_class = QtGui.QLabel
         if control_label is not None:
@@ -228,7 +209,7 @@ class ControllerControlWidget(object):
                           *args, **kwarg):
         """ Update one element of the controller.
 
-        At the end the controller trait value with the name 'control_name'
+        At the end the controller field value with the name 'control_name'
         will match the controller widget user parameters defined in
         'control_instance'.
 
@@ -251,7 +232,7 @@ class ControllerControlWidget(object):
         """ Update one element of the controller control widget.
 
         At the end the controller control widget user editable parameter with the
-        name 'control_name' will match the controller trait value with the same
+        name 'control_name' will match the controller field value with the same
         name.
 
         Parameters
@@ -281,7 +262,7 @@ class ControllerControlWidget(object):
 
     @classmethod
     def connect(cls, controller_widget, control_name, control_instance):
-        """ Connect a 'Controller' controller trait and a 'ControllerControlWidget'
+        """ Connect a 'Controller' controller field and a 'ControllerControlWidget'
         controller widget control.
 
         Parameters
@@ -305,7 +286,7 @@ class ControllerControlWidget(object):
 
     @staticmethod
     def disconnect(controller_widget, control_name, control_instance):
-        """ Disconnect a 'Controller' controller trait and a 'ControllerControlWidget'
+        """ Disconnect a 'Controller' controller field and a 'ControllerControlWidget'
         controller widget control.
 
         Parameters
@@ -400,10 +381,10 @@ class ControllerControlWidget(object):
             synchronize with the controller
         """
         # Get a new key name
-        trait_name = 'new_item'
+        item_name = 'new_item'
         i = 1
-        while control_instance.controller.trait(trait_name):
-            trait_name = 'new_item_%d' % i
+        while control_instance.controller.field(item_name):
+            item_name = 'new_item_%d' % i
             i += 1
 
         # Add the new trait to the inner list controller
@@ -415,5 +396,3 @@ class ControllerControlWidget(object):
         # update the real underlying dict object
         control_instance.controller_widget.update_controller()
 
-        logger.debug("Add 'ControllerControlWidget' '{0}' new trait "
-                     "callback.".format(trait_name))

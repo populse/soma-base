@@ -1,35 +1,16 @@
 # -*- coding: utf-8 -*-
-#
-# SOMA - Copyright (C) CEA, 2015
-# Distributed under the terms of the CeCILL-B license, as published by
-# the CEA-CNRS-INRIA. Refer to the LICENSE file or to
-# http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html
-# for details.
-#
 
-# System import
-from __future__ import print_function
-
-from __future__ import absolute_import
 import os
-import logging
-import six
-from six.moves import range
 
-# Define the logger
-logger = logging.getLogger(__name__)
-
-# Soma import
 from soma.qt_gui import qt_backend
 from soma.qt_gui.qt_backend import QtGui, QtCore
 from soma.utils.functiontools import SomaPartial, partial
-from soma.controller import trait_ids
 from soma.controller import Controller
 from soma.qt_gui.controller_widget import ControllerWidget, \
-    ScrollControllerWidget, get_ref, weak_proxy
+    ScrollControllerWidget
+from soma.utils.weak_proxy import get_ref, weak_proxy
 
 from .List import ListControlWidget, ListController
-import traits.api as traits
 import weakref
 import sip
 
@@ -458,10 +439,7 @@ class OffscreenListControlWidget(object):
                 # And add the callback on each user trait
                 control_instance.controller.on_trait_change(
                     list_controller_hook, trait_name, dispatch='ui')
-                logger.debug("Item '{0}' of a 'ListControlWidget', add "
-                             "a callback on inner controller trait "
-                             "'{0}'.".format(control_name, trait_name))
-
+ 
             # Update the list controller widget.
             # Hook: function that will be called to update the specific widget
             # when a trait event is detected on the list controller.
@@ -477,9 +455,7 @@ class OffscreenListControlWidget(object):
             # Update the list connection status
             control_instance._controller_connections = (
                 list_controller_hook, controller_hook)
-            logger.debug("Add 'List' connection: {0}.".format(
-                control_instance._controller_connections))
-
+ 
             # Update the list control connection status
             control_instance.connected = True
 

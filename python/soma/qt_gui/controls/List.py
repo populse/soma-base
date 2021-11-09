@@ -1,38 +1,17 @@
 # -*- coding: utf-8 -*-
-#
-# SOMA - Copyright (C) CEA, 2015
-# Distributed under the terms of the CeCILL-B license, as published by
-# the CEA-CNRS-INRIA. Refer to the LICENSE file or to
-# http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html
-# for details.
-#
-
-# System import
-from __future__ import print_function
-from __future__ import absolute_import
 import os
-import logging
 from functools import partial
-import six
-from six.moves import range
 
-# Define the logger
-logger = logging.getLogger(__name__)
-
-# Soma import
 from soma.qt_gui import qt_backend
 from soma.qt_gui.qt_backend import QtGui, QtCore
 from soma.utils.functiontools import SomaPartial
-from soma.controller import trait_ids
 from soma.controller import Controller
-from soma.qt_gui.controller_widget import ControllerWidget, get_ref, weak_proxy
-import traits.api as traits
+from soma.qt_gui.controller_widget import ControllerWidget
+from soma.utils.weak_proxy import get_ref, weak_proxy
 import json
 import csv
 import sys
 import sip
-
-from six.moves import cStringIO as StringIO
 
 # Qt import
 try:
@@ -81,19 +60,19 @@ class ListControlWidget(object):
         # Initilaized the output
         valid = True
 
-        # If the trait is optional, the control is valid
-        if control_instance.trait.optional is True:
+        # If the field is optional, the control is valid
+        if is_optional(control_instance.field):
             return valid
 
         # Go through all the controller widget controls
         controller_widget = control_instance.controller_widget
         for control_name, control_groups \
-                in six.iteritems(controller_widget._controls):
+                in controller_widget._controls.items():
 
             if not control_groups:
                 continue
             # Unpack the control item
-            trait, control_class, control_instance, control_label \
+            field, control_class, control_instance, control_label \
                 = next(iter(control_groups.values()))
 
             # Call the current control specific check method
@@ -121,7 +100,7 @@ class ListControlWidget(object):
     @staticmethod
     def add_callback(callback, control_instance):
         """ Method to add a callback to the control instance when the list
-        trait is modified
+        field is modified
 
         Parameters
         ----------
@@ -134,7 +113,7 @@ class ListControlWidget(object):
         pass
 
     @staticmethod
-    def create_widget(parent, control_name, control_value, trait,
+    def create_widget(parent, control_name, control_value, field,
                       label_class=None, max_items=0, user_data=None):
         """ Method to create the list widget.
 
@@ -146,8 +125,8 @@ class ListControlWidget(object):
             the name of the control we want to create
         control_value: list of items (mandatory)
             the default control value
-        trait: Tait (mandatory)
-            the trait associated to the control
+        field: Field (mandatory)
+            the controller field associated to the control
         label_class: Qt widget class (optional, default: None)
             the label widget will be an instance of this class. Its constructor
             will be called using 2 arguments: the label string and the parent
@@ -161,32 +140,19 @@ class ListControlWidget(object):
             a two element tuple of the form (control widget: ,
             associated labels: (a label QLabel, the tools QWidget))
         """
-        # Get the inner trait: expect only one inner trait
+        # Get the inner type: expect only one inner type
         # note: trait.inner_traits might be a method (ListInt) or a tuple
         # (List), whereas trait.handler.inner_trait is always a method
-        if len(trait.handler.inner_traits()) == 1:
-            inner_trait = trait.handler.inner_traits()[0]
-        elif len(trait.handler.inner_traits()) == 0:
-            # maybe a generic list, or a compount trait
-            if hasattr(trait.handler, 'handlers') \
-                    and len(trait.handler.handlers) > 0 \
-                    and hasattr(trait.handler.handlers[0], 'inner_traits') \
-                    and len(trait.handler.handlers[0].inner_traits()) > 0:
-                inner_trait = trait.handler.handlers[0].inner_traits()[0]
-            else:
-                # can't determine type, fallback to string
-                inner_trait = traits.Str()
+        main_type, inner_types = parse_type_str(field_type_str(field))
+        if len(inner_types) == 1:
+            inner_type = inner_types[0]
         else:
             raise Exception(
-                "Expect only one inner trait in List control. Trait '{0}' "
-                "inner trait is '{1}'.".format(control_name,
-                                               trait.handler.inner_traits()))
+                f'Expect only one inner type in List control. Field {control_name!r}'
+                f'inner types are {inner_types}.')
 
-        if control_value is traits.Undefined:
+        if control_value is undefined:
             control_value = []
-        elif not isinstance(control_value, (list, tuple)):
-            # in nipype MultiPath, single values are not in a list
-            control_value = [control_value]
             
         # Create the list widget: a frame
         parent = get_ref(parent)
@@ -236,8 +202,7 @@ class ListControlWidget(object):
                        partial(ListControlWidget.load_list,
                                weak_proxy(parent), control_name,
                                weak_proxy(frame)))
-        if isinstance(inner_trait.trait_type, traits.File) \
-                or isinstance(inner_trait.trait_type, traits.Directory):
+        if inner_type in ('file', 'directory'):
             menu.addAction('Select files',
                            partial(ListControlWidget.select_files,
                                    weak_proxy(parent),
@@ -248,15 +213,12 @@ class ListControlWidget(object):
         menu.addAction('Clear all',
                        partial(ListControlWidget.clear_all,
                                weak_proxy(parent), control_name,
-                               weak_proxy(frame), trait.trait_type.minlen))
+                               weak_proxy(frame), field.metadata.get('minlen', 0)))
         delete_button.setMenu(menu)
 
         # Create a new controller that contains length 'control_value' inner
-        # trait elements
+        # type elements
         controller = ListController()
-
-        if inner_trait.groups:
-            del inner_trait.groups
 
         n = max_items
         if n == 0:
@@ -264,8 +226,6 @@ class ListControlWidget(object):
 
         for cnt, inner_control_values in enumerate(control_value[:n]):
             controller.add_trait(str(cnt), inner_trait)
-            #if inner_trait.groups:
-                #del trait(str(cnt)).groups
             setattr(controller, str(cnt), inner_control_values)
 
         # Create the associated controller widget
@@ -278,8 +238,8 @@ class ListControlWidget(object):
             'ControllerWidget#inner_controller { padding: 0px; }')
 
         # Store some parameters in the list widget
-        frame.inner_trait = inner_trait
-        frame.trait = trait
+        frame.inner_type = inner_type
+        frame.field = field
         frame.controller = controller
         frame.controller_widget = controller_widget
         frame.connected = False
@@ -309,7 +269,7 @@ class ListControlWidget(object):
         delete_button.clicked.connect(delete_hook)
 
         # Create the label associated with the list widget
-        control_label = trait.label
+        control_label = field.metadata.get('label')
         if control_label is None:
             control_label = control_name
         if label_class is None:
@@ -326,7 +286,7 @@ class ListControlWidget(object):
                           *args, **kwarg):
         """ Update one element of the controller.
 
-        At the end the controller trait value with the name 'control_name'
+        At the end the controller field value with the name 'control_name'
         will match the controller widget user parameters defined in
         'control_instance'.
 
@@ -342,48 +302,41 @@ class ListControlWidget(object):
             synchronize with the controller
         """
         # Get the list widget inner controller values
-        new_trait_value = [
+        new_field_value = [
             getattr(control_instance.controller, str(i))
-            for i in range(len(control_instance.controller.user_traits()))]
+            for i in range(len(control_instance.controller.fields()))]
 
-        #if not hasattr(control_instance, 'max_items'):
-            #print('no max_items in:', control_instance)
-        #else:
         if control_instance.max_items != 0 \
-                and len(new_trait_value) == control_instance.max_items:
+                and len(new_field_value) == control_instance.max_items:
             old_value = getattr(controller_widget.controller, control_name)
-            new_trait_value += old_value[control_instance.max_items:]
+            new_field_value += old_value[control_instance.max_items:]
 
         updating = getattr(controller_widget, '_updating', False)
         controller_widget._updating = True
 
-        protected = controller_widget.controller.is_parameter_protected(
-            control_name)
+        protected = controller_widget.controller.field(
+            control_name).metadata.get('protected', False)
         # value is manually modified: protect it
         if getattr(controller_widget.controller, control_name) \
-                != new_trait_value:
-            controller_widget.controller.protect_parameter(control_name)
+                != new_field_value:
+            controller_widget.controller.fields(control_name).metadata['protected'] = True
         # Update the 'control_name' parent controller value
         try:
             setattr(controller_widget.controller, control_name,
-                    new_trait_value)
+                    new_field_value)
         except Exception as e:
             print(e, file=sys.stderr)
             if not protected:
-                controller_widget.controller.unprotect_parameter(control_name)
+                controller_widget.controller.field(control_name).metadata['protected'] = False
 
         controller_widget._updating = updating
-        logger.debug(
-            "'ListControlWidget' associated controller trait '{0}' has "
-            "been updated with value '{1}'.".format(
-                control_name, new_trait_value))
 
     @staticmethod
     def validate_all_values(controller_widget, control_instance):
         '''Performs recursively update_controller() on list elements to
         make the Controller instance values match values in widgets.
         '''
-        for k, groups in six.iteritems(controller_widget._controls):
+        for k, groups in controller_widget._controls.items():
             for g, ctrl in six.iteritems(groups):
                 ctrl[1].update_controller(controller_widget, k,
                                           control_instance,
@@ -404,7 +357,7 @@ class ListControlWidget(object):
         """ Update one element of the list controller widget.
 
         At the end the list controller widget user editable parameter with the
-        name 'control_name' will match the controller trait value with the same
+        name 'control_name' will match the controller field value with the same
         name.
 
         Parameters
@@ -420,7 +373,7 @@ class ListControlWidget(object):
         """
         # there are 2 Controller instances here:
         # * controller_widget.controller is the "official" edited controller,
-        #   which contains a trait "control_name" with a list value
+        #   which contains a field "control_name" with a list value
         # * control_instance.controller is a proxy Controller built here
         #   that represents the list items: elements keys are indexes.
         #   This controller has another widget (for list items):
@@ -440,45 +393,42 @@ class ListControlWidget(object):
             return
 
         # One callback has not been removed properly
-        if control_name in controller_widget.controller.user_traits():
+        if field in controller_widget.controller.fields():
 
             # Get the list widget current connection status
             was_connected = control_instance.connected
 
             # Disconnect the list controller and the inner list controller
-            cls.disconnect(controller_widget, control_name, control_instance)
+            cls.disconnect(controller_widget, field.name, control_instance)
             control_instance.controller_widget.disconnect()
 
-            # Get the 'control_name' list value from the top list controller
-            trait_value = getattr(controller_widget.controller, control_name)
-            if trait_value in (None, traits.Undefined):
-                trait_value = []
-            elif not isinstance(trait_value, (tuple, list)):
-                # nipype MultiPath may have one item outside of a list
-                trait_value = [trait_value]
+            # Get the 'field.name' list value from the top list controller
+            field_value = getattr(controller_widget.controller, field.name)
+            if field_value in (None, undefined):
+                field_value = []
 
             # Get the number of list elements in the controller associated
             # with the current list control
-            len_widget = len(control_instance.controller.user_traits())
+            len_widget = len(control_instance.controller.fields())
 
-            # Parameter that is True if a user trait associated with the
+            # Parameter that is True if a field associated with the
             # current list control has changed
-            user_traits_changed = False
+            fields_changed = False
 
-            # Special case: some traits have been deleted to the top controller
-            if len(trait_value) < len_widget:
+            # Special case: some fields have been deleted to the top controller
+            if len(field_value) < len_widget:
 
-                # Need to remove to the inner list controller some traits
-                for i in range(len(trait_value), len_widget):
-                    control_instance.controller.remove_trait(str(i))
+                # Need to remove to the inner list controller some fields
+                for i in range(len(field_value), len_widget):
+                    control_instance.controller.remove_field(str(i))
 
-                # Notify that some traits of the inner list controller have
+                # Notify that some fields of the inner list controller have
                 # been deleted
-                user_traits_changed = True
+                fields_changed = True
 
-            # Special case: some new traits have been added to the top
+            # Special case: some new fields have been added to the top
             # controller
-            elif len(trait_value) > len_widget \
+            elif len(field_value) > len_widget \
                     and (control_instance.max_items == 0
                          or len_widget < control_instance.max_items):
 
@@ -488,44 +438,32 @@ class ListControlWidget(object):
                     control_instance.controller.add_trait(
                         str(i), control_instance.inner_trait)
 
-                # Notify that some traits of the inner list controller
+                # Notify that some fields of the inner list controller
                 # have been added
-                user_traits_changed = True
+                fields_changed = True
 
             # Update the controller associated with the current control
-            n = len(trait_value)
+            n = len(field_value)
             if control_instance.max_items != 0 \
                     and control_instance.max_items < n:
                 n = control_instance.max_items
             for i in range(n):
-                setattr(control_instance.controller, str(i), trait_value[i])
+                setattr(control_instance.controller, str(i), field_value[i])
 
             # Connect the inner list controller
             control_instance.controller_widget.connect()
 
-            # Emit the 'user_traits_changed' signal if necessary
-            if user_traits_changed:
-                control_instance.controller.user_traits_changed = True
-
-                logger.debug(
-                    "'ListControlWidget' inner controller has been updated:"
-                    "old size '{0}', new size '{1}'.".format(
-                        len_widget, len(trait_value)))
+            # Emit the 'fields_changed' signal if necessary
+            if fields_changed:
+                control_instance.controller.controller_fields_changed.fire()
 
             # Restore the previous list controller connection status
             if was_connected:
-                cls.connect(controller_widget, control_name, control_instance)
+                cls.connect(controller_widget, field.name, control_instance)
 
         else:
-            logger.error("oups: control_name %s not in list controller "
-              "traits: %s"
-              % (control_name,
-                 repr(list(
-                    controller_widget.controller.user_traits().keys()))))
-            # print cls, controller_widget, control_name, control_instance
-            # print control_instance.controller
-            # print control_instance.controller.user_traits()
-
+            # control not in list controller
+            pass
         controller_widget._updating = False
 
     @classmethod
@@ -564,9 +502,6 @@ class ListControlWidget(object):
                 # And add the callback on each user trait
                 control_instance.controller.on_trait_change(
                     list_controller_hook, trait_name, dispatch='ui')
-                logger.debug("Item '{0}' of a 'ListControlWidget', add "
-                             "a callback on inner controller trait "
-                             "'{0}'.".format(control_name, trait_name))
 
             # Update the list controller widget.
             # Hook: function that will be called to update the specific widget
@@ -583,8 +518,6 @@ class ListControlWidget(object):
             # Update the list connection status
             control_instance._controller_connections = (
                 list_controller_hook, controller_hook)
-            logger.debug("Add 'List' connection: {0}.".format(
-                control_instance._controller_connections))
 
             # Connect also all list items
             inner_controls = control_instance.controller_widget._controls
@@ -702,9 +635,6 @@ class ListControlWidget(object):
         if hasattr(control_instance, '_controller_connections'):
             control_instance._controller_connections[0]()
 
-        # control_instance.controller_widget.update_controller_widget()
-        logger.debug("Add 'ListControlWidget' '{0}' new trait "
-                     "callback.".format(trait_name))
 
     @staticmethod
     def delete_list_item(controller_widget, control_name, control_instance):

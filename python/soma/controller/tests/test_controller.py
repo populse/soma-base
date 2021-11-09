@@ -7,7 +7,6 @@ import unittest
 from soma.controller import (Controller,
                              field,
                              OpenKeyController,
-                             field_doc, 
                              Any,
                              List,
                              Literal,
@@ -22,7 +21,6 @@ from soma.controller import (Controller,
                              is_file,
                              is_list,
                              is_output,
-                             is_optional,
                              has_default,
                              field_type_str)
 
@@ -137,10 +135,10 @@ class TestController(unittest.TestCase):
         self.assertEqual([i.name for i in my_car.problems.fields()],
                          ['exhaust', 'windshield'])
 
-        manhelp = field_doc(my_car.field('driver'))
+        manhelp = my_car.field_doc('driver')
         self.assertEqual(
             manhelp,
-            'driver [__main__.Driver]: the guy who would better take a bus')
+            'driver [controller[__main__.Driver]]: the guy who would better take a bus')
 
     def test_dynamic_controllers(self):
         class C(Controller):
@@ -154,7 +152,7 @@ class TestController(unittest.TestCase):
         o.add_field('dynamic_int', int, default=0)
         o.add_field('dynamic_str', str, default='default', custom_attribute=True)
         o.add_field('dynamic_list', List[int])
-        self.assertEqual(o.field('dynamic_str').metadata['custom_attribute'], True)
+        self.assertEqual(o.metadata('dynamic_str', 'custom_attribute'), True)
 
         calls = []
         o.on_attribute_change.add(lambda: calls.append([]))
@@ -187,36 +185,41 @@ class TestController(unittest.TestCase):
             ['x', 'default', 'dynamic_str', o],
             ])
 
-        f = o.field('dynamic_int')
+        n  = 'dynamic_int'
+        f = o.field(n)
         self.assertEqual(f.name, 'dynamic_int')
         self.assertEqual(f.type.__args__[0], int)
         self.assertEqual(f.default, 0)
-        self.assertEqual(f.metadata['class_field'], False)
+        self.assertEqual(o.metadata(n,'class_field'), False)
         
-        f = o.field('dynamic_str')
+        n = 'dynamic_str'
+        f = o.field(n)
         self.assertEqual(f.name, 'dynamic_str')
         self.assertEqual(f.type.__args__[0], str)
         self.assertEqual(f.default, 'default')
-        self.assertEqual(f.metadata['class_field'], False)
-        self.assertEqual(f.metadata['custom_attribute'], True)
+        self.assertEqual(o.metadata(f, 'class_field'), False)
+        self.assertEqual(o.metadata(f, 'custom_attribute'), True)
 
-        f = o.field('static_dict')
+        n = 'static_dict'
+        f = o.field(n)
         self.assertEqual(f.name, 'static_dict')
         self.assertEqual(f.type.__args__[0], dict)
         self.assertEqual(f.default_factory(), {})
-        self.assertEqual(f.metadata['class_field'], True)
+        self.assertEqual(o.metadata(f, 'class_field'), True)
 
-        f = o.field('static_list')
+        n = 'static_list'
+        f = o.field(n)
         self.assertEqual(f.name, 'static_list')
         self.assertEqual(f.type.__args__[0], list)
         self.assertEqual(f.default_factory(), [])
-        self.assertEqual(f.metadata['class_field'], True)
+        self.assertEqual(o.metadata(n, 'class_field'), True)
 
+        n = 'dynamic_list'
         f = o.field('dynamic_list')
         self.assertEqual(f.name, 'dynamic_list')
         self.assertEqual(f.type.__args__[0], List[int])
         self.assertEqual(f.default, undefined)
-        self.assertEqual(f.metadata['class_field'], False)
+        self.assertEqual(o.metadata(f, 'class_field'), False)
 
 
     def test_open_key_controller(self):
@@ -232,43 +235,48 @@ class TestController(unittest.TestCase):
     
     
     def test_field_doc(self):
-        f = field(name='float_trait',
-                  type_=float,
-                  default=5,
-                  desc='bla',
-                  optional=True,
-                  output=True)
-        self.assertEqual(
-            field_doc(f),
-            'float_trait [float] (5): bla')
-
-        f = field(name='float_trait',
-                  type_=float,
-                  default=5,
-                  optional=False,
-                  output=True)
-        self.assertEqual(
-            field_doc(f),
-            'float_trait [float] mandatory (5)')
-
-        class Blop(object):
+        class Blop(Controller):
             pass
-        f = field(name='blop',
-                  type_=Blop,
-                  default=None,
-                  metadata={
-                      'output': False})
-        self.assertEqual(
-            field_doc(f),
-            'blop [{}.Blop] (None)'.format(Blop.__module__))
 
-        f = field(name='choice',
-                  type_=Union[str,int],
-                  metadata={
-                      'output': False})
+        class C(Controller):
+            f1 : field(
+                    type_=float,
+                    default=5,
+                    desc='bla',
+                    optional=True,
+                    output=True)
+            f2 : field(
+                    type_=float,
+                    default=5,
+                    optional=False,
+                    output=True)
+
+            f3 : field(
+                    type_=Blop,
+                    default=None,
+                    metadata={
+                    'output': False})
+
+            f4 : field(
+                    type_=Union[str,int],
+                    metadata={
+                        'output': False})
+        o = C()
         self.assertEqual(
-            field_doc(f),
-            'choice [Union[str,int]] mandatory')
+            o.field_doc('f1'),
+            'f1 [float] (5): bla')
+
+        self.assertEqual(
+            o.field_doc('f2'),
+            'f2 [float] mandatory (5)')
+
+        self.assertEqual(
+            o.field_doc('f3'),
+            f'f3 [controller[{Blop.__module__}.Blop]] (None)')
+
+        self.assertEqual(
+            o.field_doc('f4'),
+            'f4 [union[str,int]] mandatory')
 
     def test_inheritance(self):
         class Base(Controller):
@@ -307,15 +315,13 @@ class TestController(unittest.TestCase):
         o.add_field('d', str, another='value')
 
         # Metadata of class fields are read-only
-        self.assertRaises(TypeError, exec, "o.field('s').metadata['new'] = 'value'",
-            locals=locals())
-        self.assertRaises(TypeError, exec, "o.field('s').metadata['custom'] = 'modified'",
-            locals=locals())
-        o.field('d').metadata['new'] = 'value'
-        o.field('d').metadata['another'] = 'modified'
-        self.assertEqual(o.field('s').metadata, {'class_field': True, 
-            'custom': 'value'})
-        self.assertEqual(o.field('d').metadata, {'class_field': False, 
+        o.set_metadata('s', 'new',  'value')
+        o.set_metadata('s', 'custom', 'modified'    )
+        o.set_metadata('d', 'new', 'value')
+        o.set_metadata('d', 'another', 'modified')
+        self.assertEqual(o.metadata('s'), {'class_field': True, 
+            'custom': 'modified', 'new': 'value'})
+        self.assertEqual(o.metadata('d'), {'class_field': False, 
             'another': 'modified', 'new': 'value'})
 
 
@@ -373,6 +379,8 @@ class TestController(unittest.TestCase):
             l: list
             ll: List[List[str]]
 
+            c: Controller
+            lc: List[Controller]
             o: MyController
             lo: List[MyController]
 
@@ -487,28 +495,28 @@ class TestController(unittest.TestCase):
                 'name': 'e',
                 'output': False,
                 'path': False,
-                'str': "Literal['one','two','three']"},
+                'str': "literal['one','two','three']"},
             'oe': {'directory': False,
                     'file': False,
                     'list': False,
                     'name': 'oe',
                     'output': True,
                     'path': False,
-                    'str': "Literal['one','two','three']"},
+                    'str': "literal['one','two','three']"},
             'le': {'directory': False,
                     'file': False,
                     'list': True,
                     'name': 'le',
                     'output': False,
                     'path': False,
-                    'str': "list[Literal['one','two','three']]"},
+                    'str': "list[literal['one','two','three']]"},
             'ole': {'directory': False,
                     'file': False,
                     'list': True,
                     'name': 'ole',
                     'output': True,
                     'path': False,
-                    'str': "list[Literal['one','two','three']]"},
+                    'str': "list[literal['one','two','three']]"},
 
             'f': {'directory': False,
                 'file': True,
@@ -530,14 +538,14 @@ class TestController(unittest.TestCase):
                     'name': 'lf',
                     'output': False,
                     'path': True,
-                    'str': 'List[file]'},
+                    'str': 'list[file]'},
             'olf': {'directory': False,
                     'file': True,
                     'list': True,
                     'name': 'olf',
                     'output': True,
                     'path': True,
-                    'str': 'List[file]'},
+                    'str': 'list[file]'},
 
             'd': {'directory': True,
                 'file': False,
@@ -559,14 +567,14 @@ class TestController(unittest.TestCase):
                     'name': 'ld',
                     'output': False,
                     'path': True,
-                    'str': 'List[directory]'},
+                    'str': 'list[directory]'},
             'old': {'directory': True,
                     'file': False,
                     'list': True,
                     'name': 'old',
                     'output': True,
                     'path': True,
-                    'str': 'List[directory]'},
+                    'str': 'list[directory]'},
 
             'u': {'directory': False,
                 'file': False,
@@ -574,28 +582,28 @@ class TestController(unittest.TestCase):
                 'name': 'u',
                 'output': False,
                 'path': False,
-                'str': 'Union[str,list[str]]'},
+                'str': 'union[str,list[str]]'},
             'ou': {'directory': False,
                     'file': False,
                     'list': False,
                     'name': 'ou',
                     'output': True,
                     'path': False,
-                    'str': 'Union[str,list[str]]'},
+                    'str': 'union[str,list[str]]'},
             'lu': {'directory': False,
                     'file': False,
                     'list': True,
                     'name': 'lu',
                     'output': False,
                     'path': False,
-                    'str': 'list[Union[str,list[str]]]'},
+                    'str': 'list[union[str,list[str]]]'},
             'olu': {'directory': False,
                     'file': False,
                     'list': True,
                     'name': 'olu',
                     'output': True,
                     'path': False,
-                    'str': 'list[Union[str,list[str]]]'},
+                    'str': 'list[union[str,list[str]]]'},
             
             'm': {'directory': False,
                 'file': False,
@@ -649,20 +657,34 @@ class TestController(unittest.TestCase):
                 'path': False,
                 'str': 'list[list[str]]'},
 
+            'c': {'directory': False,
+                'file': False,
+                'list': False,
+                'name': 'c',
+                'output': False,
+                'path': False,
+                'str': 'controller'},
+            'lc': {'directory': False,
+                'file': False,
+                'list': True,
+                'name': 'lc',
+                'output': False,
+                'path': False,
+                'str': 'list[controller]'},
             'o': {'directory': False,
                 'file': False,
                 'list': False,
                 'name': 'o',
                 'output': False,
                 'path': False,
-                'str': '__main__.MyController'},
+                'str': 'controller[__main__.MyController]'},
             'lo': {'directory': False,
                 'file': False,
                 'list': True,
                 'name': 'lo',
                 'output': False,
                 'path': False,
-                'str': 'list[__main__.MyController]'},
+                'str': 'list[controller[__main__.MyController]]'},
 
             'set': {'directory': False,
                 'file': False,
@@ -708,7 +730,7 @@ class TestController(unittest.TestCase):
         d = {
             f.name: {
                 'name': f.name,
-                'optional': is_optional(f),
+                'optional': o.is_optional(f),
                 'has_default': has_default(f),
             }
             for f in o.fields()

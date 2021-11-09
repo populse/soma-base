@@ -3,7 +3,6 @@
 from collections import OrderedDict
 import copy
 import dataclasses
-from functools import partial
 import inspect
 from typing import Union
 
@@ -11,7 +10,7 @@ from pydantic.dataclasses import dataclass
 
 from soma.undefined import undefined
 
-from .field import field, field_type
+from .field import field, field_type, has_default, field_type_str
 
 class _ModelsConfig:
     validate_assignment = True
@@ -137,17 +136,8 @@ class ControllerMeta(type):
                     metadata = {
                         'class_field': class_field
                     }
-                if class_field:
-                    # Metadata in dataclasses.Field is a type.MappingProxyType which
-                    # is a kind of read-only dictionary. This read-only behavior is kept
-                    # only for class fields (shared among all instances) 
-                    kwargs['metadata'] = metadata
+                kwargs['metadata'] = metadata
                 dataclass_namespace[i] = field(**kwargs)
-                if not class_field:
-                    # For instance fields, make metadata a real dict by directly
-                    # setting the attribute instead of passing it to field(). This
-                    #  way user can modify instance fields metadata.
-                    dataclass_namespace[i].metadata = metadata
         controller_dataclass = getattr(controller_class, '_controller_dataclass', None)
         if controller_dataclass:
             dataclass_bases = (controller_dataclass,)
@@ -172,8 +162,18 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
         object.__setattr__(self,'_dyn_fields', {})
         for k, v in kwargs.items():
             setattr(self, k, v)
+
+        # This event is necessary because there is no event when a trait is
+        # removed with remove_trait and because it is sometimes better to send
+        # a single event when several traits changes are done (especially
+        # when GUI is updated on real time). This event have to be triggered
+        # explicitely to take into account changes due to call(s) to
+        # add_trait or remove_trait.
+        super().__setattr__('controller_fields_changed',  Event())
+
         super().__setattr__('on_attribute_change', AttributeValueEvent())
         super().__setattr__('enable_notification', True)
+        super().__setattr__('_metadata', {})
 
     def add_field(self, name, type_, default=undefined, metadata=None, **kwargs):
         if isinstance(type_, dataclasses.Field):
@@ -201,9 +201,11 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
             field_class = type(name, (Controller,), namespace, class_field=False)
             field_instance = field_class()
         super().__getattribute__('_dyn_fields')[name] = field_instance
+        self.controller_fields_changed.fire()
         
     def remove_field(self, name):
         del self._dyn_fields[name]
+        self.controller_fields_changed.fire()
     
     def __getattribute__(self, name):
         try:
@@ -317,7 +319,81 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
         if with_values:
             result.import_dict(self.asdict())
         return result
-        
+    
+    def field_doc(self, field_or_name):
+        if isinstance(field_or_name, str):
+            field = self.field(field_or_name)
+        else:
+            field= field_or_name
+        if not field:
+            raise ValueError(f'No such field: {field_or_name}')
+        result = ['{} [{}]'.format(field.name, field_type_str(field))]
+        optional = self.metadata(field, 'optional')
+        if optional is None:
+            optional = (field.default not in (undefined, dataclasses.MISSING) or
+                        field.default_factory is not dataclasses.MISSING)
+        if not optional:
+            result.append(' mandatory')
+        default = field.default
+        if default not in (undefined, dataclasses.MISSING):
+            result.append(' ({})'.format(repr(default)))
+        desc = self.metadata(field, 'desc')
+        if desc:
+            result.append(': ' + desc)
+        return ''.join(result)
+    
+    def metadata(self, field_or_name, key=None, default=None):
+        if isinstance(field_or_name, str):
+            field = self.field(field_or_name)
+        else:
+            field= field_or_name
+        if key is None:
+            result = {}
+            result.update(field.metadata.items())
+            result.update(self._metadata.get(field.name, {}))
+            return result
+        else:
+            m = self._metadata.get(field.name)
+            if m:
+                result = m.get(key, undefined)
+                if result is not undefined:
+                    return result
+            field = self.field(field.name)
+            if field:
+                return field.metadata.get(key, default)
+            return default
+    
+    def set_metadata(self, field_or_name, key, value):
+        if isinstance(field_or_name, str):
+            field = self.field(field_or_name)
+        else:
+            field= field_or_name
+        d = self._metadata.setdefault(field.name, {})
+        if value is undefined:
+            d.pop(key, None)
+        else:
+            d[key] = value
+
+    def is_optional(self, field_or_name):
+        if isinstance(field_or_name, str):
+            field = self.field(field_or_name)
+        else:
+            field= field_or_name
+        optional = field.metadata.get('optional', None)
+        if optional is None:
+            optional =  has_default(field)
+        return optional
+
+    def set_optional(self, field_or_name, optional):
+        if isinstance(field_or_name, str):
+            field = self.field(field_or_name)
+        else:
+            field= field_or_name
+        if optional is None:
+            self.set_metadata(field, 'optional', undefined)
+        else:
+            self.set_metadata(field, 'optional', bool(optional))
+
 
 def asdict(obj, dict_factory=dict, exclude_empty=False):
     if isinstance(obj, Controller):
