@@ -1,16 +1,13 @@
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import
-import os
-import sys
-import logging
 
+import os
+
+from soma.controller import is_output
 from soma.qt_gui.qt_backend import QtGui, QtCore
 from soma.qt_gui import qt_backend
 from .File import FileControlWidget
 from soma.utils.weak_proxy import get_ref
-import traits.api as traits
-import six
-
+from soma.undefined import undefined
 
 class DirectoryControlWidget(FileControlWidget):
 
@@ -48,7 +45,7 @@ class DirectoryControlWidget(FileControlWidget):
         # If the control value contains a file, the control is valid and the
         # backgound color of the control is white
         is_valid = False
-        if control_value is traits.Undefined:
+        if control_value is undefined:
             # Undefined is an exception: allow to reset it (File instances,
             # even mandatory, are initialized with Undefined value)
             is_valid = True
@@ -57,9 +54,7 @@ class DirectoryControlWidget(FileControlWidget):
         else:
 
             if os.path.isdir(control_value) \
-                    or (control_instance.output and control_value != "") \
-                    or (control_instance.trait.handler.exists is False
-                        and control_value != ""):
+                    or (is_output(control_instance.field) and control_value != ""):
                 is_valid = True
 
             # If the control value is optional, the control is valid and the
@@ -99,7 +94,7 @@ class DirectoryControlWidget(FileControlWidget):
         # Get the current directory
         current_control_value = os.path.join(os.getcwd(), os.pardir)
         if DirectoryControlWidget.is_valid(control_instance):
-            current_control_value = six.text_type(control_instance.path.text())
+            current_control_value = str(control_instance.path.text())
 
         # Create a dialog to select a directory
         folder = qt_backend.getExistingDirectory(
@@ -108,4 +103,4 @@ class DirectoryControlWidget(FileControlWidget):
                 | QtGui.QFileDialog.DontUseNativeDialog)
 
         # Set the selected directory to the path sub control
-        control_instance.path.setText(six.text_type(folder))
+        control_instance.path.setText(str(folder))

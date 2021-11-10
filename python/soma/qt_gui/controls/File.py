@@ -1,15 +1,16 @@
 # -*- coding: utf-8 -*-
 
-import os
 from functools import partial
+import os
 
-from soma.qt_gui.qt_backend import QtGui, QtCore
-from soma.qt_gui import qt_backend
-from soma.utils.functiontools import SomaPartial
-from soma.qt_gui.timered_widgets import TimeredQLineEdit
-from soma.utils.weak_proxy import weak_proxy
 import sip
 
+from soma.controller import is_output
+from soma.qt_gui import qt_backend
+from soma.qt_gui.qt_backend import QtGui, QtCore
+from soma.qt_gui.timered_widgets import TimeredQLineEdit
+from soma.undefined import undefined
+from soma.utils.weak_proxy import weak_proxy
 
 class FileControlWidget(object):
 
@@ -47,7 +48,7 @@ class FileControlWidget(object):
         # If the control value contains a file, the control is valid and the
         # backgound color of the control is white
         is_valid = False
-        if control_value is traits.Undefined:
+        if control_value is undefined:
             # Undefined is an exception: allow to reset it (File instances,
             # even mandatory, are initialized with Undefined value)
             is_valid = True
@@ -57,9 +58,8 @@ class FileControlWidget(object):
         else:
 
             if (os.path.isfile(control_value)
-                    or (control_instance.output and control_value != "")
-                    or (control_instance.trait.handler.exists is False
-                        and control_value != "")):
+                    or (is_output(control_instance.field)
+                        and control_value != '')):
                 is_valid = True
 
             # If the control value is optional, the control is valid and the
@@ -120,20 +120,19 @@ class FileControlWidget(object):
         control_instance.path.userModification.connect(callback)
 
     @staticmethod
-    def create_widget(parent, control_name, control_value, trait,
-                      label_class=None, user_data=None):
+    def create_widget(parent, controller, field,
+                      label_class=None):
         """ Method to create the file widget.
 
         Parameters
         ----------
         parent: QWidget (mandatory)
             the parent widget
-        control_name: str (mandatory)
-            the name of the control we want to create
-        control_value: str (mandatory)
-            the default control value
-        trait: Tait (mandatory)
-            the trait associated to the control
+        controller: Controller (mandatory)
+            Controller instance containing the field to create a widget
+            for.
+        field: Field (mandatory)
+            the controller field associated to the control
         label_class: Qt widget class (optional, default: None)
             the label widget will be an instance of this class. Its constructor
             will be called using 2 arguments: the label string and the parent
@@ -154,7 +153,7 @@ class FileControlWidget(object):
         layout.setContentsMargins(0, 0, 0, 0)
         widget.setLayout(layout)
         # Create a widget to print the file path
-        path = TimeredQLineEdit(widget, predefined_values=[traits.Undefined])
+        path = TimeredQLineEdit(widget, predefined_values=[undefined])
         # this takes too much space...
         #if hasattr(path, 'setClearButtonEnabled'):
             #path.setClearButtonEnabled(True)
@@ -172,27 +171,25 @@ class FileControlWidget(object):
         widget.connected = False
 
         # Add a parameter to tell us if the widget is optional
-        widget.optional = trait.optional
-        widget.output = trait.output
+        widget.optional = controller.is_optional(field)
+        widget.output = is_output(field)
 
         # Set a callback on the browse button
-        control_class = parent.get_control_class(trait)
+        control_class = parent.get_control_class(field)
         widget.control_class = control_class
         browse_hook = partial(control_class.onBrowseClicked,
                               weak_proxy(widget))
         widget.browse.clicked.connect(browse_hook)
 
         # Create the label associated with the string widget
-        control_label = trait.label
-        if control_label is None:
-            control_label = control_name
+        control_label = controller.metadata(field, 'label', field.name)
         if label_class is None:
             label_class = QtGui.QLabel
         if control_label is not None:
             label = label_class(control_label, parent)
         else:
             label = None
-        widget.trait = trait
+        widget.field = field
 
         return (widget, label)
 
@@ -201,7 +198,7 @@ class FileControlWidget(object):
                           reset_invalid_value=False, *args, **kwargs):
         """ Update one element of the controller.
 
-        At the end the controller trait value with the name 'control_name'
+        At the end the controller field value with the name 'control_name'
         will match the controller widget user parameters defined in
         'control_instance'.
 
@@ -222,32 +219,31 @@ class FileControlWidget(object):
         if control_class.is_valid(control_instance):
 
             # Get the control value
-            #if new_trait_value is not traits.Undefined:
-            new_trait_value = control_instance.path.value()
+            new_value = control_instance.path.value()
             protected = controller_widget.controller.field(
                 control_name).metadata.get('protected', False)
             # value is manually modified: protect it
-            if getattr(controller_widget.controller, control_name) \
-                    != new_trait_value:
-                controller_widget.controller.field(control_name).metadata['protected'] = True
-            # Set the control value to the controller associated trait
+            if getattr(controller_widget.controller, control_name, undefined) \
+                    != new_value:
+                controller_widget.controller.set_metadata(control_name, 'protected', True)
+            # Set the control value to the controller associated field
             try:
-                if new_trait_value not in (None, traits.Undefined):
-                    new_trait_value = str(new_trait_value)
+                if new_value not in (None, undefined):
+                    new_value = str(new_value)
                 setattr(controller_widget.controller, control_name,
-                        new_trait_value)
+                        new_value)
                 fail = False
-            except traits.TraitError as e:
+            except ValidationError as e:
                 print(e)
                 if not protected:
                     # resgtore protected state after abortion
-                    controller_widget.controller.fied(control_name).metadata['protected'] = False
+                    controller_widget.controller.set_metadata(control_name, 'protected', False)
 
         if fail and reset_invalid_value:
             # invalid, reset GUI to older value
-            old_trait_value = getattr(controller_widget.controller,
+            old_value = getattr(controller_widget.controller,
                                       control_name)
-            control_instance.path.set_value(old_trait_value)
+            control_instance.path.set_value(old_value)
 
     @staticmethod
     def update_controller_widget(controller_widget, control_name,
@@ -255,7 +251,7 @@ class FileControlWidget(object):
         """ Update one element of the controller widget.
 
         At the end the controller widget user editable parameter with the
-        name 'control_name' will match the controller trait value with the same
+        name 'control_name' will match the controller field value with the same
         name.
 
         Parameters
@@ -270,7 +266,7 @@ class FileControlWidget(object):
             synchronize with the controller
         """
 
-        # Get the trait value
+        # Get the field value
         try:
             was_connected = control_instance.connected
         except ReferenceError:
@@ -285,12 +281,12 @@ class FileControlWidget(object):
         new_controller_value = getattr(
             controller_widget.controller, control_name, "")
 
-        # Set the trait value to the string control
+        # Set the field value to the string control
         control_instance.path.setText(str(new_controller_value))
 
     @classmethod
     def connect(cls, controller_widget, control_name, control_instance):
-        """ Connect a 'File' controller trait and a 'FileControlWidget'
+        """ Connect a 'File' controller field and a 'FileControlWidget'
         controller widget control.
 
         Parameters
@@ -311,7 +307,7 @@ class FileControlWidget(object):
 
             # Update one element of the controller.
             # Hook: function that will be called to update a specific
-            # controller trait when a 'userModification' qt signal is emited
+            # controller field when a 'userModification' qt signal is emited
             widget_hook = partial(cls.update_controller,
                                   weak_proxy(controller_widget),
                                   control_name,
@@ -319,7 +315,7 @@ class FileControlWidget(object):
                                   False)
 
             # When a qt 'userModification' signal is emited, update the
-            # 'control_name' controller trait value
+            # 'control_name' controller field value
             control_instance.path.userModification.connect(widget_hook)
 
             widget_hook2 = partial(cls.update_controller,
@@ -331,17 +327,17 @@ class FileControlWidget(object):
 
             # Update the control.
             # Hook: function that will be called to update the control value
-            # when the 'control_name' controller trait is modified.
-            controller_hook = SomaPartial(
+            # when the 'control_name' controller field is modified.
+            controller_hook = partial(
                 cls.update_controller_widget, weak_proxy(controller_widget),
                 control_name, weak_proxy(control_instance))
 
-            # When the 'control_name' controller trait value is modified,
+            # When the 'control_name' controller field value is modified,
             # update the corresponding control
-            controller_widget.controller.on_trait_change(
-                controller_hook, name=control_name, dispatch='ui')
+            controller_widget.controller.on_attribute_change.add(
+                controller_hook, control_name)
 
-            # Store the trait - control connection we just build
+            # Store the field - control connection we just build
             control_instance._controller_connections = (
                 widget_hook, widget_hook2, controller_hook)
 
@@ -350,7 +346,7 @@ class FileControlWidget(object):
 
     @staticmethod
     def disconnect(controller_widget, control_name, control_instance):
-        """ Disconnect a 'File' controller trait and a 'FileControlWidget'
+        """ Disconnect a 'File' controller field and a 'FileControlWidget'
         controller widget control.
 
         Parameters
@@ -371,9 +367,9 @@ class FileControlWidget(object):
             (widget_hook, widget_hook2,
              controller_hook) = control_instance._controller_connections
 
-            # Remove the controller hook from the 'control_name' trait
-            controller_widget.controller.on_trait_change(
-                controller_hook, name=control_name, remove=True)
+            # Remove the controller hook from the 'control_name' field
+            controller_widget.controller.on_attribute_change.remove(
+                controller_hook, control_name)
 
             if sip.isdeleted(control_instance.__init__.__self__):
                 return
@@ -383,7 +379,7 @@ class FileControlWidget(object):
             control_instance.path.userModification.disconnect(widget_hook)
             control_instance.path.editingFinished.disconnect(widget_hook2)
 
-            # Delete the trait - control connection we just remove
+            # Delete the field - control connection we just remove
             del control_instance._controller_connections
 
             # Update the control connection status
@@ -416,18 +412,17 @@ class FileControlWidget(object):
         # be a weakproxy.
         widget = control_instance.__repr__.__self__
         ext = []
-        trait = control_instance.trait
-        if trait.allowed_extensions:
-            ext = trait.allowed_extensions
-        if trait.extensions:
-            ext = trait.extensions
-        ext = ['*%s' % e for e in ext]
-        ext = ' '.join(ext)
+        # TODO: manage extensions via formats
+        # field = control_instance.field
+        # if trait.allowed_extensions:
+        #     ext = trait.allowed_extensions
+        # if trait.extensions:
+        #     ext = trait.extensions
+        ext = ' '.join(f'*{e}' for e in ext)
         if ext:
             ext += ';; All files (*)'
         # Create a dialog to select a file
-        if control_instance.output \
-                or control_instance.trait.handler.exists is False:
+        if control_instance.output:
             fname = qt_backend.getSaveFileName(
                 widget, "Output file", current_control_value, ext,
                 None, QtGui.QFileDialog.DontUseNativeDialog)
