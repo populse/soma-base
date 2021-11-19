@@ -5,13 +5,13 @@ from soma.controller import (
     parse_type_str,
 )
 from soma.qt_gui.qt_backend import Qt
-from soma.qt_gui.timered_widgets import TimeredQLineEdit
-from .controls import WidgetFactory
-from .controls.Str import StrWidgetFactory
-
-class VScrollableWindow(Qt.QScrollArea):
+from .factories import WidgetFactory
+from .factories.str import StrWidgetFactory
+from .collapsable import CollapsableWidget
+class ScrollableWidgetsGrid(Qt.QScrollArea):
     """
-    A widget that is used for Controller main windows.
+    A widget that is used for Controller main windows (i.e.
+    top level widget).
     It has a 2 colums grid layout aligned ont the top of the
     window. It allows to add many inner_widgets rows. Each
     row contains either 1 or 2 widgets. A single widget uses
@@ -35,32 +35,70 @@ class VScrollableWindow(Qt.QScrollArea):
         else:
             self.content_layout.addWidget(first_widget, row, 0, 1, 1)
             self.content_layout.addWidget(second_widget, row, 1, 1, 1)
-        self.resize(self.content_widget.size())
+
+class WidgetsGrid(Qt.QWidget):
+    """
+    A widget that is used for Controller inside another
+    controller widget.
+    It has the same properties as VSCrollableWindow but
+    not the same layout.
+    """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.content_layout = Qt.QGridLayout(self)
+
+    def add_widget_row(self, first_widget, second_widget=None):
+        row = self.content_layout.rowCount()
+        if second_widget is None:
+            self.content_layout.addWidget(first_widget, row, 0, 1, 2)
+        else:
+            self.content_layout.addWidget(first_widget, row, 0, 1, 1)
+            self.content_layout.addWidget(second_widget, row, 1, 1, 1)
 
 
-class ControllerWindow(VScrollableWindow):
+class BaseControllerWidget:
     widget_factories = {
         'str': StrWidgetFactory,
         'int': StrWidgetFactory,
         'float': StrWidgetFactory,
     }
 
-    def __init__(self, controller, *args, **kwargs):
+    def __init__(self, controller, output=False, user_level=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        # Select and group fields
+        self.groups = {
+            None: self,
+        }
         self.factories = {}
         for field in controller.fields():
-            type = field_type_str(field)
-            subtypes = []
-            factory_class = self.widget_factories.get(type)
-            if factory_class is None:
-                type, subtypes = parse_type_str(type)
-                factory_class = self.widget_factories.get(type)
-            if factory_class is None:
-                factory_class = WidgetFactory
-            factory = factory_class(self, controller, field, subtypes)
-            self.factories[field.name] = factory
-            self.add_widget_row(*factory.create_widgets())
+            if (
+                (output or not controller.metadata(field, 'output', False))
+                and (user_level is None or user_level >= controller.metadata(field, 'user_level', 0))
+            ):
+                group = controller.metadata(field, 'group', None)
+                group_content_widget = self.groups.get(group)
+                if group_content_widget is None:
+                    group_content_widget = WidgetsGrid()
+                    group_widget = CollapsableWidget(group_content_widget, f'[{group}]',
+                                                     expanded=True)
+                    self.add_widget_row(group_widget)
+                    self.groups[group] = group_content_widget
 
+                type = field_type_str(field)
+                subtypes = []
+                factory_class = self.widget_factories.get(type)
+                if factory_class is None:
+                    type, subtypes = parse_type_str(type)
+                    factory_class = self.widget_factories.get(type)
+                if factory_class is None:
+                    factory_class = WidgetFactory
+                factory = factory_class(group_content_widget, controller, field, subtypes)
+                self.factories[field.name] = factory
+                group_content_widget.add_widget_row(*factory.create_widgets())
+
+
+class ControllerWindow(BaseControllerWidget, ScrollableWidgetsGrid):
+    pass
 
 
 if __name__ == '__main__':
@@ -83,15 +121,15 @@ if __name__ == '__main__':
         ls: List[str]
 
     class C(Controller):
-        s: str
-        os: field(type_=str, optional=True)
-        ls: List[str]
-        ols: field(type_=List[str], output=True)
+        s: field(type_=str, group='string')
+        os: field(type_=str, optional=True, group='string')
+        ls: field(type_=List[str], group='string')
+        ols: field(type_=List[str], output=True, group='string')
 
-        i: int
-        oi: field(type_=int, output=True)
-        li: List[int]
-        oli: field(type_=List[int], output=True)
+        i: field(type_=int, group='integer')
+        oi: field(type_=int, optional=True, group='integer')
+        li: field(type_=List[int], group='integer')
+        oli: field(type_=List[int], output=True, group='integer')
 
         n: float
         on: field(type_=float, optional=True)
@@ -141,13 +179,13 @@ if __name__ == '__main__':
         Set_str: Set[str]
         set: set
 
-app = Qt.QApplication(sys.argv)
-o = C()
-window1 = ControllerWindow(o)
-window1.show()
-window2 = ControllerWindow(o)
-window2.show()
-app.exec_()
+    app = Qt.QApplication(sys.argv)
+    o = C()
+    window1 = ControllerWindow(o)
+    window1.show()
+    window2 = ControllerWindow(o)
+    window2.show()
+    app.exec_()
 
 
 

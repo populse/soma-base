@@ -3,7 +3,7 @@
 from pydantic import ValidationError
 
 from soma.qt_gui.qt_backend import Qt
-from soma.qt_gui.controls import WidgetFactory
+from soma.qt_gui.factories import WidgetFactory
 from soma.qt_gui.timered_widgets import TimeredQLineEdit
 from soma.undefined import undefined
 
