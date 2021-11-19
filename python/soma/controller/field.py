@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 
-import typing
 import dataclasses
+import re
+import typing
 
 from soma.undefined import undefined
 
@@ -138,6 +139,14 @@ def literal_values(type):
 
 def field_literal_values(field):
     return literal_values(field_type(field))
+
+
+def subtypes(type):
+    return type.__args__
+
+
+def field_subtypes(field):
+    return subtypes(field_type(field))
 
 
 def parse_type_str(type_str):

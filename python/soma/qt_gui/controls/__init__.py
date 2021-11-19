@@ -1,53 +1,34 @@
 # -*- coding: utf-8 -*-
 
-import sys
+from soma.controller.field import field_type_str
+from soma.qt_gui.qt_backend import Qt
+from soma.undefined import undefined
 
-from .Str import StrControlWidget
-from .Bytes import BytesControlWidget
-from .Float import FloatControlWidget
-from .Int import IntControlWidget
-from .Enum import EnumControlWidget
-from .List import ListControlWidget
-from .List_File_offscreen import OffscreenListFileControlWidget
-from .Bool import BoolControlWidget
-from .File import FileControlWidget
-from .Directory import DirectoryControlWidget
-from .Dict import DictControlWidget
-from .Controller import ControllerControlWidget
-from .Compound import CompoundControlWidget
-from .non_editable import NonEditableControlWidget
+class WidgetFactory:
+    valid_style_sheet = ''
+    warning_style_sheet = 'background: #FFFFC8;'
+    invalid_style_sheet = 'background: #FFDCDC;'
+    
+    def __init__(self, controller_widget, controller, field, subtypes):
+        super().__init__()
+        self.controller_widget = controller_widget
+        self. controller = controller
+        self.field = field
+        self.subtypes = subtypes
 
+    def create_widgets(self):
+        label = self.controller.metadata(self.field.name, 'label', self.field.name)
+        self.label_widget = Qt.QLabel(label, parent=self.controller_widget)
+        self.text_widget = Qt.QLineEdit(parent=self.controller_widget)
+        self.text_widget.setStyleSheet('color: red;')
+        self.text_widget.setReadOnly(True)
+        self.text_widget.setToolTip(f'No graphical editor found for type {field_type_str(self.field)}')
 
-# Define a structure that will contain the mapping between the string trait
-# descriptions and the associated control classes
-controls = {}
+        self.controller.on_attribute_change.add(self.update_gui, self.field.name)
+        self.update_gui(getattr(self.controller, self.field.name, undefined))
 
+        return self.label_widget, self.text_widget
 
-def range_editor(trait):
-    t = type(trait.default)
-    if t is int:
-        return IntControlWidget
-    if sys.version_info[0] >= 3:
-        long = int  # this is only a trick to fool flake8
-    elif t is long:
-        return IntControlWidget
-    return FloatControlWidget
+    def update_gui(self, value):
+        self.text_widget.setText(f'{value}')
 
-
-# Register all control class
-controls["str"] = StrControlWidget
-controls["bytes"] = BytesControlWidget
-controls["any"] = StrControlWidget
-controls["float"] = FloatControlWidget
-controls["int"] = IntControlWidget
-controls["literal"] = EnumControlWidget
-controls["bool"] = BoolControlWidget
-controls["file"] = FileControlWidget
-controls["directory"] = DirectoryControlWidget
-controls["list"] = ListControlWidget
-controls["controller"] = ControllerControlWidget
-controls["dict"] = DictControlWidget
-controls["union"] = CompoundControlWidget
-controls["list[file]"] = OffscreenListFileControlWidget
-controls["range"] = range_editor
-controls["unknown"] = NonEditableControlWidget

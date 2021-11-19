@@ -33,7 +33,7 @@ class TestControls(Controller):
     b: bool
     fp: file()
     dp: directory()
-    # l: List[float]
+    l: List[float]
     # ll: List[List[float]]
     # lll = List[List[List[str]]]
 

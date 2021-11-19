@@ -27,7 +27,12 @@ class Event:
 
 
     def remove(self, callback):
-        self.callbacks.remove(callback)
+        try:
+            self.callbacks.remove(callback)
+            return True
+        except ValueError:
+            # The callback was not in the list
+            return False
 
 
     def fire(self, *args, **kwargs):
@@ -69,7 +74,12 @@ class AttributeValueEvent(Event):
 
     def remove(self, callback, attribute_name=None):
         real_callback = self.callbacks_mapping.pop(callback, callback)
-        self.callbacks[attribute_name].remove(real_callback)
+        try:
+            self.callbacks[attribute_name].remove(real_callback)
+            return True
+        except ValueError:
+            # The callback was not in the list
+            return False
 
 
     def fire(self, attribute_name, new_value, old_value, controller):

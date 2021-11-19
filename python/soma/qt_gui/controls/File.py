@@ -242,7 +242,7 @@ class FileControlWidget(object):
         if fail and reset_invalid_value:
             # invalid, reset GUI to older value
             old_value = getattr(controller_widget.controller,
-                                      control_name)
+                                      control_name, undefined)
             control_instance.path.set_value(old_value)
 
     @staticmethod

@@ -103,7 +103,7 @@ class FloatControlWidget(StrControlWidget):
             protected = controller_widget.controller.field(
                 control_name).metadata.get('protected', False)
             # value is manually modified: protect it
-            if getattr(controller_widget.controller, control_name) \
+            if getattr(controller_widget.controller, control_name, undefined) \
                     != new_value:
                 controller_widget.controller.set_metadata(control_name, 'protected', True)
             # Set the control value to the controller associated field

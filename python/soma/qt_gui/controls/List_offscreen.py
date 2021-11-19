@@ -10,7 +10,7 @@ from soma.qt_gui.controller_widget import ControllerWidget, \
     ScrollControllerWidget
 from soma.utils.weak_proxy import get_ref, weak_proxy
 
-from .List import ListControlWidget, ListController
+from .List import ListControlWidget
 import weakref
 import sip
 

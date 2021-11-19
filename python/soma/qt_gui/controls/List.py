@@ -1,33 +1,27 @@
 # -*- coding: utf-8 -*-
-import os
-from functools import partial
 
-from soma.qt_gui import qt_backend
-from soma.qt_gui.qt_backend import QtGui, QtCore
-from soma.utils.functiontools import SomaPartial
-from soma.controller import Controller
-from soma.qt_gui.controller_widget import ControllerWidget
-from soma.utils.weak_proxy import get_ref, weak_proxy
+import os
 import json
 import csv
 import sys
 import sip
+from functools import partial
 
-# Qt import
-try:
-    _fromUtf8 = QtCore.QString.fromUtf8
-except AttributeError:
-    _fromUtf8 = lambda s: s
+from pydantic import ValidationError
+
+from soma.qt_gui import qt_backend
+from soma.qt_gui.qt_backend import QtGui, QtCore
+from soma.controller import (Controller,
+                             field_type,
+                             field_type_str,
+                             parse_type_str,
+                             field_subtypes)
+from soma.qt_gui.controller_widget import ControllerWidget
+from soma.utils.weak_proxy import get_ref, weak_proxy
+from soma.undefined import undefined
 
 QtCore.QResource.registerResource(os.path.join(os.path.dirname(
     os.path.dirname(__file__)), 'resources', 'widgets_icons.rcc'))
-
-
-class ListController(Controller):
-
-    """ Dummy list controller to simplify the creation of a list widget
-    """
-    pass
 
 
 class ListControlWidget(object):
@@ -61,7 +55,7 @@ class ListControlWidget(object):
         valid = True
 
         # If the field is optional, the control is valid
-        if is_optional(control_instance.field):
+        if control_instance.controller.is_optional(control_instance.field):
             return valid
 
         # Go through all the controller widget controls
@@ -113,18 +107,17 @@ class ListControlWidget(object):
         pass
 
     @staticmethod
-    def create_widget(parent, control_name, control_value, field,
-                      label_class=None, max_items=0, user_data=None):
+    def create_widget(parent, controller, field,
+                      label_class=None, max_items=0):
         """ Method to create the list widget.
 
         Parameters
         ----------
         parent: QWidget (mandatory)
             the parent widget
-        control_name: str (mandatory)
-            the name of the control we want to create
-        control_value: list of items (mandatory)
-            the default control value
+        controller: Controller (mandatory)
+            Controller instance containing the field to create a widget
+            for.
         field: Field (mandatory)
             the controller field associated to the control
         label_class: Qt widget class (optional, default: None)
@@ -140,24 +133,15 @@ class ListControlWidget(object):
             a two element tuple of the form (control widget: ,
             associated labels: (a label QLabel, the tools QWidget))
         """
-        # Get the inner type: expect only one inner type
-        # note: trait.inner_traits might be a method (ListInt) or a tuple
-        # (List), whereas trait.handler.inner_trait is always a method
-        main_type, inner_types = parse_type_str(field_type_str(field))
-        if len(inner_types) == 1:
-            inner_type = inner_types[0]
-        else:
-            raise Exception(
-                f'Expect only one inner type in List control. Field {control_name!r}'
-                f'inner types are {inner_types}.')
+        main_type_str, inner_types_str = parse_type_str(field_type_str(field))
+        inner_type_str = inner_types_str[0]
+        inner_type = field_subtypes(field)[0]
 
-        if control_value is undefined:
-            control_value = []
+        control_value = getattr(controller, field.name, [])
             
         # Create the list widget: a frame
         parent = get_ref(parent)
         frame = QtGui.QFrame(parent=parent)
-        #frame.setFrameShape(QtGui.QFrame.StyledPanel)
         frame.setFrameShape(QtGui.QFrame.NoFrame)
 
         # Create tools to interact with the list widget: expand or collapse -
@@ -177,16 +161,16 @@ class ListControlWidget(object):
         layout.addWidget(delete_button)
         # Set the tool icons
         icon = QtGui.QIcon()
-        icon.addPixmap(QtGui.QPixmap(_fromUtf8(":/soma_widgets_icons/add")),
+        icon.addPixmap(QtGui.QPixmap(':/soma_widgets_icons/add'),
                        QtGui.QIcon.Normal, QtGui.QIcon.Off)
         add_button.setIcon(icon)
         icon = QtGui.QIcon()
-        icon.addPixmap(QtGui.QPixmap(_fromUtf8(":/soma_widgets_icons/delete")),
+        icon.addPixmap(QtGui.QPixmap(':/soma_widgets_icons/delete'),
                        QtGui.QIcon.Normal, QtGui.QIcon.Off)
         delete_button.setIcon(icon)
         icon = QtGui.QIcon()
         icon.addPixmap(
-            QtGui.QPixmap(_fromUtf8(":/soma_widgets_icons/nav_down")),
+            QtGui.QPixmap(':/soma_widgets_icons/nav_down'),
             QtGui.QIcon.Normal, QtGui.QIcon.Off)
         resize_button.setIcon(icon)
         resize_button.setFixedSize(30, 22)
@@ -196,43 +180,43 @@ class ListControlWidget(object):
         menu = QtGui.QMenu()
         menu.addAction('Enter list',
                        partial(ListControlWidget.enter_list,
-                               weak_proxy(parent), control_name,
+                               weak_proxy(parent), field.name,
                                weak_proxy(frame)))
         menu.addAction('Load list',
                        partial(ListControlWidget.load_list,
-                               weak_proxy(parent), control_name,
+                               weak_proxy(parent), field.name,
                                weak_proxy(frame)))
-        if inner_type in ('file', 'directory'):
+        if inner_type_str in ('file', 'directory'):
             menu.addAction('Select files',
                            partial(ListControlWidget.select_files,
                                    weak_proxy(parent),
-                                   control_name, weak_proxy(frame)))
+                                   field.name, weak_proxy(frame)))
         add_button.setMenu(menu)
 
         menu = QtGui.QMenu()
         menu.addAction('Clear all',
                        partial(ListControlWidget.clear_all,
-                               weak_proxy(parent), control_name,
+                               weak_proxy(parent), field.name,
                                weak_proxy(frame), field.metadata.get('minlen', 0)))
         delete_button.setMenu(menu)
 
         # Create a new controller that contains length 'control_value' inner
         # type elements
-        controller = ListController()
+        controller = Controller()
 
         n = max_items
         if n == 0:
             n = len(control_value)
 
         for cnt, inner_control_values in enumerate(control_value[:n]):
-            controller.add_trait(str(cnt), inner_trait)
-            setattr(controller, str(cnt), inner_control_values)
+            field_name = f'i{cnt}'
+            controller.add_field(field_name, inner_type)
+            setattr(controller, field_name, inner_control_values)
 
         # Create the associated controller widget
         controller_widget = ControllerWidget(
             controller, parent=frame, live=True,
-            override_control_types=parent._defined_controls,
-            user_data=user_data)
+            override_control_types=parent._defined_controls)
         controller_widget.setObjectName('inner_controller')
         controller_widget.setStyleSheet(
             'ControllerWidget#inner_controller { padding: 0px; }')
@@ -260,18 +244,16 @@ class ListControlWidget(object):
         # Add list item callback
         add_hook = partial(
             ListControlWidget.add_list_item, weak_proxy(parent),
-            control_name, weak_proxy(frame))
+            field.name, weak_proxy(frame))
         add_button.clicked.connect(add_hook)
         # Delete list item callback
         delete_hook = partial(
             ListControlWidget.delete_list_item, weak_proxy(parent),
-            control_name, weak_proxy(frame))
+            field.name, weak_proxy(frame))
         delete_button.clicked.connect(delete_hook)
 
         # Create the label associated with the list widget
-        control_label = field.metadata.get('label')
-        if control_label is None:
-            control_label = control_name
+        control_label = controller.metadata(field, 'label', field.name)
         if label_class is None:
             label_class = QtGui.QLabel
         if control_label is not None:
@@ -301,14 +283,16 @@ class ListControlWidget(object):
             the instance of the controller widget control we want to
             synchronize with the controller
         """
+        print('!update_controller!', controller_widget, control_name, control_instance, args, kwarg)
         # Get the list widget inner controller values
         new_field_value = [
-            getattr(control_instance.controller, str(i))
-            for i in range(len(control_instance.controller.fields()))]
+            getattr(control_instance.controller, f.name, field_type(f)())
+            for f in control_instance.controller.fields()]
+        old_value = getattr(controller_widget.controller, control_name, undefined)
+        print('!update_controller2!', new_field_value, old_value)
 
         if control_instance.max_items != 0 \
                 and len(new_field_value) == control_instance.max_items:
-            old_value = getattr(controller_widget.controller, control_name)
             new_field_value += old_value[control_instance.max_items:]
 
         updating = getattr(controller_widget, '_updating', False)
@@ -319,15 +303,15 @@ class ListControlWidget(object):
         # value is manually modified: protect it
         if getattr(controller_widget.controller, control_name) \
                 != new_field_value:
-            controller_widget.controller.fields(control_name).metadata['protected'] = True
+            controller_widget.controller.set_metadata(control_name, 'protected', True)
         # Update the 'control_name' parent controller value
         try:
             setattr(controller_widget.controller, control_name,
                     new_field_value)
-        except Exception as e:
+        except ValidationError as e:
             print(e, file=sys.stderr)
             if not protected:
-                controller_widget.controller.field(control_name).metadata['protected'] = False
+                controller_widget.controller.set_metadata(control_name, 'protected', False)
 
         controller_widget._updating = updating
 
@@ -337,15 +321,15 @@ class ListControlWidget(object):
         make the Controller instance values match values in widgets.
         '''
         for k, groups in controller_widget._controls.items():
-            for g, ctrl in six.iteritems(groups):
+            for g, ctrl in groups.items():
                 ctrl[1].update_controller(controller_widget, k,
                                           control_instance,
                                           reset_invalid_value=True)
                 if ctrl[1] is ListControlWidget:
                     frame = ctrl[2]
                     sub_cw = frame.controller_widget
-                    for sub_k, sub_groups in six.iteritems(sub_cw._controls):
-                        for sub_g, sub_ctrl in six.iteritems(sub_groups):
+                    for sub_k, sub_groups in sub_cw._controls.items():
+                        for sub_g, sub_ctrl in sub_groups.items():
                             sub_ctrl[1].update_controller(
                                 sub_cw, sub_k, sub_ctrl[2],
                                 reset_invalid_value=True)
@@ -371,6 +355,7 @@ class ListControlWidget(object):
             the instance of the controller widget control we want to
             synchronize with the controller
         """
+        print('!update_controller_widget!', controller_widget, control_name, control_instance)
         # there are 2 Controller instances here:
         # * controller_widget.controller is the "official" edited controller,
         #   which contains a field "control_name" with a list value
@@ -393,7 +378,8 @@ class ListControlWidget(object):
             return
 
         # One callback has not been removed properly
-        if field in controller_widget.controller.fields():
+        field = controller_widget.controller.field(control_name)
+        if field:
 
             # Get the list widget current connection status
             was_connected = control_instance.connected
@@ -409,7 +395,7 @@ class ListControlWidget(object):
 
             # Get the number of list elements in the controller associated
             # with the current list control
-            len_widget = len(control_instance.controller.fields())
+            len_widget = sum(1 for _ in control_instance.controller.fields())
 
             # Parameter that is True if a field associated with the
             # current list control has changed
@@ -432,11 +418,11 @@ class ListControlWidget(object):
                     and (control_instance.max_items == 0
                          or len_widget < control_instance.max_items):
 
-                # Need to add to the inner list controller some traits
-                # with type 'inner_trait'
-                for i in range(len_widget, len(trait_value)):
-                    control_instance.controller.add_trait(
-                        str(i), control_instance.inner_trait)
+                # Need to add to the inner list controller some fields
+                # with type 'inner_type'
+                for i in range(len_widget, len(field_value)):
+                    control_instance.controller.add_field(
+                        f'i{i}', control_instance.inner_type)
 
                 # Notify that some fields of the inner list controller
                 # have been added
@@ -468,7 +454,7 @@ class ListControlWidget(object):
 
     @classmethod
     def connect(cls, controller_widget, control_name, control_instance):
-        """ Connect a 'List' controller trait and a 'ListControlWidget'
+        """ Connect a 'List' controller field and a 'ListControlWidget'
         controller widget control.
 
         Parameters
@@ -487,33 +473,32 @@ class ListControlWidget(object):
         # Check if the control is connected
         if not control_instance.connected:
 
-            # Update the list item when one of his associated controller trait
+            # Update the list item when one of his associated controller field
             # changed.
             # Hook: function that will be called to update the controller
             # associated with a list widget when a list widget inner controller
-            # trait is modified.
-            list_controller_hook = SomaPartial(
+            # field is modified.
+            list_controller_hook = partial(
                 cls.update_controller, weak_proxy(controller_widget),
                 control_name, weak_proxy(control_instance))
 
-            # Go through all list widget inner controller user traits
-            for trait_name in control_instance.controller.user_traits():
-
-                # And add the callback on each user trait
-                control_instance.controller.on_trait_change(
-                    list_controller_hook, trait_name, dispatch='ui')
+            # Go through all list widget inner controller fields
+            for f in control_instance.controller.fields():
+                # And add the callback on each field
+                control_instance.controller.on_attribute_change.add(
+                    list_controller_hook, f.name)
 
             # Update the list controller widget.
             # Hook: function that will be called to update the specific widget
-            # when a trait event is detected on the list controller.
-            controller_hook = SomaPartial(
+            # when a field event is detected on the list controller.
+            controller_hook = partial(
                 cls.update_controller_widget, weak_proxy(controller_widget),
                 control_name, weak_proxy(control_instance))
 
-            # When the 'control_name' controller trait value is modified,
+            # When the 'control_name' controller field value is modified,
             # update the corresponding control
-            controller_widget.controller.on_trait_change(
-                controller_hook, control_name, dispatch='ui')
+            controller_widget.controller.on_attribute_change.add(
+                controller_hook, control_name)
 
             # Update the list connection status
             control_instance._controller_connections = (
@@ -522,9 +507,9 @@ class ListControlWidget(object):
             # Connect also all list items
             inner_controls = control_instance.controller_widget._controls
             for (inner_control_name,
-                 inner_control_groups) in six.iteritems(inner_controls):
+                 inner_control_groups) in inner_controls.items():
                 for group, inner_control \
-                        in six.iteritems(inner_control_groups):
+                        in inner_control_groups.items():
 
                     # Unpack the control item
                     inner_control_instance = inner_control[2]
@@ -540,7 +525,7 @@ class ListControlWidget(object):
 
     @staticmethod
     def disconnect(controller_widget, control_name, control_instance):
-        """ Disconnect a 'List' controller trait and a 'ListControlWidget'
+        """ Disconnect a 'List' controller field and a 'ListControlWidget'
         controller widget control.
 
         Parameters
@@ -563,25 +548,25 @@ class ListControlWidget(object):
             (list_controller_hook,
              controller_hook) = control_instance._controller_connections
 
-            # Remove the controller hook from the 'control_name' trait
-            controller_widget.controller.on_trait_change(
-                controller_hook, control_name, remove=True)
+            # Remove the controller hook from the 'control_name' field
+            controller_widget.controller.on_attribute_change.remove(
+                controller_hook, control_name)
 
             # Remove the list controller hook associated with the controller
-            # traits
-            for trait_name in control_instance.controller.user_traits():
-                control_instance.controller.on_trait_change(
-                    list_controller_hook, trait_name, remove=True)
+            # fields
+            for f in control_instance.controller.fields():
+                control_instance.controller.on_attribute_change.remove(
+                    list_controller_hook, f.name)
 
-            # Delete the trait - control connection we just remove
+            # Delete the field - control connection we just remove
             del control_instance._controller_connections
 
             # Disconnect also all list items
             inner_controls = control_instance.controller_widget._controls
             for (inner_control_name,
-                 inner_control_groups) in six.iteritems(inner_controls):
+                 inner_control_groups) in inner_controls.items():
                 for group, inner_control \
-                        in six.iteritems(inner_control_groups):
+                        in inner_control_groups.items():
 
                     # Unpack the control item
                     inner_control_instance = inner_control[2]
@@ -614,21 +599,21 @@ class ListControlWidget(object):
             the instance of the controller widget control we want to
             synchronize with the controller
         """
-        # Get the number of traits associated with the current list control
+        # Get the number of fields associated with the current list control
         # controller
-        nb_of_traits = len(control_instance.controller.user_traits())
+        nb_of_fields = sum(1 for _ in control_instance.controller.fields())
         if control_instance.max_items != 0 \
-                and nb_of_traits >= control_instance.max_items:
+                and nb_of_fields >= control_instance.max_items:
             # don't display more.
             return
-        trait_name = str(nb_of_traits)
+        field_name = f'i{nb_of_fields}'
 
-        # Add the new trait to the inner list controller
-        control_instance.controller.add_trait(
-            trait_name, control_instance.inner_trait)
+        # Add the new field to the inner list controller
+        control_instance.controller.add_field(
+            field_name, control_instance.inner_type)
         control_instance._updating = True
-        setattr(control_instance.controller, trait_name,
-                control_instance.inner_trait.default)
+        setattr(control_instance.controller, field_name,
+                control_instance.inner_type())
         control_instance._updating = False
 
         # Update the list controller
@@ -656,14 +641,12 @@ class ListControlWidget(object):
 
         # inner controller for list items
         controller = control_instance.controller
-        keys = controller.user_traits().keys()
-        keys = sorted([int(k) for k in keys])
+        keys = [f.name for f in controller.fields()]
         if not keys:
-            print('no element to remove')
             return
 
         last_key = str(keys[-1])
-        controller.remove_trait(last_key)
+        controller.remove_field(last_key)
 
         # Update the list controller
         if hasattr(control_instance, '_controller_connections'):
@@ -688,14 +671,14 @@ class ListControlWidget(object):
         if control_instance.isVisible():
             control_instance.hide()
             icon.addPixmap(
-                QtGui.QPixmap(_fromUtf8(":/soma_widgets_icons/nav_right")),
+                QtGui.QPixmap(':/soma_widgets_icons/nav_right'),
                 QtGui.QIcon.Normal, QtGui.QIcon.Off)
 
         # Show the control
         else:
             control_instance.show()
             icon.addPixmap(
-                QtGui.QPixmap(_fromUtf8(":/soma_widgets_icons/nav_down")),
+                QtGui.QPixmap(':/soma_widgets_icons/nav_down'),
                 QtGui.QIcon.Normal, QtGui.QIcon.Off)
 
         # Set the new button icon
@@ -719,7 +702,7 @@ class ListControlWidget(object):
                 if value is not None:
                     try:
                         setattr(parent_controller, control_name, value)
-                    except Exception as e:
+                    except ValidationError as e:
                         print(e)
                     done = True
                 else:
@@ -852,8 +835,7 @@ class ListControlWidget(object):
     def clear_all(controller_widget, control_name, control_instance, minlen):
         controller = control_instance.controller
         parent_controller = controller_widget.controller
-        value = parent_controller.trait(control_name).default
-        setattr(parent_controller, control_name, value)
+        setattr(parent_controller, control_name, undefined)
 
 
 class ListValuesEditor(QtGui.QDialog):
