@@ -340,10 +340,10 @@ class TestController(unittest.TestCase):
             li: List[int]
             oli: field(type_=List[int], output=True)
 
-            f: float
-            of: field(type_=float, output=True)
-            lf: List[float]
-            olf: field(type_=List[float], output=True)
+            n: float
+            on: field(type_=float, output=True)
+            ln: List[float]
+            oln: field(type_=List[float], output=True)
 
             b: bool
             ob: field(type_=bool, output=True)
@@ -459,6 +459,35 @@ class TestController(unittest.TestCase):
                     'output': True,
                     'path': False,
                     'str': 'list[int]'},
+
+            'n': {'directory': False,
+                  'file': False,
+                  'list': False,
+                  'name': 'n',
+                  'output': False,
+                  'path': False,
+                  'str': 'float'},
+            'on': {'directory': False,
+                   'file': False,
+                   'list': False,
+                   'name': 'on',
+                   'output': True,
+                   'path': False,
+                   'str': 'float'},
+            'ln': {'directory': False,
+                   'file': False,
+                   'list': True,
+                   'name': 'ln',
+                   'output': False,
+                   'path': False,
+                   'str': 'list[float]'},
+            'oln': {'directory': False,
+                    'file': False,
+                    'list': True,
+                    'name': 'oln',
+                    'output': True,
+                    'path': False,
+                    'str': 'list[float]'},
 
             'b': {'directory': False,
                 'file': False,
