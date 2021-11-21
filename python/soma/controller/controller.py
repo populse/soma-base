@@ -25,7 +25,6 @@ class Event:
     def add(self, callback, ):
         self.callbacks.append(callback)
 
-
     def remove(self, callback):
         try:
             self.callbacks.remove(callback)
@@ -33,7 +32,6 @@ class Event:
         except ValueError:
             # The callback was not in the list
             return False
-
 
     def fire(self, *args, **kwargs):
         for callback in self.callbacks:
@@ -53,14 +51,16 @@ class AttributeValueEvent(Event):
     def normalize_callback_parameters(callback):
         signature = inspect.signature(callback)
         if len(signature.parameters) == 0:
-            return lambda new_value, old_value, attribute_name, controller: callback()
+            return lambda new_value, old_value, attribute_name, controller, index: callback()
         elif len(signature.parameters) == 1:
-            return lambda new_value, old_value, attribute_name, controller: callback(new_value)
+            return lambda new_value, old_value, attribute_name, controller, index: callback(new_value)
         elif len(signature.parameters) == 2:
-            return lambda new_value, old_value, attribute_name, controller: callback(new_value, old_value)
+            return lambda new_value, old_value, attribute_name, controller, index: callback(new_value, old_value)
         elif len(signature.parameters) == 3:
-            return lambda new_value, old_value, attribute_name, controller: callback(new_value, old_value, attribute_name)
+            return lambda new_value, old_value, attribute_name, controller, index: callback(new_value, old_value, attribute_name)
         elif len(signature.parameters) == 4:
+            return lambda new_value, old_value, attribute_name, controller, index: callback(new_value, old_value, attribute_name, controller)
+        elif len(signature.parameters) == 5:
             return callback
         raise ValueError('Invalid callback signature')
 
@@ -82,11 +82,11 @@ class AttributeValueEvent(Event):
             return False
 
 
-    def fire(self, attribute_name, new_value, old_value, controller):
+    def fire(self, attribute_name, new_value, old_value, controller, index=None):
         for callback in self.callbacks.get(attribute_name, []):
-            callback(new_value, old_value, attribute_name, controller)
+            callback(new_value, old_value, attribute_name, controller, index)
         for callback in self.callbacks.get(None, []):
-            callback(new_value, old_value, attribute_name, controller)
+            callback(new_value, old_value, attribute_name, controller, index)
     
     @property
     def has_callback(self):
@@ -173,15 +173,10 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
         for k, v in kwargs.items():
             setattr(self, k, v)
 
-        # This event is necessary because there is no event when a trait is
-        # removed with remove_trait and because it is sometimes better to send
-        # a single event when several traits changes are done (especially
-        # when GUI is updated on real time). This event have to be triggered
-        # explicitely to take into account changes due to call(s) to
-        # add_trait or remove_trait.
-        super().__setattr__('controller_fields_changed',  Event())
 
         super().__setattr__('on_attribute_change', AttributeValueEvent())
+        super().__setattr__('on_attribute_item_change',  Event())
+        super().__setattr__('on_fields_change',  Event())
         super().__setattr__('enable_notification', True)
         super().__setattr__('_metadata', {})
 
@@ -211,11 +206,11 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
             field_class = type(name, (Controller,), namespace, class_field=False)
             field_instance = field_class()
         super().__getattribute__('_dyn_fields')[name] = field_instance
-        self.controller_fields_changed.fire()
+        self.on_fields_change.fire()
         
     def remove_field(self, name):
         del self._dyn_fields[name]
-        self.controller_fields_changed.fire()
+        self.on_fields_change.fire()
     
     def __getattribute__(self, name):
         try:

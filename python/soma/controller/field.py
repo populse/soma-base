@@ -16,6 +16,7 @@ from typing import (
     Set,
 )
 
+max_field_creation_order = 1000000
 def field(name=None, type_=None, 
          default=dataclasses.MISSING, 
          default_factory=dataclasses.MISSING, 
@@ -25,6 +26,7 @@ def field(name=None, type_=None,
          compare=None, 
          metadata=None,
          **kwargs):
+    global max_field_creation_order
     if isinstance(type_, dataclasses.Field):
         if default is dataclasses.MISSING:
             default = type_.default
@@ -42,9 +44,16 @@ def field(name=None, type_=None,
             metadata = type_.metadata
     elif metadata is None:
         metadata = kwargs
-    elif kwargs:
-        metadata = metadata.copy()
+    metadata = metadata.copy()
+    if kwargs:
         metadata.update(kwargs)
+    order = metadata.get('order')
+    if order is None:
+        max_field_creation_order += 1
+        order = max_field_creation_order
+    else:
+        max_field_creation_order = max(max_field_creation_order, order)
+    metadata['order'] = order
     if init is None:
         init=True
     if repr is None:
@@ -182,6 +191,23 @@ def parse_type_str(type_str):
                 return (type, [i.format(**substitution) for i in inner.split(',')])
     else:
         return (type, [])
+
+
+simple_type_default_value = {
+    'str': lambda: '',
+    'int': lambda: 0,
+    'float': lambda: 0.0,
+    'bool': lambda: False,
+    'list': lambda: [],
+}
+def type_str_default_value(type_str):
+    global simple_type_default_value
+
+    type, subtypes = parse_type_str(type_str)
+    f = simple_type_default_value.get(type)
+    if f:
+        return f()
+    raise TypeError(f'Cannot get default value for type {type_str}')
 
 
 class ListMeta(type):

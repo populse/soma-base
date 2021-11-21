@@ -11,6 +11,7 @@ class CollapsableWidget(Qt.QWidget):
     to show/hide the inner widget.
     '''
     def __init__(self, inner_widget: Qt.QWidget, label: str, expanded=False,
+                 buttons_label=[],
                  *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.label = label
@@ -18,17 +19,26 @@ class CollapsableWidget(Qt.QWidget):
         self.toggle_button.setStyleSheet('QPushButton { border: none; }')
         self.toggle_button.setCheckable(True)
 
-        self.header_line = Qt.QFrame(parent=self)
-        self.header_line.setFrameShape(Qt.QFrame.HLine)
-        self.header_line.setFrameShadow(Qt.QFrame.Sunken)
-        self.header_line.setSizePolicy(Qt.QSizePolicy.Expanding, Qt.QSizePolicy.Maximum)
+        bar = Qt.QWidget(parent=self)
+        hlayout = Qt.QHBoxLayout(bar)
+        header_line = Qt.QFrame(parent=self)
+        header_line.setFrameShape(Qt.QFrame.HLine)
+        header_line.setFrameShadow(Qt.QFrame.Sunken)
+        header_line.setSizePolicy(Qt.QSizePolicy.Expanding, Qt.QSizePolicy.Maximum)
+        hlayout.addWidget(header_line)
+        self.buttons = []
+        for icon in buttons_label:
+            button = Qt.QToolButton(parent=bar)
+            button.setText(icon)
+            hlayout.addWidget(button)
+            self.buttons.append(button)
 
         # don't waste space
         self.main_layout = Qt.QGridLayout()
         self.main_layout.setVerticalSpacing(0)
         self.main_layout.setContentsMargins(0, 0, 0, 0)
         self.main_layout.addWidget(self.toggle_button, 0, 0, 1, 1, QtCore.Qt.AlignLeft)
-        self.main_layout.addWidget(self.header_line, 0, 2, 1, 1)
+        self.main_layout.addWidget(bar, 0, 2, 1, 1)
         self.setLayout(self.main_layout)
         self.setSizePolicy(Qt.QSizePolicy.MinimumExpanding, Qt.QSizePolicy.Minimum)
         self.toggle_button.clicked.connect(self.toggle_expand)
@@ -42,6 +52,10 @@ class CollapsableWidget(Qt.QWidget):
         self.toggle_button.setText(f'{self.label}  {arrow}')
         self.toggle_button.setChecked(expanded)
         if expanded:
+            for button in self.buttons:
+                button.show()
             self.inner_widget.show()
         else:
+            for button in self.buttons:
+                button.hide()
             self.inner_widget.hide()

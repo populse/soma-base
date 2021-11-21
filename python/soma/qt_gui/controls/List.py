@@ -441,7 +441,7 @@ class ListControlWidget(object):
 
             # Emit the 'fields_changed' signal if necessary
             if fields_changed:
-                control_instance.controller.controller_fields_changed.fire()
+                control_instance.controller.on_fields_change.fire()
 
             # Restore the previous list controller connection status
             if was_connected:

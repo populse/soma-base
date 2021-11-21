@@ -7,7 +7,12 @@ from soma.controller import (
 from soma.qt_gui.qt_backend import Qt
 from .factories import WidgetFactory
 from .factories.str import StrWidgetFactory
+from .factories.list import ListStrWidgetFactory
+from .factories.list import ListIntWidgetFactory
+from .factories.list import ListFloatWidgetFactory
 from .collapsable import CollapsableWidget
+
+
 class ScrollableWidgetsGrid(Qt.QScrollArea):
     """
     A widget that is used for Controller main windows (i.e.
@@ -36,7 +41,7 @@ class ScrollableWidgetsGrid(Qt.QScrollArea):
             self.content_layout.addWidget(first_widget, row, 0, 1, 1)
             self.content_layout.addWidget(second_widget, row, 1, 1, 1)
 
-class WidgetsGrid(Qt.QWidget):
+class WidgetsGrid(Qt.QFrame):
     """
     A widget that is used for Controller inside another
     controller widget.
@@ -61,40 +66,48 @@ class BaseControllerWidget:
         'str': StrWidgetFactory,
         'int': StrWidgetFactory,
         'float': StrWidgetFactory,
+        'list[str]': ListStrWidgetFactory,
+        'list[int]': ListIntWidgetFactory,
+        'list[float]': ListFloatWidgetFactory,
     }
 
     def __init__(self, controller, output=False, user_level=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Select and group fields
-        self.groups = {
-            None: self,
-        }
-        self.factories = {}
+        # Select and sort fields
+        fields = []
         for field in controller.fields():
             if (
                 (output or not controller.metadata(field, 'output', False))
                 and (user_level is None or user_level >= controller.metadata(field, 'user_level', 0))
             ):
-                group = controller.metadata(field, 'group', None)
-                group_content_widget = self.groups.get(group)
-                if group_content_widget is None:
-                    group_content_widget = WidgetsGrid()
-                    group_widget = CollapsableWidget(group_content_widget, f'[{group}]',
-                                                     expanded=True)
-                    self.add_widget_row(group_widget)
-                    self.groups[group] = group_content_widget
+                fields.append(field)
+        self.fields = sorted(fields, key=lambda f: f.metadata.get('order'))
+        self.groups = {
+            None: self,
+        }
+        self.factories = {}
+        for field in self.fields:
+            group = controller.metadata(field, 'group', None)
+            group_content_widget = self.groups.get(group)
+            if group_content_widget is None:
+                group_content_widget = WidgetsGrid()
+                group_content_widget.setFrameShape(Qt.QFrame.Box)
+                group_widget = CollapsableWidget(group_content_widget, group,
+                                                    expanded=True)
+                self.add_widget_row(group_widget)
+                self.groups[group] = group_content_widget
 
-                type = field_type_str(field)
-                subtypes = []
+            type = field_type_str(field)
+            subtypes = []
+            factory_class = self.widget_factories.get(type)
+            if factory_class is None:
+                type, subtypes = parse_type_str(type)
                 factory_class = self.widget_factories.get(type)
-                if factory_class is None:
-                    type, subtypes = parse_type_str(type)
-                    factory_class = self.widget_factories.get(type)
-                if factory_class is None:
-                    factory_class = WidgetFactory
-                factory = factory_class(group_content_widget, controller, field, subtypes)
-                self.factories[field.name] = factory
-                group_content_widget.add_widget_row(*factory.create_widgets())
+            if factory_class is None:
+                factory_class = WidgetFactory
+            factory = factory_class(group_content_widget, controller, field, subtypes)
+            self.factories[field] = factory
+            factory.create_widgets()
 
 
 class ControllerWindow(BaseControllerWidget, ScrollableWidgetsGrid):
@@ -121,7 +134,7 @@ if __name__ == '__main__':
         ls: List[str]
 
     class C(Controller):
-        s: field(type_=str, group='string')
+        s: field(type_=str, group='string', label='string')
         os: field(type_=str, optional=True, group='string')
         ls: field(type_=List[str], group='string')
         ols: field(type_=List[str], output=True, group='string')
@@ -181,6 +194,7 @@ if __name__ == '__main__':
 
     app = Qt.QApplication(sys.argv)
     o = C()
+    o.ls = ['one', 'two', 'three']
     window1 = ControllerWindow(o)
     window1.show()
     window2 = ControllerWindow(o)
@@ -542,7 +556,7 @@ if __name__ == '__main__':
 
 #             # Add an event connected with the 'user_attribute_changed' controller
 #             # signal: update the controls
-#             self.controller.controller_fields_changed.add(
+#             self.controller.on_fields_change.add(
 #                 self.update_controls)
 
 #             # if 'visible_groups' is a field, connect it to groups
@@ -589,7 +603,7 @@ if __name__ == '__main__':
 #         static_disconnect() is called via a Qt signal when the widget is
 #         destroyed. But the python part is already destroyed then.
 #         '''
-#         controller.controller_fields_changed.remove(
+#         controller.on_fields_change.remove(
 #             update_controls)
 
 #         # if 'visible_groups' is a field, disconnect it from groups
@@ -619,8 +633,8 @@ if __name__ == '__main__':
 #         if self.connected:
 
 #             # Remove the 'update_controls' event connected with the
-#             # 'controller_fields_changed' controller signal
-#             self.controller.controller_fields_changed.remove(
+#             # 'on_fields_change' controller signal
+#             self.controller.on_fields_change.remove(
 #                 self.update_controls)
 
 #             # if 'visible_groups' is a field, connect it to groups

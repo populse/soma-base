@@ -18,7 +18,7 @@ class StrWidgetFactory(WidgetFactory):
 
         self.text_widget.userModification.connect(self.update_controller)
 
-        return self.label_widget, self.text_widget
+        self.controller_widget.add_widget_row(self.label_widget, self.text_widget)
 
     def update_gui(self, value):
         if value is undefined:

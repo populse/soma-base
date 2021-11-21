@@ -27,7 +27,7 @@ class WidgetFactory:
         self.controller.on_attribute_change.add(self.update_gui, self.field.name)
         self.update_gui(getattr(self.controller, self.field.name, undefined))
 
-        return self.label_widget, self.text_widget
+        self.controller_widget.add_widget_row(self.label_widget, self.text_widget)
 
     def update_gui(self, value):
         self.text_widget.setText(f'{value}')
