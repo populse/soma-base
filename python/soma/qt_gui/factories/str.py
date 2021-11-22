@@ -9,21 +9,29 @@ from soma.undefined import undefined
 
 class StrWidgetFactory(WidgetFactory):
     def create_widgets(self):
-        label = self.controller.metadata(self.field.name, 'label', self.field.name)
+        label = self.parent_interaction.get_label()
         self.label_widget = Qt.QLabel(label, parent=self.controller_widget)
         self.text_widget = TimeredQLineEdit(parent=self.controller_widget)
 
-        self.controller.on_attribute_change.add(self.update_gui, self.field.name)
-        self.update_gui(getattr(self.controller, self.field.name, undefined))
+        self.parent_interaction.on_change_add(self.update_gui)
+        self.update_gui()
 
         self.text_widget.userModification.connect(self.update_controller)
 
         self.controller_widget.add_widget_row(self.label_widget, self.text_widget)
 
-    def update_gui(self, value):
+    def delete_widgets(self):
+        self.controller_widget.remove_widget_row()
+        self.text_widget.userModification.disconnect(self.update_controller)
+        self.parent_interaction.on_change_remove(self.update_gui)
+        self.label_widget.deleteLater()
+        self.text_widget.deleteLater()
+
+    def update_gui(self):
+        value = self.parent_interaction.get_value()
         if value is undefined:
             self.text_widget.setText('')
-            if self.controller.is_optional(self.field):
+            if self.parent_interaction.is_optional():
                 self.text_widget.setStyleSheet(self.warning_style_sheet)
             else:
                 self.text_widget.setStyleSheet(self.invalid_style_sheet)
@@ -33,9 +41,9 @@ class StrWidgetFactory(WidgetFactory):
 
     def update_controller(self):
         try:
-            setattr(self.controller, self.field.name, self.text_widget.text())
+            self.parent_interaction.set_value(self.text_widget.text())
         except ValidationError:
             self.text_widget.setStyleSheet(self.invalid_style_sheet)
         else:
-            self.controller.set_metadata(self.field, 'protected', False)
+            self.parent_interaction.set_protected(False)
             self.text_widget.setStyleSheet(self.valid_style_sheet)
