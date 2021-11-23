@@ -2,7 +2,13 @@
 
 from functools import partial
 
-from soma.controller.field import field_type_str, parse_type_str
+from soma.controller import (
+    type_str, 
+    parse_type_str, 
+    subtypes,
+    field_type,
+    field_type_str,
+)
 from soma.qt_gui.qt_backend import Qt
 from soma.undefined import undefined
 
@@ -35,9 +41,12 @@ class WidgetFactory:
 
 
 class ControllerFieldInteraction:
-    def __init__(self, controller, field):
+    def __init__(self, controller, field, depth):
         self.controller = controller
         self.field = field
+        self.type = field_type(field)
+        self.type_str = field_type_str(field)
+        self.depth = depth
     
     def get_value(self, default=undefined):
         return getattr(self.controller, self.field.name, default)
@@ -61,9 +70,6 @@ class ControllerFieldInteraction:
         value = self.get_value()
         self.controller.on_attribute_change.fire(self.field.name, value, value, self.controller, index)
 
-    def type_str(self):
-        return field_type_str(self.field)
-    
     def is_optional(self):
         return self.controller.is_optional(self.field)
 
@@ -72,6 +78,10 @@ class ListItemInteraction:
     def __init__(self, parent_interaction, index):
         self.parent_interaction = parent_interaction
         self.index = index
+        self.type = subtypes(self.parent_interaction.type)[0]
+        _, subtypes_str = parse_type_str(parent_interaction.type_str)
+        self.type_str = subtypes_str[0]
+        self.depth = self.parent_interaction.depth + 1
     
     def get_value(self, default=undefined):
         values = self.parent_interaction.get_value()
@@ -97,20 +107,17 @@ class ListItemInteraction:
     def inner_item_changed(self, index):
         self.parent_interaction.inner_item_changed(index)
 
-    def type_str(self):
-        _, subtypes = parse_type_str(self.parent_interaction.type_str())
-        return subtypes[0]
-    
     def is_optional(self):
         return False
+
  
 
 class DefaultWidgetFactory(WidgetFactory):
     def create_widgets(self):
         self.text_widget = Qt.QLineEdit(parent=self.controller_widget)
-        self.text_widget.setStyleSheet('color: red;')
+        self.text_widget.setStyleSheet('QLineEdit { color: red; }')
         self.text_widget.setReadOnly(True)
-        self.text_widget.setToolTip(f'No graphical editor found for type {self.parent_interaction.type_str()}')
+        self.text_widget.setToolTip(f'No graphical editor found for type {self.parent_interaction.type_str}')
 
         self.parent_interaction.on_change_add(self.update_gui)
         self.update_gui()
@@ -134,6 +141,11 @@ from .list import (ListStrWidgetFactory,
                    ListIntWidgetFactory,
                    ListFloatWidgetFactory,
                    find_generic_list_factory)
+from .set import (SetStrWidgetFactory,
+                  SetIntWidgetFactory,
+                  SetFloatWidgetFactory,
+                  find_generic_set_factory)
+from .controller import ControllerWidgetFactory
 
 WidgetFactory.widget_factory_types = {
     'str': StrWidgetFactory,
@@ -143,4 +155,9 @@ WidgetFactory.widget_factory_types = {
     'list[int]': ListIntWidgetFactory,
     'list[float]': ListFloatWidgetFactory,
     'list': find_generic_list_factory,
+    'set[str]': SetStrWidgetFactory,
+    'set[int]': SetIntWidgetFactory,
+    'set[float]': SetFloatWidgetFactory,
+    'set': find_generic_set_factory,
+    'controller': ControllerWidgetFactory,
 }

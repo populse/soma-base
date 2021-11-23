@@ -10,19 +10,21 @@ from ..controller_widget import WidgetsGrid
 from ..collapsable import CollapsableWidget
 from ..timered_widgets import TimeredQLineEdit
 from soma.undefined import undefined
-from soma.controller import (parse_type_str,
-                             type_str_default_value)
-
+from ...controller import subtypes, type_default_value
 
 class ListStrWidgetFactory(WidgetFactory):
     ROW_SIZE = 10
+    convert_from_list = staticmethod(lambda x: x)
+    convert_to_list = staticmethod(lambda x: x)
 
     def create_widgets(self):
         label = self.parent_interaction.get_label()
         self.grid_widget = Qt.QWidget()
         self.layout = Qt.QGridLayout(self.grid_widget)
+        self.layout.setContentsMargins(0,0,0,0)
         self.inner_widgets = []
-        self.widget = CollapsableWidget(self.grid_widget, label=label, expanded=True, 
+        self.widget = CollapsableWidget(self.grid_widget, label=label, 
+            expanded=(self.parent_interaction.depth==0), 
             buttons_label=['+', '-'], parent=self.controller_widget)
         self.grid_widget.setContentsMargins(self.widget.toggle_button.sizeHint().height(),0,0,0)
 
@@ -46,6 +48,8 @@ class ListStrWidgetFactory(WidgetFactory):
 
     def update_gui(self):
         values = self.parent_interaction.get_value(default=[])
+        print('!update_gui!', repr(values))
+        values = self.convert_to_list(values)
         # Remove item widgets if new list is shorter than current one
         while len(values) < self.layout.count():
             index = self.layout.count() - 1
@@ -73,7 +77,7 @@ class ListStrWidgetFactory(WidgetFactory):
     def update_controller(self):
         try:
             values = [self.get_value(i) for i in range(len(self.inner_widgets))]
-            self.parent_interaction.set_value(values)
+            self.parent_interaction.set_value(self.convert_from_list(values))
         except ValidationError:
             pass
         else:
@@ -92,7 +96,9 @@ class ListStrWidgetFactory(WidgetFactory):
 
     def update_controller_item(self, index):
         values = self.parent_interaction.get_value()
+        print('!update_controller_item!', repr(values))
         if values is not undefined:
+            values = self.convert_to_list(values)
             new_value = self.get_value(index)
             if new_value is undefined:
                 self.inner_widgets[index].setStyleSheet(self.invalid_style_sheet)
@@ -104,19 +110,18 @@ class ListStrWidgetFactory(WidgetFactory):
                 self.parent_interaction.inner_item_changed(index)
     
     def add_item(self):
-        values = self.parent_interaction.get_value(default=[])
-        type_str = self.parent_interaction.type_str()
-        type, subtypes = parse_type_str(type_str)
-        new_value = type_str_default_value(subtypes[0])
+        values = self.convert_to_list(self.parent_interaction.get_value(default=[]))
+        item_type = subtypes(self.parent_interaction.type)[0]
+        new_value = type_default_value(item_type)
         values = values + [new_value]
-        self.parent_interaction.set_value(values)
+        self.parent_interaction.set_value(self.convert_from_list(values))
         self.update_gui()
 
     def remove_item(self):
-        values = self.parent_interaction.get_value()
+        values = self.convert_to_list(self.parent_interaction.get_value())
         if values is not undefined and values:
             values = values[:-1]
-            self.parent_interaction.set_value(values)
+            self.parent_interaction.set_value(self.convert_from_list(values))
             self.update_gui()
 
 
@@ -148,15 +153,19 @@ def find_generic_list_factory(type, subtypes):
 
 
 class ListAnyWidgetFactory(WidgetFactory):
+    convert_from_list = staticmethod(lambda x: x)
+    convert_to_list = staticmethod(lambda x: x)
+    
     def __init__(self, item_factory_class, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.item_factory_class = item_factory_class
 
     def create_widgets(self):
-        self.items_widget = WidgetsGrid()
+        self.items_widget = WidgetsGrid(self.parent_interaction.depth)
         label = self.parent_interaction.get_label()
-        self.widget = CollapsableWidget(self.items_widget, label=label, expanded=True, 
+        self.widget = CollapsableWidget(self.items_widget, label=label, expanded=(self.items_widget.depth==0), 
             buttons_label=['+', '-'], parent=self.controller_widget)
+        self.widget.setContentsMargins(0, 0, 0, 0)
         self.items_widget.setContentsMargins(self.widget.toggle_button.sizeHint().height(),0,0,0)
         self.item_factories = []
 
@@ -176,9 +185,8 @@ class ListAnyWidgetFactory(WidgetFactory):
         self.widget.deleteLater()
         self.items_widget.deleteLater()
         
-
     def update_gui(self):
-        values = self.parent_interaction.get_value(default=[])
+        values = self.convert_to_list(self.parent_interaction.get_value(default=[]))
         # Remove item widgets if new list is shorter than current one
         while len(values) < len(self.item_factories):
             item_factory = self.item_factories.pop(-1)
@@ -187,24 +195,24 @@ class ListAnyWidgetFactory(WidgetFactory):
         # Add item widgets if new list is longer than current one
         while len(values) > len(self.item_factories):
             index = len(self.item_factories)
-            item_factory = self.item_factory_class(self.items_widget, 
-                ListItemInteraction(self.parent_interaction, index))
+            item_factory = self.item_factory_class(
+                controller_widget=self.items_widget, 
+                parent_interaction=ListItemInteraction(self.parent_interaction, 
+                index=index))
             self.item_factories.append(item_factory)
             item_factory.create_widgets()
 
-
     def add_item(self):
-        values = self.parent_interaction.get_value(default=[])
-        type_str = self.parent_interaction.type_str()
-        type, subtypes = parse_type_str(type_str)
-        new_value = type_str_default_value(subtypes[0])
+        values = self.convert_to_list(self.parent_interaction.get_value(default=[]))
+        item_type = subtypes(self.parent_interaction.type)[0]
+        new_value = type_default_value(item_type)
         values = values + [new_value]
-        self.parent_interaction.set_value(values)
+        self.parent_interaction.set_value(self.convert_from_list(values))
         self.update_gui()
 
     def remove_item(self):
-        values = self.parent_interaction.get_value()
+        values = self.convert_to_list(self.parent_interaction.get_value())
         if values is not undefined and values:
             values = values[:-1]
-            self.parent_interaction.set_value(values)
+            self.parent_interaction.set_value(self.convert_from_list(values))
             self.update_gui()

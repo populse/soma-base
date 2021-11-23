@@ -25,7 +25,9 @@ class CollapsableWidget(Qt.QWidget):
         header_line.setFrameShape(Qt.QFrame.HLine)
         header_line.setFrameShadow(Qt.QFrame.Sunken)
         header_line.setSizePolicy(Qt.QSizePolicy.Expanding, Qt.QSizePolicy.Maximum)
+        header_line.setContentsMargins(0,0,0,0)
         hlayout.addWidget(header_line)
+        hlayout.setContentsMargins(0,0,0,0)
         self.buttons = []
         for icon in buttons_label:
             button = Qt.QToolButton(parent=bar)
@@ -44,6 +46,7 @@ class CollapsableWidget(Qt.QWidget):
         self.toggle_button.clicked.connect(self.toggle_expand)
 
         self.inner_widget = inner_widget
+
         self.main_layout.addWidget(self.inner_widget, 1, 0, 1, 3)
         self.toggle_expand(expanded)
 

@@ -193,20 +193,22 @@ def parse_type_str(type_str):
         return (type, [])
 
 
-simple_type_default_value = {
-    'str': lambda: '',
-    'int': lambda: 0,
-    'float': lambda: 0.0,
-    'bool': lambda: False,
-    'list': lambda: [],
+type_default_value_functions = {
+    'str': lambda t: '',
+    'int': lambda t: 0,
+    'float': lambda t: 0.0,
+    'bool': lambda t: False,
+    'list': lambda t: [],
+    'controller': lambda t: t(),
 }
-def type_str_default_value(type_str):
-    global simple_type_default_value
+def type_default_value(type):
+    global type_default_value
 
-    type, subtypes = parse_type_str(type_str)
-    f = simple_type_default_value.get(type)
+    full_type = type_str(type)
+    main_type = full_type.split('[', 1)[0]
+    f = type_default_value_functions    .get(main_type)
     if f:
-        return f()
+        return f(type)
     raise TypeError(f'Cannot get default value for type {type_str}')
 
 
