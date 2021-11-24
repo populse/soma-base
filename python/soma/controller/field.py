@@ -42,6 +42,7 @@ def field(name=None, type_=None,
             init = type_.compare
         if metadata is None:
             metadata = type_.metadata
+        type_ = type_.type
     elif metadata is None:
         metadata = kwargs
     metadata = metadata.copy()

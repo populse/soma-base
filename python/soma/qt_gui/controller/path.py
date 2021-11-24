@@ -5,7 +5,7 @@ import os
 from pydantic import ValidationError
 
 from soma.qt_gui.qt_backend import (
-    Qt, 
+    Qt, QtCore,
     getOpenFileName,
     getSaveFileName,
     getExistingDirectory,
@@ -26,6 +26,7 @@ class FileWidgetFactory(StrWidgetFactory):
         self.button = Qt.QToolButton(self.widget)
         self.button.setText('📂')
         self.button.setSizePolicy(Qt.QSizePolicy.Minimum, Qt.QSizePolicy.Minimum)
+        self.button.setFocusPolicy(QtCore.Qt.NoFocus)
         self.button.setFocusProxy(self.text_widget)
         self.layout.addWidget(self.button)
         # self.button.hide()
@@ -42,7 +43,7 @@ class FileWidgetFactory(StrWidgetFactory):
         self.controller_widget.remove_widget_row()
         self.button.clicked.disconnect(self.select_path_dialog)
         self.text_widget.userModification.disconnect(self.update_controller)
-        self.text_widget.focusChange.disconnect(self.update_selection_button)
+        # self.text_widget.focusChange.disconnect(self.update_selection_button)
         self.parent_interaction.on_change_remove(self.update_gui)
         self.button.deleteLater()
         self.text_widget.deleteLater()

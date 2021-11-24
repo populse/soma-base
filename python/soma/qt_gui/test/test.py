@@ -21,9 +21,6 @@ class CustomController(Controller):
     ls: List[str]
 
 class TestControls(Controller):
-    x: field(type_=List[str])
-    y: field(type_=List[str])
-    z: field(type_=List[str])
     s: field(type_=str, group='string', label='the label')
     os: field(type_=str, optional=True, group='string')
     ls: field(type_=List[str], group='string')
@@ -45,38 +42,37 @@ class TestControls(Controller):
     lln: field(type_=List[List[float]], label='list^2[float]', group='float')
     llln: field(type_=List[List[List[float]]], label='list^3[float]', group='float')
 
-    b: bool
-    ob: field(type_=bool, output=True)
-    lb: List[bool]
-    olb: field(type_=List[bool], output=True)
+    b: field(type_=bool, group='bool')
+    ob: field(type_=bool, output=True, group='bool')
+    lb: field(type_=List[bool], group='bool')
+    olb: field(type_=List[bool], output=True, group='bool')
 
-    e: Literal['one', 'two', 'three']
-    oe: field(type_=Literal['one', 'two', 'three'], output=True)
-    le: List[Literal['one', 'two', 'three']]
-    ole: field(type_=List[Literal['one', 'two', 'three']], output=True)
+    e: field(type_=Literal['one', 'two', 'three'], group='enum')
+    oe: field(type_=Literal['one', 'two', 'three'], output=True, group='enum')
+    le: field(type_=List[Literal['one', 'two', 'three']], group='enum')
+    ole: field(type_=List[Literal['one', 'two', 'three']], output=True, group='enum')
     
-    f: file()
-    of: file(write=True)
-    lf: List[file()]
-    olf: List[file(write=True)]
+    f: file(group='file')
+    of: file(write=True, group='file')
+    lf: field(type_=List[file()], group='file')
+    olf: field(type_=List[file(write=True)], group='file')
     
-    d: directory()
-    od: directory(write=True)
-    ld: List[directory()]
-    old: List[directory(write=True)]
+    d: directory(group='directory')
+    od: directory(write=True, group='directory')
+    ld: field(type_=List[directory()], group='directory')
+    old: field(type_=List[directory(write=True)], group='directory')
 
-    u: Union[str, List[str]]
-    ou: field(type_=Union[str, List[str]], output=True)
-    lu: List[Union[str, List[str]]]
-    olu: field(type_=List[Union[str, List[str]]], output=True)
+    u: field(type_=Union[str, List[str]], group='union')
+    ou: field(type_=Union[str, List[str]], output=True, group='union')
+    lu: field(type_=List[Union[str, List[str]]], group='union')
+    olu: field(type_=List[Union[str, List[str]]], output=True, group='union')
 
-    m: Dict
-    om: field(type_=dict, output=True)
-    lm: List[dict]
-    olm: field(type_=List[dict], output=True)
-    mt: Dict[str, List[int]]
+    m: field(type_=Dict, group='dict')
+    om: field(type_=dict, output=True, group='dict')
+    lm: field(type_=List[dict], group='dict')
+    olm: field(type_=List[dict], output=True, group='dict')
+    mt: field(type_=Dict[str, List[int]], group='dict')
 
-    l: list
 
     controller: field(type_=Controller, group='controller')
     list_controller: field(type_=List[Controller], group='controller')
@@ -84,9 +80,7 @@ class TestControls(Controller):
     list_custom: field(type_=List[CustomController], group='controller')
     list2_custom: field(type_=List[List[CustomController]], group='controller')
 
-    Set: Set
     Set_str: Set[str]
-    set: set
 
 
 
@@ -99,7 +93,7 @@ if __name__ == "__main__":
 
     # Set some values to the controller parameters
     controller.s = ""
-    controller.f = 10.2
+    controller.n = 10.2
 
     # Create to controller widget that are synchronized on the fly
     widget1 = ControllerWidget(controller)

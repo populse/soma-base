@@ -86,6 +86,7 @@ class GroupWidget(Qt.QFrame):
         self.toggle_button.move(-2,-2)
         self.setContentsMargins(3,3,3,3)
         self.toggle_button.clicked.connect(self.toggle_expand)
+        self.setSizePolicy(Qt.QSizePolicy.Expanding, Qt.QSizePolicy.Expanding)
     
     def toggle_expand(self, expanded):
         arrow = ('▼' if expanded else '▶')
@@ -98,6 +99,7 @@ class GroupWidget(Qt.QFrame):
                    widget.show()
                 else:
                     widget.hide()
+
 
 class WidgetFactory:
     valid_style_sheet = ''
@@ -176,7 +178,7 @@ class ListItemInteraction:
     
     @property
     def is_output(self):
-        return self.parent_interaction.is_output()
+        return self.parent_interaction.is_output
 
     def get_value(self, default=undefined):
         values = self.parent_interaction.get_value()
