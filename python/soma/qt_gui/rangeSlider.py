@@ -58,7 +58,7 @@ The QRangeSlider class implements a horizontal range slider widget.
 # ------------------------------------------------------------------------
 import os
 import sys
-from soma.qt_gui.qt_backend import QtCore, QtGui
+from soma.qt_gui.qt_backend import QtCore, Qt
 
 try:
     _fromUtf8 = QtCore.QString.fromUtf8
@@ -106,22 +106,22 @@ class Ui_Form(object):
         Form.setObjectName(_fromUtf8("QRangeSlider"))
         Form.resize(300, 30)
         Form.setStyleSheet(_fromUtf8(DEFAULT_CSS))
-        self.gridLayout = QtGui.QGridLayout(Form)
+        self.gridLayout = Qt.QGridLayout(Form)
         self.gridLayout.setContentsMargins(0, 0, 0, 0)
         self.gridLayout.setSpacing(0)
         self.gridLayout.setObjectName(_fromUtf8("gridLayout"))
-        self._splitter = QtGui.QSplitter(Form)
+        self._splitter = Qt.QSplitter(Form)
         self._splitter.setMinimumSize(QtCore.QSize(0, 0))
         self._splitter.setMaximumSize(QtCore.QSize(16777215, 16777215))
         self._splitter.setOrientation(QtCore.Qt.Horizontal)
         self._splitter.setObjectName(_fromUtf8("splitter"))
-        self._head = QtGui.QGroupBox(self._splitter)
+        self._head = Qt.QGroupBox(self._splitter)
         self._head.setTitle(_fromUtf8(""))
         self._head.setObjectName(_fromUtf8("Head"))
-        self._handle = QtGui.QGroupBox(self._splitter)
+        self._handle = Qt.QGroupBox(self._splitter)
         self._handle.setTitle(_fromUtf8(""))
         self._handle.setObjectName(_fromUtf8("Span"))
-        self._tail = QtGui.QGroupBox(self._splitter)
+        self._tail = Qt.QGroupBox(self._splitter)
         self._tail.setTitle(_fromUtf8(""))
         self._tail.setObjectName(_fromUtf8("Tail"))
         self.gridLayout.addWidget(self._splitter, 0, 0, 1, 1)
@@ -130,11 +130,11 @@ class Ui_Form(object):
         QtCore.QMetaObject.connectSlotsByName(Form)
 
     def retranslateUi(self, Form):
-        Form.setWindowTitle(QtGui.QApplication.translate(
+        Form.setWindowTitle(Qt.QApplication.translate(
             "QRangeSlider", "QRangeSlider", None))
 
 
-class Element(QtGui.QGroupBox):
+class Element(Qt.QGroupBox):
 
     def __init__(self, parent, main):
         super(Element, self).__init__(parent)
@@ -146,19 +146,19 @@ class Element(QtGui.QGroupBox):
 
     def textColor(self):
         """text paint color"""
-        return getattr(self, '__textColor', QtGui.QColor(125, 125, 125))
+        return getattr(self, '__textColor', Qt.QColor(125, 125, 125))
 
     def setTextColor(self, color):
         """set the text paint color"""
         if type(color) == tuple and len(color) == 3:
-            color = QtGui.QColor(color[0], color[1], color[2])
+            color = Qt.QColor(color[0], color[1], color[2])
         elif type(color) == int:
-            color = QtGui.QColor(color, color, color)
+            color = Qt.QColor(color, color, color)
         setattr(self, '__textColor', color)
 
     def paintEvent(self, event):
         """overrides paint event to handle text"""
-        qp = QtGui.QPainter()
+        qp = Qt.QPainter()
         qp.begin(self)
         if self.main.drawValues():
             self.drawText(event, qp)
@@ -174,7 +174,7 @@ class Head(Element):
 
     def drawText(self, event, qp):
         qp.setPen(self.textColor())
-        qp.setFont(QtGui.QFont('Arial', 10))
+        qp.setFont(Qt.QFont('Arial', 10))
 
 
 class Tail(Element):
@@ -186,7 +186,7 @@ class Tail(Element):
 
     def drawText(self, event, qp):
         qp.setPen(self.textColor())
-        qp.setFont(QtGui.QFont('Arial', 10))
+        qp.setFont(Qt.QFont('Arial', 10))
 
 
 class Handle(Element):
@@ -198,7 +198,7 @@ class Handle(Element):
 
     def drawText(self, event, qp):
         qp.setPen(self.textColor())
-        qp.setFont(QtGui.QFont('Arial', 10))
+        qp.setFont(Qt.QFont('Arial', 10))
 
     def mouseMoveEvent(self, event):
         event.accept()
@@ -229,7 +229,7 @@ class Handle(Element):
             self.main._movingHandle = False
 
 
-class QRangeSlider(QtGui.QWidget, Ui_Form):
+class QRangeSlider(Qt.QWidget, Ui_Form):
 
     """
     The QRangeSlider class implements a horizontal range slider widget.
@@ -318,14 +318,14 @@ class QRangeSlider(QtGui.QWidget, Ui_Form):
         :return: New QRangeSlider instance.
         """
 
-        QtGui.QWidget.__init__(self, parent)
+        Qt.QWidget.__init__(self, parent)
         self.setupUi(self)
         self.setMouseTracking(False)
 
         self._splitter.splitterMoved.connect(self._handleMoveSplitter)
 
         # head layout
-        self._head_layout = QtGui.QHBoxLayout()
+        self._head_layout = Qt.QHBoxLayout()
         self._head_layout.setSpacing(0)
         self._head_layout.setContentsMargins(0, 0, 0, 0)
         self._head.setLayout(self._head_layout)
@@ -333,7 +333,7 @@ class QRangeSlider(QtGui.QWidget, Ui_Form):
         self._head_layout.addWidget(self.head)
 
         # handle layout
-        self._handle_layout = QtGui.QHBoxLayout()
+        self._handle_layout = Qt.QHBoxLayout()
         self._handle_layout.setSpacing(0)
         self._handle_layout.setContentsMargins(0, 0, 0, 0)
         self._handle.setLayout(self._handle_layout)
@@ -342,7 +342,7 @@ class QRangeSlider(QtGui.QWidget, Ui_Form):
         self._handle_layout.addWidget(self.handle)
 
         # tail layout
-        self._tail_layout = QtGui.QHBoxLayout()
+        self._tail_layout = Qt.QHBoxLayout()
         self._tail_layout.setSpacing(0)
         self._tail_layout.setContentsMargins(0, 0, 0, 0)
         self._tail.setLayout(self._tail_layout)
@@ -500,7 +500,7 @@ class QRangeSlider(QtGui.QWidget, Ui_Form):
         _unlockWidth(self._handle)
 
 if __name__ == '__main__':
-    app = QtGui.QApplication(sys.argv)
+    app = Qt.QApplication(sys.argv)
     rs = QRangeSlider()
     rs.show()
     rs.setRange(15, 35)

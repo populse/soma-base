@@ -1,16 +1,12 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function
-
-from __future__ import absolute_import
 import unittest
 import os
 import sys
 try:
     #from soma import qimage2ndarray
     from soma import qt_gui
-    from soma.qt_gui import controller_widget
-    from soma.qt_gui import controls
+    from soma.qt_gui import controller
     from soma.qt_gui import generic_table_editor
     from soma.qt_gui import io
     from soma.qt_gui import qtThread

@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-
 '''
 QLineEditModificationTimer and TimeredQLineEdit classes associate a
 QtCore.QTimer to a QtGui.QLineEdit in order to signal user
