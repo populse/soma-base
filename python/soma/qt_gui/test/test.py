@@ -2,7 +2,7 @@
 import sys
 
 from soma.qt_gui.qt_backend import Qt
-from soma.qt_gui.factories import ControllerWidget
+from soma.qt_gui.controller import ControllerWidget
 from soma.controller import (
     Controller,
     field,
