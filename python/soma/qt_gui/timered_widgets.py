@@ -121,6 +121,7 @@ class TimeredQLineEdit(QPredefLineEdit):
     '''
 
     userModification = QtCore.Signal()
+    focusChange = QtCore.Signal(bool)
 
     def __init__(self, *args, **kwargs):
         '''
@@ -159,3 +160,11 @@ class TimeredQLineEdit(QPredefLineEdit):
     def set_value(self, value):
         super(TimeredQLineEdit, self).set_value(value)
         self.userModification.emit()
+
+    def focusInEvent(self, event):
+        super().focusInEvent(event)
+        self.focusChange.emit(True)
+    
+    def focusOutEvent(self, event):
+        super().focusOutEvent(event)
+        self.focusChange.emit(False)

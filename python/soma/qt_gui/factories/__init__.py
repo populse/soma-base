@@ -1,16 +1,103 @@
 # -*- coding: utf-8 -*-
 
-from functools import partial
-
 from soma.controller import (
-    type_str, 
     parse_type_str, 
     subtypes,
     field_type,
     field_type_str,
+    is_output,
 )
 from soma.qt_gui.qt_backend import Qt
 from soma.undefined import undefined
+
+
+class ScrollableWidgetsGrid(Qt.QScrollArea):
+    """
+    A widget that is used for Controller main windows (i.e.
+    top level widget).
+    It has a 2 colums grid layout aligned ont the top of the
+    window. It allows to add many inner_widgets rows. Each
+    row contains either 1 or 2 widgets. A single widget uses
+    the two colums of the row.
+    """
+    def __init__(self, depth=0, *args, **kwargs):
+        self.depth = depth
+        super().__init__(*args, **kwargs)
+        self.content_widget = Qt.QWidget(self)
+        hlayout = Qt.QVBoxLayout()
+        self.content_layout = Qt.QGridLayout()
+        hlayout.addLayout(self.content_layout)
+        hlayout.addStretch(1)
+        self.content_widget.setLayout(hlayout)
+        self.setWidget(self.content_widget)
+        self.setWidgetResizable(True)
+
+    def add_widget_row(self, first_widget, second_widget=None):
+        row = self.content_layout.rowCount()
+        if second_widget is None:
+            self.content_layout.addWidget(first_widget, row, 0, 1, 2)
+        else:
+            self.content_layout.addWidget(first_widget, row, 0, 1, 1)
+            self.content_layout.addWidget(second_widget, row, 1, 1, 1)
+
+    def remove_widget_row(self):
+        row = self.content_layout.rowCount()-1
+        for column in range(self.content_layout.columnCount()):
+            self.content_layout.removeItem(self.content_layout.itemAtPosition(row, column))
+
+class WidgetsGrid(Qt.QFrame):
+    """
+    A widget that is used for Controller inside another
+    controller widget.
+    It has the same properties as VSCrollableWindow but
+    not the same layout.
+    """
+    def __init__(self, depth=0, *args, **kwargs):
+        self.depth = depth
+        super().__init__(*args, **kwargs)
+        self.content_layout = Qt.QGridLayout(self)
+  
+
+    def add_widget_row(self, first_widget, second_widget=None):
+        row = self.content_layout.rowCount()
+        if second_widget is None:
+            self.content_layout.addWidget(first_widget, row, 0, 1, 2)
+        else:
+            self.content_layout.addWidget(first_widget, row, 0, 1, 1)
+            self.content_layout.addWidget(second_widget, row, 1, 1, 1)
+
+    def remove_widget_row(self):
+        row = self.content_layout.rowCount()-1
+        for column in range(self.content_layout.columnCount()):
+            self.content_layout.removeItem(self.content_layout.itemAtPosition(row, column))
+
+
+class GroupWidget(Qt.QFrame):
+    def __init__(self, label, expanded=True, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        Qt.QVBoxLayout(self)
+        self.label = label
+        self.setFrameStyle(self.StyledPanel | self.Raised)
+        self.toggle_button = Qt.QToolButton(self)
+        self.toggle_button.setCheckable(True)
+        self.toggle_button.setStyleSheet('QToolButton { border: none; }')
+        self.toggle_expand(expanded)
+        self.toggle_button.resize(self.toggle_button.sizeHint())
+        self.toggle_button.move(-2,-2)
+        self.setContentsMargins(3,3,3,3)
+        self.toggle_button.clicked.connect(self.toggle_expand)
+    
+    def toggle_expand(self, expanded):
+        arrow = ('▼' if expanded else '▶')
+        self.toggle_button.setText(f'{self.label}  {arrow}')
+        self.toggle_button.setChecked(expanded)
+        for i in range(self.layout().count()):
+            widget = self.layout().itemAt(i).widget()
+            if widget:
+                if expanded:
+                   widget.show()
+                else:
+                    widget.hide()
 
 class WidgetFactory:
     valid_style_sheet = ''
@@ -48,6 +135,10 @@ class ControllerFieldInteraction:
         self.type_str = field_type_str(field)
         self.depth = depth
     
+    @property
+    def is_output(self):
+        return is_output(self.field)
+    
     def get_value(self, default=undefined):
         return getattr(self.controller, self.field.name, default)
 
@@ -83,6 +174,10 @@ class ListItemInteraction:
         self.type_str = subtypes_str[0]
         self.depth = self.parent_interaction.depth + 1
     
+    @property
+    def is_output(self):
+        return self.parent_interaction.is_output()
+
     def get_value(self, default=undefined):
         values = self.parent_interaction.get_value()
         if values is not undefined:
@@ -145,7 +240,8 @@ from .set import (SetStrWidgetFactory,
                   SetIntWidgetFactory,
                   SetFloatWidgetFactory,
                   find_generic_set_factory)
-from .controller import ControllerWidgetFactory
+from .controller import ControllerWidgetFactory, ControllerWidget
+from .path import FileWidgetFactory, DirectoryWidgetFactory
 
 WidgetFactory.widget_factory_types = {
     'str': StrWidgetFactory,
@@ -160,4 +256,6 @@ WidgetFactory.widget_factory_types = {
     'set[float]': SetFloatWidgetFactory,
     'set': find_generic_set_factory,
     'controller': ControllerWidgetFactory,
+    'file': FileWidgetFactory,
+    'directory': DirectoryWidgetFactory,
 }

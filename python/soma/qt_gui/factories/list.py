@@ -5,8 +5,7 @@ from functools import partial
 from pydantic import ValidationError
 
 from ..qt_backend import Qt
-from . import WidgetFactory, ListItemInteraction
-from ..controller_widget import WidgetsGrid
+from . import WidgetFactory, ListItemInteraction, WidgetsGrid
 from ..collapsable import CollapsableWidget
 from ..timered_widgets import TimeredQLineEdit
 from soma.undefined import undefined
@@ -48,7 +47,6 @@ class ListStrWidgetFactory(WidgetFactory):
 
     def update_gui(self):
         values = self.parent_interaction.get_value(default=[])
-        print('!update_gui!', repr(values))
         values = self.convert_to_list(values)
         # Remove item widgets if new list is shorter than current one
         while len(values) < self.layout.count():
@@ -96,7 +94,6 @@ class ListStrWidgetFactory(WidgetFactory):
 
     def update_controller_item(self, index):
         values = self.parent_interaction.get_value()
-        print('!update_controller_item!', repr(values))
         if values is not undefined:
             values = self.convert_to_list(values)
             new_value = self.get_value(index)
