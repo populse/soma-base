@@ -347,6 +347,7 @@ class ControllerWidgetFactory(WidgetFactory):
 
 
 from .str import StrWidgetFactory
+from .bool import BoolWidgetFactory
 from .list import (ListStrWidgetFactory,
                    ListIntWidgetFactory,
                    ListFloatWidgetFactory,
@@ -364,6 +365,7 @@ WidgetFactory.widget_factory_types = {
     'str': StrWidgetFactory,
     'int': StrWidgetFactory,
     'float': StrWidgetFactory,
+    'bool': BoolWidgetFactory,
     'list[str]': ListStrWidgetFactory,
     'list[int]': ListIntWidgetFactory,
     'list[float]': ListFloatWidgetFactory,
