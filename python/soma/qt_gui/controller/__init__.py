@@ -7,7 +7,7 @@ from soma.controller import (
     field_type_str,
     is_output,
 )
-from soma.qt_gui.qt_backend import Qt
+from soma.qt_gui.qt_backend import Qt, QtCore
 from soma.undefined import undefined
 from ..collapsable import CollapsableWidget
 
@@ -101,11 +101,13 @@ class GroupWidget(Qt.QFrame):
                     widget.hide()
 
 
-class WidgetFactory:
+class WidgetFactory(Qt.QObject):
     valid_style_sheet = ''
     warning_style_sheet = 'background: #FFFFC8;'
     invalid_style_sheet = 'background: #FFDCDC;'
     
+    inner_item_changed = QtCore.Signal(int)
+
     def __init__(self, controller_widget, parent_interaction):
         super().__init__()
         self.controller_widget = controller_widget
@@ -147,6 +149,24 @@ class ControllerFieldInteraction:
     def set_value(self, value):
         setattr(self.controller, self.field.name, value)
     
+    def set_inner_value(self, value, index):
+        all_values = self.get_value()
+        container = type(all_values)
+        if container is list:
+            old_value = all_values[index]
+        else:
+            print('!!!', list)
+            old_value = list(all_values)[index]
+        if old_value != value:
+            if container is list:
+                all_values[index] = value
+            else:
+                new_values = list(all_values)
+                new_values[index] = value
+                all_values.clear()
+                all_values.update(new_values)
+            self.inner_value_changed([index])
+
     def get_label(self):
         return self.controller.metadata(self.field, 'label', self.field.name)
     
@@ -159,13 +179,11 @@ class ControllerFieldInteraction:
     def set_protected(self, protected):
         self.controller.set_metadata(self.field, 'protected', protected)
 
-    def inner_item_changed(self, index):
-        value = self.get_value()
-        self.controller.on_attribute_change.fire(self.field.name, value, value, self.controller, index)
-
     def is_optional(self):
         return self.controller.is_optional(self.field)
 
+    def inner_value_changed(self, indices):
+        self.controller.on_inner_value_change.fire([self.field] + indices)
 
 class ListItemInteraction:
     def __init__(self, parent_interaction, index):
@@ -188,7 +206,25 @@ class ListItemInteraction:
 
     def set_value(self, value):
         self.parent_interaction.get_value()[self.index] = value
-    
+        self.parent_interaction.inner_value_changed([self.index])
+        
+    def set_inner_value(self, value, index):
+        all_values = self.get_value()
+        container = type(all_values)
+        if container is list:
+            old_value = all_values[index]
+        else:
+            old_value = list(all_values)[index]
+        if old_value != value:
+            if container is list:
+                all_values[index] = value
+            else:
+                new_values = list(all_values)
+                new_values[index] = value
+                all_values.clear()
+                all_values.update(new_values)
+            self.parent_interaction.inner_value_changed([self.index, index])
+
     def get_label(self):
         return f'{self.parent_interaction.get_label()}[{self.index}]'
     
@@ -201,11 +237,12 @@ class ListItemInteraction:
     def set_protected(self, protected):
         pass
 
-    def inner_item_changed(self, index):
-        self.parent_interaction.inner_item_changed(index)
-
     def is_optional(self):
         return False
+
+    def inner_value_changed(self, indices):
+        self.parent_interaction.inner_value_changed([self.index] + indices)
+
 
  
 
@@ -237,6 +274,7 @@ class DefaultWidgetFactory(WidgetFactory):
 class BaseControllerWidget:
     def __init__(self, controller, output=False, user_level=None, depth=0, *args, **kwargs):
         super().__init__(depth=depth, *args, **kwargs)
+        self.allow_update_gui = True
         self.depth = depth
         # Select and sort fields
         fields = []
@@ -268,6 +306,18 @@ class BaseControllerWidget:
                                    parent_interaction=ControllerFieldInteraction(controller, field, self.depth))
             self.factories[field] = factory
             factory.create_widgets()
+        controller.on_inner_value_change.add(self.update_inner_gui)
+
+
+    def update_inner_gui(self, indices):
+        if self.allow_update_gui:
+            self.allow_update_gui = False
+            field = indices[0]
+            indices = indices[1:]
+            if indices:
+                factory = self.factories[field]
+                factory.update_inner_gui(indices)
+            self.allow_update_gui = True
 
 
 class ControllerWidget(BaseControllerWidget, ScrollableWidgetsGrid):

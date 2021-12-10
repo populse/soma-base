@@ -175,7 +175,7 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
 
 
         super().__setattr__('on_attribute_change', AttributeValueEvent())
-        super().__setattr__('on_attribute_item_change',  Event())
+        super().__setattr__('on_inner_value_change',  Event())
         super().__setattr__('on_fields_change',  Event())
         super().__setattr__('enable_notification', True)
         super().__setattr__('_metadata', {})
@@ -206,11 +206,13 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
             field_class = type(name, (Controller,), namespace, class_field=False)
             field_instance = field_class()
         super().__getattribute__('_dyn_fields')[name] = field_instance
-        self.on_fields_change.fire()
+        if getattr(self, 'enable_notification', False) and self.on_fields_change.has_callback:
+            self.on_fields_change.fire()
         
     def remove_field(self, name):
         del self._dyn_fields[name]
-        self.on_fields_change.fire()
+        if getattr(self, 'enable_notification', False) and self.on_fields_change.has_callback:
+            self.on_fields_change.fire()
     
     def __getattribute__(self, name):
         try:

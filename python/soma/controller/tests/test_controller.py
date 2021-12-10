@@ -160,10 +160,11 @@ class TestController(unittest.TestCase):
         o.on_attribute_change.add(lambda one, two: calls.append([one, two]))
         o.on_attribute_change.add(lambda one, two, three: calls.append([one, two, three]))
         o.on_attribute_change.add(lambda one, two, three, four: calls.append([one, two, three, four]))
+        o.on_attribute_change.add(lambda one, two, three, four, five: calls.append([one, two, three, four, five]))
         self.assertRaises(Exception,
                           o.on_attribute_change.add,
-                          lambda one, two, three, four, five:
-                            calls.append([one, two, three, four, five]))
+                          lambda one, two, three, four, five, six:
+                            calls.append([one, two, three, four, five, six]))
 
         o.static_int = 0
         o.static_int = 42
@@ -178,11 +179,13 @@ class TestController(unittest.TestCase):
             [42, 0], 
             [42, 0, 'static_int'],
             [42, 0, 'static_int', o],
+            [42, 0, 'static_int', o, None],
             [], 
             ['x'], 
             ['x', 'default'], 
             ['x', 'default', 'dynamic_str'],
             ['x', 'default', 'dynamic_str', o],
+            ['x', 'default', 'dynamic_str', o, None],
             ])
 
         n  = 'dynamic_int'
@@ -320,9 +323,9 @@ class TestController(unittest.TestCase):
         o.set_metadata('d', 'new', 'value')
         o.set_metadata('d', 'another', 'modified')
         self.assertEqual(o.metadata('s'), {'class_field': True, 
-            'custom': 'modified', 'new': 'value'})
+            'custom': 'modified', 'new': 'value', 'order': 1000094})
         self.assertEqual(o.metadata('d'), {'class_field': False, 
-            'another': 'modified', 'new': 'value'})
+            'another': 'modified', 'new': 'value', 'order': 1000095})
 
 
     def test_field_types(self):

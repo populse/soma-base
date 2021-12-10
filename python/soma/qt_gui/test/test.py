@@ -92,14 +92,17 @@ if __name__ == "__main__":
     controller = TestControls()
 
     # Set some values to the controller parameters
-    controller.s = ""
+    controller.s = 'a text value'
     controller.n = 10.2
 
+    controller.lls= [[],['a', 'b', 'c'],[]]
     # Create to controller widget that are synchronized on the fly
     widget1 = ControllerWidget(controller)
     widget2 = ControllerWidget(controller)
     widget1.show()
     widget2.show()
+    print('!widget1', widget1)
+    print('!widget2', widget2)
 
     # Start the qt loop
     app.exec_()

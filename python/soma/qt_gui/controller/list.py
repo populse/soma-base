@@ -16,6 +16,10 @@ class ListStrWidgetFactory(WidgetFactory):
     convert_from_list = staticmethod(lambda x: x)
     convert_to_list = staticmethod(lambda x: x)
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.allow_update_gui = True
+
     def create_widgets(self):
         label = self.parent_interaction.get_label()
         self.grid_widget = Qt.QWidget()
@@ -46,32 +50,51 @@ class ListStrWidgetFactory(WidgetFactory):
         self.grid_widget.deleteLater()
 
     def update_gui(self):
-        values = self.parent_interaction.get_value(default=[])
-        values = self.convert_to_list(values)
-        # Remove item widgets if new list is shorter than current one
-        while len(values) < self.layout.count():
-            index = self.layout.count() - 1
-            item = self.layout.takeAt(index)
-            if item.widget():
-                item.widget().userModification.disconnect()
-                self.layout.removeWidget(item.widget())
-                self.inner_widgets = self.inner_widgets[:-1]
-                item.widget().deleteLater()
-        # Add item widgets if new list is longer than current one
-        while len(values) > self.layout.count():
-            pos = self.layout.count()
-            column = pos % self.ROW_SIZE
-            row = int(pos / self.ROW_SIZE) 
-            widget = TimeredQLineEdit(parent=self.grid_widget)
-            widget.setMinimumWidth(10)
-            widget.setSizePolicy(Qt.QSizePolicy.Ignored, Qt.QSizePolicy.Fixed)
-            self.inner_widgets.append(widget)
-            self.layout.addWidget(widget, row, column)
-            widget.userModification.connect(partial(self.update_controller_item, pos))
-        # Set values
-        for index, value in enumerate(values):
-            self.set_value(value, index)
+        if self.allow_update_gui:
+            self.allow_update_gui = False
+            values = self.parent_interaction.get_value(default=[])
+            values = self.convert_to_list(values)
+            # Remove item widgets if new list is shorter than current one
+            while len(values) < self.layout.count():
+                index = self.layout.count() - 1
+                item = self.layout.takeAt(index)
+                if item.widget():
+                    item.widget().userModification.disconnect()
+                    self.layout.removeWidget(item.widget())
+                    self.inner_widgets = self.inner_widgets[:-1]
+                    item.widget().deleteLater()
+            # Add item widgets if new list is longer than current one
+            while len(values) > self.layout.count():
+                pos = self.layout.count()
+                column = pos % self.ROW_SIZE
+                row = int(pos / self.ROW_SIZE) 
+                widget = TimeredQLineEdit(parent=self.grid_widget)
+                widget.setMinimumWidth(10)
+                widget.setSizePolicy(Qt.QSizePolicy.Ignored, Qt.QSizePolicy.Fixed)
+                self.inner_widgets.append(widget)
+                self.layout.addWidget(widget, row, column)
+                widget.userModification.connect(partial(self.inner_widget_changed, pos))
+            # Set values without sending modification signal
+            for widget in self.inner_widgets:
+                widget.startInternalModification()
+            for index, value in enumerate(values):
+                self.set_value(value, index)
+            for widget in self.inner_widgets:
+                widget.stopInternalModification()
+            self.allow_update_gui = True
+    
+    def inner_widget_changed(self, index):
+        new_value = self.get_value(index)
+        self.parent_interaction.set_inner_value(new_value, index)
+        self.update_inner_gui([index])
 
+    def update_inner_gui(self, indices):
+        if self.allow_update_gui:
+            self.allow_update_gui = False
+            index = indices[0]
+            self.set_value(self.parent_interaction.get_value()[index], index)
+            self.allow_update_gui = True
+    
     def update_controller(self):
         try:
             values = [self.get_value(i) for i in range(len(self.inner_widgets))]
@@ -82,29 +105,39 @@ class ListStrWidgetFactory(WidgetFactory):
             self.parent_interaction.set_protected(False)
 
     def set_value(self, value, index):
-        widget = self.inner_widgets[index]
+        try:
+            widget = self.inner_widgets[index]
+        except IndexError:
+            return
         if value is undefined:
             widget.setStyleSheet(WidgetFactory.invalid_style_sheet)
         else:
             widget.setStyleSheet(WidgetFactory.valid_style_sheet)
-            widget.setText(f'{value}')
+            current_text = widget.text()
+            new_text = f'{value}'
+            if new_text != current_text:
+                widget.startInternalModification()
+                widget.setText(new_text)
+                widget.stopInternalModification()
 
     def get_value(self, index):
-        return self.inner_widgets[index].text()
+        try:
+            return self.inner_widgets[index].text()
+        except IndexError:
+            return undefined
 
-    def update_controller_item(self, index):
-        values = self.parent_interaction.get_value()
-        if values is not undefined:
-            values = self.convert_to_list(values)
-            new_value = self.get_value(index)
-            if new_value is undefined:
-                self.inner_widgets[index].setStyleSheet(self.invalid_style_sheet)
-            else:
-                self.inner_widgets[index].setStyleSheet(self.valid_style_sheet)
-            old_value = values[index]
-            if new_value != old_value:
-                values[index] = new_value
-                self.parent_interaction.inner_item_changed(index)
+    # def update_controller_item(self, index):
+    #     values = self.parent_interaction.get_value()
+    #     if values is not undefined:
+    #         values = self.convert_to_list(values)
+    #         new_value = self.get_value(index)
+    #         if new_value is undefined:
+    #             self.inner_widgets[index].setStyleSheet(self.invalid_style_sheet)
+    #         else:
+    #             self.inner_widgets[index].setStyleSheet(self.valid_style_sheet)
+    #         old_value = values[index]
+    #         if new_value != old_value:
+    #             values[index] = new_value
     
     def add_item(self):
         values = self.convert_to_list(self.parent_interaction.get_value(default=[]))
@@ -156,6 +189,7 @@ class ListAnyWidgetFactory(WidgetFactory):
     def __init__(self, item_factory_class, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.item_factory_class = item_factory_class
+        self.allow_update_gui = True
 
     def create_widgets(self):
         self.items_widget = WidgetsGrid(self.parent_interaction.depth)
@@ -183,22 +217,37 @@ class ListAnyWidgetFactory(WidgetFactory):
         self.items_widget.deleteLater()
         
     def update_gui(self):
-        values = self.convert_to_list(self.parent_interaction.get_value(default=[]))
-        # Remove item widgets if new list is shorter than current one
-        while len(values) < len(self.item_factories):
-            item_factory = self.item_factories.pop(-1)
-            item_factory.delete_widgets()
+        if self.allow_update_gui:
+            self.allow_update_gui = False
+            values = self.convert_to_list(self.parent_interaction.get_value(default=[]))
+            # Remove item widgets if new list is shorter than current one
+            while len(values) < len(self.item_factories):
+                item_factory = self.item_factories.pop(-1)
+                item_factory.delete_widgets()
 
-        # Add item widgets if new list is longer than current one
-        while len(values) > len(self.item_factories):
-            index = len(self.item_factories)
-            item_factory = self.item_factory_class(
-                controller_widget=self.items_widget, 
-                parent_interaction=ListItemInteraction(self.parent_interaction, 
-                index=index))
-            self.item_factories.append(item_factory)
-            item_factory.create_widgets()
-
+            # Add item widgets if new list is longer than current one
+            while len(values) > len(self.item_factories):
+                index = len(self.item_factories)
+                item_factory = self.item_factory_class(
+                    controller_widget=self.items_widget, 
+                    parent_interaction=ListItemInteraction(self.parent_interaction, 
+                    index=index))
+                self.item_factories.append(item_factory)
+                item_factory.create_widgets()
+            self.allow_update_gui = True
+        
+    def update_inner_gui(self, indices):
+        if self.allow_update_gui:
+            self.allow_update_gui = False
+            index = indices[0]
+            factory = self.item_factories[index]
+            indices = indices[1:]
+            if indices:
+                factory.update_inner_gui(indices)
+            else:
+                factory.update_gui()
+            self.allow_update_gui = True
+    
     def add_item(self):
         values = self.convert_to_list(self.parent_interaction.get_value(default=[]))
         item_type = subtypes(self.parent_interaction.type)[0]
