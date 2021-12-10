@@ -92,7 +92,7 @@ class ListStrWidgetFactory(WidgetFactory):
         if self.allow_update_gui:
             self.allow_update_gui = False
             index = indices[0]
-            self.set_value(self.parent_interaction.get_value()[index], index)
+            self.set_value(self.convert_to_list(self.parent_interaction.get_value())[index], index)
             self.allow_update_gui = True
     
     def update_controller(self):

@@ -155,7 +155,6 @@ class ControllerFieldInteraction:
         if container is list:
             old_value = all_values[index]
         else:
-            print('!!!', list)
             old_value = list(all_values)[index]
         if old_value != value:
             if container is list:
@@ -357,6 +356,9 @@ from .set import (SetStrWidgetFactory,
                   SetFloatWidgetFactory,
                   find_generic_set_factory)
 from .path import FileWidgetFactory, DirectoryWidgetFactory
+# Above imports also import the module. This hides
+# the corresponding builtins => remove them
+del str, list, set, path
 
 WidgetFactory.widget_factory_types = {
     'str': StrWidgetFactory,
