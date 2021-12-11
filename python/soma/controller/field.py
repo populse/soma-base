@@ -201,13 +201,14 @@ type_default_value_functions = {
     'bool': lambda t: False,
     'list': lambda t: [],
     'controller': lambda t: t(),
+    'literal': lambda t: literal_values(t)[0],
 }
 def type_default_value(type):
     global type_default_value
 
     full_type = type_str(type)
     main_type = full_type.split('[', 1)[0]
-    f = type_default_value_functions    .get(main_type)
+    f = type_default_value_functions.get(main_type)
     if f:
         return f(type)
     raise TypeError(f'Cannot get default value for type {type_str}')

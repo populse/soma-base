@@ -348,6 +348,7 @@ class ControllerWidgetFactory(WidgetFactory):
 
 from .str import StrWidgetFactory
 from .bool import BoolWidgetFactory
+from .literal import LiteralWidgetFactory
 from .list import (ListStrWidgetFactory,
                    ListIntWidgetFactory,
                    ListFloatWidgetFactory,
@@ -359,13 +360,14 @@ from .set import (SetStrWidgetFactory,
 from .path import FileWidgetFactory, DirectoryWidgetFactory
 # Above imports also import the module. This hides
 # the corresponding builtins => remove them
-del str, list, set, path
+del str, bool, literal, list, set, path
 
 WidgetFactory.widget_factory_types = {
     'str': StrWidgetFactory,
     'int': StrWidgetFactory,
     'float': StrWidgetFactory,
     'bool': BoolWidgetFactory,
+    'literal': LiteralWidgetFactory,
     'list[str]': ListStrWidgetFactory,
     'list[int]': ListIntWidgetFactory,
     'list[float]': ListFloatWidgetFactory,
