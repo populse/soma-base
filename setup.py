@@ -1,9 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import absolute_import
 import os
-from setuptools import setup, find_packages
+from setuptools import setup
 
 python_dir = os.path.join(os.path.dirname(__file__), "python")
 release_info = {}
@@ -21,8 +20,8 @@ setup(
     author=release_info["AUTHOR"],
     author_email=release_info["AUTHOR_EMAIL"],
     version=release_info["VERSION"],
-    package_dir = {'': python_dir},
-    packages=find_packages(python_dir),
+    package_dir = {'': 'python'},
+    packages=['soma'],
     platforms=release_info["PLATFORMS"],
     install_requires=release_info["REQUIRES"],
     extras_require = release_info["EXTRAS_REQUIRE"],
