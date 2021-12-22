@@ -68,6 +68,7 @@ PROVIDES = ["soma-base"]
 REQUIRES = [
     "six >= 1.13",
     "numpy",
+    "pydantic",
 ]
 EXTRAS_REQUIRE = {
     "doc": ["sphinx>=%s" % SPHINX_MIN_VERSION],
