@@ -260,8 +260,7 @@ def set_qt_backend(backend=None, pyqt_api=1, compatible_qt5=None):
             elif qt_api == 'pyside':
                 backend = 'PySide'
             else:
-                backend = 'PyQt4'
-                pyqt_api = 1
+                backend = 'PyQt5'
         else:
             backend = qt_backend
     if qt_backend is not None and qt_backend != backend:
