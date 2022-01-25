@@ -323,10 +323,10 @@ class TestController(unittest.TestCase):
         o.set_metadata('d', 'new', 'value')
         o.set_metadata('d', 'another', 'modified')
         self.assertEqual(o.metadata('s'), {'class_field': True, 
-            'custom': 'modified', 'new': 'value', 'order': 1000094})
+            'custom': 'modified', 'new': 'value', 'order': o.metadata('s', 'order')})
         self.assertEqual(o.metadata('d'), {'class_field': False, 
-            'another': 'modified', 'new': 'value', 'order': 1000095})
-
+            'another': 'modified', 'new': 'value', 'order': o.metadata('d', 'order')})
+        self.assertGreater(o.metadata('d', 'order'), o.metadata('s', 'order'))
 
     def test_field_types(self):
         class MyController(Controller):
@@ -824,6 +824,13 @@ class TestController(unittest.TestCase):
             self.assertEqual(d[n], expected[n])
         self.assertEqual(len(d), len(expected))
 
+
+    def test_add_field(self):
+        c = Controller()
+
+        c.add_field('toto', field(type_=str))
+        c.toto = 'titi'
+        self.assertEqual([i.name for i in c.fields()], ['toto'])
 
 if __name__ == "__main__":
     unittest.main()

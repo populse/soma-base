@@ -161,7 +161,7 @@ class ControllerMeta(type):
 
 
 class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
-    def __new__(cls, **kwargs):
+    def __new__(cls, *args, **kwargs):
         if cls is Controller:
             return EmptyController()
         return super().__new__(cls)
@@ -181,30 +181,25 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
         super().__setattr__('_metadata', {})
 
     def add_field(self, name, type_, default=undefined, metadata=None, **kwargs):
-        if isinstance(type_, dataclasses.Field):
-            if default is not undefined or metadata or kwargs:
-                raise NotImplementedError('Cannot modify an existing field given to add_field()')
-            field_instance = type_
-        else:
-            # Dynamically create a class equivalent to:
-            # (without default if it is undefined)
-            #
-            # class {name}(Controller):
-            #     value: type_ = default
-            namespace = {
-                '__annotations__': {
-                    name: type_,
-                }
+        # Dynamically create a class equivalent to:
+        # (without default if it is undefined)
+        #
+        # class {name}(Controller):
+        #     value: type_ = default
+        namespace = {
+            '__annotations__': {
+                name: type_,
             }
-            field_kwargs = {}
-            if default is not undefined:
-                field_kwargs['default'] = default
-            if metadata is not None:
-                field_kwargs['metadata'] = metadata
-            if field_kwargs:
-                namespace[name] = field(**field_kwargs, **kwargs)
-            field_class = type(name, (Controller,), namespace, class_field=False)
-            field_instance = field_class()
+        }
+        field_kwargs = {}
+        if default is not undefined:
+            field_kwargs['default'] = default
+        if metadata is not None:
+            field_kwargs['metadata'] = metadata
+        if isinstance(type_, dataclasses.Field) or field_kwargs:
+            namespace[name] = field(**field_kwargs, **kwargs)
+        field_class = type(name, (Controller,), namespace, class_field=False)
+        field_instance = field_class()
         super().__getattribute__('_dyn_fields')[name] = field_instance
         if getattr(self, 'enable_notification', False) and self.on_fields_change.has_callback:
             self.on_fields_change.fire()
