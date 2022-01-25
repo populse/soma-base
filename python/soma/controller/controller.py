@@ -197,7 +197,12 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
             field_kwargs['default'] = default
         if metadata is not None:
             field_kwargs['metadata'] = metadata
-        if isinstance(type_, dataclasses.Field) or field_kwargs:
+        if isinstance(type_, dataclasses.Field):
+            type_ = copy.copy(type_)
+            type_.metadata = dict(type_.metadata)
+            type_.metadata.update(field_kwargs)
+            namespace[name] = type_
+        elif field_kwargs:
             namespace[name] = field(**field_kwargs, **kwargs)
         field_class = type(name, (Controller,), namespace, class_field=False)
         field_instance = field_class()
@@ -246,8 +251,18 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
             super().__delattr__(name)
 
     def __repr__(self):
-        drepr = ', '.join(['%s=%s'
-                           % (x, repr(y)) for x, y in self.asdict().items()])
+        fields = []
+        for f in self.fields():
+            value = getattr(self, f.name, undefined)
+            if value is undefined:
+                svalue = 'undefined'
+            else:
+                try:
+                    svalue = repr(value)
+                except Exception:
+                    svalue = '<non_printable>'
+            fields.append((f.name, svalue))
+        drepr = ', '.join(['%s=%s' % f for f in fields])
         return '%s(%s)' % (self.__class__.__name__, drepr)
 
     def _unnotified_setattr(self, name, value):
