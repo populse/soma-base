@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 import dataclasses
-from typing import List, Union, Literal
 import unittest
 
 from soma.controller import (Controller,
@@ -823,6 +822,13 @@ class TestController(unittest.TestCase):
         for n, i in d.items():
             self.assertEqual(d[n], expected[n])
         self.assertEqual(len(d), len(expected))
+
+    def test_repr(self):
+        c = Controller()
+        c.add_field('thing', str, 12)
+        c.add_field('other', int)
+        self.assertEqual(repr(c),
+                         "EmptyController(thing='12', other=undefined)")
 
 
     def test_add_field(self):

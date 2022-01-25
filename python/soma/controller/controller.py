@@ -245,8 +245,18 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
             super().__delattr__(name)
 
     def __repr__(self):
-        drepr = ', '.join(['%s=%s'
-                           % (x, repr(y)) for x, y in self.asdict().items()])
+        fields = []
+        for f in self.fields():
+            value = getattr(self, f.name, undefined)
+            if value is undefined:
+                svalue = 'undefined'
+            else:
+                try:
+                    svalue = repr(value)
+                except Exception:
+                    svalue = '<non_printable>'
+            fields.append((f.name, svalue))
+        drepr = ', '.join(['%s=%s' % f for f in fields])
         return '%s(%s)' % (self.__class__.__name__, drepr)
 
     def _unnotified_setattr(self, name, value):
