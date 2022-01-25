@@ -2,8 +2,8 @@ environment:
 
   matrix:
 
-    - PYTHON: "C:\\Python27"
-    - PYTHON: "C:\\Python35"
+    - PYTHON: "C:\\Python38"
+    - PYTHON: "C:\\Python39"
 
 build: off
 
@@ -12,9 +12,7 @@ install:
   - "python -m pip install --upgrade pip"
   - "pip install numpy six"
   - "pip install six"
-  - "pip install traits"
   - "pip install argparse"
-  - "pip install subprocess32"
   - "python setup.py install"
   - "SET PYTHONPATH=C:\\projects\\soma-base\\python;%PYTHONPATH%"
 
