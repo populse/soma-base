@@ -114,11 +114,11 @@ def type_str(type_):
         elif name == 'Dict':
             name = 'dict'
             args = getattr(type_, '__args__', None)
-            ignore_args = args == Dict.__args__
+            ignore_args = args == getattr(Dict, '__args__', None)
         elif name == 'Set':
             name = 'set'
             args = getattr(type_, '__args__', None)
-            ignore_args = args == Set.__args__
+            ignore_args = args == getattr(Set, '__args__', None)
     if name:
         name = name
     if not name and getattr(type_, '__origin__', None) is Union:
