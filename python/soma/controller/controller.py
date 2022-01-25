@@ -244,6 +244,11 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
         else:
             super().__delattr__(name)
 
+    def __repr__(self):
+        drepr = ', '.join(['%s=%s'
+                           % (x, repr(y)) for x, y in self.asdict().items()])
+        return '%s(%s)' % (self.__class__.__name__, drepr)
+
     def _unnotified_setattr(self, name, value):
         dyn_field = super().__getattribute__('_dyn_fields').get(name)
         if dyn_field:
@@ -485,5 +490,3 @@ class OpenKeyController(Controller, metaclass=OpenKeyControllerMeta, ignore_meta
 
 class EmptyOpenKeyController(OpenKeyController[str]):
     pass
-
-
