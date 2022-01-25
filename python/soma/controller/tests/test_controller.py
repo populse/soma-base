@@ -823,6 +823,13 @@ class TestController(unittest.TestCase):
             self.assertEqual(d[n], expected[n])
         self.assertEqual(len(d), len(expected))
 
+    def test_instance_default_value(self):
+        c = Controller()
+        c.add_field('thing', str, 12)
+        self.assertEqual(c.thing, '12')
+        c.add_field('other', field(type_=int, default=25))
+        self.assertEqual(c.other, 25)
+
     def test_repr(self):
         c = Controller()
         c.add_field('thing', str, 12)
