@@ -259,7 +259,7 @@ class DefaultWidgetFactory(WidgetFactory):
         self.label_widget = Qt.QLabel(label, parent=self.controller_widget)
         self.controller_widget.add_widget_row(self.label_widget, self.text_widget)
 
-    def remove_widgets(self):
+    def delete_widgets(self):
         self.parent_interaction.on_change_remove(self.update_gui)
         self.controller_widget.remove_widget_row()
         self.label_widget.deleteLater()
@@ -275,12 +275,27 @@ class BaseControllerWidget:
         super().__init__(depth=depth, *args, **kwargs)
         self.allow_update_gui = True
         self.depth = depth
+        self.controller = controller
+        self.output = output
+        self.user_level = user_level
+        self.build()
+        controller.on_inner_value_change.add(self.update_inner_gui)
+        controller.on_fields_change.add(self.update_fields)
+
+    def __del__(self):
+        # print('del BaseControllerWidget', self)
+        self.disconnect()
+
+    def build(self):
+        controller = self.controller
         # Select and sort fields
         fields = []
         for field in controller.fields():
             if (
-                (output or not controller.metadata(field, 'output', False))
-                and (user_level is None or user_level >= controller.metadata(field, 'user_level', 0))
+                (self.output
+                 or not controller.metadata(field, 'output', False))
+                and (self.user_level is None
+                     or self.user_level >= controller.metadata(field, 'user_level', 0))
             ):
                 fields.append(field)
         self.fields = sorted(fields, key=lambda f: f.metadata.get('order'))
@@ -294,18 +309,17 @@ class BaseControllerWidget:
             if group_content_widget is None:
                 group_content_widget = WidgetsGrid(depth=self.depth)
                 self.group_widget = GroupWidget(group)
-                
+
                 self.group_widget.layout().addWidget(group_content_widget)
                 self.add_widget_row(self.group_widget)
                 self.groups[group] = group_content_widget
 
             type_str = field_type_str(field)
             factory_type = WidgetFactory.find_factory(type_str, DefaultWidgetFactory)
-            factory = factory_type(controller_widget=group_content_widget, 
+            factory = factory_type(controller_widget=group_content_widget,
                                    parent_interaction=ControllerFieldInteraction(controller, field, self.depth))
             self.factories[field] = factory
             factory.create_widgets()
-        controller.on_inner_value_change.add(self.update_inner_gui)
 
 
     def update_inner_gui(self, indices):
@@ -317,6 +331,26 @@ class BaseControllerWidget:
                 factory = self.factories[field]
                 factory.update_inner_gui(indices)
             self.allow_update_gui = True
+
+    def update_fields(self):
+        if self.allow_update_gui:
+            self.allow_update_gui = False
+            self.clear()
+            self.build()
+            self.allow_update_gui = True
+
+    def clear(self):
+        for field, factory in self.factories.items():
+            factory.delete_widgets()
+        self.factories = {}
+        self.groups = {}
+        if hasattr(self, 'group_widget'):
+            del self.group_widget
+        self.fields = []
+
+    def disconnect(self):
+        self.controller.on_inner_value_change.add(self.update_inner_gui)
+        self.controller.on_fields_change.add(self.update_fields)
 
 
 class ControllerWidget(BaseControllerWidget, ScrollableWidgetsGrid):
