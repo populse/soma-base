@@ -23,7 +23,7 @@ from soma.controller import (Controller,
                              is_output,
                              has_default,
                              field_type_str)
-
+from soma.singleton import Singleton
 from soma.undefined import undefined
 
 
@@ -831,6 +831,14 @@ class TestController(unittest.TestCase):
         c.add_field('toto', field(type_=str))
         c.toto = 'titi'
         self.assertEqual([i.name for i in c.fields()], ['toto'])
+
+    def test_singleton(self):
+        class Application(Singleton, Controller):
+            pass
+        app1 = Application()
+        app1.add_field('toto', str)
+        app2 = Application()
+        self.assertEqual([i.name for i in app2.fields()], ['toto'])
 
 if __name__ == "__main__":
     unittest.main()

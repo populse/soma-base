@@ -96,9 +96,10 @@ class ControllerMeta(type):
     def __new__(cls, name, bases, namespace, class_field=True, ignore_metaclass=False):
         if ignore_metaclass:
             return super().__new__(cls, name, bases, namespace)
-        if not bases or not issubclass(bases[0], Controller):
-            raise TypeError('Controller must be the first base class')
-        controller_class = bases[0]
+        base_controllers = [i for i in bases if issubclass(i, Controller)]
+        if len(base_controllers) != 1:
+            raise TypeError('There must be exactly one Controller in base classes')
+        controller_class = base_controllers[0]
         annotations = namespace.pop('__annotations__', None)
         dataclass_namespace = {}
         if annotations:
