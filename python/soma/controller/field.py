@@ -227,7 +227,7 @@ class ListMeta(type):
 class List(metaclass=ListMeta):
     pass
 
-def path(format,
+def path(format=None,
          dataset=undefined,
          read=undefined,
          write=False,
@@ -241,7 +241,7 @@ def path(format,
     if dataset is undefined:
         dataset = ('output' if write else 'input')
     field_metadata = {
-        'format': f'path/{format}',
+        'format': (f'path/{format}' if format else 'path'),
         'dataset': dataset,
         'read': read,
         'write': write,

@@ -22,6 +22,7 @@ from .field import (
     Union,
     Dict,
     Set,
+    path,
     file,
     directory,
     is_path,
