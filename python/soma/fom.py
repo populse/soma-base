@@ -1351,10 +1351,6 @@ class AttributesToPaths(object):
 
 
 def call_before_application_initialization(application):
-    try:
-        from traits.api import ListStr
-    except ImportError:
-        from enthought.traits.api import ListStr
 
     application.add_field(
         'fom_path',
