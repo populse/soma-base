@@ -418,6 +418,29 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
             self.set_metadata(field, 'optional', bool(optional))
 
 
+    def json(self):
+        result = {}
+        for field in self.fields():
+            value = getattr(self, field.name, undefined)
+            if value is not undefined:
+                result[field.name] = self.json_value(value)
+        return result
+    
+    
+    def import_json(self, json):
+        for field_name, json_value in json.items():
+            setattr(self, field_name, json_value)
+    
+
+    def json_value(self, value):
+        if isinstance(value, Controller):
+            return value.json()
+        elif isinstance(value, (tuple, set, list)):
+            return [self.json_value(i) for i in value]
+        elif isinstance(value, dict):
+            return dict((i,self.json_value(j)) for i,j in value.items())
+        return value
+
 def asdict(obj, dict_factory=dict, exclude_empty=False):
     if isinstance(obj, Controller):
         result = []

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import dataclasses
+import json
 import unittest
 
 from soma.controller import (Controller,
@@ -25,6 +25,29 @@ from soma.controller import (Controller,
 from soma.singleton import Singleton
 from soma.undefined import undefined
 
+class SubController(Controller):
+    dummy : str
+
+class SerializableController(Controller):
+    s: str
+    i: int
+    n: float
+    b: bool
+    e: Literal['one', 'two', 'three']
+    f: file()
+    d: directory()
+    u: Union[str, List[str]]
+    m: dict
+    lm: List[dict]
+    mt: Dict[str, List[int]]
+    l: list
+    ll: List[List[str]]
+    c: Controller
+    lc: List[Controller]
+    o: SubController
+    lo: List[SubController]
+    set_str: Set[str]
+    set: set
 
 class TestController(unittest.TestCase):
 
@@ -327,10 +350,7 @@ class TestController(unittest.TestCase):
             'another': 'modified', 'new': 'value', 'order': o.metadata('d', 'order')})
         self.assertGreater(o.metadata('d', 'order'), o.metadata('s', 'order'))
 
-    def test_field_types(self):
-        class MyController(Controller):
-            dummy : str
-        
+    def test_field_types(self):        
         class C(Controller):
             s: str
             os: field(type_=str, output=True)
@@ -383,8 +403,8 @@ class TestController(unittest.TestCase):
 
             c: Controller
             lc: List[Controller]
-            o: MyController
-            lo: List[MyController]
+            o: SubController
+            lo: List[SubController]
 
             Set: Set
             Set_str: Set[str]
@@ -708,14 +728,14 @@ class TestController(unittest.TestCase):
                 'name': 'o',
                 'output': False,
                 'path': False,
-                'str': 'controller[__main__.MyController]'},
+                'str': 'controller[__main__.SubController]'},
             'lo': {'directory': False,
                 'file': False,
                 'list': True,
                 'name': 'lo',
                 'output': False,
                 'path': False,
-                'str': 'list[controller[__main__.MyController]]'},
+                'str': 'list[controller[__main__.SubController]]'},
 
             'set': {'directory': False,
                 'file': False,
@@ -852,6 +872,41 @@ class TestController(unittest.TestCase):
         app1.add_field('toto', str)
         app2 = Application()
         self.assertEqual([i.name for i in app2.fields()], ['toto'])
+
+    def test_json(self):
+
+        c1 = SerializableController(
+            s='toto', 
+            i=42,
+            n=12.34,
+            b=True,
+            e='two',
+            f='/a_file.txt',
+            d='/somewhere',
+            u=['one', 'two'],
+            m={},
+            lm=[{}],
+            mt={'toto':[1,2,3]},
+            l=[],
+            ll=[['1','2'],['a','b']],
+            # Serialization of derived types is not implemented yet.
+            # Here the field type is Controller but the value type
+            # is SerializableController.
+            # c=SerializableController(
+            #     s='toto', 
+            #     i=42,
+            #     n=12.34,
+            #     b=True),
+            # lc=[Controller(), Controller()],
+            o=SubController(dummy='toto'),
+            lo=[SubController(dummy='tutu'),SubController(dummy='tata')],
+            set_str={'a', 'b', 'c'},
+            set={1, 'two', None}
+            )
+        j = json.dumps(c1.json())
+        c2 = SerializableController()
+        c2.import_json(json.loads(j))
+        self.assertEqual(c1.asdict(), c2.asdict())
 
 if __name__ == "__main__":
     unittest.main()

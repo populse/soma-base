@@ -2,6 +2,7 @@
 
 import dataclasses
 import re
+import sys
 import typing
 
 from soma.undefined import undefined
@@ -10,11 +11,19 @@ from soma.undefined import undefined
 from typing import (
     Any,
     Literal,
-    Tuple,
     Union,
-    Dict,
-    Set,
 )
+
+if sys.version_info < (3,9):
+    from typing import (
+        Tuple,
+        Dict,
+        Set,
+    )
+else:
+    Tuple = tuple
+    Dict = dict
+    Set = set
 
 max_field_creation_order = 1000000
 def field(name=None, type_=None, 
@@ -93,7 +102,6 @@ def field_type_str(field):
         else:
             return path_type
     return type_str(field_type(field))
-
 
 def type_str(type_):
     from soma.controller import Controller
