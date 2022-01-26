@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import print_function
-
 from __future__ import absolute_import
+
 import unittest
 import os
 import sys
@@ -51,16 +51,16 @@ class TestUndefined(unittest.TestCase):
         self.assertTrue(undefined.UndefinedClass.get_instance()
                         is undefined.Undefined)
 
-    def test_undefined_traits(self):
-        self.restore_traits()
-        from soma import undefined
-        from traits import trait_base
-        import traits.api as traits
-        reload_module(undefined)
-        self.assertTrue(hasattr(undefined, 'Undefined'))
-        undef = undefined.Undefined
-        self.assertTrue(isinstance(undef, trait_base._Undefined))
-        self.assertEqual(repr(undef), '<undefined>')
+    #def test_undefined_traits(self):
+        #self.restore_traits()
+        #from soma import undefined
+        #from traits import trait_base
+        #import traits.api as traits
+        #reload_module(undefined)
+        #self.assertTrue(hasattr(undefined, 'Undefined'))
+        #undef = undefined.Undefined
+        #self.assertTrue(isinstance(undef, trait_base._Undefined))
+        #self.assertEqual(repr(undef), '<undefined>')
 
 
 def test():

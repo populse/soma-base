@@ -167,7 +167,7 @@ except ImportError:
     bz2 = None
 
 from collections import OrderedDict
-
+from soma.controller import List
 
 try:
     import yaml
@@ -1351,14 +1351,10 @@ class AttributesToPaths(object):
 
 
 def call_before_application_initialization(application):
-    try:
-        from traits.api import ListStr
-    except ImportError:
-        from enthought.traits.api import ListStr
 
-    application.add_trait(
+    application.add_field(
         'fom_path',
-        ListStr(descr='Path for finding file organization models'))
+        List[str], field_doc='Path for finding file organization models')
     if application.install_directory:
         application.fom_path = [osp.join(application.install_directory,
                                          'share', 'foms')]

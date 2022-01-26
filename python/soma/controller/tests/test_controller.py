@@ -160,7 +160,7 @@ class TestController(unittest.TestCase):
         manhelp = my_car.field_doc('driver')
         self.assertEqual(
             manhelp,
-            'driver [controller[__main__.Driver]]: the guy who would better take a bus')
+            'driver [controller[%s.Driver]]: the guy who would better take a bus' % __name__)
 
     def test_dynamic_controllers(self):
         class C(Controller):
@@ -728,14 +728,14 @@ class TestController(unittest.TestCase):
                 'name': 'o',
                 'output': False,
                 'path': False,
-                'str': 'controller[__main__.SubController]'},
+                'str': f'controller[{__name__}.SubController]'},
             'lo': {'directory': False,
                 'file': False,
                 'list': True,
                 'name': 'lo',
                 'output': False,
                 'path': False,
-                'str': 'list[controller[__main__.SubController]]'},
+                'str': f'list[controller[{__name__}.SubController]]'},
 
             'set': {'directory': False,
                 'file': False,
@@ -908,5 +908,10 @@ class TestController(unittest.TestCase):
         c2.import_json(json.loads(j))
         self.assertEqual(c1.asdict(), c2.asdict())
 
+def test():
+    suite = unittest.TestLoader().loadTestsFromTestCase(TestController)
+    runtime = unittest.TextTestRunner(verbosity=2).run(suite)
+    return runtime.wasSuccessful()
+
 if __name__ == "__main__":
-    unittest.main()
+    test()

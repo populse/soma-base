@@ -35,7 +35,7 @@
 
 from __future__ import print_function
 from __future__ import absolute_import
-from soma.qt_gui.qt_backend.QtGui import *
+from soma.qt_gui.qt_backend.Qt import *
 from soma.qt_gui.qt_backend.QtCore import QSize
 import re
 import os
