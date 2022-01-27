@@ -167,7 +167,7 @@ except ImportError:
     bz2 = None
 
 from collections import OrderedDict
-from soma.controller import List
+from soma.controller import List, undefined
 
 try:
     import yaml
@@ -1354,8 +1354,9 @@ def call_before_application_initialization(application):
 
     application.add_field(
         'fom_path',
-        List[str], field_doc='Path for finding file organization models')
-    if application.install_directory:
+        List[str], field_doc='Path for finding file organization models',
+        default_factory=lambda: [])
+    if getattr(application, 'install_directory', undefined):
         application.fom_path = [osp.join(application.install_directory,
                                          'share', 'foms')]
 
