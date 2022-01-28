@@ -157,6 +157,7 @@ class ControllerMeta(type):
         c = type(name + '_dataclass' , dataclass_bases, dataclass_namespace)
         c = dataclass(c, config=_ModelsConfig)
         namespace['_controller_dataclass'] = c
+        namespace['__hash__'] = Controller.__hash__
         c = super().__new__(cls, name, bases + (c,) , namespace)
         return c
 
@@ -235,7 +236,7 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
                 old_value = getattr(self, name, undefined)
                 self._unnotified_setattr(name, value)
                 # Value can be converted, therefore get actual attribute new value
-                new_value = getattr(self, name)
+                new_value = getattr(self, name, undefined)
                 if old_value != new_value:
                     self.on_attribute_change.fire(name, new_value, old_value, self)
             else:
