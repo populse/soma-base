@@ -30,4 +30,14 @@ class UndefinedClass(Singleton):
         '''
         return '<undefined>'
 
+    def __bool__(self):
+        '''
+        undefined is always a False value.
+
+        Returns
+        -------
+        False
+        '''
+        return False
+
 Undefined = undefined = UndefinedClass()

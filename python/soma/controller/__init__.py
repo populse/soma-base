@@ -31,4 +31,5 @@ from .field import (
     is_list,
     is_input,
     is_output,
-    has_default)
+    has_default,
+    undefined)

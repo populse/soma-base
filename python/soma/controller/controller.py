@@ -182,7 +182,8 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
         super().__setattr__('enable_notification', True)
         super().__setattr__('_metadata', {})
 
-    def add_field(self, name, type_, default=undefined, metadata=None, **kwargs):
+    def add_field(self, name, type_, default=undefined, metadata=None,
+                  **kwargs):
         # Dynamically create a class equivalent to:
         # (without default if it is undefined)
         #
@@ -203,7 +204,7 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
             type_.metadata = dict(type_.metadata)
             type_.metadata.update(field_kwargs)
             namespace[name] = type_
-        elif field_kwargs:
+        elif field_kwargs or kwargs:
             namespace[name] = field(**field_kwargs, **kwargs)
         field_class = type(name, (Controller,), namespace, class_field=False)
         field_instance = field_class()
@@ -231,7 +232,9 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
         return result
 
     def __setattr__(self, name, value):
-        if name in self.__pydantic_model__.__fields__ or name in super().__getattribute__('_dyn_fields'):
+        if name in self.__pydantic_model__.__fields__ \
+                or (hasattr(self, '_dyn_fields')
+                    and name in super().__getattribute__('_dyn_fields')):
             if getattr(self, 'enable_notification', False) and self.on_attribute_change.has_callback:
                 old_value = getattr(self, name, undefined)
                 self._unnotified_setattr(name, value)
@@ -273,7 +276,7 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
         else:
             field = self.__dataclass_fields__[name]
             type = field_type(field)
-            if isinstance(value, dict) and issubclass(type,Controller):
+            if isinstance(value, dict) and issubclass(type, Controller):
                 controller = getattr(self, name, undefined)
                 if controller is undefined:
                     controller = type()
