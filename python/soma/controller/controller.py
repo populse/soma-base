@@ -238,7 +238,7 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
                 old_value = getattr(self, name, undefined)
                 self._unnotified_setattr(name, value)
                 # Value can be converted, therefore get actual attribute new value
-                new_value = getattr(self, name)
+                new_value = getattr(self, name, undefined)
                 if old_value != new_value:
                     self.on_attribute_change.fire(name, new_value, old_value, self)
             else:
@@ -275,7 +275,7 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
         else:
             field = self.__dataclass_fields__[name]
             type = field_type(field)
-            if isinstance(value, dict) and issubclass(type,Controller):
+            if isinstance(value, dict) and issubclass(type, Controller):
                 controller = getattr(self, name, undefined)
                 if controller is undefined:
                     controller = type()
