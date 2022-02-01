@@ -349,8 +349,9 @@ class BaseControllerWidget:
         self.fields = []
 
     def disconnect(self):
-        self.controller.on_inner_value_change.add(self.update_inner_gui)
-        self.controller.on_fields_change.add(self.update_fields)
+        if hasattr(self, 'controller'):
+            self.controller.on_inner_value_change.add(self.update_inner_gui)
+            self.controller.on_fields_change.add(self.update_fields)
 
 
 class ControllerWidget(BaseControllerWidget, ScrollableWidgetsGrid):

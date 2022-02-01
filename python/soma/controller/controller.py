@@ -209,7 +209,8 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
         field_class = type(name, (Controller,), namespace, class_field=False)
         field_instance = field_class()
         super().__getattribute__('_dyn_fields')[name] = field_instance
-        if getattr(self, 'enable_notification', False) and self.on_fields_change.has_callback:
+        if getattr(self, 'enable_notification', False) \
+                and self.on_fields_change.has_callback:
             self.on_fields_change.fire()
         
     def remove_field(self, name):
@@ -351,7 +352,7 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
         if isinstance(field_or_name, str):
             field = self.field(field_or_name)
         else:
-            field= field_or_name
+            field = field_or_name
         if not field:
             raise ValueError(f'No such field: {field_or_name}')
         result = ['{} [{}]'.format(field.name, field_type_str(field))]

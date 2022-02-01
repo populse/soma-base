@@ -150,6 +150,10 @@ def type_str(type_):
             result = name.lower()
     return final_mapping.get(result, result)
 
+def type_from_str(type_str):
+    # TODO: avoid eval()
+    return eval(type_str)
+
 
 def literal_values(type):
     return type.__args__
@@ -300,5 +304,3 @@ def is_list(field):
     t = field_type(field)
     return (getattr(t, '_name', None) == 'List'
             or (isinstance(t, type) and issubclass(t, list)))
-
-
