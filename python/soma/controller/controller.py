@@ -10,7 +10,8 @@ from pydantic.dataclasses import dataclass
 
 from soma.undefined import undefined
 
-from .field import field, field_type, has_default, field_type_str
+from .field import (field, field_type, has_default, field_type_str,
+                    is_output, is_path)
 
 class _ModelsConfig:
     validate_assignment = True
@@ -391,32 +392,36 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
                 return field.metadata.get(key, default)
             return default
     
-    def set_metadata(self, field_or_name, key, value):
+    def ensure_field(self, field_or_name):
         if isinstance(field_or_name, str):
-            field = self.field(field_or_name)
+            return self.field(field_or_name)
         else:
-            field= field_or_name
-        d = self._metadata.setdefault(field.name, {})
+            return field_or_name
+
+    def set_metadata(self, field_or_name, key, value):
+        d = self._metadata.setdefault(self.ensure_field(field_or_name), {})
         if value is undefined:
             d.pop(key, None)
         else:
             d[key] = value
 
+    def is_output(self, field_or_name):
+        field = self.ensure_field(field_or_name)
+        return is_output(field)
+
+    def is_path(self, field_or_name):
+        field = self.ensure_field(field_or_name)
+        return is_path(field)
+
     def is_optional(self, field_or_name):
-        if isinstance(field_or_name, str):
-            field = self.field(field_or_name)
-        else:
-            field= field_or_name
+        field = self.ensure_field(field_or_name)
         optional = field.metadata.get('optional', None)
         if optional is None:
             optional =  has_default(field)
         return optional
 
     def set_optional(self, field_or_name, optional):
-        if isinstance(field_or_name, str):
-            field = self.field(field_or_name)
-        else:
-            field= field_or_name
+        field = self.ensure_field(field_or_name)
         if optional is None:
             self.set_metadata(field, 'optional', undefined)
         else:
