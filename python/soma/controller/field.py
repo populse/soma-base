@@ -300,6 +300,13 @@ def has_default(field):
     return (field.default not in (undefined, dataclasses.MISSING)
             or field.default_factory is not dataclasses.MISSING)
 
+def default_value(field):
+    if field.default is not dataclasses.MISSING:
+        return field.default
+    if field.default_factory is not dataclasses.MISSING:
+        return field.default_factory()
+    return undefined
+
 def is_list(field):
     t = field_type(field)
     return (getattr(t, '_name', None) == 'List'
