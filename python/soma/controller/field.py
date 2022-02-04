@@ -50,13 +50,15 @@ def field(name=None, type_=None,
         if compare is None:
             init = type_.compare
         if metadata is None:
-            metadata = type_.metadata
+            metadata = type_.metadata.get('_metadata', {}).copy()
+        else:
+            metadata = metadata.copy()
         type_ = type_.type
     elif metadata is None:
-        metadata = kwargs
-    metadata = metadata.copy()
-    if kwargs:
-        metadata.update(kwargs)
+        metadata = {}
+    else:
+        metadata = metadata.copy()
+    metadata.update(kwargs)
     order = metadata.get('order')
     if order is None:
         max_field_creation_order += 1
@@ -79,7 +81,7 @@ def field(name=None, type_=None,
         repr=repr,
         hash=hash,
         compare=compare,
-        metadata=metadata)
+        metadata={'_metadata': metadata})
     if name is not None:
         result.name = name
     if type_ is not None:
@@ -96,7 +98,7 @@ def field_type(field):
 
 def field_type_str(field):
     if is_path(field):
-        path_type = field.metadata['format'].split('/')[1]
+        path_type = metadata(field, 'format').split('/')[1]
         if is_list(field):
             return f'list[{path_type}]'
         else:
@@ -225,13 +227,27 @@ def type_default_value(type):
         return f(type)
     raise TypeError(f'Cannot get default value for type {type_str}')
 
+def metadata(field, key=None, default=None):
+    editable_metadata = field.metadata['_metadata']
+    if key is None:
+        return editable_metadata
+    else:
+        return editable_metadata.get(key, default)
+
+def set_metadata(field, key, value):
+    editable_metadata = field.metadata['_metadata']
+    if value is undefined:
+        editable_metadata.pop(key, None)
+    else:
+        editable_metadata[key] = value
+
 
 class ListMeta(type):
     def __getitem__(cls, type):
         if isinstance(type, dataclasses.Field):
             result = field(
                 type_=List[field_type(type)], 
-                metadata=type.metadata)
+                metadata=type.metadata.get('_metadata', {}))
         else:
             result = typing.List[type]
         return result
@@ -278,23 +294,23 @@ def directory(**kwargs):
 
 
 def is_path(field):
-    return field.metadata.get('format', '').startswith('path/')
+    return metadata(field, 'format', '').startswith('path/')
 
 
 def is_file(field):
-    return field.metadata.get('format', '') == 'path/file'
+    return metadata(field, 'format', '') == 'path/file'
 
 
 def is_directory(field):
-    return field.metadata.get('format', '') == 'path/directory'
+    return metadata(field, 'format', '') == 'path/directory'
 
 def is_input(field):
-    return (not field.metadata.get('output', False)
-            and field.metadata.get('read', True))
+    return (not metadata(field, 'output', False)
+            and metadata(field, 'read', True))
 
 def is_output(field):
-    return (field.metadata.get('output', False)
-            or field.metadata.get('write', False))
+    return (metadata(field, 'output', False)
+            or metadata(field, 'write', False))
 
 def has_default(field):
     return (field.default not in (undefined, dataclasses.MISSING)

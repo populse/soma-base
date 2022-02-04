@@ -11,7 +11,7 @@ from pydantic.dataclasses import dataclass
 from soma.undefined import undefined
 
 from .field import (field, field_type, has_default, field_type_str,
-                    is_output, is_path)
+                    is_output, is_path, metadata, set_metadata)
 
 class _ModelsConfig:
     validate_assignment = True
@@ -120,9 +120,8 @@ class ControllerMeta(type):
                     field_type = value
                     value = undefined
                 if field_type:
-                    metadata = {}
-                    metadata.update(field_type.metadata)
-                    metadata['class_field'] = class_field
+                    mdata = metadata(field_type).copy()
+                    mdata['class_field'] = class_field
                     annotations[i] = type_
                     if field_type.default is undefined:
                         default = value
@@ -145,10 +144,10 @@ class ControllerMeta(type):
                     kwargs = {
                         'default': value,
                     }
-                    metadata = {
+                    mdata = {
                         'class_field': class_field
                     }
-                kwargs['metadata'] = metadata
+                kwargs['metadata'] = mdata
                 dataclass_namespace[i] = field(**kwargs)
         controller_dataclass = getattr(controller_class, '_controller_dataclass', None)
         if controller_dataclass:
@@ -195,18 +194,14 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
                 name: type_,
             }
         }
+
         field_kwargs = {}
         if default is not undefined:
             field_kwargs['default'] = default
         if metadata is not None:
             field_kwargs['metadata'] = metadata
-        if isinstance(type_, dataclasses.Field):
-            type_ = copy.copy(type_)
-            type_.metadata = dict(type_.metadata)
-            type_.metadata.update(field_kwargs)
-            namespace[name] = type_
-        elif field_kwargs or kwargs:
-            namespace[name] = field(**field_kwargs, **kwargs)
+        field_kwargs['type_'] = type_
+        namespace[name] = field(**field_kwargs, **kwargs)
         field_class = type(name, (Controller,), namespace, class_field=False)
         field_instance = field_class()
         super().__getattribute__('_dyn_fields')[name] = field_instance
@@ -371,39 +366,17 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
             result.append(': ' + desc)
         return ''.join(result)
     
-    def metadata(self, field_or_name, key=None, default=None):
-        if isinstance(field_or_name, str):
-            field = self.field(field_or_name)
-        else:
-            field= field_or_name
-        if key is None:
-            result = {}
-            result.update(field.metadata.items())
-            result.update(self._metadata.get(field.name, {}))
-            return result
-        else:
-            m = self._metadata.get(field.name)
-            if m:
-                result = m.get(key, undefined)
-                if result is not undefined:
-                    return result
-            field = self.field(field.name)
-            if field:
-                return field.metadata.get(key, default)
-            return default
-    
     def ensure_field(self, field_or_name):
         if isinstance(field_or_name, str):
             return self.field(field_or_name)
         else:
             return field_or_name
 
+    def metadata(self, field_or_name, key=None, default=None):
+        return metadata(self.ensure_field(field_or_name), key, default)
+    
     def set_metadata(self, field_or_name, key, value):
-        d = self._metadata.setdefault(self.ensure_field(field_or_name), {})
-        if value is undefined:
-            d.pop(key, None)
-        else:
-            d[key] = value
+        return set_metadata(self.ensure_field(field_or_name), key, value)
 
     def is_output(self, field_or_name):
         field = self.ensure_field(field_or_name)
@@ -415,7 +388,7 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
 
     def is_optional(self, field_or_name):
         field = self.ensure_field(field_or_name)
-        optional = field.metadata.get('optional', None)
+        optional = metadata(field, 'optional', None)
         if optional is None:
             optional =  has_default(field)
         return optional
