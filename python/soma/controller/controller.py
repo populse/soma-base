@@ -375,7 +375,7 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
         if isinstance(field_or_name, str):
             field = self.field(field_or_name)
         else:
-            field= field_or_name
+            field = field_or_name
         if key is None:
             result = {}
             result.update(field.metadata.items())
@@ -399,7 +399,8 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
             return field_or_name
 
     def set_metadata(self, field_or_name, key, value):
-        d = self._metadata.setdefault(self.ensure_field(field_or_name), {})
+        d = self._metadata.setdefault(self.ensure_field(field_or_name).name,
+                                      {})
         if value is undefined:
             d.pop(key, None)
         else:
