@@ -914,4 +914,4 @@ def test():
     return runtime.wasSuccessful()
 
 if __name__ == "__main__":
-    test()
+    unittest.main()
