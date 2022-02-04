@@ -32,5 +32,6 @@ from .field import (
     is_input,
     is_output,
     has_default,
+    default_value,
     undefined,
     type_from_str)
