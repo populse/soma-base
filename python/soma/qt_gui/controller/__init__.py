@@ -271,7 +271,13 @@ class DefaultWidgetFactory(WidgetFactory):
 
 
 class BaseControllerWidget:
-    def __init__(self, controller, output=False, user_level=None, depth=0, *args, **kwargs):
+    def __init__(self, controller, output=None, user_level=None, depth=0,
+                 *args, **kwargs):
+        ''' ...
+
+        If output is None (default), both inputs and outputs are displayed.
+        Otherwise only inputs (output=False) or outputs (output=True) are.
+        '''
         super().__init__(depth=depth, *args, **kwargs)
         self.allow_update_gui = True
         self.depth = depth
@@ -292,8 +298,11 @@ class BaseControllerWidget:
         fields = []
         for field in controller.fields():
             if (
-                (self.output
-                 or not controller.metadata(field, 'output', False))
+                (self.output is None
+                 or (not self.output
+                     and not controller.is_output(field))
+                 or (self.output
+                     and controller.is_output(field)))
                 and (self.user_level is None
                      or self.user_level >= controller.metadata(field, 'user_level', 0))
             ):
