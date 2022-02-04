@@ -416,7 +416,7 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
 
     def is_optional(self, field_or_name):
         field = self.ensure_field(field_or_name)
-        optional = field.metadata.get('optional', None)
+        optional = self.metadata(field).get('optional', None)
         if optional is None:
             optional =  has_default(field)
         return optional
