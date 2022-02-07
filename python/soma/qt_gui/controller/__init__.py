@@ -307,7 +307,8 @@ class BaseControllerWidget:
                      or self.user_level >= controller.metadata(field, 'user_level', 0))
             ):
                 fields.append(field)
-        self.fields = sorted(fields, key=lambda f: f.metadata.get('order'))
+        self.fields = sorted(fields,
+                             key=lambda f: controller.metadata(f).get('order'))
         self.groups = {
             None: self,
         }
