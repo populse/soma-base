@@ -310,8 +310,10 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
         """
         dyn_fields = super().__getattribute__('_dyn_fields')
         new_fields = OrderedDict((i, dyn_fields.pop(i)) for i in fields)
-        for k, v in sorted(dyn_fields.items(), 
-                           key=lambda x: x[1].extra.get('order', hash(x[1]))):
+        for k, v in sorted(
+                dyn_fields.items(),
+                key=lambda x: metadata(x[1].field(x[0])).get('order',
+                                                             hash(x[1]))):
             new_fields[k] = v
         object.__setattr__(self,'_dyn_fields', new_fields)
 
