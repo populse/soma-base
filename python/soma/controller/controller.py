@@ -70,17 +70,31 @@ class AttributeValueEvent(Event):
         real_callback = self.normalize_callback_parameters(callback)
         if real_callback is not callback:
             self.callbacks_mapping[callback] = real_callback
-        self.callbacks.setdefault(attribute_name, []).append(real_callback)
+        if isinstance(attribute_name, (list, tuple)):
+            for attribute_name1 in attribute_name:
+                self.callbacks.setdefault(attribute_name1,
+                                          []).append(real_callback)
+        else:
+            self.callbacks.setdefault(attribute_name, []).append(real_callback)
 
 
     def remove(self, callback, attribute_name=None):
         real_callback = self.callbacks_mapping.pop(callback, callback)
-        try:
-            self.callbacks[attribute_name].remove(real_callback)
-            return True
-        except ValueError:
-            # The callback was not in the list
-            return False
+        if isinstance(attribute_name, (list, tuple)):
+            result = True
+            for attribute_name1 in attribute_name:
+                try:
+                    self.callbacks[attribute_name1].remove(real_callback)
+                except ValueError:
+                    result = False
+            return result
+        else:
+            try:
+                self.callbacks[attribute_name].remove(real_callback)
+                return True
+            except ValueError:
+                # The callback was not in the list
+                return False
 
 
     def fire(self, attribute_name, new_value, old_value, controller, index=None):
