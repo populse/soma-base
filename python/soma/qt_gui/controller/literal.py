@@ -14,7 +14,7 @@ class LiteralWidgetFactory(WidgetFactory):
         self.label_widget = Qt.QLabel(label, parent=self.controller_widget)
         self.widget = Qt.QComboBox(parent=self.controller_widget)
         for v in literal_values(self.parent_interaction.type):
-            self.widget.addItem(v)
+            self.widget.addItem(str(v))
         self.widget.setSizePolicy(Qt.QSizePolicy.Expanding, Qt.QSizePolicy.Fixed)
 
         self.parent_interaction.on_change_add(self.update_gui)
@@ -40,7 +40,7 @@ class LiteralWidgetFactory(WidgetFactory):
                 self.widget.setStyleSheet(self.invalid_style_sheet)
         else:
             self.widget.setStyleSheet(self.valid_style_sheet)
-            self.widget.setCurrentText(value)
+            self.widget.setCurrentText(str(value))
 
     def update_controller(self):
         try:
