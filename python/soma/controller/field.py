@@ -326,4 +326,5 @@ def default_value(field):
 def is_list(field):
     t = field_type(field)
     return (getattr(t, '_name', None) == 'List'
+            or getattr(t, '__name__', None) == 'list'
             or (isinstance(t, type) and issubclass(t, list)))
