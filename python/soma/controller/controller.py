@@ -424,7 +424,6 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
         else:
             self.set_metadata(field, 'optional', bool(optional))
 
-
     def json(self):
         result = {}
         for field in self.fields():
@@ -432,8 +431,7 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
             if value is not undefined:
                 result[field.name] = self.json_value(value)
         return result
-    
-    
+        
     def import_json(self, json):
         for field_name, json_value in json.items():
             setattr(self, field_name, json_value)

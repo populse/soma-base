@@ -97,7 +97,7 @@ def field_type(field):
         return Union.__getitem__(types)
 
 def field_type_str(field):
-    if is_path(field):
+    if has_path(field):
         path_type = metadata(field, 'format').split('/')[1]
         if is_list(field):
             return f'list[{path_type}]'
@@ -293,16 +293,23 @@ def directory(**kwargs):
     return path(format='directory', **kwargs)
 
 
-def is_path(field):
+def has_path(field):
     return metadata(field, 'format', '').startswith('path/')
 
-
-def is_file(field):
+def has_file(field):
     return metadata(field, 'format', '') == 'path/file'
 
+def has_directory(field):
+    return metadata(field, 'format', '') == 'path/directory'
+
+def is_path(field):
+    return field_type(field) is str and has_path(field)
+
+def is_file(field):
+    return field_type(field) is str and has_file(field)
 
 def is_directory(field):
-    return metadata(field, 'format', '') == 'path/directory'
+    return field_type(field) is str and has_directory(field)
 
 def is_input(field):
     return (not metadata(field, 'output', False)
