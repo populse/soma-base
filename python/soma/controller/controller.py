@@ -10,8 +10,12 @@ from pydantic.dataclasses import dataclass
 
 from soma.undefined import undefined
 
-from .field import (field, field_type, has_default, field_type_str,
-                    is_output, is_path, metadata, set_metadata)
+from .field import (field, field_type, field_type_str,
+                    List, file, directory, path,
+                    is_input, is_output, metadata, set_metadata,
+                    is_path, has_path, is_file, has_file,
+                    is_directory, has_directory, is_list,
+                    has_default, default_value)
 
 class _ModelsConfig:
     validate_assignment = True
