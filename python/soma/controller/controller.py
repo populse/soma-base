@@ -197,12 +197,20 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
         super().__setattr__('_metadata', {})
 
     def add_field(self, name, type_, default=undefined, metadata=None,
-                  **kwargs):
+                  override=False, **kwargs):
+        # avoid duplicate fields
+        if self.field(name) is not None:
+            if override:
+                self.remove_field(name)
+            else:
+                raise ValueError('a field named %s already exists' % name)
+
         # Dynamically create a class equivalent to:
         # (without default if it is undefined)
         #
         # class {name}(Controller):
         #     value: type_ = default
+
         namespace = {
             '__annotations__': {
                 name: type_,
