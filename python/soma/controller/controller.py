@@ -194,8 +194,8 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
         super().__setattr__('enable_notification', True)
         super().__setattr__('_metadata', {})
 
-    def add_field(self, name, type_, default=undefined, metadata=None,
-                  override=False, **kwargs):
+    def add_field(self, name, type_, default=undefined,
+                  metadata=None, override=False, **kwargs):
         # avoid duplicate fields
         if self.field(name) is not None:
             if override:
@@ -208,6 +208,15 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
         #
         # class {name}(Controller):
         #     value: type_ = default
+
+        # avoid having both default and default_factory defined
+        if 'default_factory' in kwargs \
+                and kwargs['default_factory'] not in (dataclasses.MISSING,
+                                                      undefined):
+            if default in (dataclasses.MISSING, undefined):
+                default = dataclasses.MISSING
+            else:
+                del kwargs['default_factory']
 
         new_field = field(type_=type_, default=default, metadata=metadata, **kwargs)
         namespace = {
@@ -286,11 +295,12 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
             setattr(dyn_field, name, value)
         else:
             field = self.__dataclass_fields__[name]
-            type = field.type.__args__[0]
-            if isinstance(value, dict) and issubclass(type, Controller):
+            type_ = field.type.__args__[0]
+            if isinstance(value, dict) and isinstance(type_, type) \
+                    and issubclass(type_, Controller):
                 controller = getattr(self, name, undefined)
                 if controller is undefined:
-                    controller = type()
+                    controller = type_()
                     controller.import_dict(value)
                     value = controller
                 else:
