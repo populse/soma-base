@@ -295,11 +295,11 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
             setattr(dyn_field, name, value)
         else:
             field = self.__dataclass_fields__[name]
-            type = field.type.__args__[0]
-            if isinstance(value, dict) and issubclass(type, Controller):
+            type_ = field.type.__args__[0]
+            if isinstance(value, dict) and issubclass(type_, Controller):
                 controller = getattr(self, name, undefined)
                 if controller is undefined:
-                    controller = type()
+                    controller = type_()
                     controller.import_dict(value)
                     value = controller
                 else:
