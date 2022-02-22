@@ -5,6 +5,8 @@ import re
 import sys
 import typing
 
+from pydantic import ValidationError
+
 from soma.undefined import undefined
 
 # Import allsupported types from typing
@@ -60,7 +62,7 @@ def type_str(type_):
             ignore_args = True
     module = getattr(type_, '__module__', None)
     controller = isinstance(type_, type) and issubclass(type_, Controller)
-    if module and module not in {'builtins', 'typing', 'soma.controller.controller'}:
+    if module and module not in {'builtins', 'typing', 'soma.controller.controller', 'soma.controller.field'}:
         name = f'{module}.{name}'
     args = getattr(type_, '__args__', ())
     if not ignore_args and args:
@@ -80,7 +82,16 @@ def literal_values(type):
     return type.__args__
 
 def subtypes(type):
-    return type.__args__
+    return getattr(type, '__args__', ())
+
+def inner_type(type):
+    s = subtypes(type)
+    if s:
+        while s:
+            type = s[0]
+            s = subtypes(type)
+        return type
+    return None
 
 def parse_type_str(type_str):
     '''
@@ -166,12 +177,6 @@ class Field:
         return self.field.default_factory
     
     def type_str(self):
-        if self.has_path():
-            path_type = self.metadata('format').split('/')[1]
-            if self.is_list():
-                return f'list[{path_type}]'
-            else:
-                return path_type
         return type_str(self.type)
 
     def literal_values(self):
@@ -179,6 +184,9 @@ class Field:
 
     def subtypes(self):
         return subtypes(self.type)
+
+    def inner_type(self):
+        return inner_type(self.type)
 
     def metadata(self, key=None, default=None):
         editable_metadata = self.field.metadata['_metadata']
@@ -195,30 +203,63 @@ class Field:
             editable_metadata[key] = value
 
     def has_path(self):
-        return self.metadata('format', '').startswith('path/')
+        if self.is_path():
+            return True
+        t = self.inner_type()
+        if isinstance(t, type) and issubclass(t, Path):
+            return True
+        return False
 
     def has_file(self):
-        return self.metadata('format', '') == 'path/file'
+        if self.is_file():
+            return True
+        t = self.inner_type()
+        if isinstance(t, type) and issubclass(t, File):
+            return True
+        return False
 
     def has_directory(self):
-        return self.metadata('format', '') == 'path/directory'
+        if self.is_directory():
+            return True
+        t = self.inner_type()
+        if isinstance(t, type) and issubclass(t, Directory):
+            return True
+        return False
+
+    def is_subclass(self, cls):
+        type_ = self.type
+        return isinstance(type_, type) and issubclass(type_, cls)
 
     def is_path(self):
-        return self.type is str and self.has_path()
+        return self.is_subclass(Path)
 
     def is_file(self):
-        return self.type is str and self.has_file()
+        return self.is_subclass(File)
 
     def is_directory(self):
-        return self.type is str and self.has_directory()
+        return self.is_subclass(Directory)
 
     def is_input(self):
-        return (not self.metadata('output', False)
-                and self.metadata('read', True))
+        if self.metadata('output', False):
+            return False
+        if self.is_list():
+            t = self.inner_type()
+        else:
+            t = self.type
+        if isinstance(t, type) and issubclass(t, Path):
+            return t.read
+        return True
 
     def is_output(self):
-        return (self.metadata('output', False)
-                or self.metadata('write', False))
+        if self.metadata('output', False):
+            return True
+        if self.is_list():
+            t = self.inner_type()
+        else:
+            t = self.type
+        if isinstance(t, type) and issubclass(t, Path):
+            return t.write
+        return False
 
     def has_default(self):
         return (self.field.default not in (undefined, dataclasses.MISSING)
@@ -326,39 +367,50 @@ class ListMeta(type):
 class List(metaclass=ListMeta):
     pass
 
-def path(format=None,
-         dataset=undefined,
-         read=undefined,
-         write=False,
-         default=undefined,
-         default_factory=undefined,
-         doc=undefined,
-         _type=str,
-         **metadata):
-    if read is undefined:
-        read = not write
-    if dataset is undefined:
-        dataset = ('output' if write else 'input')
-    field_metadata = {
-        'format': (f'path/{format}' if format else 'path'),
-        'dataset': dataset,
-        'read': read,
-        'write': write,
-    }
-    if doc is not undefined:
-        field_metadata['doc'] = doc
-    field_metadata.update(metadata)
-    if default_factory is undefined:
-        default_factory = dataclasses.MISSING
-    return field(type_=_type,
-                 metadata=field_metadata,
-                 default=default,
-                 default_factory=default_factory)
 
+class Path:
+    read = True
+    write = False
+
+    def __class_getitem__(cls, kwargs):
+        if not isinstance(kwargs, dict):
+            raise TypeError('Use Path[dict(read=?, write=?)]')
+        return cls._create_path_type(**kwargs)
+    
+    @classmethod
+    def _create_path_type(cls, read=None, write=None):
+        if read is None:
+            if write is None:
+                return cls
+            else:
+                read = not write
+        if write is None:
+            write = not Path
+        if read is cls.read and write is cls.write:
+            return cls
+        return type(cls.__name__, (cls,), {'read': read, 'write':write})
+   
+    @classmethod
+    def __get_validators__(cls):
+        return [cls.validate_path]
+    
+    @classmethod
+    def validate_path(cls, value, values, config, field):
+        if not isinstance(value, str):
+            raise ValidationError('{cls.__name__} type only accepts string value')
+        return value
+
+class File(Path):
+    pass
+
+class Directory(Path):
+    pass
+
+def path(**kwargs):
+    return Path[kwargs]
 
 def file(**kwargs):
-    return path(format='file', **kwargs)
-
-
+    return File[kwargs]
+    
 def directory(**kwargs):
-    return path(format='directory', **kwargs)
+    return Directory[kwargs]
