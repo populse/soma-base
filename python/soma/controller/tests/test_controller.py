@@ -14,17 +14,8 @@ from soma.controller import (Controller,
                              Dict,
                              Set,
                              file,
-                             directory,
-                             has_path,
-                             has_directory,
-                             has_file,
-                             is_path,
-                             is_directory,
-                             is_file,
-                             is_list,
-                             is_output,
-                             has_default,
-                             field_type_str)
+                             directory)
+
 from soma.singleton import Singleton
 from soma.undefined import undefined
 
@@ -177,7 +168,7 @@ class TestController(unittest.TestCase):
         o.add_field('dynamic_int', int, default=0)
         o.add_field('dynamic_str', str, default='default', custom_attribute=True)
         o.add_field('dynamic_list', List[int])
-        self.assertEqual(o.metadata('dynamic_str', 'custom_attribute'), True)
+        self.assertEqual(o.field('dynamic_str').metadata('custom_attribute'), True)
 
         calls = []
         o.on_attribute_change.add(lambda: calls.append([]))
@@ -216,38 +207,38 @@ class TestController(unittest.TestCase):
         n  = 'dynamic_int'
         f = o.field(n)
         self.assertEqual(f.name, 'dynamic_int')
-        self.assertEqual(f.type.__args__[0], int)
+        self.assertEqual(f.type, int)
         self.assertEqual(f.default, 0)
-        self.assertEqual(o.metadata(n,'class_field'), False)
+        self.assertEqual(f.metadata('class_field'), False)
         
         n = 'dynamic_str'
         f = o.field(n)
         self.assertEqual(f.name, 'dynamic_str')
-        self.assertEqual(f.type.__args__[0], str)
+        self.assertEqual(f.type, str)
         self.assertEqual(f.default, 'default')
-        self.assertEqual(o.metadata(f, 'class_field'), False)
-        self.assertEqual(o.metadata(f, 'custom_attribute'), True)
+        self.assertEqual(f.metadata('class_field'), False)
+        self.assertEqual(f.metadata('custom_attribute'), True)
 
         n = 'static_dict'
         f = o.field(n)
         self.assertEqual(f.name, 'static_dict')
-        self.assertEqual(f.type.__args__[0], dict)
+        self.assertEqual(f.type, dict)
         self.assertEqual(f.default_factory(), {})
-        self.assertEqual(o.metadata(f, 'class_field'), True)
+        self.assertEqual(f.metadata('class_field'), True)
 
         n = 'static_list'
         f = o.field(n)
         self.assertEqual(f.name, 'static_list')
-        self.assertEqual(f.type.__args__[0], list)
+        self.assertEqual(f.type, list)
         self.assertEqual(f.default_factory(), [])
-        self.assertEqual(o.metadata(n, 'class_field'), True)
+        self.assertEqual(f.metadata('class_field'), True)
 
         n = 'dynamic_list'
         f = o.field('dynamic_list')
         self.assertEqual(f.name, 'dynamic_list')
-        self.assertEqual(f.type.__args__[0], List[int])
+        self.assertEqual(f.type, List[int])
         self.assertEqual(f.default, undefined)
-        self.assertEqual(o.metadata(f, 'class_field'), False)
+        self.assertEqual(f.metadata('class_field'), False)
 
 
     def test_open_key_controller(self):
@@ -343,15 +334,15 @@ class TestController(unittest.TestCase):
         o.add_field('d', str, another='value')
 
         # Metadata of class fields are read-only
-        o.set_metadata('s', 'new',  'value')
-        o.set_metadata('s', 'custom', 'modified'    )
-        o.set_metadata('d', 'new', 'value')
-        o.set_metadata('d', 'another', 'modified')
-        self.assertEqual(o.metadata('s'), {'class_field': True, 
-            'custom': 'modified', 'new': 'value', 'order': o.metadata('s', 'order')})
-        self.assertEqual(o.metadata('d'), {'class_field': False, 
-            'another': 'modified', 'new': 'value', 'order': o.metadata('d', 'order')})
-        self.assertGreater(o.metadata('d', 'order'), o.metadata('s', 'order'))
+        o.field('s').set_metadata('new',  'value')
+        o.field('s').set_metadata('custom', 'modified'    )
+        o.field('d').set_metadata('new', 'value')
+        o.field('d').set_metadata('another', 'modified')
+        self.assertEqual(o.field('s').metadata(), {'class_field': True, 
+            'custom': 'modified', 'new': 'value', 'order': o.field('s').metadata('order')})
+        self.assertEqual(o.field('d').metadata(), {'class_field': False, 
+            'another': 'modified', 'new': 'value', 'order': o.field('d').metadata('order')})
+        self.assertGreater(o.field('d').metadata('order'), o.field('s').metadata('order'))
 
     def test_field_types(self):        
         class C(Controller):
@@ -417,15 +408,15 @@ class TestController(unittest.TestCase):
         d = {
             f.name: {
                 'name': f.name,
-                'str': field_type_str(f),
-                'list': is_list(f),
-                'has_path': has_path(f),
-                'has_file': has_file(f),
-                'has_directory': has_directory(f),
-                'is_path':is_path(f),
-                'is_file': is_file(f),
-                'is_directory': is_directory(f),
-                'output': is_output(f),
+                'str': f.type_str(),
+                'list': f.is_list(),
+                'has_path': f.has_path(),
+                'has_file': f.has_file(),
+                'has_directory': f.has_directory(),
+                'is_path': f.is_path(),
+                'is_file': f.is_file(),
+                'is_directory': f.is_directory(),
+                'output': f.is_output(),
             }
             for f in o.fields()
         }
@@ -972,8 +963,8 @@ class TestController(unittest.TestCase):
         d = {
             f.name: {
                 'name': f.name,
-                'optional': o.is_optional(f),
-                'has_default': has_default(f),
+                'optional': f.is_optional(),
+                'has_default': f.has_default(),
             }
             for f in o.fields()
         }

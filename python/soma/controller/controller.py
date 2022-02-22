@@ -9,14 +9,12 @@ from typing import Union
 from pydantic.dataclasses import dataclass
 
 from soma.undefined import undefined
+from .field import field, Field
 
-from .field import (field, field_type, has_default, field_type_str,
-                    is_output, is_path, metadata, set_metadata)
 
 class _ModelsConfig:
     validate_assignment = True
     arbitrary_types_allowed = True
-
         
 
 class Event:
@@ -123,36 +121,36 @@ class ControllerMeta(type):
                 type_ = annotations[i]
                 value = namespace.get(i, undefined)
                 dataclass_namespace[i] = value
-                if isinstance(type_, dataclasses.Field):
+                if isinstance(type_, Field):
                     field_type = type_
-                    type_ = field_type.type
+                    type_ = field_type.field.type
                     del annotations[i]
                 else:
                     field_type = None
                     type_ = annotations[i] = Union[type_,type(undefined)]
-                if isinstance(value, dataclasses.Field):
+                if isinstance(value, Field):
                     field_type = value
                     value = undefined
                 if field_type:
-                    mdata = metadata(field_type).copy()
+                    mdata = field_type.metadata().copy()
                     mdata['class_field'] = class_field
                     annotations[i] = type_
-                    if field_type.default is undefined:
+                    if field_type.field.default is undefined:
                         default = value
-                    elif value is not undefined and value is not field_type.default:
+                    elif value is not undefined and value is not field_type.field.default:
                         raise TypeError('Two default values given for '
                             f'field "{i}": {repr(value)} and '
-                            f'{repr(field_type.default)}')
+                            f'{repr(field_type.field.default)}')
                     else:
-                        default=field_type.default
-                    default_factory=field_type.default_factory
+                        default=field_type.field.default
+                    default_factory=field_type.field.default_factory
                     kwargs = dict(
                         default=default,
                         default_factory=default_factory,
-                        repr=field_type.repr,
-                        hash=field_type.hash,
-                        init=field_type.init,
-                        compare=field_type.compare
+                        repr=field_type.field.repr,
+                        hash=field_type.field.hash,
+                        init=field_type.field.init,
+                        compare=field_type.field.compare
                     )
                 else:
                     kwargs = {
@@ -162,7 +160,7 @@ class ControllerMeta(type):
                         'class_field': class_field
                     }
                 kwargs['metadata'] = mdata
-                dataclass_namespace[i] = field(**kwargs)
+                dataclass_namespace[i] = field(**kwargs).field
         controller_dataclass = getattr(controller_class, '_controller_dataclass', None)
         if controller_dataclass:
             dataclass_bases = (controller_dataclass,)
@@ -204,26 +202,20 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
                 self.remove_field(name)
             else:
                 raise ValueError('a field named %s already exists' % name)
-
+        
         # Dynamically create a class equivalent to:
         # (without default if it is undefined)
         #
         # class {name}(Controller):
         #     value: type_ = default
 
+        new_field = field(type_=type_, default=default, metadata=metadata, **kwargs)
         namespace = {
             '__annotations__': {
-                name: type_,
+                name: new_field,
             }
         }
 
-        field_kwargs = {}
-        if default is not undefined:
-            field_kwargs['default'] = default
-        if metadata is not None:
-            field_kwargs['metadata'] = metadata
-        field_kwargs['type_'] = type_
-        namespace[name] = field(**field_kwargs, **kwargs)
         field_class = type(name, (Controller,), namespace, class_field=False)
         field_instance = field_class()
         super().__getattribute__('_dyn_fields')[name] = field_instance
@@ -294,7 +286,7 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
             setattr(dyn_field, name, value)
         else:
             field = self.__dataclass_fields__[name]
-            type = field_type(field)
+            type = field.type.__args__[0]
             if isinstance(value, dict) and issubclass(type, Controller):
                 controller = getattr(self, name, undefined)
                 if controller is undefined:
@@ -307,8 +299,8 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
             super().__setattr__(name, value)
     
     def fields(self):
-        yield from dataclasses.fields(self)
-        yield from (dataclasses.fields(i)[0] for i in super().__getattribute__('_dyn_fields').values())
+        yield from (Field(i) for i in dataclasses.fields(self))
+        yield from (Field(i) for i in (dataclasses.fields(i)[0] for i in super().__getattribute__('_dyn_fields').values()))
 
     def field(self, name):
         field = self.__dataclass_fields__.get(name)
@@ -316,7 +308,7 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
             field = super().__getattribute__('_dyn_fields').get(name)
             if field is not None:
                 field = dataclasses.fields(field)[0]
-        return field
+        return Field(field) if field else None
 
     def reorder_fields(self, fields=()):
         """Reorder dynamic fields according to a new ordered list.
@@ -334,8 +326,8 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
         new_fields = OrderedDict((i, dyn_fields.pop(i)) for i in fields)
         for k, v in sorted(
                 dyn_fields.items(),
-                key=lambda x: metadata(x[1].field(x[0])).get('order',
-                                                             hash(x[1]))):
+                key=lambda x: x[1].field(x[0]).metadata('order',
+                                                        hash(x[1]))):
             new_fields[k] = v
         object.__setattr__(self,'_dyn_fields', new_fields)
 
@@ -352,7 +344,7 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
             field = self.field(name)
             if field:
                 # Field type is Union[real_type,UndefinedClass], get real type
-                type = field_type(field)
+                type = field.type
                 if issubclass(type, Controller):
                     controller = getattr(self, name, undefined)
                     if controller is not undefined:
@@ -375,8 +367,8 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
             field = field_or_name
         if not field:
             raise ValueError(f'No such field: {field_or_name}')
-        result = ['{} [{}]'.format(field.name, field_type_str(field))]
-        optional = self.metadata(field, 'optional')
+        result = ['{} [{}]'.format(field.name, field.type_str())]
+        optional = field.metadata('optional')
         if optional is None:
             optional = (field.default not in (undefined, dataclasses.MISSING) or
                         field.default_factory is not dataclasses.MISSING)
@@ -385,7 +377,7 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
         default = field.default
         if default not in (undefined, dataclasses.MISSING):
             result.append(' ({})'.format(repr(default)))
-        desc = self.metadata(field, 'desc')
+        desc = field.metadata('desc')
         if desc:
             result.append(': ' + desc)
         return ''.join(result)
@@ -395,34 +387,6 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
             return self.field(field_or_name)
         else:
             return field_or_name
-
-    def metadata(self, field_or_name, key=None, default=None):
-        return metadata(self.ensure_field(field_or_name), key, default)
-    
-    def set_metadata(self, field_or_name, key, value):
-        return set_metadata(self.ensure_field(field_or_name), key, value)
-
-    def is_output(self, field_or_name):
-        field = self.ensure_field(field_or_name)
-        return is_output(field)
-
-    def is_path(self, field_or_name):
-        field = self.ensure_field(field_or_name)
-        return is_path(field)
-
-    def is_optional(self, field_or_name):
-        field = self.ensure_field(field_or_name)
-        optional = metadata(field, 'optional', None)
-        if optional is None:
-            optional =  has_default(field)
-        return optional
-
-    def set_optional(self, field_or_name, optional):
-        field = self.ensure_field(field_or_name)
-        if optional is None:
-            self.set_metadata(field, 'optional', undefined)
-        else:
-            self.set_metadata(field, 'optional', bool(optional))
 
     def json(self):
         result = {}
