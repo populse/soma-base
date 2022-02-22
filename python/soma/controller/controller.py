@@ -296,6 +296,7 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
         else:
             field = self.__dataclass_fields__[name]
             type_ = field.type.__args__[0]
+            print('type:', type_, type(type))
             if isinstance(value, dict) and issubclass(type_, Controller):
                 controller = getattr(self, name, undefined)
                 if controller is undefined:
