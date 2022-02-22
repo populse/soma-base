@@ -7,6 +7,7 @@ import inspect
 from typing import Union
 
 from pydantic.dataclasses import dataclass
+from pydantic import ValidationError  # to expose it in the API
 
 from soma.undefined import undefined
 
