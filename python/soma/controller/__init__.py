@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from pydantic import ValidationError # to expose it in the API
+
 from .controller import (Controller,
                          asdict,
                          Event,
@@ -24,3 +26,4 @@ from .field import (
     directory,
     undefined,
     type_from_str)
+
