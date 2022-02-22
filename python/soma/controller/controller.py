@@ -194,8 +194,8 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
         super().__setattr__('enable_notification', True)
         super().__setattr__('_metadata', {})
 
-    def add_field(self, name, type_, default=undefined, metadata=None,
-                  override=False, **kwargs):
+    def add_field(self, name, type_, default=undefined,
+                  metadata=None, override=False, **kwargs):
         # avoid duplicate fields
         if self.field(name) is not None:
             if override:
@@ -208,6 +208,15 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
         #
         # class {name}(Controller):
         #     value: type_ = default
+
+        # avoid having both default and default_factory defined
+        if 'default_factory' in kwargs \
+                and kwargs['default_factory'] not in (dataclasses.MISSING,
+                                                      undefined):
+            if default in (dataclasses.MISSING, undefined):
+                default = dataclasses.MISSING
+            else:
+                del kwargs['default_factory']
 
         new_field = field(type_=type_, default=default, metadata=metadata, **kwargs)
         namespace = {
