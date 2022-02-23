@@ -24,6 +24,8 @@ from .field import (
     path,
     file,
     directory,
+    Path,
+    File,
+    Directory,
     undefined,
     type_from_str)
-
