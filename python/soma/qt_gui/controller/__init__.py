@@ -1,14 +1,8 @@
 # -*- coding: utf-8 -*-
 
-from soma.controller import (
-    parse_type_str, 
-    subtypes,
-    field_type,
-    field_type_str,
-    is_output,
-)
 from soma.qt_gui.qt_backend import Qt, QtCore
 from soma.undefined import undefined
+from soma.controller import parse_type_str
 from ..collapsable import CollapsableWidget
 
 class ScrollableWidgetsGrid(Qt.QScrollArea):
@@ -135,13 +129,13 @@ class ControllerFieldInteraction:
     def __init__(self, controller, field, depth):
         self.controller = controller
         self.field = field
-        self.type = field_type(field)
-        self.type_str = field_type_str(field)
+        self.type = field.type
+        self.type_str = field.type_str()
         self.depth = depth
     
     @property
     def is_output(self):
-        return is_output(self.field)
+        return self.field.is_output()
     
     def get_value(self, default=undefined):
         return getattr(self.controller, self.field.name, default)
@@ -167,7 +161,7 @@ class ControllerFieldInteraction:
             self.inner_value_changed([index])
 
     def get_label(self):
-        return self.controller.metadata(self.field, 'label', self.field.name)
+        return self.field.metadata('label', self.field.name)
     
     def on_change_add(self, callback):
         self.controller.on_attribute_change.add(callback, self.field.name)
@@ -176,10 +170,10 @@ class ControllerFieldInteraction:
         self.controller.on_attribute_change.remove(callback, self.field.name)
 
     def set_protected(self, protected):
-        self.controller.set_metadata(self.field, 'protected', protected)
+        self.field.set_metadata('protected', protected)
 
     def is_optional(self):
-        return self.controller.is_optional(self.field)
+        return self.field.is_optional()
 
     def inner_value_changed(self, indices):
         self.controller.on_inner_value_change.fire([self.field] + indices)
@@ -300,21 +294,21 @@ class BaseControllerWidget:
             if (
                 (self.output is None
                  or (not self.output
-                     and not controller.is_output(field))
+                     and not field.is_output())
                  or (self.output
-                     and controller.is_output(field)))
+                     and field.is_output()))
                 and (self.user_level is None
-                     or self.user_level >= controller.metadata(field, 'user_level', 0))
+                     or self.user_level >= field.metadata('user_level', 0))
             ):
                 fields.append(field)
         self.fields = sorted(fields,
-                             key=lambda f: controller.metadata(f).get('order'))
+                             key=lambda f: f.metadata('order'))
         self.groups = {
             None: self,
         }
         self.factories = {}
         for field in self.fields:
-            group = controller.metadata(field, 'group', None)
+            group = field.metadata('group', None)
             group_content_widget = self.groups.get(group)
             if group_content_widget is None:
                 group_content_widget = WidgetsGrid(depth=self.depth)
@@ -324,7 +318,7 @@ class BaseControllerWidget:
                 self.add_widget_row(self.group_widget)
                 self.groups[group] = group_content_widget
 
-            type_str = field_type_str(field)
+            type_str = field.type_str()
             factory_type = WidgetFactory.find_factory(type_str, DefaultWidgetFactory)
             factory = factory_type(controller_widget=group_content_widget,
                                    parent_interaction=ControllerFieldInteraction(controller, field, self.depth))
@@ -376,7 +370,7 @@ class ControllerWidgetFactory(WidgetFactory):
     def create_widgets(self):
         controller = self.parent_interaction.get_value()
         if controller is undefined:
-            controller = field_type(self.parent_interaction.field)()
+            controller = self.parent_interaction.field.type()
         self.inner_widget = ControllerSubwidget(controller, depth=self.controller_widget.depth + 1)
         label = self.parent_interaction.get_label()
         self.widget = CollapsableWidget(self.inner_widget, label=label, expanded=(self.parent_interaction.depth==0), 
