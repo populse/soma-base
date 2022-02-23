@@ -13,7 +13,9 @@ from soma.controller import (Controller,
                              Union,
                              Dict,
                              Set,
+                             File,
                              file,
+                             Directory,
                              directory)
 
 from soma.singleton import Singleton
@@ -28,8 +30,8 @@ class SerializableController(Controller):
     n: float
     b: bool
     e: Literal['one', 'two', 'three']
-    f: file()
-    d: directory()
+    f: File
+    d: Directory
     u: Union[str, List[str]]
     m: dict
     lm: List[dict]
@@ -371,14 +373,14 @@ class TestController(unittest.TestCase):
             le: List[Literal['one', 'two', 'three']]
             ole: field(type_=List[Literal['one', 'two', 'three']], output=True)
             
-            f: file()
+            f: File
             of: file(write=True)
-            lf: List[file()]
+            lf: List[File]
             olf: List[file(write=True)]
             
-            d: directory()
+            d: Directory
             od: directory(write=True)
-            ld: List[directory()]
+            ld: List[Directory]
             old: List[directory(write=True)]
 
             u: Union[str, List[str]]

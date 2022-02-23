@@ -4,6 +4,7 @@ import dataclasses
 import re
 import sys
 import typing
+import types
 
 from pydantic import ValidationError
 
@@ -351,6 +352,12 @@ def field(
         result.name = name
     if type_ is not None:
         result.type = Union[type_, type(undefined)]
+
+    # merge and cache metadata for subtypes (if any)
+    meta = result.metadata['_metadata']
+    meta.update({k: v for k, v in _parse_type_metadata(result.type).items()
+                 if k not in meta})
+
     return Field(result)
 
 
@@ -368,9 +375,23 @@ class List(metaclass=ListMeta):
     pass
 
 
+class classproperty(object):
+    def __init__(self, f):
+        self.f = f
+    def __get__(self, obj, owner):
+        return self.f(owner)
+
 class Path:
-    read = True
-    write = False
+    __metadata__ = types.MappingProxyType({'read': True,
+                                           'write': False})
+
+    @classproperty
+    def read(cls):
+        return cls.__metadata__['read']
+
+    @classproperty
+    def write(cls):
+        return cls.__metadata__['write']
 
     def __class_getitem__(cls, kwargs):
         if not isinstance(kwargs, dict):
@@ -385,10 +406,12 @@ class Path:
             else:
                 read = not write
         if write is None:
-            write = not Path
+            write = not read
         if read is cls.read and write is cls.write:
             return cls
-        return type(cls.__name__, (cls,), {'read': read, 'write':write})
+        return type(cls.__name__, (cls,),
+                    {'__metadata__': types.MappingProxyType(
+                      {'read': read, 'write': write})})
    
     @classmethod
     def __get_validators__(cls):
@@ -414,3 +437,14 @@ def file(**kwargs):
     
 def directory(**kwargs):
     return Directory[kwargs]
+
+def _parse_type_metadata(type_):
+    meta = {}
+    todo = [type_]
+    while todo:
+        type_ = todo.pop(0)
+        if hasattr(type_, '__args__') and isinstance(type_.__args__, tuple):
+            todo += [t for t in type_.__args__ if isinstance(t, type)]
+        if hasattr(type_, '__metadata__'):
+            meta.update(type_.__metadata__)
+    return meta

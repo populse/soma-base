@@ -11,7 +11,7 @@ import sys
 import traceback
 
 from soma.singleton import Singleton
-from soma.controller import Controller, file, directory, List, field
+from soma.controller import Controller, Directory, List, field
 
 #-------------------------------------------------------------------------
 
@@ -36,14 +36,14 @@ class Application(Singleton, Controller):
         # Using the trait Directory() might instanciate a QApplication (seems to depend on the
         # traits release). If it is declared in the class, the QApplication is instanciated at
         # module importation which prevent to customize QApplication.
-        self.add_field('install_directory', directory(
-                       field_doc='Base directory where the application is installed'))
-        self.add_field('user_directory', directory(
-                       field_doc='Base directory where user specific information can be find'))
-        self.add_field('application_directory', directory(
-                       field_doc='Base directory where application specifc information can be find'))
-        self.add_field('site_directory',  directory(
-                       field_doc='Base directory where site specifc information can be find'))
+        self.add_field('install_directory', Directory,
+                       field_doc='Base directory where the application is installed')
+        self.add_field('user_directory', Directory,
+                       field_doc='Base directory where user specific information can be find')
+        self.add_field('application_directory', Directory,
+                       field_doc='Base directory where application specifc information can be find')
+        self.add_field('site_directory',  Directory,
+                       field_doc='Base directory where site specifc information can be find')
         self._controller_factories = None
 
         if name is None:
