@@ -170,10 +170,10 @@ class ControllerFieldInteraction:
         self.controller.on_attribute_change.remove(callback, self.field.name)
 
     def set_protected(self, protected):
-        self.field.set_metadata('protected', protected)
+        self.field.protected = protected
 
     def is_optional(self):
-        return self.field.is_optional()
+        return self.field.optional
 
     def inner_value_changed(self, indices):
         self.controller.on_inner_value_change.fire([self.field] + indices)
