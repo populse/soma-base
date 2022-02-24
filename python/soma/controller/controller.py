@@ -371,9 +371,9 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
         default = field.default
         if default not in (undefined, dataclasses.MISSING):
             result.append(' ({})'.format(repr(default)))
-        desc = field.metadata('desc', None)
-        if desc:
-            result.append(': ' + desc)
+        doc = field.metadata('doc')
+        if doc:
+            result.append(': ' + doc)
         return ''.join(result)
     
     def ensure_field(self, field_or_name):

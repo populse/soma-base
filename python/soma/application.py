@@ -37,13 +37,13 @@ class Application(Singleton, Controller):
         # traits release). If it is declared in the class, the QApplication is instanciated at
         # module importation which prevent to customize QApplication.
         self.add_field('install_directory', Directory,
-                       field_doc='Base directory where the application is installed')
+                       doc='Base directory where the application is installed')
         self.add_field('user_directory', Directory,
-                       field_doc='Base directory where user specific information can be find')
+                       doc='Base directory where user specific information can be find')
         self.add_field('application_directory', Directory,
-                       field_doc='Base directory where application specifc information can be find')
+                       doc='Base directory where application specifc information can be find')
         self.add_field('site_directory',  Directory,
-                       field_doc='Base directory where site specifc information can be find')
+                       doc='Base directory where site specifc information can be find')
         self._controller_factories = None
 
         if name is None:

@@ -219,10 +219,8 @@ class Field:
         return True
 
     def is_output(self):
-        if self.metadata('output', False):
+        if self.metadata('output', False) or self.metadata('write', False):
             return True
-        if self.path_type:
-            return self.write
         return False
 
     def has_default(self):
@@ -257,7 +255,7 @@ class Field:
 
     @property
     def doc(self):
-        return self.__getattribute__('doc')
+        return self.__getattr__('doc')
 
     @doc.setter
     def doc(self, doc):

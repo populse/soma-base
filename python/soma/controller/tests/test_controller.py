@@ -110,7 +110,7 @@ class TestController(unittest.TestCase):
             engine : str
             driver : Driver = field(
                 default_factory=lambda: Driver(),
-                desc='the guy who would better take a bus')
+                doc='the guy who would better take a bus')
             problems : OpenKeyController
 
         my_car = Car()
@@ -151,7 +151,7 @@ class TestController(unittest.TestCase):
         self.assertEqual([i.name for i in my_car.problems.fields()],
                          ['exhaust', 'windshield'])
 
-        self.assertEqual(my_car.field('driver').desc, 'the guy who would better take a bus')
+        self.assertEqual(my_car.field('driver').doc, 'the guy who would better take a bus')
         manhelp = my_car.field_doc('driver')
         self.assertEqual(
             manhelp,
@@ -262,7 +262,7 @@ class TestController(unittest.TestCase):
             f1 : field(
                     type_=float,
                     default=5,
-                    desc='bla',
+                    doc='bla',
                     optional=True,
                     output=True)
             f2 : field(
