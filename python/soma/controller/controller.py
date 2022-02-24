@@ -123,44 +123,29 @@ class ControllerMeta(type):
                 dataclass_namespace[i] = value
                 if isinstance(type_, Field):
                     field_type = type_
-                    type_ = field_type.field.type
+                    type_ = field_type._dataclass_field.type
                     del annotations[i]
                 else:
                     field_type = None
-                    type_ = annotations[i] = Union[type_,type(undefined)]
+                    type_ = annotations[i] = Union[type_, type(undefined)]
                 if isinstance(value, Field):
                     field_type = value
                     value = undefined
                 if field_type:
-                    mdata = field_type.metadata().copy()
-                    mdata['class_field'] = class_field
                     annotations[i] = type_
-                    if field_type.field.default is undefined:
-                        default = value
-                    elif value is not undefined and value is not field_type.field.default:
+                    mdata = field_type._dataclass_field.metadata['_metadata']
+                    mdata['class_field'] = class_field
+                    if field_type._dataclass_field.default is undefined:
+                        field_type._dataclass_field.default = value
+                    elif value is not undefined and value is not field_type._dataclass_field.default:
                         raise TypeError('Two default values given for '
                             f'field "{i}": {repr(value)} and '
-                            f'{repr(field_type.field.default)}')
-                    else:
-                        default=field_type.field.default
-                    default_factory=field_type.field.default_factory
-                    kwargs = dict(
-                        default=default,
-                        default_factory=default_factory,
-                        repr=field_type.field.repr,
-                        hash=field_type.field.hash,
-                        init=field_type.field.init,
-                        compare=field_type.field.compare
-                    )
+                            f'{repr(field_type._dataclass_field.default)}')
+                    dataclass_namespace[i] = field_type._dataclass_field
                 else:
-                    kwargs = {
-                        'default': value,
-                    }
-                    mdata = {
-                        'class_field': class_field
-                    }
-                kwargs['metadata'] = mdata
-                dataclass_namespace[i] = field(**kwargs).field
+                    dataclass_namespace[i] = field(type_=type_.__args__[0], 
+                                                   default=value,
+                                                   class_field=class_field)._dataclass_field
         controller_dataclass = getattr(controller_class, '_controller_dataclass', None)
         if controller_dataclass:
             dataclass_bases = (controller_dataclass,)
@@ -192,7 +177,6 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
         super().__setattr__('on_inner_value_change',  Event())
         super().__setattr__('on_fields_change',  Event())
         super().__setattr__('enable_notification', True)
-        super().__setattr__('_metadata', {})
 
     def add_field(self, name, type_, default=undefined,
                   metadata=None, override=False, **kwargs):
@@ -378,7 +362,7 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
         if not field:
             raise ValueError(f'No such field: {field_or_name}')
         result = ['{} [{}]'.format(field.name, field.type_str())]
-        optional = field.metadata('optional')
+        optional = field.optional
         if optional is None:
             optional = (field.default not in (undefined, dataclasses.MISSING) or
                         field.default_factory is not dataclasses.MISSING)
@@ -387,7 +371,7 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
         default = field.default
         if default not in (undefined, dataclasses.MISSING):
             result.append(' ({})'.format(repr(default)))
-        desc = field.metadata('desc')
+        desc = field.metadata('desc', None)
         if desc:
             result.append(': ' + desc)
         return ''.join(result)

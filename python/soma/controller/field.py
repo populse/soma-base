@@ -5,6 +5,7 @@ import re
 import sys
 import typing
 import types
+from numpy import issubdtype
 
 from pydantic import ValidationError
 
@@ -85,14 +86,10 @@ def literal_values(type):
 def subtypes(type):
     return getattr(type, '__args__', ())
 
-def inner_type(type):
-    s = subtypes(type)
-    if s:
-        while s:
-            type = s[0]
-            s = subtypes(type)
-        return type
-    return None
+def is_list(type_):
+    return (getattr(type_, '_name', None) == 'List'
+            or getattr(type_, '__name__', None) == 'list'
+            or (isinstance(type_, type) and issubclass(type_, list)))
 
 def parse_type_str(type_str):
     '''
@@ -154,16 +151,16 @@ def type_default_value(type):
 class Field:
     _max_field_creation_order = 1000000
     
-    def __init__(self, field):
-        self.field = field
+    def __init__(self, dataclass_field):
+        super().__setattr__('_dataclass_field', dataclass_field)
 
     @property
     def name(self):
-        return self.field.name
+        return self._dataclass_field.name
     
     @property
     def type(self):
-        types = self.field.type.__args__[:-1]
+        types = self._dataclass_field.type.__args__[:-1]
         if len(types) == 1:
             return types[0]
         else:
@@ -171,11 +168,11 @@ class Field:
 
     @property
     def default(self):
-        return self.field.default
+        return self._dataclass_field.default
     
     @property
     def default_factory(self):
-        return self.field.default_factory
+        return self._dataclass_field.default_factory
     
     def type_str(self):
         return type_str(self.type)
@@ -186,46 +183,20 @@ class Field:
     def subtypes(self):
         return subtypes(self.type)
 
-    def inner_type(self):
-        return inner_type(self.type)
-
-    def metadata(self, key=None, default=None):
-        editable_metadata = self.field.metadata['_metadata']
-        if key is None:
-            return editable_metadata
-        else:
-            return editable_metadata.get(key, default)
-
-    def set_metadata(self, key, value):
-        editable_metadata = self.field.metadata['_metadata']
+    def metadata(self, name, default=None):
+        return self._dataclass_field.metadata['_metadata'].get(name, default)
+    
+    def __getattr__(self, name):
+        value = self.metadata(name, undefined)
         if value is undefined:
-            editable_metadata.pop(key, None)
-        else:
-            editable_metadata[key] = value
+            raise AttributeError(f'{self} has not attribute {name}')
+        return value
 
-    def has_path(self):
-        if self.is_path():
-            return True
-        t = self.inner_type()
-        if isinstance(t, type) and issubclass(t, Path):
-            return True
-        return False
+    def __setattr__(self, name, value):
+        self._dataclass_field.metadata['_metadata'][name] = value
 
-    def has_file(self):
-        if self.is_file():
-            return True
-        t = self.inner_type()
-        if isinstance(t, type) and issubclass(t, File):
-            return True
-        return False
-
-    def has_directory(self):
-        if self.is_directory():
-            return True
-        t = self.inner_type()
-        if isinstance(t, type) and issubclass(t, Directory):
-            return True
-        return False
+    def __delattr__(self, name):
+        del self._dataclass_field.metadata['_metadata'][name]
 
     def is_subclass(self, cls):
         type_ = self.type
@@ -241,55 +212,60 @@ class Field:
         return self.is_subclass(Directory)
 
     def is_input(self):
-        if self.metadata('output', False):
+        if self.output:
             return False
-        if self.is_list():
-            t = self.inner_type()
-        else:
-            t = self.type
-        if isinstance(t, type) and issubclass(t, Path):
-            return t.read
+        if self.path_type:
+            return self.read
         return True
 
     def is_output(self):
         if self.metadata('output', False):
             return True
-        if self.is_list():
-            t = self.inner_type()
-        else:
-            t = self.type
-        if isinstance(t, type) and issubclass(t, Path):
-            return t.write
+        if self.path_type:
+            return self.write
         return False
 
     def has_default(self):
-        return (self.field.default not in (undefined, dataclasses.MISSING)
-                or self.field.default_factory is not dataclasses.MISSING)
+        return (self._dataclass_field.default not in (undefined, dataclasses.MISSING)
+                or self._dataclass_field.default_factory is not dataclasses.MISSING)
 
     def default_value(self):
-        if self.field.default is not dataclasses.MISSING:
-            return self.field.default
-        if self.field.default_factory is not dataclasses.MISSING:
-            return self.field.default_factory()
+        if self._dataclass_field.default is not dataclasses.MISSING:
+            return self._dataclass_field.default
+        if self._dataclass_field.default_factory is not dataclasses.MISSING:
+            return self._dataclass_field.default_factory()
         return undefined
 
     def is_list(self):
-        t = self.type
-        return (getattr(t, '_name', None) == 'List'
-                or getattr(t, '__name__', None) == 'list'
-                or (isinstance(t, type) and issubclass(t, list)))
-
-    def is_optional(self):
-        optional = self.metadata('optional', None)
+        return is_list(self.type)
+    
+    @property
+    def optional(self):
+        optional = self._dataclass_field.metadata['_metadata'].get('optional')
         if optional is None:
             optional =  self.has_default()
         return optional
 
-    def set_optional(self, optional):
-        if optional is None:
-            self.set_metadata('optional', undefined)
-        else:
-            self.set_metadata('optional', bool(optional))
+    @optional.setter
+    def optional(self, optional):
+        self._dataclass_field.metadata['_metadata']['optional'] = optional
+
+
+    @optional.deleter
+    def optional(self):
+        del self._dataclass_field.metadata['_metadata']['optional']
+
+    @property
+    def doc(self):
+        return self.__getattribute__('doc')
+
+    @doc.setter
+    def doc(self, doc):
+        self.__setattr__('doc', doc)
+    
+    @doc.deleter
+    def doc(self):
+        self.__delattr__('doc')
 
 def field(
          name=None, 
@@ -304,19 +280,19 @@ def field(
          **kwargs):
     if isinstance(type_, Field):
         if default is dataclasses.MISSING or default is undefined:
-            default = type_.field.default
+            default = type_._dataclass_field.default
         if default_factory is dataclasses.MISSING:
-            default_factory = type_.field.default_factory
+            default_factory = type_._dataclass_field.default_factory
         if init is None:
-            init = type_.field.init
+            init = type_._dataclass_field.init
         if repr is None:
-            repr = type_.field.repr
+            repr = type_._dataclass_field.repr
         if hash is None:
-            init = type_.field.hash
+            init = type_._dataclass_field.hash
         if compare is None:
-            init = type_.field.compare
+            init = type_._dataclass_field.compare
         if metadata is None:
-            metadata = type_.metadata().copy()
+            metadata = type_._dataclass_field.metadata.copy()
         else:
             metadata = metadata.copy()
         type_ = type_.type
@@ -350,15 +326,29 @@ def field(
         metadata={'_metadata': metadata})
     if name is not None:
         result.name = name
+    path_type = None
     if type_ is not None:
         result.type = Union[type_, type(undefined)]
+        if isinstance(type_, type) and issubclass(type_, Path):
+            path_type = type_.__name__.lower()
+        elif is_list(type_):
+            current_type = type_
+            while is_list(current_type):
+                s = subtypes(current_type)
+                if s:
+                    current_type = s[0]
+                else:
+                    break
+            if isinstance(current_type, type) and issubclass(current_type, Path):
+                path_type = current_type.__name__.lower()
 
-    # merge and cache metadata for subtypes (if any)
-    meta = result.metadata['_metadata']
-    meta.update({k: v for k, v in _parse_type_metadata(result.type).items()
-                 if k not in meta})
+    result = Field(result)
+    result.path_type = path_type
+    if path_type:
+        result._dataclass_field.metadata['_metadata'].setdefault('read', True)
+        result._dataclass_field.metadata['_metadata'].setdefault('write', False)
+    return result
 
-    return Field(result)
 
 
 class ListMeta(type):
@@ -381,47 +371,8 @@ class classproperty(object):
     def __get__(self, obj, owner):
         return self.f(owner)
 
-class Path:
-    __metadata__ = types.MappingProxyType({'read': True,
-                                           'write': False})
-
-    @classproperty
-    def read(cls):
-        return cls.__metadata__['read']
-
-    @classproperty
-    def write(cls):
-        return cls.__metadata__['write']
-
-    def __class_getitem__(cls, kwargs):
-        if not isinstance(kwargs, dict):
-            raise TypeError('Use Path[dict(read=?, write=?)]')
-        return cls._create_path_type(**kwargs)
-    
-    @classmethod
-    def _create_path_type(cls, read=None, write=None):
-        if read is None:
-            if write is None:
-                return cls
-            else:
-                read = not write
-        if write is None:
-            write = not read
-        if read is cls.read and write is cls.write:
-            return cls
-        return type(cls.__name__, (cls,),
-                    {'__metadata__': types.MappingProxyType(
-                      {'read': read, 'write': write})})
-   
-    @classmethod
-    def __get_validators__(cls):
-        return [cls.validate_path]
-    
-    @classmethod
-    def validate_path(cls, value, values, config, field):
-        if not isinstance(value, str):
-            raise ValidationError('{cls.__name__} type only accepts string value')
-        return value
+class Path(str):
+    pass
 
 class File(Path):
     pass
@@ -429,14 +380,6 @@ class File(Path):
 class Directory(Path):
     pass
 
-def path(**kwargs):
-    return Path[kwargs]
-
-def file(**kwargs):
-    return File[kwargs]
-    
-def directory(**kwargs):
-    return Directory[kwargs]
 
 def _parse_type_metadata(type_):
     meta = {}

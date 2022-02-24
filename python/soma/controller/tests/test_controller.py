@@ -14,9 +14,7 @@ from soma.controller import (Controller,
                              Dict,
                              Set,
                              File,
-                             file,
-                             Directory,
-                             directory)
+                             Directory)
 
 from soma.singleton import Singleton
 from soma.undefined import undefined
@@ -153,6 +151,7 @@ class TestController(unittest.TestCase):
         self.assertEqual([i.name for i in my_car.problems.fields()],
                          ['exhaust', 'windshield'])
 
+        self.assertEqual(my_car.field('driver').desc, 'the guy who would better take a bus')
         manhelp = my_car.field_doc('driver')
         self.assertEqual(
             manhelp,
@@ -335,16 +334,17 @@ class TestController(unittest.TestCase):
         o = C()
         o.add_field('d', str, another='value')
 
-        # Metadata of class fields are read-only
-        o.field('s').set_metadata('new',  'value')
-        o.field('s').set_metadata('custom', 'modified'    )
-        o.field('d').set_metadata('new', 'value')
-        o.field('d').set_metadata('another', 'modified')
-        self.assertEqual(o.field('s').metadata(), {'class_field': True, 
-            'custom': 'modified', 'new': 'value', 'order': o.field('s').metadata('order')})
-        self.assertEqual(o.field('d').metadata(), {'class_field': False, 
-            'another': 'modified', 'new': 'value', 'order': o.field('d').metadata('order')})
-        self.assertGreater(o.field('d').metadata('order'), o.field('s').metadata('order'))
+        o.field('s').new = 'value'
+        o.field('s').custom = 'modified'
+        o.field('d').new = 'value'
+        o.field('d').another = 'modified'
+        self.assertEqual(o.field('s').class_field, True)
+        self.assertEqual(o.field('s').custom, 'modified')
+        self.assertEqual(o.field('s').new, 'value')
+        self.assertEqual(o.field('d').class_field, False)
+        self.assertEqual(o.field('d').another, 'modified')
+        self.assertEqual(o.field('d').new, 'value')
+        self.assertGreater(o.field('d').order, o.field('s').order)
 
     def test_field_types(self):        
         class C(Controller):
@@ -374,14 +374,14 @@ class TestController(unittest.TestCase):
             ole: field(type_=List[Literal['one', 'two', 'three']], output=True)
             
             f: File
-            of: file(write=True)
+            of: field(type_=File, write=True)
             lf: List[File]
-            olf: List[file(write=True)]
+            olf: field(type_=List[File], write=True)
             
             d: Directory
-            od: directory(write=True)
+            od: field(type_=Directory, write=True)
             ld: List[Directory]
-            old: List[directory(write=True)]
+            old: field(type_=List[Directory], write=True)
 
             u: Union[str, List[str]]
             ou: field(type_=Union[str, List[str]], output=True)
@@ -412,9 +412,7 @@ class TestController(unittest.TestCase):
                 'name': f.name,
                 'str': f.type_str(),
                 'list': f.is_list(),
-                'has_path': f.has_path(),
-                'has_file': f.has_file(),
-                'has_directory': f.has_directory(),
+                'path_type': f.path_type,
                 'is_path': f.is_path(),
                 'is_file': f.is_file(),
                 'is_directory': f.is_directory(),
@@ -424,9 +422,7 @@ class TestController(unittest.TestCase):
         }
         expected = {
             's': {
-                    'has_path': False,
-                    'has_directory': False,
-                    'has_file': False,
+                    'path_type': None,
                     'is_path': False,
                     'is_directory': False,
                     'is_file': False,
@@ -435,9 +431,7 @@ class TestController(unittest.TestCase):
                     'output': False,
                     'str': 'str'},
             'os': {
-                    'has_path': False,
-                    'has_directory': False,
-                    'has_file': False,
+                    'path_type': None,
                     'is_path': False,
                     'is_directory': False,
                     'is_file': False,
@@ -446,9 +440,7 @@ class TestController(unittest.TestCase):
                     'output': True,
                     'str': 'str'},
             'ls': {
-                    'has_path': False,
-                    'has_directory': False,
-                    'has_file': False,
+                    'path_type': None,
                     'is_path': False,
                     'is_directory': False,
                     'is_file': False,
@@ -457,9 +449,7 @@ class TestController(unittest.TestCase):
                     'output': False,
                     'str': 'list[str]'},
             'ols': {
-                    'has_path': False,
-                    'has_directory': False,
-                    'has_file': False,
+                    'path_type': None,
                     'is_path': False,
                     'is_directory': False,
                     'is_file': False,
@@ -469,9 +459,7 @@ class TestController(unittest.TestCase):
                     'str': 'list[str]'},
 
             'i': {
-                    'has_path': False,
-                    'has_directory': False,
-                    'has_file': False,
+                    'path_type': None,
                     'is_path': False,
                     'is_directory': False,
                     'is_file': False,
@@ -480,9 +468,7 @@ class TestController(unittest.TestCase):
                     'output': False,
                     'str': 'int'},
             'oi': {
-                    'has_path': False,
-                    'has_directory': False,
-                    'has_file': False,
+                    'path_type': None,
                     'is_path': False,
                     'is_directory': False,
                     'is_file': False,
@@ -491,9 +477,7 @@ class TestController(unittest.TestCase):
                     'output': True,
                     'str': 'int'},
             'li': {
-                    'has_path': False,
-                    'has_directory': False,
-                    'has_file': False,
+                    'path_type': None,
                     'is_path': False,
                     'is_directory': False,
                     'is_file': False,
@@ -502,9 +486,7 @@ class TestController(unittest.TestCase):
                     'output': False,
                     'str': 'list[int]'},
             'oli': {
-                    'has_path': False,
-                    'has_directory': False,
-                    'has_file': False,
+                    'path_type': None,
                     'is_path': False,
                     'is_directory': False,
                     'is_file': False,
@@ -514,9 +496,7 @@ class TestController(unittest.TestCase):
                     'str': 'list[int]'},
 
             'n': {
-                    'has_path': False,
-                    'has_directory': False,
-                    'has_file': False,
+                    'path_type': None,
                     'is_path': False,
                     'is_directory': False,
                     'is_file': False,
@@ -525,9 +505,7 @@ class TestController(unittest.TestCase):
                     'output': False,
                     'str': 'float'},
             'on': {
-                    'has_path': False,
-                    'has_directory': False,
-                    'has_file': False,
+                    'path_type': None,
                     'is_path': False,
                     'is_directory': False,
                     'is_file': False,
@@ -536,9 +514,7 @@ class TestController(unittest.TestCase):
                     'output': True,
                     'str': 'float'},
             'ln': {
-                    'has_path': False,
-                    'has_directory': False,
-                    'has_file': False,
+                    'path_type': None,
                     'is_path': False,
                     'is_directory': False,
                     'is_file': False,
@@ -547,9 +523,7 @@ class TestController(unittest.TestCase):
                     'output': False,
                     'str': 'list[float]'},
             'oln': {
-                    'has_path': False,
-                    'has_directory': False,
-                    'has_file': False,
+                    'path_type': None,
                     'is_path': False,
                     'is_directory': False,
                     'is_file': False,
@@ -559,9 +533,7 @@ class TestController(unittest.TestCase):
                     'str': 'list[float]'},
 
             'b': {
-                    'has_path': False,
-                    'has_directory': False,
-                    'has_file': False,
+                    'path_type': None,
                     'is_path': False,
                     'is_directory': False,
                     'is_file': False,
@@ -570,9 +542,7 @@ class TestController(unittest.TestCase):
                     'output': False,
                     'str': 'bool'},
             'ob': {
-                    'has_path': False,
-                    'has_directory': False,
-                    'has_file': False,
+                    'path_type': None,
                     'is_path': False,
                     'is_directory': False,
                     'is_file': False,
@@ -581,9 +551,7 @@ class TestController(unittest.TestCase):
                     'output': True,
                     'str': 'bool'},
             'lb': {
-                    'has_path': False,
-                    'has_directory': False,
-                    'has_file': False,
+                    'path_type': None,
                     'is_path': False,
                     'is_directory': False,
                     'is_file': False,
@@ -592,9 +560,7 @@ class TestController(unittest.TestCase):
                     'output': False,
                     'str': 'list[bool]'},
             'olb': {
-                    'has_path': False,
-                    'has_directory': False,
-                    'has_file': False,
+                    'path_type': None,
                     'is_path': False,
                     'is_directory': False,
                     'is_file': False,
@@ -604,9 +570,7 @@ class TestController(unittest.TestCase):
                     'str': 'list[bool]'},
 
             'e': {
-                    'has_path': False,
-                    'has_directory': False,
-                    'has_file': False,
+                    'path_type': None,
                     'is_path': False,
                     'is_directory': False,
                     'is_file': False,
@@ -615,9 +579,7 @@ class TestController(unittest.TestCase):
                     'output': False,
                     'str': "literal['one','two','three']"},
             'oe': {
-                    'has_path': False,
-                    'has_directory': False,
-                    'has_file': False,
+                    'path_type': None,
                     'is_path': False,
                     'is_directory': False,
                     'is_file': False,
@@ -626,9 +588,7 @@ class TestController(unittest.TestCase):
                     'output': True,
                     'str': "literal['one','two','three']"},
             'le': {
-                    'has_path': False,
-                    'has_directory': False,
-                    'has_file': False,
+                    'path_type': None,
                     'is_path': False,
                     'is_directory': False,
                     'is_file': False,
@@ -637,9 +597,7 @@ class TestController(unittest.TestCase):
                     'output': False,
                     'str': "list[literal['one','two','three']]"},
             'ole': {
-                    'has_path': False,
-                    'has_directory': False,
-                    'has_file': False,
+                    'path_type': None,
                     'is_path': False,
                     'is_directory': False,
                     'is_file': False,
@@ -649,9 +607,7 @@ class TestController(unittest.TestCase):
                     'str': "list[literal['one','two','three']]"},
 
             'f': {
-                    'has_path': True,
-                    'has_directory': False,
-                    'has_file': True,
+                    'path_type': 'file',
                     'is_path': True,
                     'is_directory': False,
                     'is_file': True,
@@ -660,9 +616,7 @@ class TestController(unittest.TestCase):
                     'output': False,
                     'str': 'file'},
             'of': {
-                    'has_path': True,
-                    'has_directory': False,
-                    'has_file': True,
+                    'path_type': 'file',
                     'is_path': True,
                     'is_directory': False,
                     'is_file': True,
@@ -671,9 +625,7 @@ class TestController(unittest.TestCase):
                     'output': True,
                     'str': 'file'},
             'lf': {
-                    'has_path': True,
-                    'has_directory': False,
-                    'has_file': True,
+                    'path_type': 'file',
                     'is_path': False,
                     'is_directory': False,
                     'is_file': False,
@@ -682,9 +634,7 @@ class TestController(unittest.TestCase):
                     'output': False,
                     'str': 'list[file]'},
             'olf': {
-                    'has_path': True,
-                    'has_directory': False,
-                    'has_file': True,
+                    'path_type': 'file',
                     'is_path': False,
                     'is_directory': False,
                     'is_file': False,
@@ -694,9 +644,7 @@ class TestController(unittest.TestCase):
                     'str': 'list[file]'},
 
             'd': {
-                    'has_path': True,
-                    'has_directory': True,
-                    'has_file': False,
+                    'path_type': 'directory',
                     'is_path': True,
                     'is_directory': True,
                     'is_file': False,
@@ -705,9 +653,7 @@ class TestController(unittest.TestCase):
                     'output': False,
                     'str': 'directory'},
             'od': {
-                    'has_path': True,
-                    'has_directory': True,
-                    'has_file': False,
+                    'path_type': 'directory',
                     'is_path': True,
                     'is_directory': True,
                     'is_file': False,
@@ -717,9 +663,7 @@ class TestController(unittest.TestCase):
 
                     'str': 'directory'},
             'ld': {
-                    'has_path': True,
-                    'has_directory': True,
-                    'has_file': False,
+                    'path_type': 'directory',
                     'is_path': False,
                     'is_directory': False,
                     'is_file': False,
@@ -728,9 +672,7 @@ class TestController(unittest.TestCase):
                     'output': False,
                     'str': 'list[directory]'},
             'old': {
-                    'has_path': True,
-                    'has_directory': True,
-                    'has_file': False,
+                    'path_type': 'directory',
                     'is_path': False,
                     'is_directory': False,
                     'is_file': False,
@@ -740,9 +682,7 @@ class TestController(unittest.TestCase):
                     'str': 'list[directory]'},
 
             'u': {
-                    'has_path': False,
-                    'has_directory': False,
-                    'has_file': False,
+                    'path_type': None,
                     'is_path': False,
                     'is_directory': False,
                     'is_file': False,
@@ -751,9 +691,7 @@ class TestController(unittest.TestCase):
                     'output': False,
                     'str': 'union[str,list[str]]'},
             'ou': {
-                    'has_path': False,
-                    'has_directory': False,
-                    'has_file': False,
+                    'path_type': None,
                     'is_path': False,
                     'is_directory': False,
                     'is_file': False,
@@ -762,9 +700,7 @@ class TestController(unittest.TestCase):
                     'output': True,
                     'str': 'union[str,list[str]]'},
             'lu': {
-                    'has_path': False,
-                    'has_directory': False,
-                    'has_file': False,
+                    'path_type': None,
                     'is_path': False,
                     'is_directory': False,
                     'is_file': False,
@@ -773,9 +709,7 @@ class TestController(unittest.TestCase):
                     'output': False,
                     'str': 'list[union[str,list[str]]]'},
             'olu': {
-                    'has_path': False,
-                    'has_directory': False,
-                    'has_file': False,
+                    'path_type': None,
                     'is_path': False,
                     'is_directory': False,
                     'is_file': False,
@@ -785,9 +719,7 @@ class TestController(unittest.TestCase):
                     'str': 'list[union[str,list[str]]]'},
             
             'm': {
-                    'has_path': False,
-                    'has_directory': False,
-                    'has_file': False,
+                    'path_type': None,
                     'is_path': False,
                     'is_directory': False,
                     'is_file': False,
@@ -796,9 +728,7 @@ class TestController(unittest.TestCase):
                     'output': False,
                     'str': 'dict'},
             'om': {
-                    'has_path': False,
-                    'has_directory': False,
-                    'has_file': False,
+                    'path_type': None,
                     'is_path': False,
                     'is_directory': False,
                     'is_file': False,
@@ -807,9 +737,7 @@ class TestController(unittest.TestCase):
                     'output': True,
                     'str': 'dict'},
             'lm': {
-                    'has_path': False,
-                    'has_directory': False,
-                    'has_file': False,
+                    'path_type': None,
                     'is_path': False,
                     'is_directory': False,
                     'is_file': False,
@@ -818,9 +746,7 @@ class TestController(unittest.TestCase):
                     'output': False,
                     'str': 'list[dict]'},
             'olm': {
-                    'has_path': False,
-                    'has_directory': False,
-                    'has_file': False,
+                    'path_type': None,
                     'is_path': False,
                     'is_directory': False,
                     'is_file': False,
@@ -830,9 +756,7 @@ class TestController(unittest.TestCase):
                     'str': 'list[dict]'},
             
             'mt': {
-                    'has_path': False,
-                    'has_directory': False,
-                    'has_file': False,
+                    'path_type': None,
                     'is_path': False,
                     'is_directory': False,
                     'is_file': False,
@@ -842,9 +766,7 @@ class TestController(unittest.TestCase):
                     'str': 'dict[str,list[int]]'},
 
             'l': {
-                    'has_path': False,
-                    'has_directory': False,
-                    'has_file': False,
+                    'path_type': None,
                     'is_path': False,
                     'is_directory': False,
                     'is_file': False,
@@ -853,9 +775,7 @@ class TestController(unittest.TestCase):
                     'output': False,
                     'str': 'list'},
             'll': {
-                    'has_path': False,
-                    'has_directory': False,
-                    'has_file': False,
+                    'path_type': None,
                     'is_path': False,
                     'is_directory': False,
                     'is_file': False,
@@ -865,9 +785,7 @@ class TestController(unittest.TestCase):
                     'str': 'list[list[str]]'},
 
             'c': {
-                    'has_path': False,
-                    'has_directory': False,
-                    'has_file': False,
+                    'path_type': None,
                     'is_path': False,
                     'is_directory': False,
                     'is_file': False,
@@ -876,9 +794,7 @@ class TestController(unittest.TestCase):
                     'output': False,
                     'str': 'controller'},
             'lc': {
-                    'has_path': False,
-                    'has_directory': False,
-                    'has_file': False,
+                    'path_type': None,
                     'is_path': False,
                     'is_directory': False,
                     'is_file': False,
@@ -887,9 +803,7 @@ class TestController(unittest.TestCase):
                     'output': False,
                     'str': 'list[controller]'},
             'o': {
-                    'has_path': False,
-                    'has_directory': False,
-                    'has_file': False,
+                    'path_type': None,
                     'is_path': False,
                     'is_directory': False,
                     'is_file': False,
@@ -899,9 +813,7 @@ class TestController(unittest.TestCase):
 
                     'str': f'controller[{__name__}.SubController]'},
             'lo': {
-                    'has_path': False,
-                    'has_directory': False,
-                    'has_file': False,
+                    'path_type': None,
                     'is_path': False,
                     'is_directory': False,
                     'is_file': False,
@@ -911,9 +823,7 @@ class TestController(unittest.TestCase):
                     'str': f'list[controller[{__name__}.SubController]]'},
 
             'set': {
-                    'has_path': False,
-                    'has_directory': False,
-                    'has_file': False,
+                    'path_type': None,
                     'is_path': False,
                     'is_directory': False,
                     'is_file': False,
@@ -922,9 +832,7 @@ class TestController(unittest.TestCase):
                     'output': False,
                     'str': 'set'},
             'Set': {
-                    'has_path': False,
-                    'has_directory': False,
-                    'has_file': False,
+                    'path_type': None,
                     'is_path': False,
                     'is_directory': False,
                     'is_file': False,
@@ -933,9 +841,7 @@ class TestController(unittest.TestCase):
                     'output': False,
                     'str': 'set'},
             'Set_str': {
-                    'has_path': False,
-                    'has_directory': False,
-                    'has_file': False,
+                    'path_type': None,
                     'is_path': False,
                     'is_directory': False,
                     'is_file': False,
@@ -965,7 +871,7 @@ class TestController(unittest.TestCase):
         d = {
             f.name: {
                 'name': f.name,
-                'optional': f.is_optional(),
+                'optional': f.optional,
                 'has_default': f.has_default(),
             }
             for f in o.fields()
