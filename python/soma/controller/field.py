@@ -4,7 +4,6 @@ import dataclasses
 import re
 import sys
 import typing
-import types
 from numpy import issubdtype
 
 from pydantic import ValidationError
@@ -290,7 +289,8 @@ def field(
         if compare is None:
             init = type_._dataclass_field.compare
         if metadata is None:
-            metadata = type_._dataclass_field.metadata.copy()
+            metadata = type_._dataclass_field.metadata.get(
+                '_metadata', {}).copy()
         else:
             metadata = metadata.copy()
         type_ = type_.type
