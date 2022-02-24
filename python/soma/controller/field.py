@@ -252,14 +252,8 @@ class Field:
         return True
 
     def is_output(self):
-        if self.metadata('output', False):
+        if self.metadata('output', False) or self.metadata('write', False):
             return True
-        if self.is_list():
-            t = self.inner_type()
-        else:
-            t = self.type
-        if isinstance(t, type) and issubclass(t, Path):
-            return t.write
         return False
 
     def has_default(self):

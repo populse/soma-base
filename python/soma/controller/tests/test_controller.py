@@ -112,7 +112,7 @@ class TestController(unittest.TestCase):
             engine : str
             driver : Driver = field(
                 default_factory=lambda: Driver(),
-                desc='the guy who would better take a bus')
+                doc='the guy who would better take a bus')
             problems : OpenKeyController
 
         my_car = Car()
@@ -263,7 +263,7 @@ class TestController(unittest.TestCase):
             f1 : field(
                     type_=float,
                     default=5,
-                    desc='bla',
+                    doc='bla',
                     optional=True,
                     output=True)
             f2 : field(
