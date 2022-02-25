@@ -322,7 +322,7 @@ class BaseControllerWidget:
             factory_type = WidgetFactory.find_factory(type_str, DefaultWidgetFactory)
             factory = factory_type(controller_widget=group_content_widget,
                                    parent_interaction=ControllerFieldInteraction(controller, field, self.depth))
-            self.factories[field] = factory
+            self.factories[field._dataclass_field] = factory
             factory.create_widgets()
 
 
@@ -332,8 +332,9 @@ class BaseControllerWidget:
             field = indices[0]
             indices = indices[1:]
             if indices:
-                factory = self.factories[field]
-                factory.update_inner_gui(indices)
+                factory = self.factories.get(field)
+                if factory is not None:
+                    factory.update_inner_gui(indices)
             self.allow_update_gui = True
 
     def update_fields(self):
@@ -344,7 +345,7 @@ class BaseControllerWidget:
             self.allow_update_gui = True
 
     def clear(self):
-        for field, factory in self.factories.items():
+        for factory in self.factories.values():
             factory.delete_widgets()
         self.factories = {}
         self.groups = {}
@@ -406,16 +407,20 @@ WidgetFactory.widget_factory_types = {
     'int': StrWidgetFactory,
     'float': StrWidgetFactory,
     'bool': BoolWidgetFactory,
-    'literal': LiteralWidgetFactory,
+    'Literal': LiteralWidgetFactory,
     'list[str]': ListStrWidgetFactory,
     'list[int]': ListIntWidgetFactory,
     'list[float]': ListFloatWidgetFactory,
     'list': find_generic_list_factory,
+    'List[str]': ListStrWidgetFactory,
+    'List[int]': ListIntWidgetFactory,
+    'List[float]': ListFloatWidgetFactory,
+    'List': find_generic_list_factory,
     'set[str]': SetStrWidgetFactory,
     'set[int]': SetIntWidgetFactory,
     'set[float]': SetFloatWidgetFactory,
     'set': find_generic_set_factory,
     'controller': ControllerWidgetFactory,
-    'file': FileWidgetFactory,
-    'directory': DirectoryWidgetFactory,
+    'File': FileWidgetFactory,
+    'Directory': DirectoryWidgetFactory,
 }
