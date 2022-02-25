@@ -182,7 +182,9 @@ class Field:
     def subtypes(self):
         return subtypes(self.type)
 
-    def metadata(self, name, default=None):
+    def metadata(self, name=None, default=None):
+        if name is None:
+            return self._dataclass_field.metadata['_metadata']
         return self._dataclass_field.metadata['_metadata'].get(name, default)
     
     def __getattr__(self, name):
