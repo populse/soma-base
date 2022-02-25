@@ -72,7 +72,7 @@ def type_str(type_):
         if controller:
             result = f'controller[{name}]'
         else:
-            result = name.lower()
+            result = name  # .lower()
     return final_mapping.get(result, result)
 
 def type_from_str(type_str):
