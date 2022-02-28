@@ -57,6 +57,9 @@ API
 .. automodule:: soma.controller.controller
     :members:
 
+.. automodule:: soma.controller.field
+    :members:
+
 
 SubModule: ``crypt``
 ====================

@@ -225,48 +225,9 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
                 self.add_field('instance_param', list[int], optional=True,
                                default_factory=list)
 
-    :class:`soma.controller.field.Field` may have metadata to define or characterize them more
-    precisely. Metadata are orgalized in a dictionary, and may be accessed as
-    attributes on the Field object. A number of field metadata are normalized:
-
-    doc: str
-        field documentation
-    optional: bool
-        if the field parameter is otional in the Controller.
-    output: bool
-        if the field parameter is an output parameter.
-
-        Note that for paths (files, directories) an output parameter means two
-        different things: is the filename an output (its value will be
-        determined internally during processing) ? Or is the file it refers to
-        an output file which will be wtitten ?
-
-        We follow the convention here that the `output` metadata means that the
-        file name (the parameter is actually the file name, not the file
-        itself) is an output. Thus for files we also have `read` and `write`
-        metadata. A file which will be written, but at a location given as
-        input, will have `write` set to True, but `output` will be False. In a
-        pipelining point of view, this field will still be an output, however,
-        thus this pipeline output state should be questioned using the Field
-        method :meth:`soma.controller.field.Field.is_output` rather than querying the `output`
-        metadata.
-    path_type: bool
-        If the field `contains` a :class:`Field.Path` type (file or directory).
-        It is True for lists of Path, or compound type containing a Path type.
-    read:
-        If the field parameter is a path, or contains paths, and if paths will
-        be actually read during processing.
-    write:
-        If the field parameter is a path, or contains paths, and if paths will
-        be actually written during processing.
-    hidden: bool
-        if GUI should not display it
-    protected: bool
-        if the parameter value has been set manually, and parameters links (in
-        a pipelining context) should not modify it any longer.
-    allowed_extensions: list[str]
-        for path fields, list the allowed file extensions for it. This metadata
-        should be replaced with a proper format handling, in the future.
+    :class:`~.field.Field` may have metadata to define or characterize them
+    more precisely. The :class:`~.field.Field` class doc lists some of them
+    which are normalized.
     '''
 
     def __new__(cls, *args, **kwargs):
