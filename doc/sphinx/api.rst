@@ -38,12 +38,15 @@ SubModule: ``config``
 
 .. _controller:
 
-SubModule: ``controller``: Traits-based controller objects
-==========================================================
+SubModule: ``controller``: objects with typed fields
+====================================================
 
 Classes
 -------
 * :class:`soma.controller.controller.Controller`
+* :class:`soma.controller.controller.Event`
+* :class:`soma.controller.controller.AttributeValueEvent`
+* :class:`soma.controller.controller.OpenKeyController`
 
 API
 ---
@@ -158,10 +161,18 @@ SubModule: ``qt_gui``
 .. automodule:: soma.qt_gui
     :members:
 
-SubModule: ``qt_gui.controller_widget``
-=======================================
+SubModule: ``qt_gui.controller``
+================================
 
-.. automodule:: soma.qt_gui.controller_widget
+Classes
+-------
+
+* :class:`soma.qt_gui.controller.controller.ControllerWidget`
+
+API
+---
+
+.. automodule:: soma.qt_gui.controller
     :members:
 
 SubModule: ``qt_gui.io``

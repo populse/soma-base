@@ -18,13 +18,20 @@ class _ModelsConfig:
         
 
 class Event:
+    ''' Notification class for Controller. An Event can be fired (:meth:`fire`)
+    to notify observers who have registered callbacks.
+    '''
     def __init__(self):
         self.callbacks = []
 
     def add(self, callback, ):
+        ''' Add a callback for an observer
+        '''
         self.callbacks.append(callback)
 
     def remove(self, callback):
+        ''' Remove a callback
+        '''
         try:
             self.callbacks.remove(callback)
             return True
@@ -33,15 +40,35 @@ class Event:
             return False
 
     def fire(self, *args, **kwargs):
+        ''' Activate notification: call all registered callbacks, using the
+        given arguments. Thus all callbacks must follow the same calling
+        conventions.
+        '''
         for callback in self.callbacks:
             callback(*args, **kwargs)
     
     @property
     def has_callback(self):
+        ''' True if any callback has been registered.
+        '''
         return bool(self.callbacks)
 
 
 class AttributeValueEvent(Event):
+    ''' Event subclass notifier for fields in a Controller. It can notify
+    values changes for a set of attributes. Callbacks are thus registered in
+    association of a list of attributes, or for all attributes if they are
+    associated to an empty (None) attribute name.
+
+    Callbacks are called wih the following parameters:
+
+    ``new_value, old_value, attribute_name, controller, index``
+
+    All parameters are optional, but are positional arguments, thus if a
+    callback needs the controller parameter, it should also declare
+    ``new_value``,  ``old_value``, and ``attribute_name`` parameters first.
+    '''
+
     def __init__(self):
         self.callbacks_mapping = {}
         self.callbacks = {}
@@ -65,6 +92,9 @@ class AttributeValueEvent(Event):
 
 
     def add(self, callback, attribute_name=None):
+        ''' Register a callback associated to given attribute names.
+        Callbacks registered with the name None will be called every time.
+        '''
         real_callback = self.normalize_callback_parameters(callback)
         if real_callback is not callback:
             self.callbacks_mapping[callback] = real_callback
@@ -77,6 +107,8 @@ class AttributeValueEvent(Event):
 
 
     def remove(self, callback, attribute_name=None):
+        ''' Remove a callback for one or several attribute names
+        '''
         real_callback = self.callbacks_mapping.pop(callback, callback)
         if isinstance(attribute_name, (list, tuple)):
             result = True
@@ -95,7 +127,11 @@ class AttributeValueEvent(Event):
                 return False
 
 
-    def fire(self, attribute_name, new_value, old_value, controller, index=None):
+    def fire(self, attribute_name, new_value, old_value, controller,
+             index=None):
+        ''' Fire callbacks associated with a given attribute name.
+        Callbacks without an attribute name (None) are also fired.
+        '''
         for callback in self.callbacks.get(attribute_name, []):
             callback(new_value, old_value, attribute_name, controller, index)
         for callback in self.callbacks.get(None, []):
@@ -106,7 +142,11 @@ class AttributeValueEvent(Event):
         return bool(self.callbacks)
 
 class ControllerMeta(type):
-    def __new__(cls, name, bases, namespace, class_field=True, ignore_metaclass=False):
+    ''' Metaclass for Controller subclasses
+    '''
+
+    def __new__(cls, name, bases, namespace, class_field=True,
+                ignore_metaclass=False):
         if ignore_metaclass:
             return super().__new__(cls, name, bases, namespace)
         base_controllers = [i for i in bases if issubclass(i, Controller)]
@@ -160,6 +200,75 @@ class ControllerMeta(type):
 
 
 class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
+    ''' Controller is an object with fields.
+
+    Fields are typed attributes, with validation when setting them, and
+    notification.
+
+    The implementation is based on the
+    `pydantic <https://pydantic-docs.helpmanual.io/>`_ library.
+
+    It allows to declare "fields", either as class fields or instance fields,
+    in a python3 syntax::
+
+        class C(Controller):
+            a: int = 0
+            b: float = 1.
+            c: list[str]
+
+    or::
+
+        class D(Controller):
+            class_param: str
+
+            def __init__(self):
+                self.add_field('instance_param', list[int], optional=True,
+                               default_factory=list)
+
+    :class:`soma.controller.field.Field` may have metadata to define or characterize them more
+    precisely. Metadata are orgalized in a dictionary, and may be accessed as
+    attributes on the Field object. A number of field metadata are normalized:
+
+    doc: str
+        field documentation
+    optional: bool
+        if the field parameter is otional in the Controller.
+    output: bool
+        if the field parameter is an output parameter.
+
+        Note that for paths (files, directories) an output parameter means two
+        different things: is the filename an output (its value will be
+        determined internally during processing) ? Or is the file it refers to
+        an output file which will be wtitten ?
+
+        We follow the convention here that the `output` metadata means that the
+        file name (the parameter is actually the file name, not the file
+        itself) is an output. Thus for files we also have `read` and `write`
+        metadata. A file which will be written, but at a location given as
+        input, will have `write` set to True, but `output` will be False. In a
+        pipelining point of view, this field will still be an output, however,
+        thus this pipeline output state should be questioned using the Field
+        method :meth:`soma.controller.field.Field.is_output` rather than querying the `output`
+        metadata.
+    path_type: bool
+        If the field `contains` a :class:`Field.Path` type (file or directory).
+        It is True for lists of Path, or compound type containing a Path type.
+    read:
+        If the field parameter is a path, or contains paths, and if paths will
+        be actually read during processing.
+    write:
+        If the field parameter is a path, or contains paths, and if paths will
+        be actually written during processing.
+    hidden: bool
+        if GUI should not display it
+    protected: bool
+        if the parameter value has been set manually, and parameters links (in
+        a pipelining context) should not modify it any longer.
+    allowed_extensions: list[str]
+        for path fields, list the allowed file extensions for it. This metadata
+        should be replaced with a proper format handling, in the future.
+    '''
+
     def __new__(cls, *args, **kwargs):
         if cls is Controller:
             return EmptyController()
@@ -180,6 +289,23 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
 
     def add_field(self, name, type_, default=undefined,
                   metadata=None, override=False, **kwargs):
+        ''' Add an instance field.
+
+        Parameters are a type, an optional default value and metadata dict, an
+        optional `override` parameter specifying if an existing field of the
+        same name should be silently overriden or an exception will be raised.
+        Additonal keyword arguments are additional metadata.
+
+        `type_` may be a field type such as `int`, `str` or `list[float]`. It
+        may also be a compound type: `Union[str, list[str]]`,
+        `Literal["one", "two"]`, or a :class:`~field.Field` object which may
+        already contain a complex type definition and metadata.
+
+        The field type will be actually replaced with a :class:`~field.Union`
+        of the given type and the `undefined` value, in order to allow
+        undefined values at initialization time.
+        '''
+
         # avoid duplicate fields
         if self.field(name) is not None:
             if override:
@@ -217,6 +343,8 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
             self.on_fields_change.fire()
         
     def remove_field(self, name):
+        ''' Remove the given field
+        '''
         del self._dyn_fields[name]
         if getattr(self, 'enable_notification', False) and self.on_fields_change.has_callback:
             self.on_fields_change.fire()
@@ -293,10 +421,15 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
             super().__setattr__(name, value)
     
     def fields(self):
+        ''' Returns an iterator over registered fields (both class fields and
+        instance fields)
+        '''
         yield from (Field(i) for i in dataclasses.fields(self))
         yield from (Field(i) for i in (dataclasses.fields(i)[0] for i in super().__getattribute__('_dyn_fields').values()))
 
     def field(self, name):
+        ''' Query the fiend assiciated with the given name
+        '''
         field = self.__dataclass_fields__.get(name)
         if field is None:
             field = super().__getattribute__('_dyn_fields').get(name)
@@ -327,10 +460,14 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
 
 
     def asdict(self, **kwargs):
+        ''' Returns fields values in a dictionary.
+        '''
         return asdict(self, **kwargs)
     
 
     def import_dict(self, state, clear=False):
+        ''' Set fields values from a dict
+        '''
         if clear:
             for field in self.fields():
                 delattr(self, field.name)
@@ -347,6 +484,8 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
             setattr(self, name, value)
 
     def copy(self, with_values=True):
+        ''' Copy the Controller and all its fields, and return the copy.
+        '''
         result = self.__class__()
         for name, field in super().__getattribute__('_dyn_fields').items():
             result.add_field(name, field)
@@ -355,6 +494,8 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
         return result
     
     def field_doc(self, field_or_name):
+        ''' Get the doc for a field, with some metadata precisions
+        '''
         if isinstance(field_or_name, str):
             field = self.field(field_or_name)
         else:
@@ -377,12 +518,16 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
         return ''.join(result)
     
     def ensure_field(self, field_or_name):
+        ''' Get a :class:`field.Field` object for a given Field or name
+        '''
         if isinstance(field_or_name, str):
             return self.field(field_or_name)
         else:
             return field_or_name
 
     def json(self):
+        ''' Retuern a JSON dict for the current Controller
+        '''
         result = {}
         for field in self.fields():
             value = getattr(self, field.name, undefined)
@@ -391,11 +536,15 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
         return result
         
     def import_json(self, json):
+        ''' Set the Controller state from a JSON dict
+        '''
         for field_name, json_value in json.items():
             setattr(self, field_name, json_value)
     
 
     def json_value(self, value):
+        ''' Convert the value to a JSON-compatible representation
+        '''
         if isinstance(value, Controller):
             return value.json()
         elif isinstance(value, (tuple, set, list)):
@@ -448,25 +597,26 @@ class OpenKeyControllerMeta(ControllerMeta):
             return result
         
 
-class OpenKeyController(Controller, metaclass=OpenKeyControllerMeta, ignore_metaclass=True):
+class OpenKeyController(Controller, metaclass=OpenKeyControllerMeta,
+                        ignore_metaclass=True):
 
     """ A dictionary-like controller, with "open keys": items may be added
-    on the fly, traits are created upon assignation.
+    on the fly, fields are created upon assignation.
 
-    A value trait type should be specified to build the items.
+    A value field type should be specified to build the items.
 
     Usage:
 
-    >>> dict_controller = OpenKeyController(value_trait=traits.Str())
-    >>> print(dict_controller.user_traits().keys())
+    >>> dict_controller = OpenKeyController(value_type=str)
+    >>> print(dict_controller.fields())
     []
     >>> dict_controller.my_item = 'bubulle'
-    >>> print(dict_controller.user_traits().keys())
+    >>> print([f.name for f in dict_controller.fields()])
     ['my_item']
-    >>> print(dict_controller.export_to_dict())
+    >>> print(dict_controller.asdict())
     {'my_item': 'bubulle'}
     >>> del dict_controller.my_item
-    >>> print(dict_controller.export_to_dict())
+    >>> print(dict_controller.asdict())
     {}
     """
     _reserved_names = {'enable_notification'}
