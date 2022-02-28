@@ -577,7 +577,7 @@ class TestController(unittest.TestCase):
                     'list': False,
                     'name': 'e',
                     'output': False,
-                    'str': "literal['one','two','three']"},
+                    'str': "Literal['one','two','three']"},
             'oe': {
                     'path_type': None,
                     'is_path': False,
@@ -586,7 +586,7 @@ class TestController(unittest.TestCase):
                     'list': False,
                     'name': 'oe',
                     'output': True,
-                    'str': "literal['one','two','three']"},
+                    'str': "Literal['one','two','three']"},
             'le': {
                     'path_type': None,
                     'is_path': False,
@@ -595,7 +595,7 @@ class TestController(unittest.TestCase):
                     'list': True,
                     'name': 'le',
                     'output': False,
-                    'str': "list[literal['one','two','three']]"},
+                    'str': "list[Literal['one','two','three']]"},
             'ole': {
                     'path_type': None,
                     'is_path': False,
@@ -604,7 +604,7 @@ class TestController(unittest.TestCase):
                     'list': True,
                     'name': 'ole',
                     'output': True,
-                    'str': "list[literal['one','two','three']]"},
+                    'str': "list[Literal['one','two','three']]"},
 
             'f': {
                     'path_type': 'file',
@@ -614,7 +614,7 @@ class TestController(unittest.TestCase):
                     'list': False,
                     'name': 'f',
                     'output': False,
-                    'str': 'file'},
+                    'str': 'File'},
             'of': {
                     'path_type': 'file',
                     'is_path': True,
@@ -623,7 +623,7 @@ class TestController(unittest.TestCase):
                     'list': False,
                     'name': 'of',
                     'output': True,
-                    'str': 'file'},
+                    'str': 'File'},
             'lf': {
                     'path_type': 'file',
                     'is_path': False,
@@ -632,7 +632,7 @@ class TestController(unittest.TestCase):
                     'list': True,
                     'name': 'lf',
                     'output': False,
-                    'str': 'list[file]'},
+                    'str': 'list[File]'},
             'olf': {
                     'path_type': 'file',
                     'is_path': False,
@@ -641,7 +641,7 @@ class TestController(unittest.TestCase):
                     'list': True,
                     'name': 'olf',
                     'output': True,
-                    'str': 'list[file]'},
+                    'str': 'list[File]'},
 
             'd': {
                     'path_type': 'directory',
@@ -651,7 +651,7 @@ class TestController(unittest.TestCase):
                     'list': False,
                     'name': 'd',
                     'output': False,
-                    'str': 'directory'},
+                    'str': 'Directory'},
             'od': {
                     'path_type': 'directory',
                     'is_path': True,
@@ -661,7 +661,7 @@ class TestController(unittest.TestCase):
                     'name': 'od',
                     'output': True,
 
-                    'str': 'directory'},
+                    'str': 'Directory'},
             'ld': {
                     'path_type': 'directory',
                     'is_path': False,
@@ -670,7 +670,7 @@ class TestController(unittest.TestCase):
                     'list': True,
                     'name': 'ld',
                     'output': False,
-                    'str': 'list[directory]'},
+                    'str': 'list[Directory]'},
             'old': {
                     'path_type': 'directory',
                     'is_path': False,
@@ -679,7 +679,7 @@ class TestController(unittest.TestCase):
                     'list': True,
                     'name': 'old',
                     'output': True,
-                    'str': 'list[directory]'},
+                    'str': 'list[Directory]'},
 
             'u': {
                     'path_type': None,
@@ -851,6 +851,7 @@ class TestController(unittest.TestCase):
                     'str': 'set[str]'},
         }
         for n, i in d.items():
+            print(d[n])
             self.assertEqual(d[n], expected[n])
         self.assertEqual(len(d), len(expected))
 
