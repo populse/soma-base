@@ -42,20 +42,16 @@ def type_str(type_):
     ignore_args = False
     if not name:
         name = getattr(type_, '_name', None)
-        if name == 'List':
-            name = 'list'
-        elif name == 'Dict':
-            name = 'dict'
+        if name == 'Dict':
             args = getattr(type_, '__args__', None)
             ignore_args = args == getattr(Dict, '__args__', None)
         elif name == 'Set':
-            name = 'set'
             args = getattr(type_, '__args__', None)
             ignore_args = args == getattr(Set, '__args__', None)
     if name:
         name = name
     if not name and getattr(type_, '__origin__', None) is Union:
-        name = 'union'
+        name = 'Union'
     if not name:
         if isinstance(type_, str):
             name = repr(type_)
