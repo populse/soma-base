@@ -49,8 +49,6 @@ can be imported from :py:mod:`soma.minf.api`:
 * organization: NeuroSpin
 * license: `CeCILL B <http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html>`_
 '''
-from __future__ import print_function
-from __future__ import absolute_import
 __docformat__ = "restructuredtext en"
 
 import gzip
@@ -112,11 +110,7 @@ def minfFormat(source):
     opened_source_file = None
     try:
         if not hasattr(source, 'readline'):
-            if six.PY2:
-                opened_source_file = open(source)
-            else:
-                opened_source_file = open(source, encoding='UTF-8')
-                
+            opened_source_file = open(source, encoding='UTF-8')
             source = BufferAndFile(opened_source_file)
         elif not isinstance(source, BufferAndFile):
             source.seek(0)
@@ -163,7 +157,7 @@ def _setTarget(target, source):
             target.update(source)
             return True
         elif isinstance(target, HasSignature):
-            for k, v in six.iteritems(source):
+            for k, v in source.items():
                 attrTarget = getattr(target, k, Undefined)
                 if attrTarget is Undefined:
                     setattr(target, k, v)
@@ -199,7 +193,7 @@ def iterateMinf(source, targets=None, stop_on_error=True, exceptions=[]):
 
     initial_source = source
 
-    if not hasattr(initial_source, 'readline') and not six.PY2:
+    if not hasattr(initial_source, 'readline'):
         # in python3 the encoding of a file should be specified when opening
         # it: it cannot be changed afterwards. So in python3 we cannot read
         # the encoding within the file (for instance in a XML file).
@@ -212,10 +206,7 @@ def iterateMinf(source, targets=None, stop_on_error=True, exceptions=[]):
     for encoding in try_encodings:
         opened_source_file = None
         if not hasattr(initial_source, 'readline'):
-            if six.PY2:
-                opened_source_file = open(initial_source)
-            else:
-                opened_source_file = open(initial_source, encoding=encoding)
+            opened_source_file = open(initial_source, encoding=encoding)
             source = BufferAndFile(opened_source_file)
         elif not isinstance(source, BufferAndFile):
             source.seek(0)
@@ -380,7 +371,6 @@ for t in six.integer_types:
     minf_2_0_reducer.registerAtomType(t)
 minf_2_0_reducer.registerAtomType(float)
 minf_2_0_reducer.registerAtomType(str)
-minf_2_0_reducer.registerAtomType(six.text_type)  # unicode in Python 2
 minf_2_0_reducer.registerAtomType(XHTML)
 minf_2_0_reducer.registerClass(list, minf_2_0_reducer.sequenceReducer)
 minf_2_0_reducer.registerClass(tuple, minf_2_0_reducer.sequenceReducer)

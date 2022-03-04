@@ -4,7 +4,6 @@ import dataclasses
 import re
 import sys
 import typing
-from numpy import issubdtype
 
 from pydantic import ValidationError
 
