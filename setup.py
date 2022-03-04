@@ -20,9 +20,10 @@ setup(
     author=release_info["AUTHOR"],
     author_email=release_info["AUTHOR_EMAIL"],
     version=release_info["VERSION"],
-    package_dir = {'': 'python'},
+    package_dir={'': 'python'},
     packages=['soma'],
     platforms=release_info["PLATFORMS"],
     install_requires=release_info["REQUIRES"],
-    extras_require = release_info["EXTRAS_REQUIRE"],
+    extras_require=release_info["EXTRAS_REQUIRE"],
+    python_requires=release_info["PYTHON_REQUIRES"],
 )
