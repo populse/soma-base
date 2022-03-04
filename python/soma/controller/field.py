@@ -36,7 +36,7 @@ def type_str(type_):
         'typing.any': 'Any',
         'tuple[any]': 'tuple',
         'dict[any,any]': 'dict',
-        'controller[Controller]': 'controller',
+        'Controller[Controller]': 'Controller',
     }
     name = getattr(type_, '__name__', None)
     ignore_args = False
@@ -57,20 +57,23 @@ def type_str(type_):
     if not name and getattr(type_, '__origin__', None) is Union:
         name = 'union'
     if not name:
-        name = str(type_).replace(' ', '')
-        if name.startswith('typing.'):
-            name = name[7:]
-            ignore_args = True
+        if isinstance(type_, str):
+            name = repr(type_)
+        else:
+            name = str(type_).replace(' ', '')
+            if name.startswith('typing.'):
+                name = name[7:]
+                ignore_args = True
     module = getattr(type_, '__module__', None)
     controller = isinstance(type_, type) and issubclass(type_, Controller)
     if module and module not in {'builtins', 'typing', 'soma.controller.controller', 'soma.controller.field'}:
         name = f'{module}.{name}'
     args = getattr(type_, '__args__', ())
     if not ignore_args and args:
-        result = f'{name.lower()}[{",".join(type_str(i) for i in args)}]'
+        result = f'{name}[{",".join(type_str(i) for i in args)}]'
     else:
         if controller:
-            result = f'controller[{name}]'
+            result = f'Controller[{name}]'
         else:
             result = name  # .lower()
     return final_mapping.get(result, result)

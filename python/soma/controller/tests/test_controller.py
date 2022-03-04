@@ -32,7 +32,7 @@ class SerializableController(Controller):
     d: Directory
     u: Union[str, List[str]]
     m: dict
-    lm: List[dict]
+    lm: list[dict]
     mt: Dict[str, List[int]]
     l: list
     ll: List[List[str]]
@@ -155,7 +155,7 @@ class TestController(unittest.TestCase):
         manhelp = my_car.field_doc('driver')
         self.assertEqual(
             manhelp,
-            'driver [controller[%s.Driver]]: the guy who would better take a bus' % __name__)
+            'driver [Controller[%s.Driver]]: the guy who would better take a bus' % __name__)
 
     def test_dynamic_controllers(self):
         class C(Controller):
@@ -292,11 +292,11 @@ class TestController(unittest.TestCase):
 
         self.assertEqual(
             o.field_doc('f3'),
-            f'f3 [controller[{Blop.__module__}.Blop]] (None)')
+            f'f3 [Controller[{Blop.__module__}.Blop]] (None)')
 
         self.assertEqual(
             o.field_doc('f4'),
-            'f4 [union[str,int]] mandatory')
+            'f4 [Union[str,int]] mandatory')
 
     def test_inheritance(self):
         class Base(Controller):
@@ -360,12 +360,12 @@ class TestController(unittest.TestCase):
 
             n: float
             on: field(type_=float, output=True)
-            ln: List[float]
+            ln: list[float]
             oln: field(type_=List[float], output=True)
 
             b: bool
             ob: field(type_=bool, output=True)
-            lb: List[bool]
+            lb: list[bool]
             olb: field(type_=List[bool], output=True)
 
             e: Literal['one', 'two', 'three']
@@ -447,7 +447,7 @@ class TestController(unittest.TestCase):
                     'list': True,
                     'name': 'ls',
                     'output': False,
-                    'str': 'list[str]'},
+                    'str': 'List[str]'},
             'ols': {
                     'path_type': None,
                     'is_path': False,
@@ -456,7 +456,7 @@ class TestController(unittest.TestCase):
                     'list': True,
                     'name': 'ols',
                     'output': True,
-                    'str': 'list[str]'},
+                    'str': 'List[str]'},
 
             'i': {
                     'path_type': None,
@@ -484,7 +484,7 @@ class TestController(unittest.TestCase):
                     'list': True,
                     'name': 'li',
                     'output': False,
-                    'str': 'list[int]'},
+                    'str': 'List[int]'},
             'oli': {
                     'path_type': None,
                     'is_path': False,
@@ -493,7 +493,7 @@ class TestController(unittest.TestCase):
                     'list': True,
                     'name': 'oli',
                     'output': True,
-                    'str': 'list[int]'},
+                    'str': 'List[int]'},
 
             'n': {
                     'path_type': None,
@@ -530,7 +530,7 @@ class TestController(unittest.TestCase):
                     'list': True,
                     'name': 'oln',
                     'output': True,
-                    'str': 'list[float]'},
+                    'str': 'List[float]'},
 
             'b': {
                     'path_type': None,
@@ -567,7 +567,7 @@ class TestController(unittest.TestCase):
                     'list': True,
                     'name': 'olb',
                     'output': True,
-                    'str': 'list[bool]'},
+                    'str': 'List[bool]'},
 
             'e': {
                     'path_type': None,
@@ -595,7 +595,7 @@ class TestController(unittest.TestCase):
                     'list': True,
                     'name': 'le',
                     'output': False,
-                    'str': "list[Literal['one','two','three']]"},
+                    'str': "List[Literal['one','two','three']]"},
             'ole': {
                     'path_type': None,
                     'is_path': False,
@@ -604,7 +604,7 @@ class TestController(unittest.TestCase):
                     'list': True,
                     'name': 'ole',
                     'output': True,
-                    'str': "list[Literal['one','two','three']]"},
+                    'str': "List[Literal['one','two','three']]"},
 
             'f': {
                     'path_type': 'file',
@@ -632,7 +632,7 @@ class TestController(unittest.TestCase):
                     'list': True,
                     'name': 'lf',
                     'output': False,
-                    'str': 'list[File]'},
+                    'str': 'List[File]'},
             'olf': {
                     'path_type': 'file',
                     'is_path': False,
@@ -641,7 +641,7 @@ class TestController(unittest.TestCase):
                     'list': True,
                     'name': 'olf',
                     'output': True,
-                    'str': 'list[File]'},
+                    'str': 'List[File]'},
 
             'd': {
                     'path_type': 'directory',
@@ -670,7 +670,7 @@ class TestController(unittest.TestCase):
                     'list': True,
                     'name': 'ld',
                     'output': False,
-                    'str': 'list[Directory]'},
+                    'str': 'List[Directory]'},
             'old': {
                     'path_type': 'directory',
                     'is_path': False,
@@ -679,7 +679,7 @@ class TestController(unittest.TestCase):
                     'list': True,
                     'name': 'old',
                     'output': True,
-                    'str': 'list[Directory]'},
+                    'str': 'List[Directory]'},
 
             'u': {
                     'path_type': None,
@@ -689,7 +689,7 @@ class TestController(unittest.TestCase):
                     'list': False,
                     'name': 'u',
                     'output': False,
-                    'str': 'union[str,list[str]]'},
+                    'str': 'Union[str,List[str]]'},
             'ou': {
                     'path_type': None,
                     'is_path': False,
@@ -698,7 +698,7 @@ class TestController(unittest.TestCase):
                     'list': False,
                     'name': 'ou',
                     'output': True,
-                    'str': 'union[str,list[str]]'},
+                    'str': 'Union[str,List[str]]'},
             'lu': {
                     'path_type': None,
                     'is_path': False,
@@ -707,7 +707,7 @@ class TestController(unittest.TestCase):
                     'list': True,
                     'name': 'lu',
                     'output': False,
-                    'str': 'list[union[str,list[str]]]'},
+                    'str': 'List[Union[str,List[str]]]'},
             'olu': {
                     'path_type': None,
                     'is_path': False,
@@ -716,7 +716,7 @@ class TestController(unittest.TestCase):
                     'list': True,
                     'name': 'olu',
                     'output': True,
-                    'str': 'list[union[str,list[str]]]'},
+                    'str': 'List[Union[str,List[str]]]'},
             
             'm': {
                     'path_type': None,
@@ -744,7 +744,7 @@ class TestController(unittest.TestCase):
                     'list': True,
                     'name': 'lm',
                     'output': False,
-                    'str': 'list[dict]'},
+                    'str': 'List[dict]'},
             'olm': {
                     'path_type': None,
                     'is_path': False,
@@ -753,7 +753,7 @@ class TestController(unittest.TestCase):
                     'list': True,
                     'name': 'olm',
                     'output': True,
-                    'str': 'list[dict]'},
+                    'str': 'List[dict]'},
             
             'mt': {
                     'path_type': None,
@@ -763,7 +763,7 @@ class TestController(unittest.TestCase):
                     'list': False,
                     'name': 'mt',
                     'output': False,
-                    'str': 'dict[str,list[int]]'},
+                    'str': 'dict[str,List[int]]'},
 
             'l': {
                     'path_type': None,
@@ -782,7 +782,7 @@ class TestController(unittest.TestCase):
                     'list': True,
                     'name': 'll',
                     'output': False,
-                    'str': 'list[list[str]]'},
+                    'str': 'List[List[str]]'},
 
             'c': {
                     'path_type': None,
@@ -792,7 +792,7 @@ class TestController(unittest.TestCase):
                     'list': False,
                     'name': 'c',
                     'output': False,
-                    'str': 'controller'},
+                    'str': 'Controller'},
             'lc': {
                     'path_type': None,
                     'is_path': False,
@@ -801,7 +801,7 @@ class TestController(unittest.TestCase):
                     'list': True,
                     'name': 'lc',
                     'output': False,
-                    'str': 'list[controller]'},
+                    'str': 'List[Controller]'},
             'o': {
                     'path_type': None,
                     'is_path': False,
@@ -811,7 +811,7 @@ class TestController(unittest.TestCase):
                     'name': 'o',
                     'output': False,
 
-                    'str': f'controller[{__name__}.SubController]'},
+                    'str': f'Controller[{__name__}.SubController]'},
             'lo': {
                     'path_type': None,
                     'is_path': False,
@@ -820,7 +820,7 @@ class TestController(unittest.TestCase):
                     'list': True,
                     'name': 'lo',
                     'output': False,
-                    'str': f'list[controller[{__name__}.SubController]]'},
+                    'str': f'List[Controller[{__name__}.SubController]]'},
 
             'set': {
                     'path_type': None,
