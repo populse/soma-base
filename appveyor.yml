@@ -2,7 +2,7 @@ environment:
 
   matrix:
 
-    - PYTHON: "C:\\Python38"
+    - PYTHON: "C:\\Python39"
 
 build: off
 
