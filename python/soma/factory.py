@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import six
 from importlib import import_module
 from pkgutil import iter_modules
 
@@ -11,7 +10,7 @@ def find_subclasses_in_module(module_name, parent_class):
     given class or class name. If the module is a package, it also look
     into submodules.
     '''
-    if isinstance(parent_class, six.string_types):
+    if isinstance(parent_class, str):
         check = lambda item: (isinstance(item, type) and 
                               item.__module__ == module_name and 
                               parent_class in (i.__name__ 
@@ -35,7 +34,7 @@ def find_items_in_module(module_name, check):
     except ImportError:
         return
     
-    for i in six.itervalues(module.__dict__):
+    for i in module.__dict__.values():
         if check(i):
             yield i
     path = getattr(module, '__path__', None)

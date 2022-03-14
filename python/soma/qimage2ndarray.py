@@ -24,10 +24,8 @@ TODO:
 - implement in C++
 """
 
-from __future__ import absolute_import
 import numpy
 from soma.qt_gui.qt_backend.QtGui import QImage, QColor
-from six.moves import range
 
 bgra_dtype = numpy.dtype({'b': (numpy.uint8, 0),
                           'g': (numpy.uint8, 1),

@@ -16,13 +16,11 @@ It will:
 .. [1] https://github.com/numpy/numpy/blob/master/doc/HOWTO_DOCUMENT.rst.txt
 
 """
-from __future__ import division, absolute_import, print_function
 
-import os, sys, re, pydoc
+import re, pydoc
 import sphinx
 import inspect
 import collections
-import six
 
 if sphinx.__version__ < '1.0.1':
     raise RuntimeError("Sphinx 1.0.1 or newer is required")
@@ -30,7 +28,7 @@ if sphinx.__version__ < '1.0.1':
 from .docscrape_sphinx import get_doc_object, SphinxDocString
 from sphinx.util.compat import Directive
 
-sixu = lambda s: six.text_type(s, 'unicode_escape')
+sixu = lambda s: str(s, 'unicode_escape')
 
 
 def mangle_docstrings(app, what, name, obj, options, lines,
@@ -48,7 +46,7 @@ def mangle_docstrings(app, what, name, obj, options, lines,
         lines[:] = title_re.sub(sixu(''), sixu("\n").join(lines)).split(sixu("\n"))
     else:
         doc = get_doc_object(obj, what, sixu("\n").join(lines), config=cfg)
-        doc = six.text_type(doc)
+        doc = str(doc)
         lines[:] = doc.split(sixu("\n"))
 
     if app.config.numpydoc_edit_link and hasattr(obj, '__name__') and \

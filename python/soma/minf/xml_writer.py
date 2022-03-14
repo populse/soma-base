@@ -1,60 +1,20 @@
 # -*- coding: utf-8 -*-
 
-#  This software and supporting documentation are distributed by
-#      Institut Federatif de Recherche 49
-#      CEA/NeuroSpin, Batiment 145,
-#      91191 Gif-sur-Yvette cedex
-#      France
-#
-# This software is governed by the CeCILL-B license under
-# French law and abiding by the rules of distribution of free software.
-# You can  use, modify and/or redistribute the software under the
-# terms of the CeCILL-B license as circulated by CEA, CNRS
-# and INRIA at the following URL "http://www.cecill.info".
-#
-# As a counterpart to the access to the source code and  rights to copy,
-# modify and redistribute granted by the license, users are provided only
-# with a limited warranty  and the software's author,  the holder of the
-# economic rights,  and the successive licensors  have only  limited
-# liability.
-#
-# In this respect, the user's attention is drawn to the risks associated
-# with loading,  using,  modifying and/or developing or reproducing the
-# software by the user in light of its specific status of free software,
-# that may mean  that it is complicated to manipulate,  and  that  also
-# therefore means  that it is reserved for developers  and  experienced
-# professionals having in-depth computer knowledge. Users are therefore
-# encouraged to load and test the software's suitability as regards their
-# requirements in conditions enabling the security of their systems and/or
-# data to be ensured and,  more generally, to use and operate it in the
-# same conditions as regards security.
-#
-# The fact that you are presently reading this means that you have had
-# knowledge of the CeCILL-B license and that you accept its terms.
-
 '''
 Writing of XML minf format.
-
-* author: Yann Cointepas
-* organization: `NeuroSpin <http://www.neurospin.org>`_
-* license: `CeCILL B <http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html>`_
 '''
-from __future__ import absolute_import
 __docformat__ = "restructuredtext en"
 
 import codecs
-import six
-from six.moves import range
 from xml.sax.saxutils import quoteattr as xml_quoteattr
 from xml.sax.saxutils import escape as xml_escape
 from soma.translation import translate as _
 from soma.minf.tree import createMinfReducer
 from soma.minf.writer import MinfWriter
-from soma.minf.tree import minfStructure, listStructure, dictStructure, \
+from soma.minf.tree import listStructure, dictStructure, \
     StartStructure, EndStructure
 from soma.minf.error import MinfError
 from soma.undefined import Undefined
-import sys
 
 
 # This module only contains a definition of XML tags and attributes.
@@ -133,8 +93,8 @@ class MinfXMLWriter(MinfWriter):
                 attributes[objectTypeAttribute] = minfNode.type
             if attributes:
                 attributes = ' ' + \
-                    ' '.join([n + '=' + xml_quoteattr(six.text_type(v))
-                             for n, v in six.iteritems(attributes)])
+                    ' '.join([n + '=' + xml_quoteattr(str(v))
+                             for n, v in attributes.items()])
             else:
                 attributes = ''
             self._encodeAndWriteLine('<' + tag + attributes + '>', level)
@@ -147,7 +107,7 @@ class MinfXMLWriter(MinfWriter):
                     self._encodeAndWriteLine('</' + tag + '>', level)
                     break
                 elif naming:
-                    if isinstance(minfNode, six.string_types):
+                    if isinstance(minfNode, str):
                         self._write(
                             minfNodeIterator, Undefined, level + 1, minfNode)
                     elif minfNode is None:
@@ -170,8 +130,8 @@ class MinfXMLWriter(MinfWriter):
         else:
             if attributes:
                 attributesXML = ' ' + \
-                    ' '.join([n + '=' + xml_quoteattr(six.text_type(v))
-                             for n, v in six.iteritems(attributes)])
+                    ' '.join([n + '=' + xml_quoteattr(str(v))
+                             for n, v in attributes.items()])
             else:
                 attributesXML = ''
             if minfNode is None:
@@ -184,12 +144,12 @@ class MinfXMLWriter(MinfWriter):
                 else:
                     self._encodeAndWriteLine(
                         '<' + falseTag + attributesXML + '/>', level)
-            elif isinstance(minfNode, (float,) + six.integer_types):
-                self._encodeAndWriteLine('<' + numberTag + attributesXML + '>' + six.text_type(minfNode) + '</' +
+            elif isinstance(minfNode, (float, int)):
+                self._encodeAndWriteLine('<' + numberTag + attributesXML + '>' + str(minfNode) + '</' +
                                          numberTag + '>', level)
-            elif isinstance(minfNode, six.string_types):
+            elif isinstance(minfNode, str):
 
-                if type(minfNode) is six.binary_type:
+                if type(minfNode) is bytes:
                     try:
                         minfNode = minfNode.decode("utf-8")
                     except UnicodeDecodeError:
@@ -213,7 +173,8 @@ class MinfXMLWriter(MinfWriter):
         else:
             indent = self.indentString * (self.level + level)
             nl = '\n'
-        line = six.ensure_text(line, 'utf8')
+        if isinstance(line, bytes):
+            line = line.decode('utf8')
         try:
             self.__file.write(indent + line + nl)
         except TypeError:

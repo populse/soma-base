@@ -1,46 +1,8 @@
 # -*- coding: utf-8 -*-
-# Copyright CEA and IFR 49 (2000-2005)
-#
-#  This software and supporting documentation were developed by
-#      CEA/DSV/SHFJ and IFR 49
-#      4 place du General Leclerc
-#      91401 Orsay cedex
-#      France
-#
-# This software is governed by the CeCILL license version 2 under
-# French law and abiding by the rules of distribution of free software.
-# You can  use, modify and/or redistribute the software under the
-# terms of the CeCILL license version 2 as circulated by CEA, CNRS
-# and INRIA at the following URL "http://www.cecill.info".
-#
-# As a counterpart to the access to the source code and  rights to copy,
-# modify and redistribute granted by the license, users are provided only
-# with a limited warranty  and the software's author,  the holder of the
-# economic rights,  and the successive licensors  have only  limited
-# liability.
-#
-# In this respect, the user's attention is drawn to the risks associated
-# with loading,  using,  modifying and/or developing or reproducing the
-# software by the user in light of its specific status of free software,
-# that may mean  that it is complicated to manipulate,  and  that  also
-# therefore means  that it is reserved for developers  and  experienced
-# professionals having in-depth computer knowledge. Users are therefore
-# encouraged to load and test the software's suitability as regards their
-# requirements in conditions enabling the security of their systems and/or
-# data to be ensured and,  more generally, to use and operate it in the
-# same conditions as regards security.
-#
-# The fact that you are presently reading this means that you have had
-# knowledge of the CeCILL license version 2 and that you accept its terms.
 
-from __future__ import print_function
-from __future__ import absolute_import
 from soma.qt_gui.qt_backend.Qt import *
-from soma.qt_gui.qt_backend.QtCore import QSize
 import re
 import os
-import six
-from six.moves import range
 
 
 class GenericTableEditor(QWidget):
@@ -289,8 +251,8 @@ class GenericTableEditor(QWidget):
             if not to_str:
                 return None
             for tSelec in self.gui_table.selectedRanges():
-                for row in six.moves.xrange(tSelec.topRow(), tSelec.bottomRow() + 1):
-                    for col in six.moves.xrange(tSelec.leftColumn(), tSelec.rightColumn() + 1):
+                for row in range(tSelec.topRow(), tSelec.bottomRow() + 1):
+                    for col in range(tSelec.leftColumn(), tSelec.rightColumn() + 1):
                         # regexp.sub(  	replacement, string
                         val = str(self.buf_table[row][col])
                         # if type(val)==types.StringType : val = str(val)
@@ -330,7 +292,7 @@ class GenericTableEditor(QWidget):
     def menu_addLine(self):
         nbline = QInputDialog.getInteger(self, 'Add line(s)',
                                          'Enter number line(s) to add',  1, 1, 2147483647, 1)[0]
-        for i in six.moves.xrange(nbline):
+        for i in range(nbline):
             self.buf_table.append([0] * len(self.numCols()))
         self.buf_2_gui()
 
@@ -347,14 +309,14 @@ class GenericTableEditor(QWidget):
     def getSelectedCols(self):
         ret = []
         for tSelec in self.gui_table.selectedRanges():
-            for col in six.moves.xrange(tSelec.leftColumn(), tSelec.rightColumn() + 1):
+            for col in range(tSelec.leftColumn(), tSelec.rightColumn() + 1):
                 ret.append(col)
         return ret
 
     def getSelectedRows(self):
         ret = []
         for tSelec in self.gui_table.selectedRanges():
-            for raw in six.moves.xrange(tSelec.topRow(), tSelec.bottomRow() + 1):
+            for raw in range(tSelec.topRow(), tSelec.bottomRow() + 1):
                 ret.append(raw)
         return ret
 
@@ -368,8 +330,8 @@ class GenericTableEditor(QWidget):
         selectedCells = []
         selectedCellsContent = []
         for s in self.gui_table.selectedRanges():
-            for row in six.moves.xrange(s.topRow(), s.bottomRow() + 1):
-                for col in six.moves.xrange(s.leftColumn(), s.rightColumn() + 1):
+            for row in range(s.topRow(), s.bottomRow() + 1):
+                for col in range(s.leftColumn(), s.rightColumn() + 1):
                     cell = [row, col]
                     if not cell in selectedCells:
                         selectedCells.append(cell)
@@ -550,7 +512,7 @@ class GenericTableEditor(QWidget):
                     if type:
                         self.setEditText(type)
 
-            for col in six.moves.xrange(nbCols):  # self.fileStructure['nbCols']):
+            for col in range(nbCols):  # self.fileStructure['nbCols']):
                 current = QWidget(columns)
                 columnsLayout.addWidget(current)
                 currentLayout = QVBoxLayout()

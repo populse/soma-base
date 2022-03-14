@@ -1,7 +1,4 @@
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import
-from __future__ import print_function
-import six
 
 class GraphNode(object):
     """ Simple Graph Node Structure
@@ -210,7 +207,7 @@ class Graph(object):
 
         # Step 1
         nnil = []
-        for name, node in six.iteritems(self._nodes):
+        for name, node in self._nodes.items():
             if node.links_from_degree == 0:
                 nnil.append(node)
 

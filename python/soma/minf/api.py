@@ -1,37 +1,5 @@
 # -*- coding: utf-8 -*-
 
-#  This software and supporting documentation are distributed by
-#      Institut Federatif de Recherche 49
-#      CEA/NeuroSpin, Batiment 145,
-#      91191 Gif-sur-Yvette cedex
-#      France
-#
-# This software is governed by the CeCILL-B license under
-# French law and abiding by the rules of distribution of free software.
-# You can  use, modify and/or redistribute the software under the
-# terms of the CeCILL-B license as circulated by CEA, CNRS
-# and INRIA at the following URL "http://www.cecill.info".
-#
-# As a counterpart to the access to the source code and  rights to copy,
-# modify and redistribute granted by the license, users are provided only
-# with a limited warranty  and the software's author,  the holder of the
-# economic rights,  and the successive licensors  have only  limited
-# liability.
-#
-# In this respect, the user's attention is drawn to the risks associated
-# with loading,  using,  modifying and/or developing or reproducing the
-# software by the user in light of its specific status of free software,
-# that may mean  that it is complicated to manipulate,  and  that  also
-# therefore means  that it is reserved for developers  and  experienced
-# professionals having in-depth computer knowledge. Users are therefore
-# encouraged to load and test the software's suitability as regards their
-# requirements in conditions enabling the security of their systems and/or
-# data to be ensured and,  more generally, to use and operate it in the
-# same conditions as regards security.
-#
-# The fact that you are presently reading this means that you have had
-# knowledge of the CeCILL-B license and that you accept its terms.
-
 '''
 This module contains all the framework necessary to customize, read and
 write minf files. A minf file is composed of structured data saved in
@@ -44,16 +12,10 @@ can be imported from :py:mod:`soma.minf.api`:
 - for reading minf files: :func:`iterateMinf`, :func:`readMinf`
 - for writing minf files: :func:`createMinfWriter`, :func:`writeMinf`
 - for customizing minf files: :func:`createReducerAndExpander`, :func:`registerClass`, :func:`registerClassAs`
-
-* author: Yann Cointepas
-* organization: NeuroSpin
-* license: `CeCILL B <http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html>`_
 '''
 __docformat__ = "restructuredtext en"
 
 import gzip
-import six
-import sys
 
 from soma.translation import translate as _
 from soma.minf.error import MinfError
@@ -224,7 +186,7 @@ def iterateMinf(source, targets=None, stop_on_error=True, exceptions=[]):
                 except Exception:
                     d = {'nan': None}
                 try:
-                    six.exec_(source.read().replace("\r\n", "\n"), d)
+                    exec(source.read().replace("\r\n", "\n"), d)
                 except Exception as e:
                     x = source
                     if hasattr(source, '_BufferAndFile__file'):
@@ -367,8 +329,7 @@ from soma.uuid import Uuid
 minf_2_0_reducer = MinfReducer('minf_2.0')
 minf_2_0_reducer.registerAtomType(None.__class__)
 minf_2_0_reducer.registerAtomType(bool)
-for t in six.integer_types:
-    minf_2_0_reducer.registerAtomType(t)
+minf_2_0_reducer.registerAtomType(int)
 minf_2_0_reducer.registerAtomType(float)
 minf_2_0_reducer.registerAtomType(str)
 minf_2_0_reducer.registerAtomType(XHTML)

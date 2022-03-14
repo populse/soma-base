@@ -147,9 +147,6 @@ At lower level, they are used through several classes:
 
 '''
 
-from __future__ import absolute_import
-from __future__ import print_function
-
 import sys
 import os
 import os.path as osp
@@ -159,8 +156,6 @@ import re
 import pprint
 import sqlite3
 import json
-import six
-from six.moves import range
 try:
     import bz2
 except ImportError:
@@ -205,7 +200,7 @@ def deep_update(update, original):
     Recursively update a dict.
     Subdict's won't be overwritten but also updated.
     '''
-    for key, value in six.iteritems(original):
+    for key, value in original.items():
         if not key in update:
             update[key] = value
         elif isinstance(value, dict):
@@ -255,7 +250,7 @@ class DirectoryAsDict(object):
         st_content = self.cache.get_directory(self.directory)
         if st_content is not None:
             st, content = st_content
-            for i in six.iteritems(content):
+            for i in content.items():
                 yield i
         else:
             try:
@@ -344,7 +339,7 @@ class DirectoryAsDict(object):
             debug.info('%s files=%d, directories=%d, size=%d'
                        % (time.asctime(), files + links, directories, files_size))
         count += 1
-        for name, content in six.iteritems(dirdict):
+        for name, content in dirdict.items():
             path_size += len(name)
             st, content = content
             if st:
@@ -582,7 +577,7 @@ class FileOrganizationModels(object):
         # Update attribute definitions
         attribute_definitions = json_dict.get('attribute_definitions')
         if attribute_definitions:
-            for attribute, definition in six.iteritems(attribute_definitions):
+            for attribute, definition in attribute_definitions.items():
                 existing_definition = self.attribute_definitions.get(
                     attribute)
                 values = definition.get('values')
@@ -612,7 +607,7 @@ class FileOrganizationModels(object):
             while stack:
                 name, pattern = stack.pop()
                 if isinstance(pattern, list):
-                    if pattern and isinstance(pattern[0], six.string_types):
+                    if pattern and isinstance(pattern[0], str):
                         pattern[0] = self._expand_shared_pattern(pattern[0])
                     else:
                         for i in pattern:
@@ -637,11 +632,11 @@ class FileOrganizationModels(object):
 
         if processes:
             process_patterns = OrderedDict()
-            for process, parameters in six.iteritems(processes):
+            for process, parameters in processes.items():
                 process_dict = OrderedDict()
                 process_patterns[process] = process_dict
-                for parameter, rules in six.iteritems(parameters):
-                    if isinstance(rules, six.string_types):
+                for parameter, rules in parameters.items():
+                    if isinstance(rules, str):
                         rules = self.shared_patterns[rules[1:-1]]
                     parameter_rules = []
                     process_dict[parameter] = parameter_rules
@@ -697,7 +692,7 @@ class FileOrganizationModels(object):
                                 format), repr(rule_formats)))
                         continue
                 keep = True
-                for attribute, selection_value in six.iteritems(selection):
+                for attribute, selection_value in selection.items():
                     if attribute == 'format':
                         continue
                     rule_value = rule_attributes.get(attribute)
@@ -718,7 +713,7 @@ class FileOrganizationModels(object):
     def _expand_json_patterns(self, json_patterns, parent, parent_attributes):
         attributes = parent_attributes.copy()
         attributes.update(json_patterns.get('fom_attributes', {}))
-        for attribute, value in six.iteritems(attributes):
+        for attribute, value in attributes.items():
             if attribute not in self.attribute_definitions:
                 self.attribute_definitions[
                     attribute] = {'values': set((value,))}
@@ -733,7 +728,7 @@ class FileOrganizationModels(object):
             # raise ValueError( 'Attribute "%s" must be declared in
             # attribute_definitions' % key_attribute )
 
-        for key, value in six.iteritems(json_patterns):
+        for key, value in json_patterns.items():
             if key.startswith('fom_') and key != 'fom_dummy':
                 continue
             if key_attribute:
@@ -752,7 +747,7 @@ class FileOrganizationModels(object):
                         rule_attributes = attributes.copy()
                     else:
                         pattern, format_list, rule_attributes = rule
-                        for attribute, value in six.iteritems(rule_attributes):
+                        for attribute, value in rule_attributes.items():
                             definition = self.attribute_definitions.setdefault(
                                 attribute, {})
                             values = definition.setdefault('values', set())
@@ -764,7 +759,7 @@ class FileOrganizationModels(object):
 
                     # Expand format_list
                     rule_formats = []
-                    if isinstance(format_list, six.string_types):
+                    if isinstance(format_list, str):
                         format_list = [format_list]
                     if format_list:
                         for format in format_list:
@@ -798,7 +793,7 @@ class FileOrganizationModels(object):
                     rules.append([pattern, rule_attributes])
 
     def _parse_patterns(self, patterns, dest_patterns):
-        for key, value in six.iteritems(patterns):
+        for key, value in patterns.items():
             if isinstance(value, dict):
                 self._parse_patterns(
                     value, dest_patterns.setdefault(key, OrderedDict()))
@@ -907,12 +902,12 @@ class PathToAttributes(object):
     def _pprint(self, file, node, indent):
         if node:
             print('  ' * indent + '{', file=file)
-            for pattern, rules_subpattern in six.iteritems(node):
+            for pattern, rules_subpattern in node.items():
                 ext_rules, subpattern = rules_subpattern
                 print('  ' * (indent + 1) + repr(pattern) + ': { (', file=file)
                 if ext_rules:
                     print('  ' * (indent + 1) + '{', file=file)
-                    for ext, rules in six.iteritems(ext_rules):
+                    for ext, rules in ext_rules.items():
                         print('  ' * \
                             (indent + 2) + repr(ext) + ': ', repr(rules),
                           file=file)
@@ -926,12 +921,12 @@ class PathToAttributes(object):
             print('  ' * indent + '{}', file=file, end=' ')
 
     def parse_directory(self, dirdict, single_match=False, all_unknown=False, log=None):
-        if isinstance(dirdict, six.string_types):
+        if isinstance(dirdict, str):
             dirdict = DirectoryAsDict.paths_to_dict(dirdict)
         return self._parse_directory(dirdict, [([], self.hierarchical_patterns, {})], single_match, all_unknown, log)
 
     def _parse_directory(self, dirdict, parsing_list, single_match, all_unknown, log):
-        for name, content in six.iteritems(dirdict):
+        for name, content in dirdict.items():
             st, content = content
             # Split extention on left most dot
             l = name.split('.')
@@ -954,7 +949,7 @@ class PathToAttributes(object):
                         pattern_attributes) + ' ' + repr(list(hierarchical_patterns.keys())))
                 branch_matched = False
                 for pattern, rules_subpattern \
-                        in six.iteritems(hierarchical_patterns):
+                        in hierarchical_patterns.items():
                     stop_parsing = False
                     for name_no_ext, ext in possible_extension_split:
                         ext_rules, subpattern = rules_subpattern
@@ -980,7 +975,7 @@ class PathToAttributes(object):
                                 full_path = path + [name]
                                 if log:
                                     log.debug('directory matched: %s %s' % (
-                                        repr(full_path), (repr([i[0] for i in six.iteritems(content)]) if content else None)))
+                                        repr(full_path), (repr([i[0] for i in content.items()]) if content else None)))
                                 matched_directories.append(
                                     (full_path, subpattern, new_attributes))
                             else:
@@ -1033,7 +1028,7 @@ class PathToAttributes(object):
                 yield path + [name], st, None
 
     def _parse_unknown_directory(self, dirdict, path, log):
-        for name, content in six.iteritems(dirdict):
+        for name, content in dirdict.items():
             st, content = content
             if log:
                 log.debug('?-> ' + '/'.join(path + [name]) + ' None')

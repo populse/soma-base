@@ -104,7 +104,7 @@ def getCallableString(callable):
     if inspect.isfunction(callable):
         name = _('function %s') % (callable.__name__, )
     elif inspect.ismethod(callable):
-        name = _('method %s') % (six.get_method_self(callable).__class__.__name__ + '.' +
+        name = _('method %s') % (callable.__self__.__class__.__name__ + '.' +
                                  callable.__name__, )
     elif inspect.isclass(callable):
         name = _('class %s') % (callable.__name__, )

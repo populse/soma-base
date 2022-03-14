@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import
-from __future__ import print_function
 
 from soma.qt_gui.qt_backend import Qt
-import six
 try:
     from traits.api import Undefined
 except ImportError:
@@ -62,9 +59,11 @@ class QPredefLineEdit(Qt.QLineEdit):
             return '<none>'
         if value is Undefined:
             return '<undefined>'
-        if not isinstance(value, (six.string_types, type(b''))):
+        if not isinstance(value, (str, bytes)):
             value = str(value)
-        return six.ensure_text(value)
+        if isinstance(value, bytes):
+            value = value.decode()
+        return value
 
     def value(self):
         text = self.text()

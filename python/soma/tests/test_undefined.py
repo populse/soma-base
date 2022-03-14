@@ -1,14 +1,10 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function
-from __future__ import absolute_import
-
 import unittest
 import os
 import sys
 
-from six.moves import reload_module
-
+from importlib import reload as reload_module
 
 class TestUndefined(unittest.TestCase):
 

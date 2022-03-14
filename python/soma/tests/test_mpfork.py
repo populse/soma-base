@@ -9,7 +9,6 @@ import sys
 from soma import mpfork
 import queue
 import math
-from six.moves import range
 
 
 class TestMPFork(unittest.TestCase):
