@@ -18,7 +18,6 @@ install:
   - "pip install six"
   - "pip install argparse"
   - "python setup.py install"
-  - "SET PYTHONPATH=C:\\projects\\soma-base\\python;%PYTHONPATH%"
 
 test_script:
   - "python --version"
