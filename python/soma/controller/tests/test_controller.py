@@ -851,7 +851,6 @@ class TestController(unittest.TestCase):
                     'str': 'set[str]'},
         }
         for n, i in d.items():
-            print(d[n])
             self.assertEqual(d[n], expected[n])
         self.assertEqual(len(d), len(expected))
 
