@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import
 import sys
-import six
 
 
 '''
@@ -80,7 +78,7 @@ def from_json(json_serialization):
     '''
     if json_serialization is None:
         return None
-    elif isinstance(json_serialization, six.string_types):
+    elif isinstance(json_serialization, str):
         callable = find_factory(json_serialization)
         return callable()
     elif isinstance(json_serialization, list):
