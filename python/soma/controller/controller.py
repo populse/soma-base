@@ -159,7 +159,7 @@ class ControllerMeta(type):
             dataclass_namespace['__annotations__'] = annotations
             for i in list(annotations):
                 type_ = annotations[i]
-                value = namespace.get(i, undefined)
+                value = namespace.pop(i, undefined)
                 dataclass_namespace[i] = value
                 if isinstance(type_, Field):
                     field_type = type_
@@ -191,6 +191,11 @@ class ControllerMeta(type):
             dataclass_bases = (controller_dataclass,)
         else:
             dataclass_bases = ()
+        for n in list(namespace):
+            v = namespace[n]
+            if hasattr(v, '__validator_config__'):
+                dataclass_namespace[n] = v
+                del namespace[n]
         c = type(name + '_dataclass' , dataclass_bases, dataclass_namespace)
         c = dataclass(c, config=_ModelsConfig)
         namespace['_controller_dataclass'] = c
