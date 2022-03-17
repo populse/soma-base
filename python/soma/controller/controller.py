@@ -558,9 +558,9 @@ class OpenKeyControllerMeta(ControllerMeta):
         result = cls._cache.get(value_type)
         if result is None:
             result = type('OpenKeyController_{}'.format(value_type.__name__), 
-                          (OpenKeyController,), {'_value_type': value_type}, ignore_metaclass=True)
+                          (OpenKeyController,), {'_value_type': value_type}, ignore_metaclass=False)
             cls._cache[value_type] = result
-            return result
+        return result
         
 
 class OpenKeyController(Controller, metaclass=OpenKeyControllerMeta,
@@ -573,7 +573,7 @@ class OpenKeyController(Controller, metaclass=OpenKeyControllerMeta,
 
     Usage:
 
-    >>> dict_controller = OpenKeyController(value_type=str)
+    >>> dict_controller = OpenKeyController[str]()
     >>> print(dict_controller.fields())
     []
     >>> dict_controller.my_item = 'bubulle'
