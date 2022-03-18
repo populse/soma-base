@@ -5,7 +5,8 @@ from pydantic import ValidationError # to expose it in the API
 from .controller import (Controller,
                          asdict,
                          Event,
-                         OpenKeyController)
+                         OpenKeyController,
+                         OpenKeyDictController)
 from .field import (
     field,
     Field,

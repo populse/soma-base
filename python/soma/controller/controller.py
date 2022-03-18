@@ -548,6 +548,49 @@ class EmptyController(Controller):
     pass
 
 
+class DictControllerBase(dict):
+    '''
+    Inherit DictControllerBase _in addition_ to :class:`Controller` (or
+    subclass) if you need to access fields as dict items.
+
+    It inherits dict, because without dict iheritance, YAQL raises an error.
+
+    This class is meant to be used only as an additional inheritance to
+    Controller subclasses, it does not work alone.
+    '''
+
+    def get(self, value, default=None):
+        return getattr(self, value, default)
+
+    def __getitem__(self, name):
+        value = getattr(self, name, undefined)
+        if value is undefined:
+            raise KeyError(name)
+        return value
+
+    def items(self):
+        for field in self.fields():
+            yield (field.name, getattr(self, field.name))
+
+    def values(self):
+        for field in self.fields():
+            yield getattr(self, field.name)
+
+    def keys(self):
+        for field in self.fields():
+            yield field.name
+
+    def __contains__(self, key):
+        return self.field(key) is not None
+
+    def __len__(self):
+        return len(self.fields())
+
+    def __iter__(self):
+        for field in self.fields():
+            yield field.name
+
+
 class OpenKeyControllerMeta(ControllerMeta):
     _cache = {}
 
@@ -607,4 +650,37 @@ class OpenKeyController(Controller, metaclass=OpenKeyControllerMeta,
 
 
 class EmptyOpenKeyController(OpenKeyController[str]):
+    pass
+
+
+class OpenKeyDictControllerMeta(OpenKeyControllerMeta):
+    _cache = {}
+
+    def __getitem__(cls, value_type):
+        cls_value_type = getattr(cls, '_value_type', None)
+        if value_type is cls_value_type:
+            return cls
+        result = cls._cache.get(value_type)
+        if result is None:
+            result = type('OpenKeyDictController_{}'.format(value_type.__name__),
+                          (OpenKeyDictController,), {'_value_type': value_type}, ignore_metaclass=False)
+            cls._cache[value_type] = result
+        return result
+
+
+class OpenKeyDictController(OpenKeyController, DictControllerBase,
+                            metaclass=OpenKeyDictControllerMeta,
+                            ignore_metaclass=True):
+    '''
+    An :class:`OpenKeyController` with dict access (see
+    :class:`DictControllerBase`)
+    '''
+
+    def __new__(cls, **kwargs):
+        if cls is OpenKeyDictController:
+            return EmptyOpenKeyDictController()
+        return super().__new__(cls)
+
+
+class EmptyOpenKeyDictController(OpenKeyDictController[str]):
     pass
