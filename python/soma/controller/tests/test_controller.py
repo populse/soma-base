@@ -3,6 +3,8 @@
 import json
 import unittest
 
+import pydantic
+
 from soma.controller import (Controller,
                              field,
                              OpenKeyController,
@@ -997,6 +999,19 @@ class TestController(unittest.TestCase):
         c2 = SerializableController()
         c2.import_json(json.loads(j))
         self.assertEqual(c1.asdict(), c2.asdict())
+
+    def test_validator(self):
+        class C(Controller):
+            s : Literal['a', 'b']
+        
+            @pydantic.validator('*', pre=True)
+            def to_lower(cls, value):
+                if isinstance(value, str):
+                    return value.lower()
+                return value
+
+        o = C(s='A')
+        self.assertEqual(o.s, 'a')
 
 def test():
     suite = unittest.TestLoader().loadTestsFromTestCase(TestController)
