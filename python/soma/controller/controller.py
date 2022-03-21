@@ -435,7 +435,7 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
         ''' Set fields values from a dict
         '''
         if clear:
-            for field in self.fields():
+            for field in list(self.fields()):
                 delattr(self, field.name)
         for name, value in state.items():
             field = self.field(name)
