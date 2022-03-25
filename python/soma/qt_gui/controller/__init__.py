@@ -3,6 +3,7 @@
 from soma.qt_gui.qt_backend import Qt, QtCore
 from soma.undefined import undefined
 from soma.controller import parse_type_str
+from soma.controller.field import subtypes
 from ..collapsable import CollapsableWidget
 
 class ScrollableWidgetsGrid(Qt.QScrollArea):
@@ -398,6 +399,7 @@ from .set import (SetStrWidgetFactory,
                   SetFloatWidgetFactory,
                   find_generic_set_factory)
 from .path import FileWidgetFactory, DirectoryWidgetFactory
+from .openkeycontroller import OpenKeyControllerWidgetFactory
 # Above imports also import the module. This hides
 # the corresponding builtins => remove them
 del str, bool, literal, list, set, path
@@ -423,4 +425,8 @@ WidgetFactory.widget_factory_types = {
     'Controller': ControllerWidgetFactory,
     'File': FileWidgetFactory,
     'Directory': DirectoryWidgetFactory,
+    'OpenKeyController': OpenKeyControllerWidgetFactory,
+    'OpenKeyController[str]': OpenKeyControllerWidgetFactory,
+    'OpenKeyDictController': OpenKeyControllerWidgetFactory,
+    'OpenKeyDictController[str]': OpenKeyControllerWidgetFactory,
 }
