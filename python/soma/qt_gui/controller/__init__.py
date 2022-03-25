@@ -420,7 +420,7 @@ WidgetFactory.widget_factory_types = {
     'set[int]': SetIntWidgetFactory,
     'set[float]': SetFloatWidgetFactory,
     'set': find_generic_set_factory,
-    'controller': ControllerWidgetFactory,
+    'Controller': ControllerWidgetFactory,
     'File': FileWidgetFactory,
     'Directory': DirectoryWidgetFactory,
 }
