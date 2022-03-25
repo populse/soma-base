@@ -584,7 +584,7 @@ class DictControllerBase(dict):
         return self.field(key) is not None
 
     def __len__(self):
-        return len(self.fields())
+        return len(list(self.fields()))
 
     def __iter__(self):
         for field in self.fields():
@@ -600,8 +600,10 @@ class OpenKeyControllerMeta(ControllerMeta):
             return cls
         result = cls._cache.get(value_type)
         if result is None:
-            result = type('OpenKeyController_{}'.format(value_type.__name__), 
+            result = type('OpenKeyController[{}]'.format(value_type.__name__),
                           (OpenKeyController,), {'_value_type': value_type}, ignore_metaclass=False)
+            result.__name__ = 'OpenKeyController'
+            result.__args__ = (value_type, )
             cls._cache[value_type] = result
         return result
         
@@ -662,8 +664,10 @@ class OpenKeyDictControllerMeta(OpenKeyControllerMeta):
             return cls
         result = cls._cache.get(value_type)
         if result is None:
-            result = type('OpenKeyDictController_{}'.format(value_type.__name__),
+            result = type('OpenKeyDictController[{}]'.format(value_type.__name__),
                           (OpenKeyDictController,), {'_value_type': value_type}, ignore_metaclass=False)
+            result.__name__ = 'OpenKeyDictController'
+            result.__args__ = (value_type, )
             cls._cache[value_type] = result
         return result
 
