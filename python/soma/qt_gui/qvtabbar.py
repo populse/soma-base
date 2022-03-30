@@ -15,6 +15,7 @@ class QVTabBar(Qt.QTabBar):
         super(QVTabBar, self).__init__(parent)
         self.tab_width = tab_width
         self.tab_height = tab_height
+        self._first_paint = True
 
     def tabSizeHint(self, index):
         s = Qt.QTabBar.tabSizeHint(self, index)
@@ -26,6 +27,10 @@ class QVTabBar(Qt.QTabBar):
         return s
 
     def paintEvent(self, event):
+        if self._first_paint:
+            self._first_paint = True
+            self.update_buttons()
+
         painter = Qt.QStylePainter(self)
         opt = Qt.QStyleOptionTab()
 
@@ -47,6 +52,7 @@ class QVTabBar(Qt.QTabBar):
             painter.drawControl(Qt.QStyle.CE_TabBarTabLabel, opt)
             painter.restore()
 
+
         Qt.QWidget.paintEvent(self, event)
 
     def resize_optimal(self):
@@ -54,6 +60,20 @@ class QVTabBar(Qt.QTabBar):
         width = max([s.width() for s in sizes])
         height = sum([s.height() for s in sizes])
         self.resize(width, height)
+
+    def update_buttons(self):
+        # check if tab is closable
+        if self.tabsClosable():
+            opt = Qt.QStyleOptionTab()
+
+            for i in range(self.count()):
+                self.initStyleOption(opt, i)
+                optRect = opt.rect;
+                optRect.setX(optRect.width() - 14)  # set X pos of close button
+                optRect.setY(optRect.y() + 8)  # calcs the Y pos of close button
+                optRect.setSize(Qt.QSize(12, 12))
+                self.tabButton(i, Qt.QTabBar.RightSide).setGeometry(optRect)
+
 
 
 class QVTabWidget(Qt.QTabWidget):
@@ -72,3 +92,6 @@ class QVTabWidget(Qt.QTabWidget):
         self.tabBar().tab_height = height
         self.tabBar().resize_optimal()
         self.resize(self.sizeHint())
+
+    def update_buttons(self):
+        self.tabBar().update_buttons()
