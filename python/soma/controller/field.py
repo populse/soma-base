@@ -144,7 +144,11 @@ def type_default_value(type):
     f = type_default_value_functions.get(main_type)
     if f:
         return f(type)
-    raise TypeError(f'Cannot get default value for type {type_str}')
+    try:
+        # try default type constructor
+        return type()
+    except Exception:
+        raise TypeError(f'Cannot get default value for type {full_type}')
 
 
 class Field:

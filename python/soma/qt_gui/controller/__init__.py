@@ -2,9 +2,70 @@
 
 from soma.qt_gui.qt_backend import Qt, QtCore
 from soma.undefined import undefined
-from soma.controller import parse_type_str
-from soma.controller.field import subtypes
+from soma.controller import (parse_type_str, OpenKeyController,
+                             type_default_value)
+from soma.controller.field import subtypes, type_str
 from ..collapsable import CollapsableWidget
+from functools import partial
+
+class EditableLabel(Qt.QWidget):
+    def __init__(self, label):
+        super().__init__()
+        layout = Qt.QHBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        self.setLayout(layout)
+        self.label = label
+        layout.addWidget(label)
+        self.buttons = Qt.QWidget()
+        blayout = Qt.QHBoxLayout()
+        blayout.setContentsMargins(0, 0, 0, 0)
+        blayout.setSpacing(0)
+        self.buttons.setLayout(blayout)
+        edit = Qt.QToolButton(self.buttons)
+        edit.setText('✎')
+        blayout.addWidget(edit)
+        delete = Qt.QToolButton(self.buttons)
+        delete.setText('✖')
+        blayout.addWidget(delete)
+        sz = self.label.sizeHint()
+        sh = self.buttons.minimumSizeHint()
+        mw = sz.width()
+        mh = sz.height()
+        bw = sh.width()
+        bh = sh.height()
+        bw = min(bw, 30)  # arbitrary max width
+        mw = max(mw, bw)
+        bh = min(mh, bh)
+        if mw != sz.width():
+            self.label.setMinimumWidth(mw)
+
+        #self.buttons.setGeometry(mw - bw, 0, bw, bh)
+        self.buttons.setGeometry(0, 0, bw, bh)
+        self.buttons.setParent(self)
+        self.buttons.hide()
+
+        self.edit_button = edit
+        self.del_button = delete
+
+        #self.setFixedSize(mw, mh)
+
+    def enterEvent(self, event):
+        self.buttons.show()
+        event.accept()
+
+    def leaveEvent(self, event):
+        self.buttons.hide()
+        event.accept()
+
+    #def resizeEvent(self, event):
+        #sz = self.label.size()
+        #sh = self.buttons.size()
+        ##self.buttons.setGeometry(sz.width() - sh.width(), 0,
+                                 ##sh.width(), sh.height())
+        #self.buttons.setGeometry(0, 0,
+                                 #sh.width(), sh.height())
+        #super().resizeEvent(event)
+
 
 class ScrollableWidgetsGrid(Qt.QScrollArea):
     """
@@ -26,19 +87,75 @@ class ScrollableWidgetsGrid(Qt.QScrollArea):
         self.content_widget.setLayout(hlayout)
         self.setWidget(self.content_widget)
         self.setWidgetResizable(True)
+        # QGridLayout.rowCount() is never decreasing, apparently: we need to
+        self._rowcount = 0
 
-    def add_widget_row(self, first_widget, second_widget=None):
-        row = self.content_layout.rowCount()
-        if second_widget is None:
-            self.content_layout.addWidget(first_widget, row, 0, 1, 2)
+    def add_widget_row(self, first_widget, second_widget=None,
+                       label_index=None, field_name=None):
+        '''
+        Add one or two widgets in a row
+
+        If the widget is not in read-only mode, and if it is marked as
+        editable, one of the widgets can be considered to be the label, and
+        will get edit/close buttons.
+
+        If label_index is not None, then it tells which of the widgets is the
+        "label" widget. If negative, then no widget will be the label. If None
+        (the default) and two widgets are passed, then the first one is the
+        label.
+
+        If a label widget is considered, then the associated field name (for
+        callbacks) is given by the field_name parameter. If not given, then the
+        label widget is supposed to be a QLabel and its text() will be used as
+        field name.
+
+        If such a label with buttons is created, it is returned by the
+        function.
+        '''
+        #row = self.content_layout.rowCount()
+        row = self._rowcount
+        result = None
+
+        if label_index is None and second_widget is not None:
+            label_index = 0
+        label_widget = None
+        if label_index == 0:
+            label_widget = first_widget
+        elif label_widget == 1 and second_widget is not None:
+            label_widget = second_widget
+
+        if label_widget and not getattr(self, 'readonly', False) \
+                and getattr(self, 'editable', False):
+            label = EditableLabel(label_widget)
+            if field_name is None:
+                if hasattr(label_widget, 'text'):
+                    field_name = label_widget.text()
+                else:
+                    print('no text in first widget')
+                    field_name = None
+            label.edit_button.clicked.connect(
+                partial(self.edit_field_name, field_name))
+            label.del_button.clicked.connect(
+                partial(self.remove_field, field_name))
+            result = label
         else:
-            self.content_layout.addWidget(first_widget, row, 0, 1, 1)
+            label = first_widget
+
+        if second_widget is None:
+            self.content_layout.addWidget(label, row, 0, 1, 2)
+        else:
+            self.content_layout.addWidget(label, row, 0, 1, 1)
             self.content_layout.addWidget(second_widget, row, 1, 1, 1)
 
+        self._rowcount += 1
+        return result  # return the new label widget if one is created
+
     def remove_widget_row(self):
-        row = self.content_layout.rowCount()-1
+        #row = self.content_layout.rowCount()-1
+        row = self._rowcount
         for column in range(self.content_layout.columnCount()):
             self.content_layout.removeItem(self.content_layout.itemAtPosition(row, column))
+        self._rowcount -= 1
 
 class WidgetsGrid(Qt.QFrame):
     """
@@ -51,15 +168,66 @@ class WidgetsGrid(Qt.QFrame):
         self.depth = depth
         super().__init__(*args, **kwargs)
         self.content_layout = Qt.QGridLayout(self)
+        self.content_layout.setContentsMargins(0, 0, 0, 0)
   
 
-    def add_widget_row(self, first_widget, second_widget=None):
+    def add_widget_row(self, first_widget, second_widget=None,
+                       label_index=None, field_name=None):
+        '''
+        Add one or two widgets in a row
+
+        If the widget is not in read-only mode, and if it is marked as
+        editable, one of the widgets can be considered to be the label, and
+        will get edit/close buttons.
+
+        If label_index is not None, then it tells which of the widgets is the
+        "label" widget. If negative, then no widget will be the label. If None
+        (the default) and two widgets are passed, then the first one is the
+        label.
+
+        If a label widget is considered, then the associated field name (for
+        callbacks) is given by the field_name parameter. If not given, then the
+        label widget is supposed to be a QLabel and its text() will be used as
+        field name.
+
+        If such a label with buttons is created, it is returned by the
+        function.
+        '''
         row = self.content_layout.rowCount()
-        if second_widget is None:
-            self.content_layout.addWidget(first_widget, row, 0, 1, 2)
+        result = None
+
+        if label_index is None and second_widget is not None:
+            label_index = 0
+        label_widget = None
+        if label_index == 0:
+            label_widget = first_widget
+        elif label_widget == 1 and second_widget is not None:
+            label_widget = second_widget
+
+        if label_widget and not getattr(self, 'readonly', False) \
+                and getattr(self, 'editable', False):
+            label = EditableLabel(label_widget)
+            if field_name is None:
+                if hasattr(label_widget, 'text'):
+                    field_name = label_widget.text()
+                else:
+                    print('no text in first widget')
+                    field_name = None
+            label.edit_button.clicked.connect(
+                partial(self.edit_field_name, field_name))
+            label.del_button.clicked.connect(
+                partial(self.remove_field, field_name))
+            result = label
         else:
-            self.content_layout.addWidget(first_widget, row, 0, 1, 1)
+            label = first_widget
+
+        if second_widget is None:
+            self.content_layout.addWidget(label, row, 0, 1, 2)
+        else:
+            self.content_layout.addWidget(label, row, 0, 1, 1)
             self.content_layout.addWidget(second_widget, row, 1, 1, 1)
+
+        return result  # return the new label widget if one is created
 
     def remove_widget_row(self):
         row = self.content_layout.rowCount()-1
@@ -103,24 +271,38 @@ class WidgetFactory(Qt.QObject):
     
     inner_item_changed = QtCore.Signal(int)
 
-    def __init__(self, controller_widget, parent_interaction):
+    def __init__(self, controller_widget, parent_interaction, readonly=False):
         super().__init__()
+        self.readonly = readonly
         self.controller_widget = controller_widget
         self.parent_interaction = parent_interaction
 
 
     @classmethod
-    def find_factory(cls, type_str, default=None):
-        subtypes = []
-        factory_finder = cls.widget_factory_types.get(type_str)
-        if factory_finder is None:
-            type_str, subtypes = parse_type_str(type_str)
-            factory_finder = cls.widget_factory_types.get(type_str)
+    def find_factory(cls, type_id, default=None):
+        todo = [type_id]
+        factory_finder = None
+        # find a factory for the type or one of its parent types
+        while factory_finder is None and todo:
+            type_id = todo.pop(0)
+            if isinstance(type_id, str):
+                type_s = type_id
+            else:
+                type_s = type_str(type_id)
+            subtypes = []
+            factory_finder = cls.widget_factory_types.get(type_s)
+            if factory_finder is None:
+                type_s, subtypes = parse_type_str(type_s)
+                factory_finder = cls.widget_factory_types.get(type_s)
+            if factory_finder is None and isinstance(type_id, type):
+                todo += list(type_id.__bases__)
+
         if factory_finder is not None:
-            if isinstance(factory_finder, type) and issubclass(factory_finder, WidgetFactory):
+            if isinstance(factory_finder, type) and issubclass(factory_finder,
+                                                               WidgetFactory):
                 return factory_finder
             else:
-                factory_class = factory_finder(type_str, subtypes)
+                factory_class = factory_finder(type_s, subtypes)
                 if factory_class is not None:
                     return factory_class
         return default
@@ -246,6 +428,8 @@ class DefaultWidgetFactory(WidgetFactory):
         self.text_widget.setStyleSheet('QLineEdit { color: red; }')
         self.text_widget.setReadOnly(True)
         self.text_widget.setToolTip(f'No graphical editor found for type {self.parent_interaction.type_str}')
+        if self.readonly:
+            self.text_widget.setEnabled(False)
 
         self.parent_interaction.on_change_add(self.update_gui)
         self.update_gui()
@@ -266,29 +450,60 @@ class DefaultWidgetFactory(WidgetFactory):
 
 
 class BaseControllerWidget:
-    def __init__(self, controller, output=None, user_level=None, depth=0,
+    def __init__(self, controller, output=None, user_level=None,
+                 readonly=False, depth=0,
                  *args, **kwargs):
         ''' ...
 
         If output is None (default), both inputs and outputs are displayed.
         Otherwise only inputs (output=False) or outputs (output=True) are.
         '''
-        super().__init__(depth=depth, *args, **kwargs)
+        try:
+            # we cannot know if another inheritance will need args or not...
+            super().__init__(depth=depth, *args, **kwargs)
+        except TypeError:
+            super().__init__()
         self.allow_update_gui = True
         self.depth = depth
         self.controller = controller
         self.output = output
         self.user_level = user_level
+        self.readonly = readonly
+        if not readonly and isinstance(controller, OpenKeyController):
+            self.editable = True
         self.build()
         controller.on_inner_value_change.add(self.update_inner_gui)
         controller.on_fields_change.add(self.update_fields)
 
     def __del__(self):
-        # print('del BaseControllerWidget', self)
         self.disconnect()
 
     def build(self):
         controller = self.controller
+
+        self.factories = {}
+        if not self.readonly and isinstance(controller, OpenKeyController) \
+                and not isinstance(self, WidgetsGrid):
+            self.keys_widget = Qt.QWidget()
+            l = Qt.QHBoxLayout()
+            l.setContentsMargins(0, 0, 0, 0)
+            l.addStretch(1)
+            plus = Qt.QToolButton(self.keys_widget)
+            plus.setText('+')
+            #plus.setSizePolicy(Qt.QSizePolicy.Fixed, Qt.QSizePolicy.Fixed)
+            l.addWidget(plus)
+            self.keys_widget.setLayout(l)
+            self.add_widget_row(self.keys_widget)
+            plus.clicked.connect(self.add_item)
+
+            class ButtonFactory(WidgetFactory):
+                def delete_widgets(self):
+                    self.controller_widget.remove_widget_row()
+                    del self.controller_widget.keys_widget
+
+            factory = ButtonFactory(self, None, readonly=False)
+            self.factories['button'] = factory
+
         # Select and sort fields
         fields = []
         for field in controller.fields():
@@ -307,7 +522,6 @@ class BaseControllerWidget:
         self.groups = {
             None: self,
         }
-        self.factories = {}
         for field in self.fields:
             group = field.metadata('group', None)
             group_content_widget = self.groups.get(group)
@@ -319,10 +533,13 @@ class BaseControllerWidget:
                 self.add_widget_row(self.group_widget)
                 self.groups[group] = group_content_widget
 
-            type_str = field.type_str()
-            factory_type = WidgetFactory.find_factory(type_str, DefaultWidgetFactory)
-            factory = factory_type(controller_widget=group_content_widget,
-                                   parent_interaction=ControllerFieldInteraction(controller, field, self.depth))
+            type_id = field.type
+            factory_type = WidgetFactory.find_factory(
+                type_id, DefaultWidgetFactory)
+            factory = factory_type(
+                controller_widget=group_content_widget,
+                parent_interaction=ControllerFieldInteraction(
+                    controller, field, self.depth), readonly=self.readonly)
             self.factories[field._dataclass_field] = factory
             factory.create_widgets()
 
@@ -359,10 +576,100 @@ class BaseControllerWidget:
             self.controller.on_inner_value_change.add(self.update_inner_gui)
             self.controller.on_fields_change.add(self.update_fields)
 
+    def ask_new_key_name(self, init_text=None):
+        dialog = Qt.QDialog()
+        layout = Qt.QVBoxLayout()
+        dialog.setLayout(layout)
+
+        layout.addWidget(Qt.QLabel('field:'))
+        le = Qt.QLineEdit()
+        if init_text:
+            le.setText(init_text)
+        layout.addWidget(le)
+
+        blay = Qt.QHBoxLayout()
+        layout.addLayout(blay)
+        ok = Qt.QPushButton('OK')
+        blay.addWidget(ok)
+        cancel = Qt.QPushButton('Cancel')
+        blay.addWidget(cancel)
+        ok.clicked.connect(dialog.accept)
+        cancel.clicked.connect(dialog.reject)
+        ok.setDefault(True)
+
+        res = dialog.exec_()
+        if res == Qt.QDialog.Accepted:
+            name = le.text()
+            if name == '' or '.' in name or '/' in name or '-' in name \
+                    or ' ' in name or name[0] in '0123456789':
+                print('invalid name', name)
+                return None
+            if self.controller.field(name) is not None:
+                print('field', name, 'already exists.')
+                return None
+            return name
+        return None
+
+    def ask_existing_key_name(self):
+        dialog = Qt.QDialog()
+        layout = Qt.QVBoxLayout()
+        dialog.setLayout(layout)
+
+        layout.addWidget(Qt.QLabel('field:'))
+        le = Qt.QLineEdit()
+        layout.addWidget(le)
+
+        blay = Qt.QHBoxLayout()
+        layout.addLayout(blay)
+        ok = Qt.QPushButton('OK')
+        blay.addWidget(ok)
+        cancel = Qt.QPushButton('Cancel')
+        blay.addWidget(cancel)
+        ok.clicked.connect(dialog.accept)
+        cancel.clicked.connect(dialog.reject)
+        ok.setDefault(True)
+
+        res = dialog.exec_()
+        if res == Qt.QDialog.Accepted:
+            name = le.text()
+            if self.controller.field(name) is None:
+                print('field', name, 'does not exist.')
+                return None
+            return name
+        return None
+
+    def add_item(self):
+        new_key = self.ask_new_key_name()
+        if not new_key:
+            return
+        controller = self.controller
+        item_type = controller._value_type
+        new_value = type_default_value(item_type)
+        setattr(controller, new_key, new_value)
+
+    def remove_item(self):
+        key = self.ask_existing_key_name()
+        if not key:
+            return
+        value = getattr(self.controller, key, undefined)
+        if value is not undefined and value:
+            delattr(self.controller, key)
+
+    def edit_field_name(self, field):
+        new_field_name = self.ask_new_key_name(field)
+        if new_field_name:
+            old_field = self.controller.field(field)
+            value = getattr(self.controller, field, undefined)
+            self.controller.remove_field(field)
+            self.controller.add_field(new_field_name, old_field)
+            setattr(self.controller, new_field_name, value)
+
+    def remove_field(self, field):
+        self.controller.remove_field(field)
+
 
 class ControllerWidget(BaseControllerWidget, ScrollableWidgetsGrid):
     pass
-
 
 class ControllerSubwidget(BaseControllerWidget, WidgetsGrid):
     pass
@@ -373,18 +680,32 @@ class ControllerWidgetFactory(WidgetFactory):
         controller = self.parent_interaction.get_value()
         if controller is undefined:
             controller = self.parent_interaction.field.type()
-        self.inner_widget = ControllerSubwidget(controller, depth=self.controller_widget.depth + 1)
+        self.inner_widget = ControllerSubwidget(
+            controller, depth=self.controller_widget.depth + 1,
+            readonly=self.readonly)
         label = self.parent_interaction.get_label()
-        self.widget = CollapsableWidget(self.inner_widget, label=label, expanded=(self.parent_interaction.depth==0), 
-                                        parent=self.controller_widget)
+        self.widget = CollapsableWidget(
+            self.inner_widget, label=label,
+            expanded=(self.parent_interaction.depth==0),
+            parent=self.controller_widget)
         self.inner_widget.setContentsMargins(self.widget.toggle_button.sizeHint().height(),0,0,0)
       
-        self.controller_widget.add_widget_row(self.widget)
+        self.controller_widget.add_widget_row(
+            self.widget, label_index=0,
+            field_name=self.parent_interaction.field.name)
+        self.parent_interaction.on_change_add(self.update_gui)
 
     def delete_widgets(self):
+        self.parent_interaction.on_change_remove(self.update_gui)
         self.controller_widget.remove_widget_row()
+        self.inner_widget.clear()
+        self.inner_widget.disconnect()
         self.widget.deleteLater()
         self.inner_widget.deleteLater()
+
+    def update_gui(self):
+        self.delete_widgets()
+        self.create_widgets()
 
 
 from .str import StrWidgetFactory
@@ -400,6 +721,7 @@ from .set import (SetStrWidgetFactory,
                   find_generic_set_factory)
 from .path import FileWidgetFactory, DirectoryWidgetFactory
 from .openkeycontroller import OpenKeyControllerWidgetFactory
+from .engineconfiguration import EngineConfigurationWidgetFactory
 # Above imports also import the module. This hides
 # the corresponding builtins => remove them
 del str, bool, literal, list, set, path
@@ -429,4 +751,8 @@ WidgetFactory.widget_factory_types = {
     'OpenKeyController[str]': OpenKeyControllerWidgetFactory,
     'OpenKeyDictController': OpenKeyControllerWidgetFactory,
     'OpenKeyDictController[str]': OpenKeyControllerWidgetFactory,
+    'ConfigurationLayer': OpenKeyControllerWidgetFactory,
+    'EngineConfiguration': EngineConfigurationWidgetFactory,
+    'Controller[capsul.config.configuration.EngineConfiguration]':
+        EngineConfigurationWidgetFactory,
 }

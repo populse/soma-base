@@ -13,6 +13,8 @@ class StrWidgetFactory(WidgetFactory):
         label = self.parent_interaction.get_label()
         self.label_widget = Qt.QLabel(label, parent=self.controller_widget)
         self.text_widget = TimeredQLineEdit(parent=self.controller_widget)
+        if self.readonly:
+            self.text_widget.setReadOnly(True)
 
         self.parent_interaction.on_change_add(self.update_gui)
         self.update_gui()
