@@ -450,7 +450,7 @@ class DefaultWidgetFactory(WidgetFactory):
 
 
 class BaseControllerWidget:
-    def __init__(self, controller, output=None, user_level=None,
+    def __init__(self, controller, output=None, user_level=0,
                  readonly=False, depth=0,
                  *args, **kwargs):
         ''' ...
