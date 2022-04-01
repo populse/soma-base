@@ -721,7 +721,6 @@ from .set import (SetStrWidgetFactory,
                   find_generic_set_factory)
 from .path import FileWidgetFactory, DirectoryWidgetFactory
 from .openkeycontroller import OpenKeyControllerWidgetFactory
-from .engineconfiguration import EngineConfigurationWidgetFactory
 # Above imports also import the module. This hides
 # the corresponding builtins => remove them
 del str, bool, literal, list, set, path
