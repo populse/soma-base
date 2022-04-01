@@ -751,8 +751,4 @@ WidgetFactory.widget_factory_types = {
     'OpenKeyController[str]': OpenKeyControllerWidgetFactory,
     'OpenKeyDictController': OpenKeyControllerWidgetFactory,
     'OpenKeyDictController[str]': OpenKeyControllerWidgetFactory,
-    'ConfigurationLayer': OpenKeyControllerWidgetFactory,
-    'EngineConfiguration': EngineConfigurationWidgetFactory,
-    'Controller[capsul.config.configuration.EngineConfiguration]':
-        EngineConfigurationWidgetFactory,
 }
