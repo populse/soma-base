@@ -10,6 +10,7 @@ from pydantic.dataclasses import dataclass
 
 from soma.undefined import undefined
 from .field import field, Field
+import sys
 
 
 class _ModelsConfig:
@@ -45,7 +46,23 @@ class Event:
         conventions.
         '''
         for callback in self.callbacks:
-            callback(*args, **kwargs)
+            try:
+                callback(*args, **kwargs)
+            except Exception as e:
+                print('Exception in Event callback:', callback,
+                      file=sys.stderr)
+                print(args, kwargs, file=sys.stderr)
+                # debug GUI deletions - most common failure case
+                if hasattr(callback, '__self__'):
+                    obj = callback.__self__
+                    import sip
+                    if isinstance(obj, sip.simplewrapper) \
+                            and sip.isdeleted(obj):
+                        print('sip object deleted:', id(obj), obj,
+                              file=sys.stderr)
+                        print('all callbacks:', self.callbacks,
+                              file=sys.stderr)
+                raise
     
     @property
     def has_callback(self):
@@ -306,7 +323,12 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
         super().__getattribute__('_dyn_fields')[name] = field_instance
         if getattr(self, 'enable_notification', False) \
                 and self.on_fields_change.has_callback:
-            self.on_fields_change.fire()
+            try:
+                self.on_fields_change.fire()
+            except Exception as e:
+                print('Exception in Event.fire:', self, file=sys.stderr)
+                print(self.on_fields_change, file=sys.stderr)
+                raise
         
     def remove_field(self, name):
         ''' Remove the given field
