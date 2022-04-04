@@ -154,7 +154,10 @@ class ScrollableWidgetsGrid(Qt.QScrollArea):
         #row = self.content_layout.rowCount()-1
         row = self._rowcount
         for column in range(self.content_layout.columnCount()):
-            self.content_layout.removeItem(self.content_layout.itemAtPosition(row, column))
+            item = self.content_layout.itemAtPosition(row, column)
+            self.content_layout.removeItem(item)
+            if item is not None and item.widget() is not None:
+                item.widget().deleteLater()
         self._rowcount -= 1
 
 class WidgetsGrid(Qt.QFrame):
