@@ -232,7 +232,10 @@ class WidgetsGrid(Qt.QFrame):
     def remove_widget_row(self):
         row = self.content_layout.rowCount()-1
         for column in range(self.content_layout.columnCount()):
-            self.content_layout.removeItem(self.content_layout.itemAtPosition(row, column))
+            item = self.content_layout.itemAtPosition(row, column)
+            self.content_layout.removeItem(item)
+            if item is not None and item.widget() is not None:
+                item.widget().deleteLater()
 
 
 class GroupWidget(Qt.QFrame):
@@ -573,8 +576,8 @@ class BaseControllerWidget:
 
     def disconnect(self):
         if hasattr(self, 'controller'):
-            self.controller.on_inner_value_change.add(self.update_inner_gui)
-            self.controller.on_fields_change.add(self.update_fields)
+            self.controller.on_inner_value_change.remove(self.update_inner_gui)
+            self.controller.on_fields_change.remove(self.update_fields)
 
     def ask_new_key_name(self, init_text=None):
         dialog = Qt.QDialog()
