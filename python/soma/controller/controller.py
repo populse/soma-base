@@ -257,13 +257,16 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
             return EmptyController()
         return super().__new__(cls)
     
-    def __init__(self, **kwargs):
+    def __init__(self, _set_attrs={}, **kwargs):
         object.__setattr__(self,'_dyn_fields', {})
+        # self.__dict__ content is replaced somewhere in the initialization
+        # process. Therefore, it is saved here and restored just after
+        # initialization.
+        d =  self.__dict__
         super().__init__()
-        object.__setattr__(self,'_dyn_fields', {})
+        self.__dict__.update(d)
         for k, v in kwargs.items():
             setattr(self, k, v)
-
 
         super().__setattr__('on_attribute_change', AttributeValueEvent())
         super().__setattr__('on_inner_value_change',  Event())
