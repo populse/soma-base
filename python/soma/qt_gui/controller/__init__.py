@@ -8,6 +8,7 @@ from soma.controller.field import subtypes, type_str
 from ..collapsable import CollapsableWidget
 from functools import partial
 
+
 class EditableLabel(Qt.QWidget):
     def __init__(self, label):
         super().__init__()
@@ -319,6 +320,12 @@ class WidgetFactory(Qt.QObject):
                     return factory_class
         return default
 
+    def expanded_items(self):
+        return False
+
+    def set_expanded_items(self, exp_value, silent=False):
+        pass
+
 
 class ControllerFieldInteraction:
     def __init__(self, controller, field, depth):
@@ -570,8 +577,10 @@ class BaseControllerWidget:
     def update_fields(self):
         if self.allow_update_gui:
             self.allow_update_gui = False
+            expanded = self.expanded_items()
             self.clear()
             self.build()
+            self.set_expanded_items(expanded, silent=True)
             self.allow_update_gui = True
 
     def clear(self):
@@ -679,6 +688,46 @@ class BaseControllerWidget:
     def remove_field(self, field):
         self.controller.remove_field(field)
 
+    def expanded_items(self):
+        ''' Get expanded items and sub-items, recursively as a dict
+
+        The returned dict keys are fields names. Values are either True
+        (expanded), False (collapsed), or a dict with expanded stated of sub-
+        fields.
+        '''
+        expanded = {}
+        for field, factory in self.factories.items():
+            expanded[field.name] = factory.expanded_items()
+        return expanded
+
+    def set_expanded_items(self, expanded, silent=False):
+        ''' Set items and sub-items expanded states
+
+        Parameters
+        ----------
+        expanded: dict
+            {field_name: state} dict. A state items may be either a bool (True
+            or False), meaning that the field is expanded or not, and does not
+            assign sub-items state; or it can be a dict, meaning that the field
+            item is expanded, and specifies sub-items states when the field has
+            items.
+        silent: bool
+            if silent, missing fields (items in the expanded dict which do not
+            exist in the controller) will be ignored silently.
+        '''
+        for key, exp_value in expanded.items():
+            item_field = self.controller.field(key)
+            if item_field is None:
+                if not silent:
+                    print('no field', key)
+                continue
+            factory = self.factories.get(item_field._dataclass_field)
+            if factory is None:
+                if not silent:
+                    print('no factory for field', key)
+                continue
+            factory.set_expanded_items(exp_value, silent=silent)
+
 
 class ControllerWidget(BaseControllerWidget, ScrollableWidgetsGrid):
     pass
@@ -719,6 +768,22 @@ class ControllerWidgetFactory(WidgetFactory):
         self.delete_widgets()
         self.create_widgets()
 
+    def set_expanded_items(self, exp_value, silent=False):
+        if isinstance(exp_value, dict):
+            self.widget.toggle_expand(True)
+            self.inner_widget.set_expanded_items(exp_value, silent=silent)
+        else:
+            expanded = bool(exp_value)
+            self.widget.toggle_expand(exp_value)
+
+    def expanded_items(self):
+        expanded = {}
+        if not self.widget.toggle_button.isChecked():
+            expanded = False
+        else:
+            expanded = self.inner_widget.expanded_items()
+        return expanded
+
 
 from .str import StrWidgetFactory
 from .bool import BoolWidgetFactory
@@ -736,7 +801,7 @@ from .path import FileWidgetFactory, DirectoryWidgetFactory
 from .openkeycontroller import OpenKeyControllerWidgetFactory
 # Above imports also import the module. This hides
 # the corresponding builtins => remove them
-del str, bool, literal, list, set, path
+del str, bool, literal, list, set, path, dict
 
 WidgetFactory.widget_factory_types = {
     'str': StrWidgetFactory,
