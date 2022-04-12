@@ -154,6 +154,11 @@ class ListStrWidgetFactory(WidgetFactory):
             self.parent_interaction.set_value(self.convert_from_list(values))
             self.update_gui()
 
+    def expanded_items(self):
+        return self.widget.toggle_button.isChecked()
+
+    def set_expanded_items(self, exp_values, silent=False):
+        self.widget.toggle_expand(bool(exp_values))
 
 
 class ListIntWidgetFactory(ListStrWidgetFactory):
@@ -262,3 +267,9 @@ class ListAnyWidgetFactory(WidgetFactory):
             values = values[:-1]
             self.parent_interaction.set_value(self.convert_from_list(values))
             self.update_gui()
+
+    def expanded_items(self):
+        return self.widget.toggle_button.isChecked()
+
+    def set_expanded_items(self, exp_values, silent=False):
+        self.widget.toggle_expand(bool(exp_values))
