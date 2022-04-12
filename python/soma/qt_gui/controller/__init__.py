@@ -27,6 +27,9 @@ class EditableLabel(Qt.QWidget):
         delete = Qt.QToolButton(self.buttons)
         delete.setText('✖')
         blayout.addWidget(delete)
+        hide = Qt.QToolButton(self.buttons)
+        hide.setText('↸')
+        blayout.addWidget(hide)
         sz = self.label.sizeHint()
         sh = self.buttons.minimumSizeHint()
         mw = sz.width()
@@ -46,6 +49,9 @@ class EditableLabel(Qt.QWidget):
 
         self.edit_button = edit
         self.del_button = delete
+        self.hide_button = hide
+
+        self.hide_button.clicked.connect(self.buttons.hide)
 
         #self.setFixedSize(mw, mh)
 
@@ -725,6 +731,7 @@ from .set import (SetStrWidgetFactory,
                   SetIntWidgetFactory,
                   SetFloatWidgetFactory,
                   find_generic_set_factory)
+from .dict import DictWidgetFactory
 from .path import FileWidgetFactory, DirectoryWidgetFactory
 from .openkeycontroller import OpenKeyControllerWidgetFactory
 # Above imports also import the module. This hides
@@ -749,6 +756,8 @@ WidgetFactory.widget_factory_types = {
     'set[int]': SetIntWidgetFactory,
     'set[float]': SetFloatWidgetFactory,
     'set': find_generic_set_factory,
+    'dict': DictWidgetFactory,
+    'dict[str, str]': DictWidgetFactory,
     'Controller': ControllerWidgetFactory,
     'File': FileWidgetFactory,
     'Directory': DirectoryWidgetFactory,
