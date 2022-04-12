@@ -202,6 +202,7 @@ class ListAnyWidgetFactory(WidgetFactory):
         self.widget = CollapsableWidget(self.items_widget, label=label, expanded=(self.items_widget.depth==0), 
             buttons_label=['+', '-'], parent=self.controller_widget)
         self.widget.setContentsMargins(0, 0, 0, 0)
+        self.widget.setToolTip(self.parent_interaction.get_doc())
         self.items_widget.setContentsMargins(self.widget.toggle_button.sizeHint().height(),0,0,0)
         self.item_factories = []
 

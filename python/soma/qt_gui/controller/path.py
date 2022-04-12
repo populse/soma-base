@@ -18,6 +18,7 @@ class FileWidgetFactory(StrWidgetFactory):
     def create_widgets(self):
         label = self.parent_interaction.get_label()
         self.label_widget = Qt.QLabel(label, parent=self.controller_widget)
+        self.label_widget.setToolTip(self.parent_interaction.get_doc())
         self.widget = Qt.QWidget(parent=self.controller_widget)
         self.layout = Qt.QHBoxLayout(self.widget)
         self.layout.setContentsMargins(0,0,0,0)
@@ -90,4 +91,3 @@ class DirectoryWidgetFactory(FileWidgetFactory):
             Qt.QFileDialog.ShowDirsOnly
                 | Qt.QFileDialog.DontUseNativeDialog)
         self.parent_interaction.set_value(folder)
-

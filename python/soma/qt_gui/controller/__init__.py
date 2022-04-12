@@ -4,9 +4,10 @@ from soma.qt_gui.qt_backend import Qt, QtCore
 from soma.undefined import undefined
 from soma.controller import (parse_type_str, OpenKeyController,
                              type_default_value)
-from soma.controller.field import subtypes, type_str
+from soma.controller.field import subtypes, type_str, Field
 from ..collapsable import CollapsableWidget
 from functools import partial
+import html
 
 
 class EditableLabel(Qt.QWidget):
@@ -380,6 +381,13 @@ class ControllerFieldInteraction:
     def inner_value_changed(self, indices):
         self.controller.on_inner_value_change.fire([self.field] + indices)
 
+    def get_doc(self):
+        doc = '<b>type:</b> %s' % str(self.type_str)
+        field_doc = getattr(self.field, 'doc', None)
+        if field_doc:
+            doc += '<br/>%s' % html.escape(field_doc)
+        return doc
+
 class ListItemInteraction:
     def __init__(self, parent_interaction, index):
         self.parent_interaction = parent_interaction
@@ -438,6 +446,9 @@ class ListItemInteraction:
     def inner_value_changed(self, indices):
         self.parent_interaction.inner_value_changed([self.index] + indices)
 
+    def get_doc(self):
+        doc = '<b>item type:</b> %s' % str(self.type_str)
+        return doc
 
  
 
@@ -767,6 +778,7 @@ class ControllerWidgetFactory(WidgetFactory):
             self.inner_widget, label=label,
             expanded=(self.parent_interaction.depth==0),
             parent=self.controller_widget)
+        self.widget.setToolTip(self.parent_interaction.get_doc())
         self.inner_widget.setContentsMargins(self.widget.toggle_button.sizeHint().height(),0,0,0)
       
         self.controller_widget.add_widget_row(
@@ -839,8 +851,8 @@ WidgetFactory.widget_factory_types = {
     'set[int]': SetIntWidgetFactory,
     'set[float]': SetFloatWidgetFactory,
     'set': find_generic_set_factory,
-    'dict': DictWidgetFactory,
-    'dict[str, str]': DictWidgetFactory,
+    #'dict': DictWidgetFactory,
+    #'dict[str, str]': DictWidgetFactory,
     'Controller': ControllerWidgetFactory,
     'File': FileWidgetFactory,
     'Directory': DirectoryWidgetFactory,
