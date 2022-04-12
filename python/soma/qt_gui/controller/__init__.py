@@ -667,6 +667,7 @@ class BaseControllerWidget:
         item_type = controller._value_type
         new_value = type_default_value(item_type)
         setattr(controller, new_key, new_value)
+        self.set_expanded_items({new_key: 'all'})
 
     def remove_item(self):
         key = self.ask_existing_key_name()
@@ -683,7 +684,9 @@ class BaseControllerWidget:
             value = getattr(self.controller, field, undefined)
             self.controller.remove_field(field)
             self.controller.add_field(new_field_name, old_field)
+            exp = self.expanded_items().get(field, 'all')
             setattr(self.controller, new_field_name, value)
+            self.set_expanded_items({new_field_name: exp})
 
     def remove_field(self, field):
         self.controller.remove_field(field)
@@ -697,7 +700,10 @@ class BaseControllerWidget:
         '''
         expanded = {}
         for field, factory in self.factories.items():
-            expanded[field.name] = factory.expanded_items()
+            # test if the field is still in the controller: it may have been
+            # removed, and the GUI in the process of updating
+            if self.controller.field(field.name):
+                expanded[field.name] = factory.expanded_items()
         return expanded
 
     def set_expanded_items(self, expanded, silent=False):
@@ -705,28 +711,40 @@ class BaseControllerWidget:
 
         Parameters
         ----------
-        expanded: dict
-            {field_name: state} dict. A state items may be either a bool (True
-            or False), meaning that the field is expanded or not, and does not
-            assign sub-items state; or it can be a dict, meaning that the field
-            item is expanded, and specifies sub-items states when the field has
-            items.
+        expanded: dict, 'all', or None
+            {field_name: state} dict. A state items may be either:
+
+            * a bool (True or False), meaning that the field is expanded or
+            not, and does not assign sub-items state;
+            * a dict, meaning that the field item is expanded, and specifies
+            sub-items states when the field has items.
+            * the string 'all', meaning that all sub_items should be expanded
+            recursively.
+            * None, meaning that the field itself may be expanded, but all
+            children will be collapsed.
         silent: bool
             if silent, missing fields (items in the expanded dict which do not
             exist in the controller) will be ignored silently.
         '''
-        for key, exp_value in expanded.items():
-            item_field = self.controller.field(key)
-            if item_field is None:
-                if not silent:
-                    print('no field', key)
-                continue
-            factory = self.factories.get(item_field._dataclass_field)
-            if factory is None:
-                if not silent:
-                    print('no factory for field', key)
-                continue
-            factory.set_expanded_items(exp_value, silent=silent)
+        if expanded == 'all':
+            for factory in self.factories.values():
+                factory.set_expanded_items('all')
+        elif expanded is None:
+            for factory in self.factories.values():
+                factory.set_expanded_items(None)
+        else:
+            for key, exp_value in expanded.items():
+                item_field = self.controller.field(key)
+                if item_field is None:
+                    if not silent:
+                        print('no field', key)
+                    continue
+                factory = self.factories.get(item_field._dataclass_field)
+                if factory is None:
+                    if not silent:
+                        print('no factory for field', key)
+                    continue
+                factory.set_expanded_items(exp_value, silent=silent)
 
 
 class ControllerWidget(BaseControllerWidget, ScrollableWidgetsGrid):
@@ -769,7 +787,7 @@ class ControllerWidgetFactory(WidgetFactory):
         self.create_widgets()
 
     def set_expanded_items(self, exp_value, silent=False):
-        if isinstance(exp_value, dict):
+        if isinstance(exp_value, dict) or exp_value == 'all':
             self.widget.toggle_expand(True)
             self.inner_widget.set_expanded_items(exp_value, silent=silent)
         else:
@@ -796,12 +814,12 @@ from .set import (SetStrWidgetFactory,
                   SetIntWidgetFactory,
                   SetFloatWidgetFactory,
                   find_generic_set_factory)
-from .dict import DictWidgetFactory
+#from .dict import DictWidgetFactory
 from .path import FileWidgetFactory, DirectoryWidgetFactory
 from .openkeycontroller import OpenKeyControllerWidgetFactory
 # Above imports also import the module. This hides
 # the corresponding builtins => remove them
-del str, bool, literal, list, set, path, dict
+del str, bool, literal, list, set, path  # , dict
 
 WidgetFactory.widget_factory_types = {
     'str': StrWidgetFactory,
