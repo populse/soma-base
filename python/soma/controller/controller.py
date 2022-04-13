@@ -264,7 +264,8 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
         # initialization.
         d =  self.__dict__
         super().__init__()
-        self.__dict__.update(d)
+        self.__dict__.update({k: v for k, v in d.items()
+                              if k not in self.__dict__})
         for k, v in kwargs.items():
             setattr(self, k, v)
 
@@ -399,7 +400,8 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
         else:
             field = self.__dataclass_fields__[name]
             type_ = field.type.__args__[0]
-            if isinstance(value, dict) and isinstance(type_, type) \
+            if not isinstance(value, Controller) \
+                    and isinstance(value, dict) and isinstance(type_, type) \
                     and issubclass(type_, Controller):
                 controller = getattr(self, name, undefined)
                 if controller is undefined:

@@ -4,9 +4,11 @@ from soma.qt_gui.qt_backend import Qt, QtCore
 from soma.undefined import undefined
 from soma.controller import (parse_type_str, OpenKeyController,
                              type_default_value)
-from soma.controller.field import subtypes, type_str
+from soma.controller.field import subtypes, type_str, Field
 from ..collapsable import CollapsableWidget
 from functools import partial
+import html
+
 
 class EditableLabel(Qt.QWidget):
     def __init__(self, label):
@@ -27,6 +29,9 @@ class EditableLabel(Qt.QWidget):
         delete = Qt.QToolButton(self.buttons)
         delete.setText('✖')
         blayout.addWidget(delete)
+        hide = Qt.QToolButton(self.buttons)
+        hide.setText('↸')
+        blayout.addWidget(hide)
         sz = self.label.sizeHint()
         sh = self.buttons.minimumSizeHint()
         mw = sz.width()
@@ -46,6 +51,9 @@ class EditableLabel(Qt.QWidget):
 
         self.edit_button = edit
         self.del_button = delete
+        self.hide_button = hide
+
+        self.hide_button.clicked.connect(self.buttons.hide)
 
         #self.setFixedSize(mw, mh)
 
@@ -313,6 +321,12 @@ class WidgetFactory(Qt.QObject):
                     return factory_class
         return default
 
+    def expanded_items(self):
+        return False
+
+    def set_expanded_items(self, exp_value, silent=False):
+        pass
+
 
 class ControllerFieldInteraction:
     def __init__(self, controller, field, depth):
@@ -366,6 +380,13 @@ class ControllerFieldInteraction:
 
     def inner_value_changed(self, indices):
         self.controller.on_inner_value_change.fire([self.field] + indices)
+
+    def get_doc(self):
+        doc = '<b>type:</b> %s' % str(self.type_str)
+        field_doc = getattr(self.field, 'doc', None)
+        if field_doc:
+            doc += '<br/>%s' % html.escape(field_doc)
+        return doc
 
 class ListItemInteraction:
     def __init__(self, parent_interaction, index):
@@ -425,6 +446,9 @@ class ListItemInteraction:
     def inner_value_changed(self, indices):
         self.parent_interaction.inner_value_changed([self.index] + indices)
 
+    def get_doc(self):
+        doc = '<b>item type:</b> %s' % str(self.type_str)
+        return doc
 
  
 
@@ -564,8 +588,10 @@ class BaseControllerWidget:
     def update_fields(self):
         if self.allow_update_gui:
             self.allow_update_gui = False
+            expanded = self.expanded_items()
             self.clear()
             self.build()
+            self.set_expanded_items(expanded, silent=True)
             self.allow_update_gui = True
 
     def clear(self):
@@ -652,6 +678,7 @@ class BaseControllerWidget:
         item_type = controller._value_type
         new_value = type_default_value(item_type)
         setattr(controller, new_key, new_value)
+        self.set_expanded_items({new_key: 'all'})
 
     def remove_item(self):
         key = self.ask_existing_key_name()
@@ -668,10 +695,67 @@ class BaseControllerWidget:
             value = getattr(self.controller, field, undefined)
             self.controller.remove_field(field)
             self.controller.add_field(new_field_name, old_field)
+            exp = self.expanded_items().get(field, 'all')
             setattr(self.controller, new_field_name, value)
+            self.set_expanded_items({new_field_name: exp})
 
     def remove_field(self, field):
         self.controller.remove_field(field)
+
+    def expanded_items(self):
+        ''' Get expanded items and sub-items, recursively as a dict
+
+        The returned dict keys are fields names. Values are either True
+        (expanded), False (collapsed), or a dict with expanded stated of sub-
+        fields.
+        '''
+        expanded = {}
+        for field, factory in self.factories.items():
+            # test if the field is still in the controller: it may have been
+            # removed, and the GUI in the process of updating
+            if self.controller.field(field.name):
+                expanded[field.name] = factory.expanded_items()
+        return expanded
+
+    def set_expanded_items(self, expanded, silent=False):
+        ''' Set items and sub-items expanded states
+
+        Parameters
+        ----------
+        expanded: dict, 'all', or None
+            {field_name: state} dict. A state items may be either:
+
+            * a bool (True or False), meaning that the field is expanded or
+            not, and does not assign sub-items state;
+            * a dict, meaning that the field item is expanded, and specifies
+            sub-items states when the field has items.
+            * the string 'all', meaning that all sub_items should be expanded
+            recursively.
+            * None, meaning that the field itself may be expanded, but all
+            children will be collapsed.
+        silent: bool
+            if silent, missing fields (items in the expanded dict which do not
+            exist in the controller) will be ignored silently.
+        '''
+        if expanded == 'all':
+            for factory in self.factories.values():
+                factory.set_expanded_items('all')
+        elif expanded is None:
+            for factory in self.factories.values():
+                factory.set_expanded_items(None)
+        else:
+            for key, exp_value in expanded.items():
+                item_field = self.controller.field(key)
+                if item_field is None:
+                    if not silent:
+                        print('no field', key)
+                    continue
+                factory = self.factories.get(item_field._dataclass_field)
+                if factory is None:
+                    if not silent:
+                        print('no factory for field', key)
+                    continue
+                factory.set_expanded_items(exp_value, silent=silent)
 
 
 class ControllerWidget(BaseControllerWidget, ScrollableWidgetsGrid):
@@ -694,6 +778,7 @@ class ControllerWidgetFactory(WidgetFactory):
             self.inner_widget, label=label,
             expanded=(self.parent_interaction.depth==0),
             parent=self.controller_widget)
+        self.widget.setToolTip(self.parent_interaction.get_doc())
         self.inner_widget.setContentsMargins(self.widget.toggle_button.sizeHint().height(),0,0,0)
       
         self.controller_widget.add_widget_row(
@@ -713,6 +798,22 @@ class ControllerWidgetFactory(WidgetFactory):
         self.delete_widgets()
         self.create_widgets()
 
+    def set_expanded_items(self, exp_value, silent=False):
+        if isinstance(exp_value, dict) or exp_value == 'all':
+            self.widget.toggle_expand(True)
+            self.inner_widget.set_expanded_items(exp_value, silent=silent)
+        else:
+            expanded = bool(exp_value)
+            self.widget.toggle_expand(exp_value)
+
+    def expanded_items(self):
+        expanded = {}
+        if not self.widget.toggle_button.isChecked():
+            expanded = False
+        else:
+            expanded = self.inner_widget.expanded_items()
+        return expanded
+
 
 from .str import StrWidgetFactory
 from .bool import BoolWidgetFactory
@@ -725,11 +826,12 @@ from .set import (SetStrWidgetFactory,
                   SetIntWidgetFactory,
                   SetFloatWidgetFactory,
                   find_generic_set_factory)
+#from .dict import DictWidgetFactory
 from .path import FileWidgetFactory, DirectoryWidgetFactory
 from .openkeycontroller import OpenKeyControllerWidgetFactory
 # Above imports also import the module. This hides
 # the corresponding builtins => remove them
-del str, bool, literal, list, set, path
+del str, bool, literal, list, set, path  # , dict
 
 WidgetFactory.widget_factory_types = {
     'str': StrWidgetFactory,
@@ -749,6 +851,8 @@ WidgetFactory.widget_factory_types = {
     'set[int]': SetIntWidgetFactory,
     'set[float]': SetFloatWidgetFactory,
     'set': find_generic_set_factory,
+    #'dict': DictWidgetFactory,
+    #'dict[str, str]': DictWidgetFactory,
     'Controller': ControllerWidgetFactory,
     'File': FileWidgetFactory,
     'Directory': DirectoryWidgetFactory,

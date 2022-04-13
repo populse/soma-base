@@ -12,6 +12,7 @@ class StrWidgetFactory(WidgetFactory):
     def create_widgets(self):
         label = self.parent_interaction.get_label()
         self.label_widget = Qt.QLabel(label, parent=self.controller_widget)
+        self.label_widget.setToolTip(self.parent_interaction.get_doc())
         self.text_widget = TimeredQLineEdit(parent=self.controller_widget)
         if self.readonly:
             self.text_widget.setReadOnly(True)

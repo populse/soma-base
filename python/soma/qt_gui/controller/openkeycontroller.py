@@ -24,6 +24,7 @@ class OpenKeyControllerWidgetFactory(ControllerWidgetFactory):
             expanded=(self.parent_interaction.depth==0),
             buttons_label=buttons,
             parent=self.controller_widget)
+        self.widget.setToolTip(self.parent_interaction.get_doc())
         self.inner_widget.setContentsMargins(
             self.widget.toggle_button.sizeHint().height(),0,0,0)
 

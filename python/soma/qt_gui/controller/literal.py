@@ -12,6 +12,7 @@ class LiteralWidgetFactory(WidgetFactory):
     def create_widgets(self):
         label = self.parent_interaction.get_label()
         self.label_widget = Qt.QLabel(label, parent=self.controller_widget)
+        self.label_widget.setToolTip(self.parent_interaction.get_doc())
         self.widget = Qt.QComboBox(parent=self.controller_widget)
         for v in literal_values(self.parent_interaction.type):
             self.widget.addItem(str(v))
