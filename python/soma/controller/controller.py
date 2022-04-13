@@ -264,7 +264,8 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
         # initialization.
         d =  self.__dict__
         super().__init__()
-        self.__dict__.update(d)
+        self.__dict__.update({k: v for k, v in d.items()
+                              if k not in self.__dict__})
         for k, v in kwargs.items():
             setattr(self, k, v)
 
