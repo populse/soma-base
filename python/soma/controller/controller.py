@@ -418,14 +418,21 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
         yield from (Field(i) for i in dataclasses.fields(self))
         yield from (Field(i) for i in (dataclasses.fields(i)[0] for i in super().__getattribute__('_dyn_fields').values()))
 
-    def field(self, name):
-        ''' Query the fiend assiciated with the given name
-        '''
+    def _field(self, name):
         field = self.__dataclass_fields__.get(name)
         if field is None:
             field = super().__getattribute__('_dyn_fields').get(name)
             if field is not None:
                 field = dataclasses.fields(field)[0]
+        return field
+
+    def has_field(self, name):
+        return bool(self._field(name))
+    
+    def field(self, name):
+        ''' Query the fiend assiciated with the given name
+        '''
+        field = self._field(name)
         return Field(field) if field else None
 
     def reorder_fields(self, fields=()):
