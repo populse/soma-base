@@ -344,7 +344,7 @@ class Field:
     def optional(self):
         ''' True if the field is optional, that is a value is not needed for the parent :class:`~.controller.Controller` to be valid.
         '''
-        optional = self._dataclass_field.metadata['_metadata'].get('optional')
+        optional = self.metadata('optional', None)
         if optional is None:
             optional =  self.has_default()
         return optional
@@ -374,7 +374,7 @@ class Field:
 
 def field(
          name=None, 
-         type_=None, 
+         type_=None,
          default=dataclasses.MISSING, 
          default_factory=dataclasses.MISSING, 
          init=None, 
@@ -382,6 +382,9 @@ def field(
          hash=None, 
          compare=None, 
          metadata=None,
+         field_class=Field,
+         proxy_controller=None,
+         proxy_field=None,
          **kwargs):
     ''' :class:`Field` construction factory function. Similar to
     :func:`̀dataclasses.field` but handles :class:`~.controller.Contoller`-
@@ -427,19 +430,8 @@ def field(
         compare = True
     if default is dataclasses.MISSING and default_factory is dataclasses.MISSING:
         default = undefined
-    result = dataclasses.field(
-        default=default,
-        default_factory=default_factory,
-        init=init,
-        repr=repr,
-        hash=hash,
-        compare=compare,
-        metadata={'_metadata': metadata})
-    if name is not None:
-        result.name = name
     path_type = None
     if type_ is not None:
-        result.type = Union[type_, type(undefined)]
         if isinstance(type_, type) and issubclass(type_, Path):
             path_type = type_.__name__.lower()
         elif is_list(type_):
@@ -452,13 +444,118 @@ def field(
                     break
             if isinstance(current_type, type) and issubclass(current_type, Path):
                 path_type = current_type.__name__.lower()
+    if field_class is Field:
+        metadata['path_type'] = path_type
+        if path_type:
+            metadata.setdefault('read', True)
+            metadata.setdefault('write', False)
 
-    result = Field(result)
-    result.path_type = path_type
-    if path_type:
-        result._dataclass_field.metadata['_metadata'].setdefault('read', True)
-        result._dataclass_field.metadata['_metadata'].setdefault('write', False)
-    return result
+    result = dataclasses.field(
+        default=default,
+        default_factory=default_factory,
+        init=init,
+        repr=repr,
+        hash=hash,
+        compare=compare,
+        metadata={
+           '_metadata': metadata,
+           '_field_class': field_class,
+           '_proxy_controller': proxy_controller,
+           '_proxy_field': proxy_field,
+        })
+    if name is not None:
+        result.name = name
+    if type_ is not None:
+        result.type = Union[type_, type(undefined)]
+    return field_class(result)
+
+class FieldProxy(Field):
+    ...
+
+class ListProxy(Field):
+    @property
+    def target_field(self):
+        metadata = self._dataclass_field.metadata
+        return metadata['_proxy_controller'].field(
+            metadata['_proxy_field'])
+    
+    @property
+    def name(self):
+        if self._name is None:
+            return self.target_field.name
+        return self._name
+    
+    @property
+    def type(self):
+        return list[self.target_field.type]
+
+    @property
+    def default(self):
+        if self._default is dataclasses.MISSING:
+            return self.target_field.default
+        return self._default
+    
+    @property
+    def default_factory(self):
+        if self._default_factory is dataclasses.MISSING:
+            return self.target_field.default_factory
+        return self._default_factory
+    
+    def metadata(self, name=None, default=None):
+        return self.target_field.metadata(name=name, default=default)
+    
+    def __getattr__(self, name):
+        return getattr(self.target_field, name)
+    
+    def __setattr__(self, name, value):
+        raise TypeError('ListProxy are read-only')
+
+    def __delattr__(self, name):
+        raise TypeError('ListProxy are read-only')
+
+
+    def has_default(self):
+        ''' True if the field has a default value, that is if it has either a
+        default or default_factory.
+        '''
+        return (self.default not in (undefined, dataclasses.MISSING)
+                or self.default_factory is not dataclasses.MISSING)
+
+    def default_value(self):
+        ''' Default value
+        '''
+        if self.default is not dataclasses.MISSING:
+            return self.default
+        if self.default_factory is not dataclasses.MISSING:
+            return self.default_factory()
+        return undefined
+    
+    @property
+    def optional(self):
+        return self.target_field.optional
+
+    @optional.setter
+    def optional(self, optional):
+        raise TypeError('ProxyField are read-only')
+
+
+    @optional.deleter
+    def optional(self):
+        raise TypeError('ProxyField are read-only')
+
+    @property
+    def doc(self):
+        ''' Field documentation string
+        '''
+        return self.target_field.doc
+
+    @doc.setter
+    def doc(self, doc):
+        raise TypeError('ProxyField are read-only')
+    
+    @doc.deleter
+    def doc(self):
+        raise TypeError('ProxyField are read-only')
 
 
 

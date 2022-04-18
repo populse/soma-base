@@ -1013,6 +1013,52 @@ class TestController(unittest.TestCase):
         o = C(s='A')
         self.assertEqual(o.s, 'a')
 
+
+    def test_field_proxy(self):
+        class C(Controller):
+            class_file: File
+            class_int: int
+            class_not_list: File
+        
+        c = C()
+        c.add_field('instance_file', type_=File)
+        c.add_field('instance_int', type_=int)
+        c.add_field('instance_not_list', type_=File)
+
+        ic = Controller()
+        ic.add_list_proxy('class_files', c, 'class_file')
+        ic.add_list_proxy('instance_files', c, 'instance_file')
+        ic.add_list_proxy('list_changing', c, 'class_int')
+        # ic.add_proxy('c_not_list', c, 'class_not_list')
+        # ic.add_field('i_not_list', c, 'instance_not_list')
+
+        self.assertEqual(ic.field('class_files').type, list[File])
+        self.assertEqual(ic.field('class_files').path_type, 'file')
+        self.assertEqual(ic.field('instance_files').type, list[File])
+        self.assertEqual(ic.field('instance_files').path_type, 'file')
+
+        self.assertEqual(ic.field('list_changing').type, list[int])
+        self.assertEqual(ic.field('list_changing').path_type, None)
+        with self.assertRaises(Exception):
+            ic.list_changing = ['/a', '/b', '/c']
+        ic.list_changing = [1, 2, 3]
+
+        ic.change_proxy('list_changing', proxy_field='class_file')
+        self.assertEqual(ic.field('list_changing').type, list[File])
+        self.assertEqual(ic.field('list_changing').path_type, 'file')
+        self.assertEqual(ic.list_changing, ['1', '2', '3'])
+        ic.list_changing = ['/a', '/b', '/c']
+
+        ic.change_proxy('list_changing', proxy_field='instance_int')
+        self.assertEqual(ic.field('list_changing').type, list[int])
+        self.assertEqual(ic.field('list_changing').path_type, None)
+        with self.assertRaises(AttributeError):
+            ic.list_changing
+
+        ic.change_proxy('list_changing', proxy_field='instance_file')
+        self.assertEqual(ic.field('list_changing').type, list[File])
+        self.assertEqual(ic.field('list_changing').path_type, 'file')
+        
 def test():
     suite = unittest.TestLoader().loadTestsFromTestCase(TestController)
     runtime = unittest.TextTestRunner(verbosity=2).run(suite)

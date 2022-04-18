@@ -9,7 +9,7 @@ from typing import Union
 from pydantic.dataclasses import dataclass
 
 from soma.undefined import undefined
-from .field import field, Field
+from .field import ListProxy, field, Field
 import sys
 
 
@@ -298,32 +298,41 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
             if override:
                 self.remove_field(name)
             else:
-                raise ValueError('a field named %s already exists' % name)
+                raise ValueError(f'a field named {name} already exists')
         
-        # Dynamically create a class equivalent to:
-        # (without default if it is undefined)
-        #
-        # class {name}(Controller):
-        #     value: type_ = default
+        if isinstance(type_, ListProxy):
+            if metadata is not None:
+                raise TypeError('metadata is not allowed when type_ is a ListProxy')
+            if default is not undefined:
+                raise TypeError('default is not allowed when type_ is a ListProxy')
+            if kwargs:
+                raise TypeError(f'arguments not allowed when type_ is a ListProxy: {", ".join(kwargs)}')
+            field_instance = type_
+        else:
+            # Dynamically create a class equivalent to:
+            # (without default if it is undefined)
+            #
+            # class {name}(Controller):
+            #     value: type_ = default
 
-        # avoid having both default and default_factory defined
-        if 'default_factory' in kwargs \
-                and kwargs['default_factory'] not in (dataclasses.MISSING,
-                                                      undefined):
-            if default in (dataclasses.MISSING, undefined):
-                default = dataclasses.MISSING
-            else:
-                del kwargs['default_factory']
+            # avoid having both default and default_factory defined
+            if 'default_factory' in kwargs \
+                    and kwargs['default_factory'] not in (dataclasses.MISSING,
+                                                        undefined):
+                if default in (dataclasses.MISSING, undefined):
+                    default = dataclasses.MISSING
+                else:
+                    del kwargs['default_factory']
 
-        new_field = field(type_=type_, default=default, metadata=metadata, **kwargs)
-        namespace = {
-            '__annotations__': {
-                name: new_field,
+            new_field = field(type_=type_, default=default, metadata=metadata, **kwargs)
+            namespace = {
+                '__annotations__': {
+                    name: new_field,
+                }
             }
-        }
 
-        field_class = type(name, (Controller,), namespace, class_field=False)
-        field_instance = field_class()
+            field_class = type(name, (Controller,), namespace, class_field=False)
+            field_instance = field_class()
         super().__getattribute__('_dyn_fields')[name] = field_instance
         if getattr(self, 'enable_notification', False) \
                 and self.on_fields_change.has_callback:
@@ -334,6 +343,25 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
                 print(self.on_fields_change, file=sys.stderr)
                 raise
         
+    def add_list_proxy(self, name, proxy_controller, proxy_field):
+        self.add_field(name, type_=list[proxy_controller.field(proxy_field).type], 
+            field_class=ListProxy,
+            proxy_controller=proxy_controller, 
+            proxy_field=proxy_field)
+
+    def change_proxy(self, name, proxy_controller=None, proxy_field=None):
+        if proxy_controller is None:
+            proxy_controller = self.field(name)._dataclass_field.metadata['_proxy_controller']
+        if proxy_field is None:
+            proxy_field = self.field(name)._dataclass_field.metadata['_proxy_field']
+        value = getattr(self, name, undefined)
+        self.remove_field(name)
+        self.add_list_proxy(name, proxy_controller, proxy_field)
+        try:
+            setattr(self, name, value)
+        except Exception:
+            setattr(self, name, undefined)
+
     def remove_field(self, name):
         ''' Remove the given field
         '''
@@ -390,8 +418,8 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
                 except Exception:
                     svalue = '<non_printable>'
             fields.append((f.name, svalue))
-        drepr = ', '.join(['%s=%s' % f for f in fields])
-        return '%s(%s)' % (self.__class__.__name__, drepr)
+        drepr = ', '.join([f'{n}={v}' for n, v in fields])
+        return f'{self.__class__.__name__}({drepr})'
 
     def _unnotified_setattr(self, name, value):
         dyn_field = super().__getattribute__('_dyn_fields').get(name)
@@ -417,8 +445,8 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
         ''' Returns an iterator over registered fields (both class fields and
         instance fields)
         '''
-        yield from (Field(i) for i in dataclasses.fields(self))
-        yield from (Field(i) for i in (dataclasses.fields(i)[0] for i in super().__getattribute__('_dyn_fields').values()))
+        yield from (i.metadata['_field_class'](i) for i in dataclasses.fields(self))
+        yield from (i.metadata['_field_class'](i) for i in (dataclasses.fields(i)[0] for i in super().__getattribute__('_dyn_fields').values()))
 
     def _field(self, name):
         field = self.__dataclass_fields__.get(name)
@@ -435,7 +463,9 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
         ''' Query the fiend assiciated with the given name
         '''
         field = self._field(name)
-        return Field(field) if field else None
+        if field is None:
+            return None
+        return field.metadata['_field_class'](field)
 
     def reorder_fields(self, fields=()):
         """Reorder dynamic fields according to a new ordered list.
