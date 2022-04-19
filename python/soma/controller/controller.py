@@ -339,6 +339,14 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
                 raise
         
     def add_proxy(self, name, proxy_controller, proxy_field):
+        '''
+        Adds a proxy field that is a link to another attribute of
+        another controller. Except for the proxy field name, any
+        access to field metadata or corresponding attribute value
+        are directed to the other controller.
+
+        The linked contoller and field can be changed with :meth:`change_proxy`
+        '''
         proxy = FieldProxy(name, proxy_controller, proxy_field)
         namespace = {
             name: proxy,
@@ -355,12 +363,51 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
             
 
     def add_list_proxy(self, name, proxy_controller, proxy_field):
+        '''
+        Adds a proxy field that is a list version of another controller field. 
+        The created field is a real field of type 
+        `list[other controller field type]` . The proxy has its own attribute
+        value but its type is is linked to target field and metadata are taken
+        from target field.
+
+        The linked contoller and field can be changed with :meth:`change_proxy`
+        '''
         self.add_field(name, type_=list[proxy_controller.field(proxy_field).type], 
             field_class=ListProxy,
             proxy_controller=proxy_controller, 
             proxy_field=proxy_field)
 
     def change_proxy(self, name, proxy_controller=None, proxy_field=None):
+        '''
+        Change the controller and field of a proxy previously created by
+        :meth:`add_proxy` or :meth:`add_list_proxy`. For list proxy, the
+        current list attribute value is checked on the new list type. If
+        value is incompatilbe, it is silently removed. But Pydantic
+        underlying library may also convert list elements and therefore
+        change the value. Here is an example of this behavior:
+
+        ```
+        from soma.controller import Controller
+
+        class C(Controller):
+            i: int
+            s: str
+
+        class ListOfC(Controller):
+            ...
+        
+        c = C()
+        lc = ListOfC()
+        # Create a list proxy on a field of type int
+        lc.add_list_proxy('l', c, 'i')
+        # Set a value for the list
+        lc.l = [1, 2, 3]
+        # Change the list proxy to a field of type str
+        lc.change_proxy('l', c, 's')
+        # The value of the list is converted by Pydantic
+        print(lc.l)
+        # This prints ['1', '2', '3']
+        '''
         proxy = self.field(name)
         if proxy_controller is None:
             if isinstance(proxy, FieldProxy):

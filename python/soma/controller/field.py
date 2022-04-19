@@ -470,6 +470,11 @@ def field(
     return field_class(result)
 
 class FieldProxy:
+    '''
+    This class is used internally to implement a link between a controller
+     field and another controller field. It replaces a dynamic field and
+     transfer all calls to the linked controller.
+    '''
     def __init__(self, name, proxy_controller, proxy_field):
         super().__setattr__('name', name)
         super().__setattr__('_proxy_controller', proxy_controller)
@@ -495,6 +500,11 @@ class FieldProxy:
 
 
 class ListProxy(Field):
+    '''
+    This class is used internally to represent a field that has a list value
+    but whose type and metadata are linked to anotehr field of another
+    controller.
+    '''
     @property
     def target_field(self):
         metadata = self._dataclass_field.metadata
