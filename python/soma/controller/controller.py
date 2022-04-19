@@ -9,7 +9,7 @@ from typing import Union
 from pydantic.dataclasses import dataclass
 
 from soma.undefined import undefined
-from .field import ListProxy, field, Field
+from .field import FieldProxy, ListProxy, field, Field
 import sys
 
 
@@ -189,15 +189,19 @@ class ControllerMeta(type):
                     field_type = value
                     value = undefined
                 if field_type:
-                    annotations[i] = type_
-                    mdata = field_type._dataclass_field.metadata['_metadata']
-                    mdata['class_field'] = class_field
-                    if field_type._dataclass_field.default is undefined:
-                        field_type._dataclass_field.default = value
-                    elif value is not undefined and value is not field_type._dataclass_field.default:
-                        raise TypeError('Two default values given for '
-                            f'field "{i}": {repr(value)} and '
-                            f'{repr(field_type._dataclass_field.default)}')
+                    if isinstance(field_type, FieldProxy):
+                        print('!!! FieldProxy')
+                        dataclass_namespace[i] = field_type
+                    else:
+                        annotations[i] = type_
+                        mdata = field_type._dataclass_field.metadata['_metadata']
+                        mdata['class_field'] = class_field
+                        if field_type._dataclass_field.default is undefined:
+                            field_type._dataclass_field.default = value
+                        elif value is not undefined and value is not field_type._dataclass_field.default:
+                            raise TypeError('Two default values given for '
+                                f'field "{i}": {repr(value)} and '
+                                f'{repr(field_type._dataclass_field.default)}')
                     dataclass_namespace[i] = field_type._dataclass_field
                 else:
                     dataclass_namespace[i] = field(type_=type_.__args__[0], 
@@ -300,39 +304,30 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
             else:
                 raise ValueError(f'a field named {name} already exists')
         
-        if isinstance(type_, ListProxy):
-            if metadata is not None:
-                raise TypeError('metadata is not allowed when type_ is a ListProxy')
-            if default is not undefined:
-                raise TypeError('default is not allowed when type_ is a ListProxy')
-            if kwargs:
-                raise TypeError(f'arguments not allowed when type_ is a ListProxy: {", ".join(kwargs)}')
-            field_instance = type_
-        else:
-            # Dynamically create a class equivalent to:
-            # (without default if it is undefined)
-            #
-            # class {name}(Controller):
-            #     value: type_ = default
+        # Dynamically create a class equivalent to:
+        # (without default if it is undefined)
+        #
+        # class {name}(Controller):
+        #     value: type_ = default
 
-            # avoid having both default and default_factory defined
-            if 'default_factory' in kwargs \
-                    and kwargs['default_factory'] not in (dataclasses.MISSING,
-                                                        undefined):
-                if default in (dataclasses.MISSING, undefined):
-                    default = dataclasses.MISSING
-                else:
-                    del kwargs['default_factory']
+        # avoid having both default and default_factory defined
+        if 'default_factory' in kwargs \
+                and kwargs['default_factory'] not in (dataclasses.MISSING,
+                                                    undefined):
+            if default in (dataclasses.MISSING, undefined):
+                default = dataclasses.MISSING
+            else:
+                del kwargs['default_factory']
 
-            new_field = field(type_=type_, default=default, metadata=metadata, **kwargs)
-            namespace = {
-                '__annotations__': {
-                    name: new_field,
-                }
+        new_field = field(type_=type_, default=default, metadata=metadata, **kwargs)
+        namespace = {
+            '__annotations__': {
+                name: new_field,
             }
+        }
 
-            field_class = type(name, (Controller,), namespace, class_field=False)
-            field_instance = field_class()
+        field_class = type(name, (Controller,), namespace, class_field=False)
+        field_instance = field_class()
         super().__getattribute__('_dyn_fields')[name] = field_instance
         if getattr(self, 'enable_notification', False) \
                 and self.on_fields_change.has_callback:
@@ -343,6 +338,22 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
                 print(self.on_fields_change, file=sys.stderr)
                 raise
         
+    def add_proxy(self, name, proxy_controller, proxy_field):
+        proxy = FieldProxy(name, proxy_controller, proxy_field)
+        namespace = {
+            name: proxy,
+        }
+        super().__getattribute__('_dyn_fields')[name] = proxy
+        if getattr(self, 'enable_notification', False) \
+                and self.on_fields_change.has_callback:
+            try:
+                self.on_fields_change.fire()
+            except Exception as e:
+                print('Exception in Event.fire:', self, file=sys.stderr)
+                print(self.on_fields_change, file=sys.stderr)
+                raise
+            
+
     def add_list_proxy(self, name, proxy_controller, proxy_field):
         self.add_field(name, type_=list[proxy_controller.field(proxy_field).type], 
             field_class=ListProxy,
@@ -350,17 +361,28 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
             proxy_field=proxy_field)
 
     def change_proxy(self, name, proxy_controller=None, proxy_field=None):
+        proxy = self.field(name)
         if proxy_controller is None:
-            proxy_controller = self.field(name)._dataclass_field.metadata['_proxy_controller']
+            if isinstance(proxy, FieldProxy):
+                proxy_controller = proxy._proxy_controller
+            else:
+                proxy_controller = proxy._dataclass_field.metadata['_proxy_controller']
         if proxy_field is None:
-            proxy_field = self.field(name)._dataclass_field.metadata['_proxy_field']
-        value = getattr(self, name, undefined)
-        self.remove_field(name)
-        self.add_list_proxy(name, proxy_controller, proxy_field)
-        try:
-            setattr(self, name, value)
-        except Exception:
-            setattr(self, name, undefined)
+            if isinstance(proxy, FieldProxy):
+                proxy_field = proxy.proxy_field
+            else:
+                proxy_field = proxy._dataclass_field.metadata['_proxy_field']
+        if isinstance(proxy, FieldProxy):
+            self.remove_field(name)    
+            self.add_proxy(name, proxy_controller, proxy_field)
+        else:
+            value = getattr(self, name, undefined)
+            self.remove_field(name)
+            self.add_list_proxy(name, proxy_controller, proxy_field)
+            try:
+                setattr(self, name, value)
+            except Exception:
+                setattr(self, name, undefined)
 
     def remove_field(self, name):
         ''' Remove the given field
@@ -453,6 +475,8 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
         if field is None:
             field = super().__getattribute__('_dyn_fields').get(name)
             if field is not None:
+                if isinstance(field, FieldProxy):
+                    return field
                 field = dataclasses.fields(field)[0]
         return field
 
@@ -465,6 +489,8 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
         field = self._field(name)
         if field is None:
             return None
+        if isinstance(field, FieldProxy):
+            return field
         return field.metadata['_field_class'](field)
 
     def reorder_fields(self, fields=()):

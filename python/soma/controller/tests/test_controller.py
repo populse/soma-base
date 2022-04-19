@@ -1017,20 +1017,34 @@ class TestController(unittest.TestCase):
     def test_field_proxy(self):
         class C(Controller):
             class_file: File
-            class_int: int
-            class_not_list: File
+            class_int: int = 32
+            class_not_list: File = '/here'
         
         c = C()
         c.add_field('instance_file', type_=File)
         c.add_field('instance_int', type_=int)
-        c.add_field('instance_not_list', type_=File)
+        c.add_field('instance_not_list', type_=File, default='/there')
 
         ic = Controller()
+
+        ic.add_proxy('c_not_list', c, 'class_not_list')
+        ic.add_proxy('i_not_list', c, 'instance_not_list')
+        self.assertEqual(ic.c_not_list, '/here')
+        self.assertEqual(ic.field('c_not_list').type, File)
+        self.assertEqual(ic.field('c_not_list').path_type, 'file')
+        self.assertEqual(ic.i_not_list, '/there')
+        self.assertEqual(ic.field('i_not_list').type, File)
+        self.assertEqual(ic.field('i_not_list').path_type, 'file')
+
+        ic.change_proxy('c_not_list', proxy_field='class_int')
+        self.assertEqual(ic.c_not_list, 32)
+        self.assertEqual(ic.field('c_not_list').type, int)
+        self.assertEqual(ic.field('c_not_list').path_type, None)
+
+
         ic.add_list_proxy('class_files', c, 'class_file')
         ic.add_list_proxy('instance_files', c, 'instance_file')
         ic.add_list_proxy('list_changing', c, 'class_int')
-        # ic.add_proxy('c_not_list', c, 'class_not_list')
-        # ic.add_field('i_not_list', c, 'instance_not_list')
 
         self.assertEqual(ic.field('class_files').type, list[File])
         self.assertEqual(ic.field('class_files').path_type, 'file')

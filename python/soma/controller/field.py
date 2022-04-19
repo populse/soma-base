@@ -469,8 +469,30 @@ def field(
         result.type = Union[type_, type(undefined)]
     return field_class(result)
 
-class FieldProxy(Field):
-    ...
+class FieldProxy:
+    def __init__(self, name, proxy_controller, proxy_field):
+        super().__setattr__('name', name)
+        super().__setattr__('_proxy_controller', proxy_controller)
+        super().__setattr__('_proxy_field', proxy_field)
+
+    @property
+    def target_field(self):
+        return self._proxy_controller.field(self._proxy_field)
+
+    def __getattr__(self, name):
+        if name == self.name:
+            return getattr(self._proxy_controller, self._proxy_field)
+        return getattr(self.target_field, name)
+    
+    def __setattr__(self, name, value):
+        if name == self.name:
+            setattr(self._proxy_controller, self._proxy_field, value)
+        else:
+            raise TypeError('ListProxy are read-only')
+
+    def __delattr__(self, name):
+        raise TypeError('ListProxy are read-only')
+
 
 class ListProxy(Field):
     @property
