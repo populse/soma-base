@@ -190,7 +190,6 @@ class ControllerMeta(type):
                     value = undefined
                 if field_type:
                     if isinstance(field_type, FieldProxy):
-                        print('!!! FieldProxy')
                         dataclass_namespace[i] = field_type
                     else:
                         annotations[i] = type_
@@ -372,7 +371,8 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
 
         The linked contoller and field can be changed with :meth:`change_proxy`
         '''
-        self.add_field(name, type_=list[proxy_controller.field(proxy_field).type], 
+        list_type = list[Union[proxy_controller.field(proxy_field).type, type(undefined)]]
+        self.add_field(name, type_=list_type, 
             field_class=ListProxy,
             proxy_controller=proxy_controller, 
             proxy_field=proxy_field)
@@ -515,7 +515,13 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
         instance fields)
         '''
         yield from (i.metadata['_field_class'](i) for i in dataclasses.fields(self))
-        yield from (i.metadata['_field_class'](i) for i in (dataclasses.fields(i)[0] for i in super().__getattribute__('_dyn_fields').values()))
+        for i in super().__getattribute__('_dyn_fields').values():
+            if isinstance(i, FieldProxy):
+                yield i
+            else:
+                f = dataclasses.fields(i)[0]
+                yield f.metadata['_field_class'](f)
+        # yield from (i.metadata['_field_class'](i) for i in (dataclasses.fields(i)[0] for i in super().__getattribute__('_dyn_fields').values()))
 
     def _field(self, name):
         field = self.__dataclass_fields__.get(name)
@@ -578,8 +584,8 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
             field = self.field(name)
             if field:
                 # Field type is Union[real_type,UndefinedClass], get real type
-                type = field.type
-                if issubclass(type, Controller):
+                type_ = field.type
+                if isinstance(type_, type) and issubclass(type_, Controller):
                     controller = getattr(self, name, undefined)
                     if controller is not undefined:
                         controller.import_dict(value, clear=clear)

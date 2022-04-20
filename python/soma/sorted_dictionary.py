@@ -124,11 +124,7 @@ class SortedDictionary(dict):
         returns an iterator over the sorted (key, value) pairs
         '''
         for k in self:
-            try:
-                yield (k, self[k])
-            except KeyError:
-                print('!SortedDictionary error!', self.keys(), self.sortedKeys)
-                raise
+            yield (k, self[k])
 
     def insert(self, index, key, value):
         '''
