@@ -303,39 +303,42 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
             else:
                 raise ValueError(f'a field named {name} already exists')
         
-        # Dynamically create a class equivalent to:
-        # (without default if it is undefined)
-        #
-        # class {name}(Controller):
-        #     value: type_ = default
+        if isinstance(type_, FieldProxy):
+            self.add_proxy(name, proxy_controller=type_._proxy_controller, proxy_field=type_._proxy_field)
+        else:
+            # Dynamically create a class equivalent to:
+            # (without default if it is undefined)
+            #
+            # class {name}(Controller):
+            #     value: type_ = default
 
-        # avoid having both default and default_factory defined
-        if 'default_factory' in kwargs \
-                and kwargs['default_factory'] not in (dataclasses.MISSING,
-                                                    undefined):
-            if default in (dataclasses.MISSING, undefined):
-                default = dataclasses.MISSING
-            else:
-                del kwargs['default_factory']
+            # avoid having both default and default_factory defined
+            if 'default_factory' in kwargs \
+                    and kwargs['default_factory'] not in (dataclasses.MISSING,
+                                                        undefined):
+                if default in (dataclasses.MISSING, undefined):
+                    default = dataclasses.MISSING
+                else:
+                    del kwargs['default_factory']
 
-        new_field = field(type_=type_, default=default, metadata=metadata, **kwargs)
-        namespace = {
-            '__annotations__': {
-                name: new_field,
+            new_field = field(type_=type_, default=default, metadata=metadata, **kwargs)
+            namespace = {
+                '__annotations__': {
+                    name: new_field,
+                }
             }
-        }
 
-        field_class = type(name, (Controller,), namespace, class_field=False)
-        field_instance = field_class()
-        super().__getattribute__('_dyn_fields')[name] = field_instance
-        if getattr(self, 'enable_notification', False) \
-                and self.on_fields_change.has_callback:
-            try:
-                self.on_fields_change.fire()
-            except Exception as e:
-                print('Exception in Event.fire:', self, file=sys.stderr)
-                print(self.on_fields_change, file=sys.stderr)
-                raise
+            field_class = type(name, (Controller,), namespace, class_field=False)
+            field_instance = field_class()
+            super().__getattribute__('_dyn_fields')[name] = field_instance
+            if getattr(self, 'enable_notification', False) \
+                    and self.on_fields_change.has_callback:
+                try:
+                    self.on_fields_change.fire()
+                except Exception as e:
+                    print('Exception in Event.fire:', self, file=sys.stderr)
+                    print(self.on_fields_change, file=sys.stderr)
+                    raise
         
     def add_proxy(self, name, proxy_controller, proxy_field):
         '''
