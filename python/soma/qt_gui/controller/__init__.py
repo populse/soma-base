@@ -860,4 +860,5 @@ WidgetFactory.widget_factory_types = {
     'OpenKeyController[str]': OpenKeyControllerWidgetFactory,
     'OpenKeyDictController': OpenKeyControllerWidgetFactory,
     'OpenKeyDictController[str]': OpenKeyControllerWidgetFactory,
+    'pydantic.conlist': find_generic_list_factory,
 }
