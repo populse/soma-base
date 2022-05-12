@@ -27,6 +27,15 @@ else:
     Dict = dict
     Set = set
 
+def _conlist_str(name, type_):
+    tdef = type_str(type_.item_type)
+    if type_.min_items:
+        tdef += ', min_items=%d' % type_.min_items
+    if type_.max_items:
+        tdef += ', max_items=%d' % type_.max_items
+    result = 'pydantic.conlist(%s)' % tdef
+    return result
+
 def type_str(type_):
     from soma.controller import Controller
 
@@ -37,6 +46,10 @@ def type_str(type_):
         'dict[any,any]': 'dict',
         'Controller[Controller]': 'Controller',
     }
+    postmap = {
+        'types.ConstrainedListValue': _conlist_str,
+    }
+
     name = getattr(type_, '__name__', None)
     ignore_args = False
     if not name:
@@ -63,6 +76,9 @@ def type_str(type_):
     controller = isinstance(type_, type) and issubclass(type_, Controller)
     if module and module not in {'builtins', 'typing', 'soma.controller.controller', 'soma.controller.field'}:
         name = f'{module}.{name}'
+    postproc_fn = postmap.get(name)
+    if postproc_fn:
+        return postproc_fn(name, type_)
     args = getattr(type_, '__args__', ())
     if not ignore_args and args:
         result = f'{name}[{",".join(type_str(i) for i in args)}]'
@@ -102,27 +118,53 @@ def parse_type_str(type_str):
     'union[list[str],Dict[str,controller[Test]]]' -> ('union', ['list[str]', 'Dict[str,controller[Test]]'])
     '''
     p = re.compile('(^[^\[\],]*)(?:\[(.*)\])?$')
-    type, inner = p.match(type_str).groups()
-    if inner:
-        p = re.compile(r'\[[^\[\]]*\]')
-        substitution = {}
-        i = 0
-        while True:
-            c = 0
-            new_inner = []
-            for m in p.finditer(inner):
-                skey = f's{i}'
-                i += 1
-                substitution[skey] = m.group(0).format(**substitution)
-                new_inner += [inner[c:m.start()], f'{{{skey}}}']
-                c = m.end()
-            if new_inner:
-                new_inner.append(inner[c:])
-                inner = ''.join(new_inner)
-            else:
-                return (type, [i.format(**substitution) for i in inner.split(',')])
+    m = p.match(type_str)
+    if m:
+        type, inner = p.match(type_str).groups()
+        if inner:
+            p = re.compile(r'\[[^\[\]]*\]')
+            substitution = {}
+            i = 0
+            while True:
+                c = 0
+                new_inner = []
+                for m in p.finditer(inner):
+                    skey = f's{i}'
+                    i += 1
+                    substitution[skey] = m.group(0).format(**substitution)
+                    new_inner += [inner[c:m.start()], f'{{{skey}}}']
+                    c = m.end()
+                if new_inner:
+                    new_inner.append(inner[c:])
+                    inner = ''.join(new_inner)
+                else:
+                    return (type, [i.format(**substitution) for i in inner.split(',')])
+        else:
+            return (type, [])
     else:
-        return (type, [])
+        # shape like conlist(int, ...)
+        p = re.compile('(^[^\[\],]*)(?:\((.*)\))?$')
+        type, inner = p.match(type_str).groups()
+        if inner:
+            p = re.compile(r'\([^\[\]]*\)')
+            substitution = {}
+            i = 0
+            while True:
+                c = 0
+                new_inner = []
+                for m in p.finditer(inner):
+                    skey = f's{i}'
+                    i += 1
+                    substitution[skey] = m.group(0).format(**substitution)
+                    new_inner += [inner[c:m.start()], f'{{{skey}}}']
+                    c = m.end()
+                if new_inner:
+                    new_inner.append(inner[c:])
+                    inner = ''.join(new_inner)
+                else:
+                    return (type, [i.format(**substitution) for i in inner.split(',')])
+        else:
+            return (type, [])
 
 
 type_default_value_functions = {
