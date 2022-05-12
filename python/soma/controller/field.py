@@ -240,8 +240,8 @@ class Field:
         ''' default value factory. See :func:`dataclasses.field` for more
         details.
         '''
-        return self._dataclass_field.default_factory
-    
+        return self._dataclass_field.default_factory        
+
     def type_str(self):
         ''' string representation of the field type
         '''
@@ -335,6 +335,15 @@ class Field:
             return self._dataclass_field.default_factory()
         return undefined
 
+    def valid_value(self):
+        '''Build a valid value for the field. Used either the default value
+        or the default construtor od the field type (i.e. self.type())
+        '''
+        value = self.default_value()
+        if value is undefined:
+            value = self.type()
+        return value
+    
     def is_list(self):
         ''' True if the field type is a list
         '''
