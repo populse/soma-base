@@ -30,3 +30,4 @@ from .singleton import Singleton
 from .application import Application
 from .controller import Controller
 from .undefined import undefined
+from .proxy import DictWithProxy, ListWithProxy
