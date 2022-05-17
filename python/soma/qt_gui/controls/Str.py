@@ -308,7 +308,7 @@ class StrControlWidget(object):
             # When the 'control_name' controller trait value is modified,
             # update the corresponding control
             controller_widget.controller.on_trait_change(
-                controller_hook, name=control_name)
+                controller_hook, name=control_name, dispatch='ui')
 
             # Store the trait - control connection we just build
             control_instance._controller_connections = (
