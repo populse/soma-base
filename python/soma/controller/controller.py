@@ -265,8 +265,14 @@ class Controller(HasTraits):
                 else:
                     default = []
                 default += [ut.item_trait.default] * (ut.minlen - len(default))
+                old_trait = trait
                 trait = traits.List(ut.item_trait, default, minlen = ut.minlen,
                                     maxlen=ut.maxlen)
+                # copy metadata
+                builtin = {'copy', 'type'}
+                for meta, value in old_trait.__dict__.items():
+                    if meta not in builtin:
+                        setattr(trait, meta, value)
         return trait
 
 
