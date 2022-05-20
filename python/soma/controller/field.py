@@ -351,13 +351,17 @@ class Field:
             return self.read
         return True
 
+    @property
+    def output(self):
+        return self.metadata('output', False)
+    
     def is_output(self):
         ''' Tells is the field is an output, from a pipelining point of view.
 
         A field is an output if either its `output` metadata or `write`
         metadata is True.
         '''
-        if self.metadata('output', False) or self.metadata('write', False):
+        if self.output or self.metadata('write', False):
             return True
         return False
 
