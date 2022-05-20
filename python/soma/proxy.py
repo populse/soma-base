@@ -66,7 +66,7 @@ class ContainerWithProxy:
             - Transform dict to DictWithProxy
         '''
         if self.is_proxy(value):
-            return self.proxy_values[value[1]]
+            return self.get_value(self.proxy_values[value[1]])
         elif isinstance(value, list):
             return ListWithProxy(_content=value,
                 _proxy_values=self.proxy_values)
@@ -80,7 +80,7 @@ class ContainerWithProxy:
         '''
         Modifies the value referenced by a proxy.
         '''
-        self.proxy_values[proxy[1]] = value
+        self.proxy_values[proxy[1]] = self.value_to_content(value)
 
     def value_to_content(self, value):
         '''
@@ -119,6 +119,15 @@ class ContainerWithProxy:
         else:
             return DictWithProxy(_content=content, _proxy_values=proxy_values)
 
+    def no_proxy(self, value):
+        '''
+        Recursively resolve all proxies to shared values and return a standard dict.
+        '''
+        no_proxy = getattr(value, '_no_proxy', None)
+        if no_proxy is not None:
+            return no_proxy()
+        return value
+    
 class DictWithProxy(MutableMapping, ContainerWithProxy):
     def __init__(self, init=None, _content=None, _proxy_values=None):
         '''
@@ -152,17 +161,11 @@ class DictWithProxy(MutableMapping, ContainerWithProxy):
     def __len__(self):
         return self.content.__len__()
 
-    def no_proxy(self):
+    def _no_proxy(self):
         '''
         Recursively resolve all proxies to shared values and return a standard dict.
         '''
-        result = {}
-        for k, v in self.items():
-            no_proxy = getattr(v, 'no_proxy', None)
-            if no_proxy is not None:
-                v = no_proxy()
-            result[k] = v
-        return result
+        return dict((k,self.no_proxy(v)) for k, v in self.items())
 
 class ListWithProxy(MutableSequence, ContainerWithProxy):
     def __init__(self, init=None, _content=None, _proxy_values=None):
@@ -198,15 +201,9 @@ class ListWithProxy(MutableSequence, ContainerWithProxy):
         self.content.insert(index, None)
         self[index] = value
 
-    def no_proxy(self):
+    def _no_proxy(self):
         '''
         Recursively resolve all proxies to shared values and return a standard dict.
         '''
-        result = []
-        for v in self:
-            no_proxy = getattr(v, 'no_proxy', None)
-            if no_proxy is not None:
-                v = no_proxy()
-            result.append(v)
-        return result
+        return [self.no_proxy(v) for v in self]
 
