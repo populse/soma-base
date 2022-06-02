@@ -547,10 +547,12 @@ class FieldProxy:
         if name == self.name:
             setattr(self._proxy_controller, self._proxy_field, value)
         else:
-            raise TypeError('ListProxy are read-only')
+            setattr(self.target_field, name, value)
 
     def __delattr__(self, name):
-        raise TypeError('ListProxy are read-only')
+        if name == self.name:
+            raise ValueError(f'Cannot remove attribute {name}')
+        delattr(self.target_field, name)
 
 
 class ListProxy(Field):
@@ -591,11 +593,11 @@ class ListProxy(Field):
         return self.target_field.metadata(name=name, default=default)
     
     def __getattr__(self, name):
-        return getattr(self.target_field, name)
+        value = self._dataclass_field.metadata['_metadata'].get(name, undefined)
+        if value is undefined:
+            value =  getattr(self.target_field, name)
+        return value
     
-    def __setattr__(self, name, value):
-        raise TypeError('ListProxy are read-only')
-
     def __delattr__(self, name):
         raise TypeError('ListProxy are read-only')
 

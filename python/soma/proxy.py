@@ -31,13 +31,18 @@ class ContainerWithProxy:
     '''
     Class containing methods common to DictWithProxy and ListWithProxy
     '''
-    def __init__(self, proxy_values, content):
+    def __init__(self, proxy_values, content, all_proxies=None):
         '''
         Create a container supporting proxy values.
         '''
         super().__init__()
         self.proxy_values = proxy_values
         self.content = content
+        if all_proxies == True:
+            all_proxies = {}
+        elif all_proxies == False:
+            all_proxies = None
+        self.all_proxies = all_proxies
         
     def proxy(self, value):
         '''
@@ -47,7 +52,10 @@ class ContainerWithProxy:
         '''
         index = len(self.proxy_values)
         self.proxy_values.append(value)
-        return ['&', index]
+        proxy = ['&', index]
+        if self.all_proxies is not None:
+            self.all_proxies[index] = [proxy]
+        return proxy
 
     @staticmethod
     def is_proxy(value):
@@ -69,9 +77,11 @@ class ContainerWithProxy:
             return self.get_value(self.proxy_values[value[1]])
         elif isinstance(value, list):
             return ListWithProxy(_content=value,
+                all_proxies=self.all_proxies,
                 _proxy_values=self.proxy_values)
         elif isinstance(value, dict):
             return DictWithProxy(_content=value,
+                all_proxies=self.all_proxies,
                 _proxy_values=self.proxy_values)
         else:
             return value
@@ -115,21 +125,25 @@ class ContainerWithProxy:
         proxy_values = json['proxy_values']
         content = json['content']
         if isinstance(content, list):
-            return ListWithProxy(_content=content, _proxy_values=proxy_values)
+            return ListWithProxy(_content=content,
+                _proxy_values=proxy_values)
         else:
-            return DictWithProxy(_content=content, _proxy_values=proxy_values)
+            return DictWithProxy(_content=content,
+                _proxy_values=proxy_values)
 
-    def no_proxy(self, value):
+    def no_proxy(self, value=...):
         '''
         Recursively resolve all proxies to shared values and return a standard dict.
         '''
+        if value is ...:
+            value = self
         no_proxy = getattr(value, '_no_proxy', None)
         if no_proxy is not None:
             return no_proxy()
         return value
     
 class DictWithProxy(MutableMapping, ContainerWithProxy):
-    def __init__(self, init=None, _content=None, _proxy_values=None):
+    def __init__(self, init=None, all_proxies=False, _content=None, _proxy_values=None):
         '''
         Creates a dict-like structure that supports proxies to shared values.
         '''
@@ -137,7 +151,7 @@ class DictWithProxy(MutableMapping, ContainerWithProxy):
             _content = {}
         if _proxy_values is None:
             _proxy_values = []
-        super().__init__(_proxy_values, _content)
+        super().__init__(_proxy_values, _content, all_proxies=all_proxies)
         if init is not None:
             for k, v in init:
                 self[k] = v
@@ -168,7 +182,7 @@ class DictWithProxy(MutableMapping, ContainerWithProxy):
         return dict((k,self.no_proxy(v)) for k, v in self.items())
 
 class ListWithProxy(MutableSequence, ContainerWithProxy):
-    def __init__(self, init=None, _content=None, _proxy_values=None):
+    def __init__(self, init=None, all_proxies=False, _content=None, _proxy_values=None):
         '''
         Creates a list-like structure that supports proxies to shared values.
         '''
@@ -176,7 +190,7 @@ class ListWithProxy(MutableSequence, ContainerWithProxy):
             _content = []
         if _proxy_values is None:
             _proxy_values = []
-        super().__init__(_proxy_values, _content)
+        super().__init__(_proxy_values, _content, all_proxies=all_proxies)
         if init is not None:
             for v in init:
                 self.append(v)

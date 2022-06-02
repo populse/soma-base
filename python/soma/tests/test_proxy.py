@@ -62,16 +62,36 @@ class TestProxy(unittest.TestCase):
 
     def test_recursive_proxy(self):
         d = DictWithProxy()
-        l_proxy = d.proxy([d.proxy(1), d.proxy(2)])
+        proxy_1 = d.proxy(1)
+        proxy_2 = d.proxy(2)
+        l_proxy = d.proxy([proxy_1, proxy_2])
+        d['1'] = proxy_1
+        d['2'] = d.proxy(proxy_2)
         d['l'] = l_proxy
-        self.assertEqual(d.no_proxy(d), {'l': [1, 2]})
+        self.assertEqual(d.no_proxy(d), {'1': 1, '2': 2, 'l': [1, 2]})
         d['l'][0] = 'one'
         d['l'][1] = 'two'
-        self.assertEqual(d.no_proxy(d), {'l': ['one', 'two']})
+        self.assertEqual(d.no_proxy(d), {'1': 'one', '2': 'two', 'l': ['one', 'two']})
         d['l'][0] = d['l'][1]
-        self.assertEqual(d.no_proxy(d), {'l': ['two', 'two']})
-        self.assertEqual(d.content, {'l': ['&', 2]})
-        self.assertEqual(d.proxy_values, ['two', 'two', [['&', 0], ['&', 1]]])
+        self.assertEqual(d.no_proxy(d), {'1': 'two', '2': 'two', 'l': ['two', 'two']})
+        self.assertEqual(d.content, {'1': ['&', 0], '2': ['&', 3], 'l': ['&', 2]})
+        self.assertEqual(d.proxy_values, ['two', 'two', [['&', 0], ['&', 1]], ['&', 1]])
+
+    def test_all_proxies(self):
+        d = DictWithProxy()
+        self.assertEqual(d.all_proxies, None)
+        d = DictWithProxy(all_proxies=True)
+        self.assertEqual(d.all_proxies, {})
+        d['l'] = [d.proxy('one'), d.proxy('two')]
+        d['d'] = {}
+        dd = d['d']
+        dd['3'] = dd.proxy('three')
+        dd['x'] = [d['l'], dd['3']]
+        self.assertEqual(d.all_proxies, {
+            0: [['&', 0]],
+            1: [['&', 1]],
+            2: [['&', 2]],
+        })
 
 def test():
     suite = unittest.TestLoader().loadTestsFromTestCase(TestProxy)
