@@ -5,7 +5,8 @@ from functools import partial
 from pydantic import ValidationError
 
 from ..qt_backend import Qt
-from . import WidgetFactory, ListItemInteraction, WidgetsGrid
+from . import (WidgetFactory, ListItemInteraction, WidgetsGrid,
+               DefaultWidgetFactory)
 from ..collapsable import CollapsableWidget
 from ..timered_widgets import TimeredQLineEdit
 from soma.undefined import undefined
@@ -180,9 +181,11 @@ class ListFloatWidgetFactory(ListStrWidgetFactory):
 def find_generic_list_factory(type, subtypes):
     if subtypes:
         item_type = subtypes[0]
-        widget_factory = WidgetFactory.find_factory(item_type, default=None)
+        widget_factory = WidgetFactory.find_factory(
+            item_type, default=DefaultWidgetFactory)
         if widget_factory is not None:
-            return partial(ListAnyWidgetFactory, item_factory_class=widget_factory)
+            return partial(ListAnyWidgetFactory,
+                           item_factory_class=widget_factory)
     return None
     
 
