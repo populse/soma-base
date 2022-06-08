@@ -480,6 +480,9 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
 
     def __repr__(self):
         fields = []
+        s = f'{self.__class__.__name__}'
+        size = len(s) + 2
+        maxsize = 100
         for f in self.fields():
             value = getattr(self, f.name, undefined)
             if value is undefined:
@@ -489,7 +492,13 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
                     svalue = repr(value)
                 except Exception:
                     svalue = '<non_printable>'
+            l = len(svalue)
+            if size + l > maxsize:
+                svalue = svalue[:(maxsize - size)] + '...'
             fields.append((f.name, svalue))
+            size += l
+            if size > maxsize:
+                break
         drepr = ', '.join([f'{n}={v}' for n, v in fields])
         return f'{self.__class__.__name__}({drepr})'
 
@@ -715,15 +724,15 @@ class DictControllerBase(dict):
         return value
 
     def items(self):
-        for field in self.fields():
+        for field in self.fields():  # noqa F402
             yield (field.name, getattr(self, field.name))
 
     def values(self):
-        for field in self.fields():
+        for field in self.fields():  # noqa F402
             yield getattr(self, field.name)
 
     def keys(self):
-        for field in self.fields():
+        for field in self.fields():  # noqa F402
             yield field.name
 
     def __contains__(self, key):
@@ -733,7 +742,7 @@ class DictControllerBase(dict):
         return len(list(self.fields()))
 
     def __iter__(self):
-        for field in self.fields():
+        for field in self.fields():  # noqa F402
             yield field.name
 
 
