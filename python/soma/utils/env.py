@@ -67,7 +67,7 @@ def parse_env_lines(text, asdict=False):
         return tags[0]
 
     def parse_parentheses(s):
-        rev_char = {'(': ')', '{': '}', '[': ']',
+        rev_char = {'(': ')', '{': '}', #'[': ']',
                     '"': '"', "'": "'"}
         groups = []
         tags = [None, []]
