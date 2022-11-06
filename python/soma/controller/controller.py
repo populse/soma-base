@@ -681,7 +681,9 @@ def asdict(obj, dict_factory=dict, exclude_empty=False):
             value = getattr(obj, f.name, undefined)
             if value is undefined:
                 continue
+            print('!?!', f.name, value)
             value = asdict(value, dict_factory, exclude_empty)
+            print('!??!', f.name, value)
             if not exclude_empty or value not in ([], {}, ()):
                 result.append((f.name, value))
         return dict_factory(result)
@@ -694,7 +696,7 @@ def asdict(obj, dict_factory=dict, exclude_empty=False):
             dv = asdict(v, dict_factory, exclude_empty)
             if not exclude_empty or dv not in ([], {}, ()):
                 result.append((dk, dv))
-        
+        return dict_factory(result)
     else:
         return copy.deepcopy(obj)
 
