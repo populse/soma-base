@@ -5,6 +5,7 @@ This module needs Crypto module.
 '''
 
 from Crypto.PublicKey import RSA
+from Crypto.Cipher import PKCS1_OAEP
 from base64 import b64decode, b64encode
 import Crypto
 
@@ -43,7 +44,9 @@ def encrypt_RSA(public_key_loc, message):
     rsakey = RSA.importKey(key)
     if not isinstance(message, bytes):
         message = message.encode()
-    encrypted = rsakey.encrypt(message, None)[0]
+    encryptor = PKCS1_OAEP.new(rsakey)
+    encrypted = encryptor.encrypt(message)
+    #encrypted = rsakey.encrypt(message, None)[0]
     return b64encode(encrypted)
 
 
@@ -55,5 +58,7 @@ def decrypt_RSA(private_key_loc, package):
     '''
     key = open(private_key_loc, "rb").read()
     rsakey = RSA.importKey(key)
-    decrypted = rsakey.decrypt(b64decode(package))
+    decryptor = PKCS1_OAEP.new(rsakey)
+    decrypted = decryptor.decrypt(b64decode(package))
+    #decrypted = rsakey.decrypt(b64decode(package))
     return decrypted
