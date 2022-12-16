@@ -330,14 +330,17 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
 
             field_class = type(name, (Controller,), namespace, class_field=False)
             field_instance = field_class()
+            default_value = getattr(field_instance, name, undefined)
+            if default_value is not undefined:
+                super().__setattr__(name, default_value)
             super().__getattribute__('_dyn_fields')[name] = field_instance
             if getattr(self, 'enable_notification', False) \
                     and self.on_fields_change.has_callback:
                 try:
                     self.on_fields_change.fire()
                 except Exception as e:
-                    print('Exception in Event.fire:', self, file=sys.stderr)
-                    print(self.on_fields_change, file=sys.stderr)
+                    # print('Exception in Event.fire:', self, file=sys.stderr)
+                    # print(self.on_fields_change, file=sys.stderr)
                     raise
         
     def add_proxy(self, name, proxy_controller, proxy_field):
@@ -441,20 +444,27 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
         if getattr(self, 'enable_notification', False) and self.on_fields_change.has_callback:
             self.on_fields_change.fire()
     
-    def __getattribute__(self, name):
-        try:
-            dyn_fields = super().__getattribute__('_dyn_fields')
-        except AttributeError:
-            dyn_fields = {}
-        dyn_field = dyn_fields.get(name)
-        if dyn_field:
-            result = getattr(dyn_field, name)
-        else:
-            result = super().__getattribute__(name)
-        if result is undefined:
-            raise AttributeError('{} object has no attribute {}'.format(repr(self.__class__), repr(name)))
-        return result
+    def __getattr__(self, name):
+        if name != '_dyn_fields':
+            dyn_fields = getattr(self, '_dyn_fields', None)
+            if dyn_fields:
+                field = dyn_fields.get(name)
+                if field:
+                    result = getattr(field, name)
+                    if result is not undefined:
+                        return result
+        raise AttributeError('{} object has no attribute {}'.format(repr(self.__class__), repr(name)))
 
+    def getattr(self, name, default=undefined):
+        '''
+        This method always return the default value whereas the attribute
+        is not defined or has the value `undefined`. 
+        '''
+        value = getattr(self, name, ...)
+        if value is ... or value is undefined:
+            value = default
+        return value
+    
     def __setattr__(self, name, value):
         if name in self.__pydantic_model__.__fields__ \
                 or (hasattr(self, '_dyn_fields')
@@ -506,6 +516,7 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
         dyn_field = super().__getattribute__('_dyn_fields').get(name)
         if dyn_field:
             setattr(dyn_field, name, value)
+            super().__setattr__(name, getattr(dyn_field, name))
         else:
             field = self.__dataclass_fields__[name]
             type_ = field.type.__args__[0]
