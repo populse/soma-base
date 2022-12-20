@@ -306,6 +306,16 @@ def set_qt_backend(backend=None, pyqt_api=1, compatible_qt5=None):
     __import__(backend + '.QtCore')
     #__import__(backend + '.QtGui')
     qt_backend = backend
+
+    if qt_backend in('PyQt4', 'PyQt5', 'PyQt6'):
+        # import the right sip module
+        try:
+            __import__('%s.sip' % qt_backend)
+            sip = sys.modules['%s.sip' % qt_backend]
+            sys.modules['sip'] = sip
+        except:
+            import sip
+
     if make_compatible_qt5 and qt5_compat_changed:
         ensure_compatible_qt5()
     else:
