@@ -44,6 +44,7 @@ import sys
 import os
 import imp
 import importlib
+import inspect
 import six
 
 
@@ -389,10 +390,11 @@ def ensure_compatible_qt5():
         from . import QtCore
         QtCore.Signal = QtCore.pyqtSignal
         QtCore.Slot = QtCore.pyqtSlot
-    if qt_backend == 'PyQt6':
-        # recreate the global Qt module
-        spec = importlib.machinery.ModuleSpec('Qt', None)
-        mod = importlib.util.module_from_spec(spec)
+
+    # export enums
+    from soma.utils.sip_compat import sip_export_enums
+    pyqt = sys.modules[qt_backend]
+    sip_export_enums(pyqt)
 
 
 
@@ -608,7 +610,6 @@ def init_matplotlib_backend(force=True):
         backend in matplotlib. If matplotlib does not support the force
         parameter, then the backend will not be forced.
     '''
-    import inspect
     try:
         import matplotlib
     except ImportError:
