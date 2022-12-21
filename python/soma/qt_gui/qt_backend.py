@@ -547,7 +547,7 @@ def getOpenFileName(parent=None, caption='', directory='', filter='',
         if selectedFilter:
             kwargs['selectedFilter'] = selectedFilter
         if options:
-            kwargs['options'] = QtGui.QFileDialog.Options(options)
+            kwargs['options'] = QtGui.QFileDialog.Option(options)
         filename = get_qt_module().QtGui.QFileDialog.getOpenFileName(
             parent, caption, directory, filter, **kwargs)
         if get_qt_backend() == 'PyQt4':
@@ -557,7 +557,7 @@ def getOpenFileName(parent=None, caption='', directory='', filter='',
     else:
         return get_qt_module().QtGui.QFileDialog.getOpenFileName(
             parent, caption, directory, filter, selectedFilter,
-            QtGui.QFileDialog.Options(options))[0]
+            QtGui.QFileDialog.Option(options))[0]
 
 
 def getSaveFileName(parent=None, caption='', directory='', filter='',
@@ -574,7 +574,7 @@ def getSaveFileName(parent=None, caption='', directory='', filter='',
         if selectedFilter:
             kwargs['selectedFilter'] = selectedFilter
         if options:
-            kwargs['options'] = QtGui.QFileDialog.Options(options)
+            kwargs['options'] = QtGui.QFileDialog.Option(options)
         filename = get_qt_module().QtGui.QFileDialog.getSaveFileName(
             parent, caption, directory, filter, **kwargs)
         if get_qt_backend() == 'PyQt4':
@@ -593,14 +593,14 @@ def getExistingDirectory(parent=None, caption='', directory='', options=None):
     if get_qt_backend() in ('PyQt4', 'PyQt5', 'PyQt6'):
         kwargs = {}
         if options is not None:
-            kwargs['options'] = QtGui.QFileDialog.Options(options)
+            kwargs['options'] = QtGui.QFileDialog.Option(options)
         return get_qt_module().QtGui.QFileDialog.getExistingDirectory(
             parent, caption, directory, **kwargs)
     else:
         if options is not None:
             return get_qt_module().QtGui.QFileDialog.getExistingDirectory(
                 parent, caption, directory,
-                QtGui.QFileDialog.Options(options))[0]
+                QtGui.QFileDialog.Option(options))[0]
         else:
             return get_qt_module().QtGui.QFileDialog.getExistingDirectory(
                 parent, caption, directory)[0]
