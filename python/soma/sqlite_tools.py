@@ -91,7 +91,7 @@ class ThreadSafeSQLiteConnection(object):
             for thread in self.connections.keys():
                 connection, connectionClosed = self.connections[thread]
                 if connection is not None:
-                    currentThread = threading.currentThread().getName()
+                    currentThread = threading.current_thread().getName()
                     print('WARNING: internal error: an sqlite connection on',
                           repr(sqliteFile), 'is opened for thread', thread,
                           'but the corresponding ThreadSafeSQLiteConnection instance (number '
@@ -112,7 +112,7 @@ class ThreadSafeSQLiteConnection(object):
         if self.__args is None:
             raise RuntimeError(
                 'Attempt to access to a closed ThreadSafeSQLiteConnection')
-        currentThread = threading.currentThread().getName()
+        currentThread = threading.current_thread().getName()
         # print('!ThreadSafeSQLiteConnection:' + currentThread + '!')
         # _getConnection( id =', self._id, ')', self.__args
         self._instanceLock.acquire()
@@ -138,10 +138,10 @@ class ThreadSafeSQLiteConnection(object):
         Delete the connection previously created for the current thread with
         get_connection()
         '''
-        if threading.currentThread is None:
+        if threading.current_thread is None:
             # exiting, threading attributes have become None
             return
-        currentThread = threading.currentThread().getName()
+        currentThread = threading.current_thread().getName()
         self._instanceLock.acquire()
         try:
             connection, connectionClosed = self.connections.pop(
@@ -169,11 +169,11 @@ class ThreadSafeSQLiteConnection(object):
         thread.
         '''
         if self.__args is not None:
-            if threading.currentThread is None:
+            if threading.current_thread is None:
                 # exiting, threading attributes have become None
                 return
             self.currentThreadCleanup()
-            currentThread = threading.currentThread().getName()
+            currentThread = threading.current_thread().getName()
             self._instanceLock.acquire()
             try:
                 for thread in self.connections.keys():
