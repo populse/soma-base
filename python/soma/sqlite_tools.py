@@ -87,18 +87,22 @@ class ThreadSafeSQLiteConnection(object):
             return
         if self.__args is not None:
             sqliteFile = self.__args[0]
-            self.close()
-            for thread in self.connections.keys():
-                connection, connectionClosed = self.connections[thread]
-                if connection is not None:
-                    currentThread = threading.current_thread().getName()
-                    print('WARNING: internal error: an sqlite connection on',
-                          repr(sqliteFile), 'is opened for thread', thread,
-                          'but the corresponding ThreadSafeSQLiteConnection instance (number '
-                          + str(self._id)
-                          + ') is being deleted in thread', currentThread
-                          + '. Method currentThreadCleanup() should have been called from',
-                          thread, 'to supress this warning.', file=sys.stderr)
+            try:
+                self.close()
+                for thread in self.connections.keys():
+                    connection, connectionClosed = self.connections[thread]
+                    if connection is not None:
+                        currentThread = threading.current_thread().getName()
+                        print('WARNING: internal error: an sqlite connection on',
+                              repr(sqliteFile), 'is opened for thread', thread,
+                              'but the corresponding ThreadSafeSQLiteConnection instance (number '
+                              + str(self._id)
+                              + ') is being deleted in thread', currentThread
+                              + '. Method currentThreadCleanup() should have been called from',
+                              thread, 'to supress this warning.', file=sys.stderr)
+            except ImportError:
+                # python is shutting down
+                pass
 
     def get_connection(self):
         '''
