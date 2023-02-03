@@ -557,7 +557,7 @@ class ObservableList(list):
         if content:
             self.extend(content)
 
-    def __getinitargs__(self):
+    def __getnewargs__(self):
         """Returns the args to pass to the __init__ method to construct this
         object.
         It is useful to save an :class:`ObservableList` object to :mod:`minf`
@@ -860,7 +860,7 @@ class ObservableSortedDictionary(SortedDictionary):
         self.onChangeNotifier = Notifier()
         super(ObservableSortedDictionary, self).__init__(*args)
 
-    def __getinitargs__(self):
+    def __getnewargs__(self):
         """Returns the args to pass to the __init__ method to construct this object.
         It is useful to save ObservableList object to minf format.
         Returns
@@ -1041,7 +1041,7 @@ class EditableTree(ObservableAttributes, ObservableSortedDictionary):
         self.visible = visible
         self.enabled = enabled
 
-    def __getinitargs__(self):
+    def __getnewargs__(self):
         """Returns the args to pass to the __init__ method to construct this object.
         It is useful in order to save EditableTree object to minf format.
         Returns
@@ -1220,7 +1220,7 @@ class EditableTree(ObservableAttributes, ObservableSortedDictionary):
             self.onChangeNotifier = Notifier()
             self.unamed = False
 
-        def __getinitargs__(self):
+        def __getnewargs__(self):
             """Returns the args to pass to the __init__ method to construct this object.
             It is useful to save L{ObservableList} object to minf format.
             Returns
@@ -1243,7 +1243,7 @@ class EditableTree(ObservableAttributes, ObservableSortedDictionary):
                 class name, init args, state, iterator on elements to copy,
                 dictionary iterator
             """
-            return (self.__class__, self.__getinitargs__(), None, None, None)
+            return (self.__class__, self.__getnewargs__(), None, None, None)
 
         def __str__(self):
             return self.name
@@ -1307,7 +1307,7 @@ class EditableTree(ObservableAttributes, ObservableSortedDictionary):
                 self.name = name
                 self.unamed = False
 
-        def __getinitargs__(self):
+        def __getnewargs__(self):
             content = list(self.values())
             return (self.name, self.id, self.icon, self.tooltip, self.copyEnabled, self.modifiable, self.delEnabled, content, self.visible, self.enabled)
 
@@ -1317,7 +1317,7 @@ class EditableTree(ObservableAttributes, ObservableSortedDictionary):
             It gives the arguments to pass to the init method of the object
             when creating a copy
             """
-            return (self.__class__, self.__getinitargs__(), None, None, None)
+            return (self.__class__, self.__getnewargs__(), None, None, None)
 
         def __str__(self):
             s = self.name + " ("
