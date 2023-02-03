@@ -89,7 +89,18 @@ class QtImporter(object):
                 imp_module_name = 'QtGui'
             elif module_name == 'QtWebKitWidgets':
                 imp_module_name = 'QtWebKit'
-        if imp_module_name == 'Qt' and qt_backend in ('PySide', 'PyQt6'):
+
+        if qt_backend in('PyQt4', 'PyQt5', 'PyQt6'):
+            # import the right sip module
+            try:
+                __import__('%s.sip' % qt_backend)
+                sip = sys.modules['%s.sip' % qt_backend]
+                sys.modules['sip'] = sip
+            except:
+                import sip
+
+        if imp_module_name == 'Qt' and (qt_backend in ('PySide', 'PyQt6')
+                                        or sip.SIP_VERSION >= 0x060000):
             # PySide and PyQt6 don't define the aggregating Qt module
             psmods = []
             base = name.split('.')[:-1]
@@ -101,6 +112,11 @@ class QtImporter(object):
                         #'QtOpenGL', 'QtTest', 'QtDeclarative', 'QtScript',
                         #'QtUiTools', 'QtScriptTools', 'QtWebKit', 'QtHelp',
                         #'QtSql', 'QtXml'):
+            if 'Qt' in mods:
+                # PyQt5 + sip6 brings a Qt module, but which is empty. We thus
+                # need to re-populate it as in PyQt6, but here the module
+                # already exists: don't reload it.
+                mods.remove('Qt')
             for mod in mods:
                 try:
                     psmods.append(self.load_module('.'.join(base + [mod])))
