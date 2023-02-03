@@ -96,12 +96,12 @@ class SingleThreadCalls(object):
         Parameters
         ----------
         thread: :class:`threading.Thread` instance or *None*
-            Processing thread. If *None*, :func:`threading.currentThread`
+            Processing thread. If *None*, :func:`threading.current_thread`
             is used.
         '''
         self._queue = []
         if thread is None:
-            thread = threading.currentThread()
+            thread = threading.current_thread()
         self._thread = thread
         self._condition = threading.Condition()
 
@@ -149,7 +149,7 @@ class SingleThreadCalls(object):
         any type
             the result of the function call
         '''
-        if threading.currentThread() is self._thread:
+        if threading.current_thread() is self._thread:
             result = function(*args, **kwargs)
         else:
             semaphore = threading.Semaphore(0)
@@ -202,7 +202,7 @@ class SingleThreadCalls(object):
         None:
             push() does not return anything.
         '''
-        if threading.currentThread() is self._thread:
+        if threading.current_thread() is self._thread:
             function(*args, **kwargs)
         else:
             self._condition.acquire()

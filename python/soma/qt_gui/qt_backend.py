@@ -34,6 +34,8 @@ transparent.
 import sys
 import os
 import imp
+import importlib
+import inspect
 
 
 # make qt_backend a fake module package, with Qt modules as sub-modules
@@ -63,7 +65,7 @@ class QtImporter(object):
                 module_name = 'QtGui'
             elif module_name == 'QtWebKitWidgets':
                 module_name = 'QtWebKit'
-        if qt_backend == 'PySide' and module_name == 'Qt':
+        if qt_backend in ('PySide', 'PyQt6') and module_name == 'Qt':
             module_name = 'QtGui'
         found = imp.find_module(module_name, qt_module.__path__)
         return self
@@ -77,20 +79,44 @@ class QtImporter(object):
                 imp_module_name = 'QtGui'
             elif module_name == 'QtWebKitWidgets':
                 imp_module_name = 'QtWebKit'
-        if imp_module_name == 'Qt' and qt_backend == 'PySide':
-            # PySide doesn't define the aggregating Qt module
+
+        if qt_backend in('PyQt4', 'PyQt5', 'PyQt6'):
+            # import the right sip module
+            try:
+                __import__('%s.sip' % qt_backend)
+                sip = sys.modules['%s.sip' % qt_backend]
+                sys.modules['sip'] = sip
+            except:
+                import sip
+
+        if imp_module_name == 'Qt' and (qt_backend in ('PySide', 'PyQt6')
+                                        or sip.SIP_VERSION >= 0x060000):
+            # PySide and PyQt6 don't define the aggregating Qt module
             psmods = []
             base = name.split('.')[:-1]
-            for mod in ('QtCore', 'QtGui', 'phonon', 'QtNetwork', 'QtSvg',
-                        'QtOpenGL', 'QtTest', 'QtDeclarative', 'QtScript',
-                        'QtUiTools', 'QtScriptTools', 'QtWebKit', 'QtHelp',
-                        'QtSql', 'QtXml'):
+            qt_mod = sys.modules[qt_backend]
+            mods = set([x.split('.')[0]
+                        for x in os.listdir(os.path.dirname(qt_mod.__file__))
+                        if not x.startswith('_')])
+            #for mod in ('QtCore', 'QtGui', 'phonon', 'QtNetwork', 'QtSvg',
+                        #'QtOpenGL', 'QtTest', 'QtDeclarative', 'QtScript',
+                        #'QtUiTools', 'QtScriptTools', 'QtWebKit', 'QtHelp',
+                        #'QtSql', 'QtXml'):
+            if 'Qt' in mods:
+                # PyQt5 + sip6 brings a Qt module, but which is empty. We thus
+                # need to re-populate it as in PyQt6, but here the module
+                # already exists: don't reload it.
+                mods.remove('Qt')
+            for mod in mods:
                 try:
                     psmods.append(self.load_module('.'.join(base + [mod])))
                 except ImportError:
                     pass
-            patch_pyside_modules(psmods)
-            return sys.modules['.'.join([qt_backend, 'Qt'])]
+            patch_main_modules(psmods)
+            mod = sys.modules['.'.join([qt_backend, 'Qt'])]
+            sys.modules['soma.qt_gui.qt_backend.Qt'] = mod
+            return mod
+
         __import__('.'.join([qt_backend, imp_module_name]))
         module = sys.modules['.'.join([qt_backend, imp_module_name])]
         # fixes: #13432 - Ubuntu 14.04 LTS: Importing some modules
@@ -147,7 +173,7 @@ class QtImporter(object):
                 if qt_backend in ('PyQt4', 'PySide'):
                     sys.modules['.'.join([qt_backend, 'QtWidgets'])] = module
                     patch_qt4_modules(QtCore, module)
-                elif qt_backend == 'PyQt5':
+                elif qt_backend in('PyQt5', 'PyQt6'):
                     __import__('.'.join([qt_backend, 'QtWidgets']))
                     qtwidgets = sys.modules['.'.join([qt_backend,
                                                       'QtWidgets'])]
@@ -158,7 +184,7 @@ class QtImporter(object):
                 if qt_backend in ('PyQt4', 'PySide'):
                     sys.modules['.'.join([qt_backend, 'QtWebKitWidgets'])] \
                         = module
-                elif qt_backend == 'PyQt5':
+                elif qt_backend in('PyQt5', 'PyQt6'):
                     __import__('.'.join([qt_backend, 'QtWebKitWidgets']))
                     qtwebkitwidgets = sys.modules[
                         '.'.join([qt_backend,'QtWebKitWidgets'])]
@@ -181,13 +207,12 @@ def get_qt_backend():
         if pyside is not None:
             qt_backend = 'PySide'
         else:
-            pyqt = sys.modules.get('PyQt5')
-            if pyqt is not None:
-                qt_backend = 'PyQt5'
-            else:
-                pyqt = sys.modules.get('PyQt4')
+            backends = ('PyQt6', 'PyQt5', 'PyQt4')
+            for backend in backends:
+                pyqt = sys.modules.get(backend)
                 if pyqt is not None:
-                    qt_backend = 'PyQt4'
+                    qt_backend = backend
+                    break
     return qt_backend
 
 
@@ -205,6 +230,7 @@ def set_qt_backend(backend=None, pyqt_api=1, compatible_qt5=None):
     * if QT_API is set to "pyqt" or "pyqt4", use PyQt4, with PyQt API v2
     * if QT_API is set to "pyside", use PySide
     * if QT_API is set to "pyqt5", use PyQt5
+    * if QT_API is set to "pyqt6", use PyQt6
 
     Moreover if using PyQt4, QtCore is patched to duplicate QtCore.pyqtSignal
     and QtCore.pyqtSlot as QtCore.Signal and QtCore.Slot. This is meant to ease
@@ -252,7 +278,9 @@ def set_qt_backend(backend=None, pyqt_api=1, compatible_qt5=None):
             # see
             # https://ipython.org/ipython-doc/dev/interactive/reference.html#pyqt-and-pyside
             qt_api = os.getenv('QT_API')
-            if qt_api == 'pyqt5':
+            if qt_api == 'pyqt6':
+                backend = 'PyQt6'
+            elif qt_api == 'pyqt5':
                 backend = 'PyQt5'
             elif qt_api in ('pyqt', 'pyqt4'):
                 backend = 'PyQt4'
@@ -283,10 +311,20 @@ def set_qt_backend(backend=None, pyqt_api=1, compatible_qt5=None):
     __import__(backend + '.QtCore')
     #__import__(backend + '.QtGui')
     qt_backend = backend
+
+    if qt_backend in('PyQt4', 'PyQt5', 'PyQt6'):
+        # import the right sip module
+        try:
+            __import__('%s.sip' % qt_backend)
+            sip = sys.modules['%s.sip' % qt_backend]
+            sys.modules['sip'] = sip
+        except:
+            import sip
+
     if make_compatible_qt5 and qt5_compat_changed:
         ensure_compatible_qt5()
     else:
-        if backend in('PyQt4', 'PyQt5'):
+        if backend in('PyQt4', 'PyQt5', 'PyQt6'):
             qt_module.QtCore.Signal = qt_module.QtCore.pyqtSignal
             qt_module.QtCore.Slot = qt_module.QtCore.pyqtSlot
 
@@ -313,12 +351,12 @@ def patch_qt4_modules(QtCore, QtGui):
     QtCore.QItemSelectionModel = QtGui.QItemSelectionModel
 
 
-def patch_pyside_modules(modules):
-    if 'PySide.Qt' in sys.modules:
-        Qt = sys.modules['PySide.Qt']
+def patch_main_modules(modules):
+    if '%s.Qt' % qt_backend in sys.modules:
+        Qt = sys.modules['%s.Qt' % qt_backend]
     else:
-        Qt = imp.new_module('PySide.Qt')
-        sys.modules['PySide.Qt'] = Qt
+        Qt = imp.new_module('%s.Qt' % qt_backend)
+        sys.modules['%s.Qt' % qt_backend] = Qt
     for mod in modules:
         for key, item in mod.__dict__.iteritems():
             if not key.startswith('__') and key not in Qt.__dict__:
@@ -329,31 +367,31 @@ def ensure_compatible_qt5():
     if not make_compatible_qt5:
         return
     qt_backend = get_qt_backend()
-    if qt_backend == 'PyQt5':
+    if qt_backend in ('PyQt5', 'PyQt6'):
         qtgui = None
         qtwidgets = None
         qtwebkit = None
         qtwebkitwidgets = None
-        if 'PyQt5.QtGui' in sys.modules:
-            qtgui = sys.modules['PyQt5.QtGui']
-        if 'PyQt5.QtWidgets' in sys.modules:
-            qtwidgets = sys.modules['PyQt5.QtWidgets']
-        if 'PyQt5.QtWebKit' in sys.modules:
-            qtwebkit = sys.modules['PyQt5.QtWebKit']
-        if 'PyQt5.QtWebKitWidgets' in sys.modules:
-            qtwebkitwidgets = sys.modules['PyQt5.QtWebKitWidgets']
+        if '%s.QtGui' % qt_backend in sys.modules:
+            qtgui = sys.modules['%s.QtGui' % qt_backend]
+        if '%s.QtWidgets' % qt_backend in sys.modules:
+            qtwidgets = sys.modules['%s.QtWidgets' % qt_backend]
+        if '%s.QtWebKit' % qt_backend in sys.modules:
+            qtwebkit = sys.modules['%s.QtWebKit' % qt_backend]
+        if '%s.QtWebKitWidgets' % qt_backend in sys.modules:
+            qtwebkitwidgets = sys.modules['%s.QtWebKitWidgets' % qt_backend]
         if qtgui and qtwidgets is None:
             from . import QtWidgets
-            qtwidgets = sys.modules['PyQt5.QtWidgets']
+            qtwidgets = sys.modules['%s.QtWidgets' % qt_backend]
         elif qtwidgets and qtgui is None:
             from . import QtGui
-            qtgui = sys.modules['PyQt5.QtGui']
+            qtgui = sys.modules['%s.QtGui' % qt_backend]
         elif qtgui and qtwidgets:
             from . import QtCore
             patch_qt5_modules(QtCore, qtgui, qtwidgets)
         if qtwebkit and qtwebkitwidgets is None:
             from . import QtWebKitWidgets
-            qtwebkitwidgets = sys.modules['PyQt5.QtWebKitWidgets']
+            qtwebkitwidgets = sys.modules['%s.QtWebKitWidgets' % qt_backend]
         elif qtwebkitwidgets and qtwebkit is None:
             from . import QtWebKit
         elif qtwebkit and qtwebkitwidgets:
@@ -363,10 +401,16 @@ def ensure_compatible_qt5():
             from . import QtWidgets
         from . import QtCore, QtGui
         patch_qt4_modules(QtCore, QtGui)
-    if qt_backend in('PyQt4', 'PyQt5'):
+    if qt_backend in('PyQt4', 'PyQt5', 'PyQt6'):
         from . import QtCore
         QtCore.Signal = QtCore.pyqtSignal
         QtCore.Slot = QtCore.pyqtSlot
+
+    # export enums
+    from soma.utils.sip_compat import sip_export_enums
+    pyqt = sys.modules[qt_backend]
+    sip_export_enums(pyqt)
+
 
 
 def get_qt_module():
@@ -445,7 +489,7 @@ def loadUi(ui_file, *args, **kwargs):
     containing the ui file, icons cannot be loaded.
     '''
     from . import QtGui
-    if get_qt_backend() in ('PyQt4', 'PyQt5'):
+    if get_qt_backend() in ('PyQt4', 'PyQt5', 'PyQt6'):
         # the problem is corrected in version > 4.7.2,
         from . import QtCore
         if QtCore.PYQT_VERSION > 0x040702:
@@ -478,6 +522,9 @@ def loadUiType(uifile, from_imports=False):
     Not implemented for PySide, actually, because PySide does not have this
     feature.
     '''
+    if get_qt_backend() == 'PyQt6':
+        from PyQt6 import uic
+        return uic.loadUiType(uifile, from_imports=from_imports)
     if get_qt_backend() == 'PyQt5':
         from PyQt5 import uic
         return uic.loadUiType(uifile, from_imports=from_imports)
@@ -496,7 +543,7 @@ def getOpenFileName(parent=None, caption='', directory='', filter='',
     '''PyQt4 / PySide compatible call to QFileDialog.getOpenFileName'''
     set_qt_backend(compatible_qt5=True)
     from . import QtGui
-    if get_qt_backend() in('PyQt4', 'PyQt5'):
+    if get_qt_backend() in('PyQt4', 'PyQt5', 'PyQt6'):
         kwargs = {}
         # kwargs are used because passing None or '' as selectedFilter
         # does not work, at least in PyQt 4.10
@@ -505,7 +552,7 @@ def getOpenFileName(parent=None, caption='', directory='', filter='',
         if selectedFilter:
             kwargs['selectedFilter'] = selectedFilter
         if options:
-            kwargs['options'] = QtGui.QFileDialog.Options(options)
+            kwargs['options'] = QtGui.QFileDialog.Option(options)
         filename = get_qt_module().QtGui.QFileDialog.getOpenFileName(
             parent, caption, directory, filter, **kwargs)
         if get_qt_backend() == 'PyQt4':
@@ -515,7 +562,7 @@ def getOpenFileName(parent=None, caption='', directory='', filter='',
     else:
         return get_qt_module().QtGui.QFileDialog.getOpenFileName(
             parent, caption, directory, filter, selectedFilter,
-            QtGui.QFileDialog.Options(options))[0]
+            QtGui.QFileDialog.Option(options))[0]
 
 
 def getSaveFileName(parent=None, caption='', directory='', filter='',
@@ -523,7 +570,7 @@ def getSaveFileName(parent=None, caption='', directory='', filter='',
     '''PyQt4 / PySide compatible call to QFileDialog.getSaveFileName'''
     set_qt_backend(compatible_qt5=True)
     from . import QtGui
-    if get_qt_backend() in ('PyQt4', 'PyQt5'):
+    if get_qt_backend() in ('PyQt4', 'PyQt5', 'PyQt6'):
         kwargs = {}
         # kwargs are used because passing None or '' as selectedFilter
         # does not work, at least in PyQt 4.10
@@ -532,7 +579,7 @@ def getSaveFileName(parent=None, caption='', directory='', filter='',
         if selectedFilter:
             kwargs['selectedFilter'] = selectedFilter
         if options:
-            kwargs['options'] = QtGui.QFileDialog.Options(options)
+            kwargs['options'] = QtGui.QFileDialog.Option(options)
         filename = get_qt_module().QtGui.QFileDialog.getSaveFileName(
             parent, caption, directory, filter, **kwargs)
         if get_qt_backend() == 'PyQt4':
@@ -548,17 +595,17 @@ def getExistingDirectory(parent=None, caption='', directory='', options=None):
     '''PyQt4 / PySide compatible call to QFileDialog.getExistingDirectory'''
     set_qt_backend(compatible_qt5=True)
     from . import QtGui
-    if get_qt_backend() in ('PyQt4', 'PyQt5'):
+    if get_qt_backend() in ('PyQt4', 'PyQt5', 'PyQt6'):
         kwargs = {}
         if options is not None:
-            kwargs['options'] = QtGui.QFileDialog.Options(options)
+            kwargs['options'] = QtGui.QFileDialog.Option(options)
         return get_qt_module().QtGui.QFileDialog.getExistingDirectory(
             parent, caption, directory, **kwargs)
     else:
         if options is not None:
             return get_qt_module().QtGui.QFileDialog.getExistingDirectory(
                 parent, caption, directory,
-                QtGui.QFileDialog.Options(options))[0]
+                QtGui.QFileDialog.Option(options))[0]
         else:
             return get_qt_module().QtGui.QFileDialog.getExistingDirectory(
                 parent, caption, directory)[0]
@@ -578,7 +625,6 @@ def init_matplotlib_backend(force=True):
         backend in matplotlib. If matplotlib does not support the force
         parameter, then the backend will not be forced.
     '''
-    import inspect
     try:
         import matplotlib
     except ImportError:
@@ -587,7 +633,10 @@ def init_matplotlib_backend(force=True):
 
     mpl_ver = [int(x) for x in matplotlib.__version__.split('.')[:2]]
     qt_backend = get_qt_backend()
-    if qt_backend == 'PyQt5':
+    if qt_backend == 'PyQt6':
+        guiBackend = 'Qt5Agg'  # apparently not Qt6Agg
+        mpl_backend_mod = 'matplotlib.backends.backend_qt5agg'
+    elif qt_backend == 'PyQt5':
         guiBackend = 'Qt5Agg'
         mpl_backend_mod = 'matplotlib.backends.backend_qt5agg'
     else:
@@ -609,7 +658,9 @@ def init_matplotlib_backend(force=True):
             # some versions (>=1.1, <3) of matplotlib have this rcParams setting
             matplotlib.rcParams['backend.qt4'] = 'PySide'
     else:
-        if qt_backend == 'PyQt5':
+        if qt_backend == 'PyQt6':
+            rc_key = 'backend.qt6'
+        elif qt_backend == 'PyQt5':
             rc_key = 'backend.qt5'
         else:
             rc_key = 'backend.qt4'

@@ -366,7 +366,7 @@ def find_in_path(file, path=None):
     Examples::
 
       find_in_path('sh') could return '/bin/sh'
-      find_in_path('libpython2.7.so', 'LD_LIBRARY_PATH') could return '/usr/local/lib/libpython2.7.so'
+      find_in_path('libpython3.10.so', 'LD_LIBRARY_PATH') could return '/usr/lib/x86_64-linux-gnu/libpython3.10.so'
     '''
     if path is None:
         path = os.environ.get('PATH').split(os.pathsep)

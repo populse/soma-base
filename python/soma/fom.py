@@ -583,12 +583,26 @@ class FileOrganizationModels(object):
                 values = definition.get('values')
                 if existing_definition:
                     existing_values = existing_definition.get('values')
-                    if (existing_values is None) != bool(values is None):
+                    # if (existing_values is None) != bool(values is None):
+                        # print('ERROR:\nexisting_definition:', existing_definition)
+                        # print('definition:', definition)
+                        #raise ValueError(
+                            #'Incompatible values redefinition for attribute '
+                            #'%s, older: %s, new: %s in file: %s' % (
+                                #attribute,
+                                #existing_values,
+                                #values,
+                                #file_or_dict))
+                    if (definition.get('default_value') is None) \
+                            != (existing_definition.get('default_value')
+                                is None):
                         raise ValueError(
-                            'Incompatible values redefinition for attribute %s' % attribute)
-                    if (definition.get('default_value') is None) != (existing_definition.get('default_value') is None):
-                        raise ValueError(
-                            'Incompatible default value redefinition of attribute %s' % attribute)
+                            'Incompatible default value redefinition of '
+                            'attribute %s, older default: %s, new default: '
+                            '%s in file: %s' % (
+                                attribute,
+                                existing_definition.get('default_value'),
+                                definition.get('default_value'), file_or_dict))
                     if values:
                         existing_values.extend(values)
                 else:
