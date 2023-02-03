@@ -52,6 +52,11 @@ In case of error, the job result will be an exception with stack information: (e
 Availability: Unix
 '''
 
+<<<<<<< HEAD
+=======
+from __future__ import print_function
+from __future__ import absolute_import
+>>>>>>> origin/master
 import multiprocessing
 import threading
 import os
@@ -114,11 +119,12 @@ def run_job(f, *args, **kwargs):
         os._exit(0)
 
 
-def worker(q, *args, **kwargs):
+def worker(q, thread_only, *args, **kwargs):
     ''' Internal function: worker thread loop:
     * pick a job in the queue q
-    * execute it in a remote process (using run_job())
-    * stopre the result in the result list
+    * execute it, either in the current thread, or in a remote process (using
+      run_job()), depending on the thread_only parameter value
+    * store the result in the result list
     * start again with another job
 
     The loop ends when a job in the queue is None.
@@ -140,7 +146,13 @@ def worker(q, *args, **kwargs):
             kwargs = dict(kwargs)
             kwargs.update(kwargsi)
             try:
-                result = run_job(f, *argsi, **kwargs)
+                if thread_only:
+                    try:
+                        result = f(*argsi, **kwargs)
+                    except Exception as e:
+                        result = e
+                else:
+                    result = run_job(f, *argsi, **kwargs)
                 #print('result:', i, result)
                 res[i] = result
             except Exception as e:
@@ -152,13 +164,17 @@ def worker(q, *args, **kwargs):
             sys.stdout.flush()
 
 
-def allocate_workers(q, nworker=0, *args, **kwargs):
+def allocate_workers(q, nworker=0, thread_only=False, *args, **kwargs):
     ''' Utility finction to allocate worker threads.
 
     Parameters
     ----------
     q: :class:`Queue <Queue.Queue>` instance
         the jobs queue which will be fed with jobs for processing
+    thread_only: bool
+        if True, workers will run jobs in the worker thread, not using a
+        separate process. This flag thus allows to choose a threaded or
+        multiprocessing implementation.
     nworker: int
         number of worker threads (jobs which will run in parallel). A positive
         number (1, 2...) will be used as is, 0 means all available CPU cores
@@ -182,7 +198,8 @@ def allocate_workers(q, nworker=0, *args, **kwargs):
             nworker = 1
     workers = []
     for i in range(nworker):
-        w = threading.Thread(target=worker, args=(q, ) + args, kwargs=kwargs)
+        w = threading.Thread(target=worker, args=(q, thread_only) + args,
+                             kwargs=kwargs)
         w.start()
         workers.append(w)
     return workers

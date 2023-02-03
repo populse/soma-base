@@ -81,7 +81,7 @@ class QtThreadCall(singleton.Singleton, QObject):
                 break
         if not mainthreadfound:
             print('Warning: main thread not found')
-            self.mainThread = threading.currentThread()
+            self.mainThread = threading.current_thread()
 
     def _postEvent(self):
         class QtThreadCallEvent(QEvent):
@@ -194,7 +194,7 @@ class QtThreadCall(singleton.Singleton, QObject):
         boolean: True if the current thread is the main thread
         """
         # return threading.currentThread().getName() == 'MainThread'
-        return threading.currentThread() is self.mainThread
+        return threading.current_thread() is self.mainThread
 
     def doAction(self):
         """
@@ -263,8 +263,8 @@ class MainThreadLife(object):
             self._obj_life = obj_life
 
     def __del__(self):
-        if not isinstance(threading.currentThread(), threading._MainThread) \
-                and hasattr(self, '_obj_life'):
+        if (not isinstance(threading.current_thread(), threading._MainThread)
+                and hasattr(self, '_obj_life')):
             lock = threading.Lock()
             lock.acquire()
             QtThreadCall().push(MainThreadLife.delInMainThread, lock,

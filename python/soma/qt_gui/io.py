@@ -350,7 +350,7 @@ class Socket(QObject):
         self.disableHandler()
         self.socketnotifier = None
         self.socket.close()
-        if self.usethread and self.readthread != threading.currentThread():
+        if self.usethread and self.readthread != threading.current_thread():
             self.readthread.join()
 
 
