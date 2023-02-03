@@ -52,11 +52,6 @@ In case of error, the job result will be an exception with stack information: (e
 Availability: Unix
 '''
 
-<<<<<<< HEAD
-=======
-from __future__ import print_function
-from __future__ import absolute_import
->>>>>>> origin/master
 import multiprocessing
 import threading
 import os
