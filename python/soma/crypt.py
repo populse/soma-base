@@ -51,7 +51,6 @@ def encrypt_RSA(public_key_loc, message):
         message = message.encode()
     cipher = PKCS1_OAEP.new(rsakey)
     encrypted = cipher.encrypt(message)
- master
     return b64encode(encrypted)
 
 
