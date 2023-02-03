@@ -87,6 +87,7 @@ class ExtendedImporter(Singleton):
         handlersList: list
             a list of handlers to apply during the import of the module.
         '''
+
         if (handlersList is None):
             # Add default handler
             handlersList = [GenericHandlers.moveChildren]
@@ -233,10 +234,16 @@ class GenericHandlers(object):
 
             # Changes child objects locals declaration
             for childName \
-                    in object.__getattribute__(mobject, '__dict__').keys():
+                    in list(object.__getattribute__(mobject, '__dict__').keys()):
                 # in sip >= 4.8, obj.__dict__[key] and getattr(obj, key)
                 # do *not* return the same thing for functions !
-                childObject = object.__getattribute__(mobject, childName)
+                # object.__getattribute__(mobject, childName) returns a
+                # "methoddescriptor", whereas
+                # getattr(mobject, childName) returns a
+                # "builtin_function_or_method", which is what we want
+
+                # childObject = object.__getattribute__(mobject, childName)
+                childObject = getattr(mobject, childName)
                 if not childName.startswith("__"):
 
                     locals[childName] = childObject
@@ -274,9 +281,10 @@ class GenericHandlers(object):
                     d = object.__getattribute__(childObject, '__dict__')
                 except AttributeError:
                     continue
-                for x in d.keys():
+                for x in list(d.keys()):
                     try:
-                        y = object.__getattribute__(childObject, x)
+                        # y = object.__getattribute__(childObject, x)
+                        y = getattr(childObject, x)
                         if not x.startswith( '__' ) \
                                 and y not in stack and y not in done:
                             stack.append(y)

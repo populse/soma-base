@@ -421,6 +421,7 @@ class OffscreenListControlWidget(object):
         # Restore the previous list controller connection status
         if was_connected:
             cls.connect(controller_widget, control_name, control_instance)
+            control_instance.controller_widget.connect()
 
     @classmethod
     def connect(cls, controller_widget, control_name, control_instance):

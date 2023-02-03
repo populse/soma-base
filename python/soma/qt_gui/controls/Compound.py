@@ -232,18 +232,19 @@ class CompoundControlWidget(object):
             control_widget, widget.trait_name,
             getattr(control_widget.controller, widget.trait_name),
             ttype, user_data=widget.user_data)
-        if isinstance(control_label, (tuple, list)):
-            if len(control_label) != 0:
-                control_label[0].deleteLater() # del only label
-                control_label = control_label[1:]
-                layout = widget.header_widget.layout()
-                for l in control_label:
-                    layout.addWidget(l)
-                if control_label:
-                    widget.compound_label = control_label
-        else:
-            control_label.deleteLater()
-        del control_label
+        if control_label:
+            if isinstance(control_label, (tuple, list)):
+                if len(control_label) != 0:
+                    control_label[0].deleteLater() # del only label
+                    control_label = control_label[1:]
+                    layout = widget.header_widget.layout()
+                    for l in control_label:
+                        layout.addWidget(l)
+                    if control_label:
+                        widget.compound_label = control_label
+            else:
+                control_label.deleteLater()
+            del control_label
 
         widget.compound_widget = control_instance
         widget.compound_class = control_class
