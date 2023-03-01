@@ -47,7 +47,7 @@ __docformat__ = "restructuredtext en"
 import inspect
 # handle deprecation / removal of getargspec in python3
 getfullargspec = getattr(inspect, 'getfullargspec',
-                         getattr(inspect, 'getargspec'))
+                         getattr(inspect, 'getargspec', None))
 
 #-------------------------------------------------------------------------
 from soma.translation import translate as _

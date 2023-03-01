@@ -48,7 +48,7 @@ import inspect
 import six
 
 getfullargspec = getattr(inspect, 'getfullargspec',
-                         getattr(inspect, 'getargspec'))
+                         getattr(inspect, 'getargspec', None))
 
 
 # make qt_backend a fake module package, with Qt modules as sub-modules
