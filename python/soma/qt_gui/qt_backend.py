@@ -47,6 +47,9 @@ import importlib
 import inspect
 import six
 
+getfullargspec = getattr(inspect, 'getfullargspec',
+                         getattr(inspect, 'getargspec'))
+
 
 # make qt_backend a fake module package, with Qt modules as sub-modules
 __package__ = __name__
@@ -661,7 +664,7 @@ def init_matplotlib_backend(force=True):
             else:
                 matplotlib.use(guiBackend)
         else:
-            if 'force' in inspect.getargspec(matplotlib.use).args:
+            if 'force' in getfullargspec(matplotlib.use).args:
                 matplotlib.use(guiBackend, force=force)
             else:
                 matplotlib.use(guiBackend)

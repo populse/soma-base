@@ -45,8 +45,9 @@ import six
 __docformat__ = "restructuredtext en"
 
 import inspect
-# handle deprecation of getargspec in python3
-getfullargspec = getattr(inspect, 'getfullargspec', inspect.getargspec)
+# handle deprecation / removal of getargspec in python3
+getfullargspec = getattr(inspect, 'getfullargspec',
+                         getattr(inspect, 'getargspec'))
 
 #-------------------------------------------------------------------------
 from soma.translation import translate as _
@@ -113,7 +114,7 @@ except ImportError:
 
 def getArgumentsSpecification(callable):
     '''
-    This is an extension of Python module :py:mod:`inspect.getargspec` that
+    This is an extension of Python module :py:mod:`inspect.getfullargspec` that
     accepts classes and returns only information about the parameters that can
     be used in a call to *callable* (*e.g.* the first *self* parameter of bound
     methods is ignored). If *callable* has not an appropriate type, a
@@ -127,7 +128,7 @@ def getArgumentsSpecification(callable):
     Returns
     -------
     tuple:
-        As :func:`inspect.getargspec`, returns
+        As :func:`inspect.getfullargspec`, returns
         *(args, varargs, varkw, defaults)* where *args* is a list of the
         argument names (it may contain nested lists). *varargs* and *varkw* are
         the names of the ``*`` and ``**`` arguments or *None*. *defaults* is a
