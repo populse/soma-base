@@ -204,6 +204,7 @@ class QtImporter(object):
                     patch_qt5_webkit_modules(module, qtwebkitwidgets)
                     if module_name == 'QtWebKitWidgets':
                         module = qtwebkitwidgets
+            ensure_compatible_qt5()
 
         return module
 
