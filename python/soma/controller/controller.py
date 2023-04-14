@@ -450,8 +450,7 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
                 field = dyn_fields.get(name)
                 if field:
                     result = getattr(field, name)
-                    if result is not undefined:
-                        return result
+                    return result
         raise AttributeError('{} object has no attribute {}'.format(repr(self.__class__), repr(name)))
 
     def getattr(self, name, default=undefined):
