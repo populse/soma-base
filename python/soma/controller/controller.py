@@ -331,8 +331,7 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
             field_class = type(name, (Controller,), namespace, class_field=False)
             field_instance = field_class()
             default_value = getattr(field_instance, name, undefined)
-            if default_value is not undefined:
-                super().__setattr__(name, default_value)
+            super().__setattr__(name, default_value)
             super().__getattribute__('_dyn_fields')[name] = field_instance
             if getattr(self, 'enable_notification', False) \
                     and self.on_fields_change.has_callback:

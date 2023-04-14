@@ -51,7 +51,7 @@ class TestController(unittest.TestCase):
         c1 = Controller()
         c1.add_field('gogo', str)
         c1.add_field('bozo', int, 12)
-        self.assertRaises(AttributeError, getattr, c1, 'gogo')
+        self.assertEqual(c1.gogo, undefined)
         self.assertEqual(c1.bozo, 12)
         self.assertEqual([i.name for i in c1.fields()], ['gogo', 'bozo'])
         c1.gogo = 'blop krok'
