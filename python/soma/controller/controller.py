@@ -796,7 +796,7 @@ class OpenKeyController(Controller, metaclass=OpenKeyControllerMeta,
     """
     _reserved_names = {'enable_notification'}
 
-    def __new__(cls, **kwargs):
+    def __new__(cls, *args, **kwargs):
         if cls is OpenKeyController:
             return EmptyOpenKeyController()
         return super().__new__(cls)
@@ -844,7 +844,7 @@ class OpenKeyDictController(OpenKeyController, DictControllerBase,
     :class:`DictControllerBase`)
     '''
 
-    def __new__(cls, **kwargs):
+    def __new__(cls, *args, **kwargs):
         if cls is OpenKeyDictController:
             return EmptyOpenKeyDictController()
         return super().__new__(cls)
