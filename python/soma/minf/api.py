@@ -252,7 +252,7 @@ def iterateMinf(source, targets=None, stop_on_error=True, exceptions=[]):
                 return
             elif start != '<?xml':
                 # Try gzip compressed file
-                gzSource = gzip.GzipFile(source.name)
+                gzSource = gzip.open(source.name, mode='rt', encoding=encoding)
                 if gzSource.read(5) != '<?xml':
                     raise MinfError(_('Invalid minf file: %s')
                                     % (source.name, ))
