@@ -5,7 +5,6 @@ This module needs Crypto module.
 '''
 
 from Crypto.PublicKey import RSA
-from Crypto.Cipher import PKCS1_OAEP
 from base64 import b64decode, b64encode
 import Crypto
 
