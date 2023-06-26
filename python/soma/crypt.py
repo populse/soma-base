@@ -7,7 +7,6 @@ This module needs Crypto module.
 from __future__ import absolute_import
 from Crypto.Cipher import PKCS1_OAEP
 from Crypto.PublicKey import RSA
-from Crypto.Cipher import PKCS1_OAEP
 from base64 import b64decode, b64encode
 import Crypto
 import six
