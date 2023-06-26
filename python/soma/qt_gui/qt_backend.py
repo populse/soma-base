@@ -68,7 +68,7 @@ class QtImporter(object):
         modsplit = fullname.split('.')
         modpath = '.'.join(modsplit[:-1])
         module_name = modsplit[-1]
-        if modpath != __name__ or module_name == 'sip':
+        if modpath != __name__ or fullname == 'sip':
             return None
         set_qt_backend()
         qt_backend = get_qt_backend()
@@ -102,6 +102,9 @@ class QtImporter(object):
             except:
                 import sip
 
+        if name == 'sip':
+            return sip
+        
         if imp_module_name == 'Qt' and (qt_backend in ('PySide', 'PyQt6')
                                         or sip.SIP_VERSION >= 0x060000):
             # PySide and PyQt6 don't define the aggregating Qt module
@@ -240,7 +243,7 @@ def set_qt_backend(backend=None, pyqt_api=1, compatible_qt5=None):
     See: https://ipython.org/ipython-doc/dev/interactive/reference.html#pyqt-and-pyside
 
     More precisely this means:
-    * If QT_API environement variable is not set, use PyQt4, with PyQt API v1
+    * If QT_API environement variable is not set, use PyQt5
     * if QT_API is set to "pyqt" or "pyqt4", use PyQt4, with PyQt API v2
     * if QT_API is set to "pyside", use PySide
     * if QT_API is set to "pyqt5", use PyQt5
@@ -302,8 +305,7 @@ def set_qt_backend(backend=None, pyqt_api=1, compatible_qt5=None):
             elif qt_api == 'pyside':
                 backend = 'PySide'
             else:
-                backend = 'PyQt4'
-                pyqt_api = 1
+                backend = 'PyQt5'
         else:
             backend = qt_backend
     if qt_backend is not None and qt_backend != backend:
