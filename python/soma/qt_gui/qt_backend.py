@@ -93,18 +93,18 @@ class QtImporter(object):
             elif module_name == 'QtWebKitWidgets':
                 imp_module_name = 'QtWebKit'
 
-        if qt_backend in('PyQt4', 'PyQt5', 'PyQt6'):
+        if qt_backend in ('PyQt4', 'PyQt5', 'PyQt6'):
             # import the right sip module
             try:
                 __import__('%s.sip' % qt_backend)
                 sip = sys.modules['%s.sip' % qt_backend]
                 sys.modules['sip'] = sip
-            except:
+            except ImportError:
                 import sip
 
         if name == 'sip':
             return sip
-        
+
         if imp_module_name == 'Qt' and (qt_backend in ('PySide', 'PyQt6')
                                         or sip.SIP_VERSION >= 0x060000):
             # PySide and PyQt6 don't define the aggregating Qt module
@@ -142,7 +142,8 @@ class QtImporter(object):
         if module_name == 'uic' and qt_backend == 'PyQt4':
             def _safe_load_plugin(plugin, plugin_globals, plugin_locals):
                 def _safe_getFilter():
-                    import sys, DLFCN
+                    import sys
+                    import DLFCN
                     res = plugin_locals['getFilter_orig']()
                     sys.setdlopenflags(DLFCN.RTLD_NOW)
 
@@ -189,7 +190,7 @@ class QtImporter(object):
                 if qt_backend in ('PyQt4', 'PySide'):
                     sys.modules['.'.join([qt_backend, 'QtWidgets'])] = module
                     patch_qt4_modules(QtCore, module)
-                elif qt_backend in('PyQt5', 'PyQt6'):
+                elif qt_backend in ('PyQt5', 'PyQt6'):
                     __import__('.'.join([qt_backend, 'QtWidgets']))
                     qtwidgets = sys.modules['.'.join([qt_backend,
                                                       'QtWidgets'])]
@@ -200,10 +201,10 @@ class QtImporter(object):
                 if qt_backend in ('PyQt4', 'PySide'):
                     sys.modules['.'.join([qt_backend, 'QtWebKitWidgets'])] \
                         = module
-                elif qt_backend in('PyQt5', 'PyQt6'):
+                elif qt_backend in ('PyQt5', 'PyQt6'):
                     __import__('.'.join([qt_backend, 'QtWebKitWidgets']))
                     qtwebkitwidgets = sys.modules[
-                        '.'.join([qt_backend,'QtWebKitWidgets'])]
+                        '.'.join([qt_backend, 'QtWebKitWidgets'])]
                     patch_qt5_webkit_modules(module, qtwebkitwidgets)
                     if module_name == 'QtWebKitWidgets':
                         module = qtwebkitwidgets
