@@ -273,7 +273,7 @@ class Field:
 
     @property
     def default(self):
-        ''' default value
+        ''' For internal use only. Use default_value() instead.
         '''
         return self._dataclass_field.default
     

@@ -298,8 +298,8 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
 
         # avoid duplicate fields
         if self.field(name) is not None:
-            if override:
-                self.remove_field(name)
+            if override and name in super().__getattribute__('_dyn_fields'):
+                del super().__getattribute__('_dyn_fields')[name]
             else:
                 raise ValueError(f'a field named {name} already exists')
         
