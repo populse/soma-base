@@ -91,15 +91,16 @@ class QtImporter(object):
             print('test sip:')
             try:
                 from PyQt5 import sip
-                print('PyQt5.sip OK', file=sys.stderr)
+                print('import sip OK', file=sys.stderr)
             except ImportError:
-                print('not PyQt5.sip...', file=sys.stderr)
-                try:
-                    import sip
-                    print('sip OK', file=sys.stderr)
-                except ImportError:
-                    print('not sip either....', file=sys.stderr)
-            return None
+                if module_name == 'sip':
+                    # importing qt_backend.sip and sip is not installed in
+                    # PyQt<x>: use the regular 'sip'
+                    try:
+                        found = imp.find_module(module_name)
+                        return self
+                    except ImportError:
+                      return None
         return self
 
     def load_module(self, name):
