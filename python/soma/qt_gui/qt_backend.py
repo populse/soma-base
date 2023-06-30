@@ -100,7 +100,7 @@ class QtImporter(object):
                         found = imp.find_module(module_name)
                         return self
                     except ImportError:
-                      return None
+                        return None
         return self
 
     def load_module(self, name):
