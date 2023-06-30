@@ -88,19 +88,16 @@ class QtImporter(object):
             print('found:', found, file=sys.stderr)
         except ImportError:
             print('not found.', file=sys.stderr)
-            print('test sip:')
-            try:
-                from PyQt5 import sip
-                print('import sip OK', file=sys.stderr)
-            except ImportError:
-                if module_name == 'sip':
-                    # importing qt_backend.sip and sip is not installed in
-                    # PyQt<x>: use the regular 'sip'
-                    try:
-                        found = imp.find_module(module_name)
-                        return self
-                    except ImportError:
-                        return None
+            if module_name == 'sip':
+                print('test sip:', file=sys.stderr)
+                # importing qt_backend.sip and sip is not installed in
+                # PyQt<x>: use the regular 'sip'
+                try:
+                    found = imp.find_module(module_name)
+                    print('import sip OK', file=sys.stderr)
+                    return self
+                except ImportError:
+                    return None
         return self
 
     def load_module(self, name):
@@ -113,17 +110,27 @@ class QtImporter(object):
                 imp_module_name = 'QtGui'
             elif module_name == 'QtWebKitWidgets':
                 imp_module_name = 'QtWebKit'
+        print('module_name:', module_name, file=sys.stderr)
 
-        if qt_backend in ('PyQt4', 'PyQt5', 'PyQt6'):
+        if qt_backend in ('PyQt4', 'PyQt5', 'PyQt6') or module_name == 'sip':
             # import the right sip module
             try:
+                print('import %s.sip' % qt_backend, file=sys.stderr)
                 __import__('%s.sip' % qt_backend)
-                sip = sys.modules['%s.sip' % qt_backend]
-                sys.modules['sip'] = sip
+                print('import OK', file=sys.stderr)
+                sip = sys.modules.get('%s.sip' % qt_backend)
+                print('sys.modules:', sip, file=sys.stderr)
+                if sip is not None:
+                    sys.modules['sip'] = sip
+                else:
+                    sip = sys.modules.get('sip')
+                    print('sys.modules[sip]:', sip, file=sys.stderr)
             except ImportError:
                 import sip
 
-        if name == 'sip':
+        if module_name == 'sip':
+            sys.modules[name] = sip
+            print('voilà', file=sys.stderr)
             return sip
 
         if imp_module_name == 'Qt' and (qt_backend in ('PySide', 'PyQt6')
