@@ -65,7 +65,7 @@ make_compatible_qt5 = False
 class QtImporter(object):
 
     def find_module(self, fullname, path=None):
-        print('find_module:', fullname, path)
+        print('find_module:', fullname, path, file=sys.stderr)
         modsplit = fullname.split('.')
         modpath = '.'.join(modsplit[:-1])
         module_name = modsplit[-1]
@@ -73,7 +73,7 @@ class QtImporter(object):
             return None
         set_qt_backend()
         qt_backend = get_qt_backend()
-        print('using qt backend:', qt_backend)
+        print('using qt backend:', qt_backend, file=sys.stderr)
         qt_module = get_qt_module()
         if make_compatible_qt5 and qt_backend in ('PyQt4', 'PySide'):
             if module_name == 'QtWidgets':
@@ -82,13 +82,28 @@ class QtImporter(object):
                 module_name = 'QtWebKit'
         if qt_backend in ('PySide', 'PyQt6') and module_name == 'Qt':
             module_name = 'QtGui'
-        print('find:', module_name, qt_module.__path__)
-        found = imp.find_module(module_name, qt_module.__path__)
-        print('found:', found)
+        print('find:', module_name, qt_module.__path__, file=sys.stderr)
+        try:
+            found = imp.find_module(module_name, qt_module.__path__)
+            print('found:', found, file=sys.stderr)
+        except ImportError:
+            print('not found.', file=sys.stderr)
+            print('test sip:')
+            try:
+                from PyQt5 import sip
+                print('PyQt5.sip OK', file=sys.stderr)
+            except ImportError:
+                print('not PyQt5.sip...', file=sys.stderr)
+                try:
+                    import sip
+                    print('sip OK', file=sys.stderr)
+                except ImportError:
+                    print('not sip either....', file=sys.stderr)
+            return None
         return self
 
     def load_module(self, name):
-        print('load_module:', name)
+        print('load_module:', name, file=sys.stderr)
         qt_backend = get_qt_backend()
         module_name = name.split('.')[-1]
         imp_module_name = module_name
