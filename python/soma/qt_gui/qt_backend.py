@@ -313,7 +313,10 @@ def set_qt_backend(backend=None, pyqt_api=1, compatible_qt5=None):
         logging.warn('set_qt_backend: a different backend, %s, has already '
                      'be set, and %s is now requested' % (qt_backend, backend))
     if backend == 'PyQt4':  # and sys.modules.get('PyQt4') is None:
-        import sip
+        sip = load_sip_module(backend)
+        if qt_backend is not None:
+            backend = qt_backend
+    if backend == 'PyQt4':
         if pyqt_api == 2:
             sip_classes = ['QString', 'QVariant', 'QDate', 'QDateTime',
                            'QTextStream', 'QTime', 'QUrl']
@@ -325,26 +328,60 @@ def set_qt_backend(backend=None, pyqt_api=1, compatible_qt5=None):
                     if not _sip_api_set:
                         logging.warning(e.message)
             _sip_api_set = True
-    qt_module = __import__(backend)
-    __import__(backend + '.QtCore')
-    #__import__(backend + '.QtGui')
-    qt_backend = backend
-
-    if qt_backend in('PyQt4', 'PyQt5', 'PyQt6'):
-        # import the right sip module
+    if qt_backend is None:
+        backends = ['PyQt5', 'PyQt6', 'PyQt4', 'PySide2', 'PySide']
+        backends.remove(backend)
+        backends.insert(0, backend)
+    else:
+        backends = [backend]
+    for test_backend in backends:
         try:
-            __import__('%s.sip' % qt_backend)
-            sip = sys.modules['%s.sip' % qt_backend]
-            sys.modules['sip'] = sip
-        except:
-            import sip
+            qt_module = __import__(test_backend)
+            __import__(test_backend + '.QtCore')
+            # __import__(backend + '.QtGui')
+            qt_backend = test_backend
+            break
+        except ImportError:
+            pass
+        if qt_backend is None:
+            # all fail: re-raise the exception
+            qt_module = __import__(backend)
+            __import__(test_backend + '.QtCore')
+
+    sip = load_sip_module(qt_backend)
 
     if make_compatible_qt5 and qt5_compat_changed:
         ensure_compatible_qt5()
     else:
-        if backend in('PyQt4', 'PyQt5', 'PyQt6'):
+        if backend in ('PyQt4', 'PyQt5', 'PyQt6'):
             qt_module.QtCore.Signal = qt_module.QtCore.pyqtSignal
             qt_module.QtCore.Slot = qt_module.QtCore.pyqtSlot
+
+
+def load_sip_module(backend=None):
+    sip = sys.modules.get('sip')
+    if sip is not None:
+        return sip
+
+    global qt_backend
+    if backend is None:
+        backend = qt_backend
+    if qt_backend is None:
+        backends = [backend, 'PyQt5', 'PyQt6', 'PyQt4']
+    else:
+        backends = [backend]
+    for test_backend in backends:
+        # import the right sip module
+        try:
+            __import__('%s.sip' % test_backend)
+            sip = sys.modules['%s.sip' % test_backend]
+            sys.modules['sip'] = sip
+            qt_backend = test_backend
+        except ImportError:
+            pass
+    if sip is None:
+        import sip
+    return sip
 
 
 def patch_qt5_modules(QtCore, QtGui, QtWidgets):
