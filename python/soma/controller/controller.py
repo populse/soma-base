@@ -272,10 +272,10 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
         for k, v in kwargs.items():
             setattr(self, k, v)
 
-        super().__setattr__('on_attribute_change', AttributeValueEvent())
-        super().__setattr__('on_inner_value_change',  Event())
-        super().__setattr__('on_fields_change',  Event())
-        super().__setattr__('enable_notification', True)
+        object.__setattr__(self, 'on_attribute_change', AttributeValueEvent())
+        object.__setattr__(self, 'on_inner_value_change',  Event())
+        object.__setattr__(self, 'on_fields_change',  Event())
+        object.__setattr__(self, 'enable_notification', True)
 
     def add_field(self, name, type_, default=undefined,
                   metadata=None, override=False, **kwargs):
