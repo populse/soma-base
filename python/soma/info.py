@@ -66,7 +66,7 @@ ISRELEASE = version_extra == ''
 VERSION = __version__
 PROVIDES = ["soma-base"]
 REQUIRES = [
-    "pydantic",
+    "pydantic<2",
 ]
 PYTHON_REQUIRES = '>=3.9'
 EXTRAS_REQUIRE = {
