@@ -5,6 +5,7 @@ This module needs Crypto module.
 '''
 
 from Crypto.PublicKey import RSA
+from Crypto.Cipher import PKCS1_OAEP
 from base64 import b64decode, b64encode
 import Crypto
 
@@ -23,6 +24,7 @@ def generate_RSA(bits=2048):
     '''
     if [int(x) for x in Crypto.__version__.split('.')] < [2, 1]:
         import random
+
         def gen_func(n):
             return ''.join([chr(random.randrange(0, 256, 1))
                             for i in range(n)])
