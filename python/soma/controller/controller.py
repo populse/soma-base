@@ -7,6 +7,7 @@ import inspect
 from typing import Union
 
 from pydantic.dataclasses import dataclass
+import pydantic
 
 from soma.undefined import undefined
 from .field import FieldProxy, ListProxy, field, Field
@@ -464,7 +465,11 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
         return value
     
     def __setattr__(self, name, value):
-        if name in self.__pydantic_model__.__fields__ \
+        if pydantic.__version__[0] >= '2':
+            pyd_fields = self.__pydantic_fields__
+        else:
+            pyd_fields = self.__pydantic_model__.__fields__
+        if name in pyd_fields \
                 or (hasattr(self, '_dyn_fields')
                     and name in super().__getattribute__('_dyn_fields')):
             if getattr(self, 'enable_notification', False) and self.on_attribute_change.has_callback:
