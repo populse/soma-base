@@ -12,10 +12,12 @@ from ..timered_widgets import TimeredQLineEdit
 from soma.undefined import undefined
 from ...controller import subtypes, type_default_value
 
+
 class ListStrWidgetFactory(WidgetFactory):
     ROW_SIZE = 10
     convert_from_list = staticmethod(lambda x: x)
-    convert_to_list = staticmethod(lambda x: x)
+    convert_to_list = staticmethod(lambda x:
+                                   x if x not in (None, undefined) else [])
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -187,13 +189,13 @@ def find_generic_list_factory(type, subtypes):
             return partial(ListAnyWidgetFactory,
                            item_factory_class=widget_factory)
     return None
-    
 
 
 class ListAnyWidgetFactory(WidgetFactory):
     convert_from_list = staticmethod(lambda x: x)
-    convert_to_list = staticmethod(lambda x: x)
-    
+    convert_to_list = staticmethod(lambda x:
+                                   x if x not in (None, undefined) else [])
+
     def __init__(self, item_factory_class, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.item_factory_class = item_factory_class
