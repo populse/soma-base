@@ -33,7 +33,7 @@ class StrWidgetFactory(WidgetFactory):
 
     def update_gui(self):
         value = self.parent_interaction.get_value()
-        if value is undefined:
+        if value in (None, undefined):
             self.text_widget.setText('')
             if self.parent_interaction.is_optional():
                 self.text_widget.setStyleSheet(self.warning_style_sheet)
