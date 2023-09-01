@@ -75,6 +75,9 @@ class DictWidgetFactory(WidgetFactory):
 
             self.allow_update_gui = True
 
+    def set_visible(self, on):
+        self.widget.setVisible(on)
+
 
 class DictFieldInteraction:
 

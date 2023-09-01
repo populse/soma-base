@@ -51,3 +51,7 @@ class StrWidgetFactory(WidgetFactory):
         else:
             self.parent_interaction.set_protected(False)
             self.text_widget.setStyleSheet(self.valid_style_sheet)
+
+    def set_visible(self, on):
+        self.text_widget.setVisible(on)
+        self.label_widget.setVisible(on)

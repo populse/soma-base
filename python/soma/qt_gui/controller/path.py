@@ -56,7 +56,7 @@ class FileWidgetFactory(StrWidgetFactory):
     #         self.button.show()
     #     else:
     #         self.button.hide()
-    
+
     def select_path_dialog(self):
         ext = []
         # TODO: manage extensions via formats
@@ -79,6 +79,10 @@ class FileWidgetFactory(StrWidgetFactory):
                 self.controller_widget, "Select file", value, ext, None,
                 Qt.QFileDialog.DontUseNativeDialog)
         self.parent_interaction.set_value(fname)
+
+    def set_visible(self, on):
+        self.widget.setVisible(on)
+        self.label_widget.setVisible(on)
 
 
 class DirectoryWidgetFactory(FileWidgetFactory):

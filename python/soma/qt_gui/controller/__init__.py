@@ -4,7 +4,7 @@ from soma.qt_gui.qt_backend import Qt, QtCore
 from soma.undefined import undefined
 from soma.controller import (parse_type_str, OpenKeyController,
                              type_default_value)
-from soma.controller.field import subtypes, type_str, Field
+from soma.controller.field import subtypes, type_str
 from ..collapsable import CollapsableWidget
 from functools import partial
 import html
@@ -84,6 +84,7 @@ class ScrollableWidgetsGrid(Qt.QScrollArea):
     row contains either 1 or 2 widgets. A single widget uses
     the two colums of the row.
     """
+
     def __init__(self, depth=0, *args, **kwargs):
         self.depth = depth
         super().__init__(*args, **kwargs)
@@ -168,6 +169,7 @@ class ScrollableWidgetsGrid(Qt.QScrollArea):
                 item.widget().deleteLater()
         self._rowcount -= 1
 
+
 class WidgetsGrid(Qt.QFrame):
     """
     A widget that is used for Controller inside another
@@ -175,12 +177,12 @@ class WidgetsGrid(Qt.QFrame):
     It has the same properties as VSCrollableWindow but
     not the same layout.
     """
+
     def __init__(self, depth=0, *args, **kwargs):
         self.depth = depth
         super().__init__(*args, **kwargs)
         self.content_layout = Qt.QGridLayout(self)
         self.content_layout.setContentsMargins(0, 0, 0, 0)
-  
 
     def add_widget_row(self, first_widget, second_widget=None,
                        label_index=None, field_name=None):
@@ -260,11 +262,11 @@ class GroupWidget(Qt.QFrame):
         self.toggle_button.setStyleSheet('QToolButton { border: none; }')
         self.toggle_expand(expanded)
         self.toggle_button.resize(self.toggle_button.sizeHint())
-        self.toggle_button.move(-2,-2)
-        self.setContentsMargins(3,3,3,3)
+        self.toggle_button.move(-2, -2)
+        self.setContentsMargins(3, 3, 3, 3)
         self.toggle_button.clicked.connect(self.toggle_expand)
         self.setSizePolicy(Qt.QSizePolicy.Expanding, Qt.QSizePolicy.Expanding)
-    
+
     def toggle_expand(self, expanded):
         arrow = ('▼' if expanded else '▶')
         self.toggle_button.setText(f'{self.label}  {arrow}')
@@ -273,7 +275,7 @@ class GroupWidget(Qt.QFrame):
             widget = self.layout().itemAt(i).widget()
             if widget:
                 if expanded:
-                   widget.show()
+                    widget.show()
                 else:
                     widget.hide()
 
@@ -282,7 +284,7 @@ class WidgetFactory(Qt.QObject):
     valid_style_sheet = ''
     warning_style_sheet = 'background: #FFFFC8;'
     invalid_style_sheet = 'background: #FFDCDC;'
-    
+
     inner_item_changed = QtCore.Signal(int)
 
     def __init__(self, controller_widget, parent_interaction, readonly=False):
@@ -290,7 +292,6 @@ class WidgetFactory(Qt.QObject):
         self.readonly = readonly
         self.controller_widget = controller_widget
         self.parent_interaction = parent_interaction
-
 
     @classmethod
     def find_factory(cls, type_id, default=None):
@@ -335,11 +336,11 @@ class ControllerFieldInteraction:
         self.type = field.type
         self.type_str = field.type_str()
         self.depth = depth
-    
+
     @property
     def is_output(self):
         return self.field.is_output()
-    
+
     def get_value(self, default=undefined):
         return getattr(self.controller, self.field.name, default)
 
@@ -473,10 +474,14 @@ class DefaultWidgetFactory(WidgetFactory):
         self.controller_widget.remove_widget_row()
         self.label_widget.deleteLater()
         self.text_widget.deleteLater()
-    
+
     def update_gui(self):
         value = self.parent_interaction.get_value()
         self.text_widget.setText(f'{value}')
+
+    def set_visible(self, on):
+        self.text_widget.setVisible(on)
+        self.label_widget.setVisible(on)
 
 
 class BaseControllerWidget:
@@ -757,6 +762,13 @@ class BaseControllerWidget:
                     continue
                 factory.set_expanded_items(exp_value, silent=silent)
 
+    def set_visible(self, fields, on=True):
+        for fname in fields:
+            item_field = self.controller.field(fname)
+            factory = self.factories.get(item_field._dataclass_field)
+            if factory is not None:
+                factory.set_visible(on)
+
 
 class ControllerWidget(BaseControllerWidget, ScrollableWidgetsGrid):
     pass
@@ -813,6 +825,9 @@ class ControllerWidgetFactory(WidgetFactory):
         else:
             expanded = self.inner_widget.expanded_items()
         return expanded
+
+    def set_visible(self, on):
+        self.widget.setVisible(on)
 
 
 from .str import StrWidgetFactory

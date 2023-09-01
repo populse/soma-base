@@ -163,6 +163,9 @@ class ListStrWidgetFactory(WidgetFactory):
     def set_expanded_items(self, exp_values, silent=False):
         self.widget.toggle_expand(bool(exp_values))
 
+    def set_visible(self, on):
+        self.widget.setVisible(on)
+
 
 class ListIntWidgetFactory(ListStrWidgetFactory):
     def get_value(self, index):
@@ -279,3 +282,6 @@ class ListAnyWidgetFactory(WidgetFactory):
 
     def set_expanded_items(self, exp_values, silent=False):
         self.widget.toggle_expand(bool(exp_values))
+
+    def set_visible(self, on):
+        self.widget.setVisible(on)

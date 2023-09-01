@@ -3,7 +3,6 @@
 from . import ControllerWidgetFactory, ControllerSubwidget
 from ..collapsable import CollapsableWidget
 from soma.undefined import undefined
-from soma.qt_gui.qt_backend import Qt
 
 
 class OpenKeyControllerWidgetFactory(ControllerWidgetFactory):
@@ -21,12 +20,12 @@ class OpenKeyControllerWidgetFactory(ControllerWidgetFactory):
             buttons = []
         self.widget = CollapsableWidget(
             self.inner_widget, label=label,
-            expanded=(self.parent_interaction.depth==0),
+            expanded=(self.parent_interaction.depth == 0),
             buttons_label=buttons,
             parent=self.controller_widget)
         self.widget.setToolTip(self.parent_interaction.get_doc())
         self.inner_widget.setContentsMargins(
-            self.widget.toggle_button.sizeHint().height(),0,0,0)
+            self.widget.toggle_button.sizeHint().height(), 0, 0, 0)
 
         if not self.readonly:
             self.widget.buttons[0].clicked.connect(self.inner_widget.add_item)
@@ -35,3 +34,6 @@ class OpenKeyControllerWidgetFactory(ControllerWidgetFactory):
             self.widget, label_index=0,
             field_name=self.parent_interaction.field.name)
         self.parent_interaction.on_change_add(self.update_gui)
+
+    def set_visible(self, on):
+        self.widget.setVisible(on)
