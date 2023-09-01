@@ -6,8 +6,10 @@ from soma.controller import (parse_type_str, OpenKeyController,
                              type_default_value)
 from soma.controller.field import subtypes, type_str
 from ..collapsable import CollapsableWidget
+from soma.utils.weak_proxy import get_ref
 from functools import partial
 import html
+import weakref
 
 
 class EditableLabel(Qt.QWidget):
@@ -290,8 +292,12 @@ class WidgetFactory(Qt.QObject):
     def __init__(self, controller_widget, parent_interaction, readonly=False):
         super().__init__()
         self.readonly = readonly
-        self.controller_widget = controller_widget
+        self._controller_widget = weakref.proxy(controller_widget)
         self.parent_interaction = parent_interaction
+
+    @property
+    def controller_widget(self):
+        return get_ref(self._controller_widget)
 
     @classmethod
     def find_factory(cls, type_id, default=None):

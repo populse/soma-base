@@ -6,6 +6,7 @@ from soma.qt_gui.qt_backend import Qt
 from . import WidgetFactory
 from soma.qt_gui.timered_widgets import TimeredQLineEdit
 from soma.undefined import undefined
+from soma.utils.weak_proxy import proxy_method
 
 
 class StrWidgetFactory(WidgetFactory):
@@ -17,7 +18,7 @@ class StrWidgetFactory(WidgetFactory):
         if self.readonly:
             self.text_widget.setReadOnly(True)
 
-        self.parent_interaction.on_change_add(self.update_gui)
+        self.parent_interaction.on_change_add(proxy_method(self, 'update_gui'))
         self.update_gui()
 
         self.text_widget.userModification.connect(self.update_controller)
@@ -27,7 +28,8 @@ class StrWidgetFactory(WidgetFactory):
     def delete_widgets(self):
         self.controller_widget.remove_widget_row()
         self.text_widget.userModification.disconnect(self.update_controller)
-        self.parent_interaction.on_change_remove(self.update_gui)
+        self.parent_interaction.on_change_remove(proxy_method(
+            self, 'update_gui'))
         self.label_widget.deleteLater()
         self.text_widget.deleteLater()
 
