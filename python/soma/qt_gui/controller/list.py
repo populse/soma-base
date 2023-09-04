@@ -219,7 +219,7 @@ class ListAnyWidgetFactory(WidgetFactory):
 
         self.widget.buttons[0].clicked.connect(self.add_item)
         self.widget.buttons[1].clicked.connect(self.remove_item)
-        
+
         self.controller_widget.add_widget_row(self.widget)
 
     def delete_widgets(self):
@@ -229,7 +229,7 @@ class ListAnyWidgetFactory(WidgetFactory):
         self.parent_interaction.on_change_remove(self.update_gui)
         self.widget.deleteLater()
         self.items_widget.deleteLater()
-        
+
     def update_gui(self):
         if self.allow_update_gui:
             self.allow_update_gui = False
@@ -243,13 +243,14 @@ class ListAnyWidgetFactory(WidgetFactory):
             while len(values) > len(self.item_factories):
                 index = len(self.item_factories)
                 item_factory = self.item_factory_class(
-                    controller_widget=self.items_widget, 
-                    parent_interaction=ListItemInteraction(self.parent_interaction, 
-                    index=index))
+                    controller_widget=self.items_widget,
+                    parent_interaction=ListItemInteraction(
+                        self.parent_interaction,
+                        index=index))
                 self.item_factories.append(item_factory)
                 item_factory.create_widgets()
             self.allow_update_gui = True
-        
+
     def update_inner_gui(self, indices):
         if self.allow_update_gui:
             self.allow_update_gui = False
@@ -261,7 +262,7 @@ class ListAnyWidgetFactory(WidgetFactory):
             else:
                 factory.update_gui()
             self.allow_update_gui = True
-    
+
     def add_item(self):
         values = self.convert_to_list(self.parent_interaction.get_value(default=[]))
         item_type = subtypes(self.parent_interaction.type)[0]

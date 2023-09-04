@@ -395,6 +395,7 @@ class ControllerFieldInteraction:
             doc += '<br/>%s' % html.escape(field_doc)
         return doc
 
+
 class ListItemInteraction:
     def __init__(self, parent_interaction, index):
         self.parent_interaction = parent_interaction
@@ -403,7 +404,7 @@ class ListItemInteraction:
         _, subtypes_str = parse_type_str(parent_interaction.type_str)
         self.type_str = subtypes_str[0]
         self.depth = self.parent_interaction.depth + 1
-    
+
     @property
     def is_output(self):
         return self.parent_interaction.is_output
@@ -779,6 +780,7 @@ class BaseControllerWidget:
 class ControllerWidget(BaseControllerWidget, ScrollableWidgetsGrid):
     pass
 
+
 class ControllerSubwidget(BaseControllerWidget, WidgetsGrid):
     pass
 
@@ -787,21 +789,27 @@ class ControllerWidgetFactory(WidgetFactory):
     def create_widgets(self):
         controller = self.parent_interaction.get_value()
         if controller is undefined:
-            controller = self.parent_interaction.field.type()
+            if hasattr(self.parent_interaction, 'field'):
+                controller = self.parent_interaction.field.type()
+            # else ?
         self.inner_widget = ControllerSubwidget(
             controller, depth=self.controller_widget.depth + 1,
             readonly=self.readonly)
         label = self.parent_interaction.get_label()
         self.widget = CollapsableWidget(
             self.inner_widget, label=label,
-            expanded=(self.parent_interaction.depth==0),
+            expanded=(self.parent_interaction.depth == 0),
             parent=self.controller_widget)
         self.widget.setToolTip(self.parent_interaction.get_doc())
-        self.inner_widget.setContentsMargins(self.widget.toggle_button.sizeHint().height(),0,0,0)
-      
+        self.inner_widget.setContentsMargins(
+            self.widget.toggle_button.sizeHint().height(), 0, 0, 0)
+
+        field_name = None
+        if hasattr(self.parent_interaction, 'field'):
+            field_name = self.parent_interaction.field.name
         self.controller_widget.add_widget_row(
             self.widget, label_index=0,
-            field_name=self.parent_interaction.field.name)
+            field_name=field_name)
         self.parent_interaction.on_change_add(self.update_gui)
 
     def delete_widgets(self):
