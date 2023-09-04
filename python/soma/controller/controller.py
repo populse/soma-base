@@ -12,6 +12,7 @@ import pydantic
 from soma.undefined import undefined
 from .field import FieldProxy, ListProxy, field, Field
 import sys
+from soma.utils.weak_proxy import proxy_method
 
 
 class _ModelsConfig:
@@ -93,7 +94,12 @@ class AttributeValueEvent(Event):
 
     @staticmethod
     def normalize_callback_parameters(callback):
-        signature = inspect.signature(callback)
+        pcallback = callback
+        if isinstance(callback, proxy_method):
+            # proxy_method exposes a different signature from its original
+            # method. Get the underlying method to inspect it
+            pcallback = getattr(callback.proxy, callback.method)
+        signature = inspect.signature(pcallback)
         if len(signature.parameters) == 0:
             return lambda new_value, old_value, attribute_name, controller, index: callback()
         elif len(signature.parameters) == 1:
