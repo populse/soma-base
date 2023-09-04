@@ -352,7 +352,7 @@ class ControllerFieldInteraction:
 
     def set_value(self, value):
         setattr(self.controller, self.field.name, value)
-    
+
     def set_inner_value(self, value, index):
         all_values = self.get_value()
         container = type(all_values)
@@ -592,7 +592,7 @@ class BaseControllerWidget:
             field = indices[0]
             indices = indices[1:]
             if indices:
-                factory = self.factories.get(field)
+                factory = self.factories.get(field._dataclass_field)
                 if factory is not None:
                     factory.update_inner_gui(indices)
             self.allow_update_gui = True
