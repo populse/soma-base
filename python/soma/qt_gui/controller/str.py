@@ -23,7 +23,8 @@ class StrWidgetFactory(WidgetFactory):
 
         self.text_widget.userModification.connect(self.update_controller)
 
-        self.controller_widget.add_widget_row(self.label_widget, self.text_widget)
+        self.controller_widget.add_widget_row(self.label_widget,
+                                              self.text_widget)
 
     def delete_widgets(self):
         self.controller_widget.remove_widget_row()
