@@ -166,6 +166,52 @@ class AttributeValueEvent(Event):
         return bool(self.callbacks)
 
 
+class InsertValueEvent(Event):
+    ''' Event subclass notifier for fields in a Controller. It can notify
+    fields insertion / deletion, or list insertion / deletion. It is used in
+    NotifyingList.
+
+    Callbacks are called with the following parameters:
+
+    ``attribute_name_or_index, controller, insert_type``
+
+    All parameters are optional, but are positional arguments, thus if a
+    callback needs the insert_type parameter, it should also declare
+    ``attribute_name_or_index``,  ``controller``, and ``insert_type``
+    parameters first.
+
+    insert_type (str value) tells if it is an insertion ('insert') or a
+    deletion ('del')
+    '''
+
+    @staticmethod
+    def normalize_callback_parameters(callback):
+        pcallback = callback
+        if isinstance(callback, proxy_method):
+            # proxy_method exposes a different signature from its original
+            # method. Get the underlying method to inspect it
+            pcallback = getattr(callback.proxy, callback.method)
+        signature = inspect.signature(pcallback)
+        if len(signature.parameters) == 0:
+            return lambda index, controller, ins_type: callback()
+        elif len(signature.parameters) == 1:
+            return lambda index, controller, ins_type: callback(index)
+        elif len(signature.parameters) == 2:
+            return lambda index, controller, ins_type: callback(index,
+                                                                controller)
+        elif len(signature.parameters) == 3:
+            return callback
+        raise ValueError('Invalid callback signature')
+
+    def fire(self, attribute_name_or_index, controller,
+             insert_type=None):
+        ''' Fire callbacks associated with a given attribute name.
+        Callbacks without an attribute name (None) are also fired.
+        '''
+        for callback in self.callbacks:
+            callback(attribute_name_or_index, controller, insert_type)
+
+
 class ControllerMeta(type):
     ''' Metaclass for Controller subclasses
     '''
@@ -891,7 +937,7 @@ class NotifyingList(list, metaclass=NotifyingListMeta):
         super().__init__(*args, **kwargs)
         self.on_attribute_change = AttributeValueEvent()
         self.on_inner_value_change = Event()
-        self.on_fields_change = Event()
+        self.on_fields_change = InsertValueEvent()
         self.enable_notification = True
 
     def __setitem__(self, index, new_value):
@@ -922,3 +968,28 @@ class NotifyingList(list, metaclass=NotifyingListMeta):
         if getattr(self, 'enable_notification', False) \
                 and self.on_fields_change.has_callback:
             self.on_fields_change.fire(len(self), self, 'insert')
+
+    @classmethod
+    def __get_validators__(cls):
+        yield cls.validate
+
+    @classmethod
+    def validate(cls, v):
+        if not isinstance(v, list):
+            raise TypeError('not a list')
+        new_list = cls()
+        for item in v:
+            if isinstance(item, cls._value_type):
+                new_list.append(item)
+            else:
+                try:
+                    it = cls._value_type(item)
+                except Exception as e:
+                    if hasattr(cls._value_type, 'import_dict') \
+                            and isinstance(item, dict):
+                        it = cls._value_type()
+                        it.import_dict(item)
+                    else:
+                        raise ValueError(str(e))
+                new_list.append(it)
+        return new_list
