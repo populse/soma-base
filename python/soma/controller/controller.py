@@ -922,4 +922,3 @@ class NotifyingList(list, metaclass=NotifyingListMeta):
         if getattr(self, 'enable_notification', False) \
                 and self.on_fields_change.has_callback:
             self.on_fields_change.fire(len(self), self, 'insert')
-
