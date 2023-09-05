@@ -523,6 +523,7 @@ def field(
         result.type = Union[type_, type(undefined)]
     return field_class(result)
 
+
 class FieldProxy:
     '''
     This class is used internally to implement a link between a controller
