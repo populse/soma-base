@@ -39,7 +39,7 @@ class ListStrWidgetFactory(WidgetFactory):
 
         self.widget.buttons[0].clicked.connect(self.add_item)
         self.widget.buttons[1].clicked.connect(self.remove_item)
-        
+
         self.controller_widget.add_widget_row(self.widget)
 
     def delete_widgets(self):
@@ -49,7 +49,7 @@ class ListStrWidgetFactory(WidgetFactory):
         self.parent_interaction.on_change_remove(self.update_gui)
         self.widget.deleteLater()
         for w in self.inner_widgets:
-            self.inner_widgets.deleteLater()
+            w.deleteLater()
         self.grid_widget.deleteLater()
 
     def update_gui(self):
