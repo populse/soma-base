@@ -868,3 +868,58 @@ class OpenKeyDictController(OpenKeyController, DictControllerBase,
 class EmptyOpenKeyDictController(OpenKeyDictController[str]):
     pass
 
+
+class NotifyingListMeta(type):
+    _cache = {}
+
+    def __getitem__(cls, value_type):
+        cls_value_type = getattr(cls, '_value_type', None)
+        if value_type is cls_value_type:
+            return cls
+        result = cls._cache.get(value_type)
+        if result is None:
+            result = type('NotifyingList[{}]'.format(value_type.__name__),
+                          (NotifyingList,), {'_value_type': value_type})
+            result.__name__ = 'NotifyingList'
+            result.__args__ = (value_type, )
+            cls._cache[value_type] = result
+        return result
+
+
+class NotifyingList(list, metaclass=NotifyingListMeta):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.on_attribute_change = AttributeValueEvent()
+        self.on_inner_value_change = Event()
+        self.on_fields_change = Event()
+        self.enable_notification = True
+
+    def __setitem__(self, index, new_value):
+        old_value = self[index]
+        super().__setitem__(index, new_value)
+        if getattr(self, 'enable_notification', False) \
+                and self.on_attribute_change.has_callback:
+            # Value can be converted, therefore get actual attribute new value
+            new_value = self[index]
+            if old_value != new_value:
+                self.on_attribute_change.fire(index, new_value, old_value,
+                                              self)
+
+    def __delitem__(self, index):
+        super().__delitem__(index)
+        if getattr(self, 'enable_notification', False) \
+                and self.on_fields_change.has_callback:
+            self.on_fields_change.fire(index, self, 'del')
+
+    def insert(self, index, value):
+        super().insert(index, value)
+        if getattr(self, 'enable_notification', False) \
+                and self.on_fields_change.has_callback:
+            self.on_fields_change.fire(index, self, 'insert')
+
+    def append(self, value):
+        super().append(value)
+        if getattr(self, 'enable_notification', False) \
+                and self.on_fields_change.has_callback:
+            self.on_fields_change.fire(len(self), self, 'insert')
+

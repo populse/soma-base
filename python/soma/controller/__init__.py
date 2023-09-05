@@ -6,7 +6,8 @@ from .controller import (Controller,
                          asdict,
                          Event,
                          OpenKeyController,
-                         OpenKeyDictController)
+                         OpenKeyDictController,
+                         NotifyingList)
 from .field import (
     field,
     Field,

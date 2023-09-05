@@ -858,6 +858,7 @@ from .set import (SetStrWidgetFactory,
 #from .dict import DictWidgetFactory
 from .path import FileWidgetFactory, DirectoryWidgetFactory
 from .openkeycontroller import OpenKeyControllerWidgetFactory
+from soma.controller.controller import NotifyingList
 # Above imports also import the module. This hides
 # the corresponding builtins => remove them
 del str, bool, literal, list, set, path  # , dict
@@ -876,6 +877,10 @@ WidgetFactory.widget_factory_types = {
     'List[int]': ListIntWidgetFactory,
     'List[float]': ListFloatWidgetFactory,
     'List': find_generic_list_factory,
+    'NotifyingList[str]': ListStrWidgetFactory,
+    'NotifyingList[int]': ListIntWidgetFactory,
+    'NotifyingList[float]': ListFloatWidgetFactory,
+    'NotifyingList': find_generic_list_factory,
     'set[str]': SetStrWidgetFactory,
     'set[int]': SetIntWidgetFactory,
     'set[float]': SetFloatWidgetFactory,
