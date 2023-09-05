@@ -79,7 +79,7 @@ class AttributeValueEvent(Event):
     association of a list of attributes, or for all attributes if they are
     associated to an empty (None) attribute name.
 
-    Callbacks are called wih the following parameters:
+    Callbacks are called with the following parameters:
 
     ``new_value, old_value, attribute_name, controller, index``
 
@@ -164,6 +164,7 @@ class AttributeValueEvent(Event):
     @property
     def has_callback(self):
         return bool(self.callbacks)
+
 
 class ControllerMeta(type):
     ''' Metaclass for Controller subclasses
@@ -449,7 +450,7 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
         del self._dyn_fields[name]
         if getattr(self, 'enable_notification', False) and self.on_fields_change.has_callback:
             self.on_fields_change.fire()
-    
+
     def __getattr__(self, name):
         if name != '_dyn_fields':
             dyn_fields = getattr(self, '_dyn_fields', None)
@@ -458,7 +459,9 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
                 if field:
                     result = getattr(field, name)
                     return result
-        raise AttributeError('{} object has no attribute {}'.format(repr(self.__class__), repr(name)))
+        raise AttributeError(
+            '{} object has no attribute {}'.format(repr(self.__class__),
+                                                   repr(name)))
 
     def getattr(self, name, default=undefined):
         '''
@@ -469,7 +472,7 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
         if value is ... or value is undefined:
             value = default
         return value
-    
+
     def __setattr__(self, name, value):
         if pydantic.__version__[0] >= '2':
             pyd_fields = self.__pydantic_fields__
@@ -484,7 +487,8 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
                 # Value can be converted, therefore get actual attribute new value
                 new_value = getattr(self, name, undefined)
                 if old_value != new_value:
-                    self.on_attribute_change.fire(name, new_value, old_value, self)
+                    self.on_attribute_change.fire(name, new_value, old_value,
+                                                  self)
             else:
                 self._unnotified_setattr(name, value)
         else:
@@ -541,7 +545,7 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
                     controller.import_dict(value, clear=True)
                     return
             super().__setattr__(name, value)
-    
+
     def fields(self):
         ''' Returns an iterator over registered fields (both class fields and
         instance fields)
@@ -781,7 +785,7 @@ class OpenKeyControllerMeta(ControllerMeta):
             result.__args__ = (value_type, )
             cls._cache[value_type] = result
         return result
-        
+
 
 class OpenKeyController(Controller, metaclass=OpenKeyControllerMeta,
                         ignore_metaclass=True):
@@ -863,3 +867,4 @@ class OpenKeyDictController(OpenKeyController, DictControllerBase,
 
 class EmptyOpenKeyDictController(OpenKeyDictController[str]):
     pass
+
