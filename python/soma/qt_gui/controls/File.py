@@ -254,10 +254,10 @@ class FileControlWidget(object):
                 setattr(controller_widget.controller, control_name,
                         new_trait_value)
                 fail = False
-            except traits.TraitError as e:
+            except (traits.TraitError, OSError) as e:
                 print(e)
                 if not protected:
-                    # resgtore protected state after abortion
+                    # restore protected state after abortion
                     controller_widget.controller.unprotect_parameter(
                         control_name)
 
