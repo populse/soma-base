@@ -34,9 +34,8 @@ transparent.
 import sys
 import os
 import imp
-import importlib
 import inspect
-
+import logging
 
 # make qt_backend a fake module package, with Qt modules as sub-modules
 __package__ = __name__
@@ -361,7 +360,7 @@ def patch_main_modules(modules):
         Qt = imp.new_module('%s.Qt' % qt_backend)
         sys.modules['%s.Qt' % qt_backend] = Qt
     for mod in modules:
-        for key, item in mod.__dict__.iteritems():
+        for key, item in mod.__dict__.items():
             if not key.startswith('__') and key not in Qt.__dict__:
                 setattr(Qt, key, item)
 

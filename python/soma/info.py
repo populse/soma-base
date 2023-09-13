@@ -66,11 +66,11 @@ ISRELEASE = version_extra == ''
 VERSION = __version__
 PROVIDES = ["soma-base"]
 REQUIRES = [
-    "pydantic<2",
+    "pydantic <2",
 ]
 PYTHON_REQUIRES = '>=3.9'
 EXTRAS_REQUIRE = {
-    "doc": ["sphinx>=%s" % SPHINX_MIN_VERSION],
+    "doc": ["sphinx >=%s" % SPHINX_MIN_VERSION],
     "crypto": ["pycrypto"],
     "test_utils": ["argparse"],
 }
