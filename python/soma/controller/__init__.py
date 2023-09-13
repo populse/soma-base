@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 
-from pydantic import ValidationError # to expose it in the API
+try:
+    from pydantic.v1 import ValidationError
+except ImportError:
+    from pydantic import ValidationError  # to expose it in the API
 
 from .controller import (Controller,
                          asdict,

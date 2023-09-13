@@ -2,8 +2,6 @@
 
 import os
 
-from pydantic import ValidationError
-
 from soma.qt_gui.qt_backend import (
     Qt, QtCore,
     getOpenFileName,
@@ -14,19 +12,20 @@ from soma.qt_gui.timered_widgets import TimeredQLineEdit
 from.str import StrWidgetFactory
 
 
-class FileWidgetFactory(StrWidgetFactory): 
+class FileWidgetFactory(StrWidgetFactory):
     def create_widgets(self):
         label = self.parent_interaction.get_label()
         self.label_widget = Qt.QLabel(label, parent=self.controller_widget)
         self.label_widget.setToolTip(self.parent_interaction.get_doc())
         self.widget = Qt.QWidget(parent=self.controller_widget)
         self.layout = Qt.QHBoxLayout(self.widget)
-        self.layout.setContentsMargins(0,0,0,0)
+        self.layout.setContentsMargins(0, 0, 0, 0)
         self.text_widget = TimeredQLineEdit(parent=self.controller_widget)
         self.layout.addWidget(self.text_widget)
         self.button = Qt.QToolButton(self.widget)
         self.button.setText('📂')
-        self.button.setSizePolicy(Qt.QSizePolicy.Minimum, Qt.QSizePolicy.Minimum)
+        self.button.setSizePolicy(Qt.QSizePolicy.Minimum,
+                                  Qt.QSizePolicy.Minimum)
         self.button.setFocusPolicy(QtCore.Qt.NoFocus)
         self.button.setFocusProxy(self.text_widget)
         self.layout.addWidget(self.button)
@@ -88,10 +87,10 @@ class FileWidgetFactory(StrWidgetFactory):
 class DirectoryWidgetFactory(FileWidgetFactory):
     def select_path_dialog(self):
         # Create a dialog to select a directory
-        value = self.parent_interaction.get_value(os.path.dirname(os.path.abspath(os.getcwd())))
+        value = self.parent_interaction.get_value(
+            os.path.dirname(os.path.abspath(os.getcwd())))
         # Create a dialog to select a directory
         folder = getExistingDirectory(
             self.controller_widget, "Open directory", value,
-            Qt.QFileDialog.ShowDirsOnly
-                | Qt.QFileDialog.DontUseNativeDialog)
+            Qt.QFileDialog.ShowDirsOnly | Qt.QFileDialog.DontUseNativeDialog)
         self.parent_interaction.set_value(folder)

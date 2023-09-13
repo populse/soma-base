@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 
-from pydantic import ValidationError
+try:
+    from pydantic.v1 import ValidationError
+except ImportError:
+    from pydantic import ValidationError
 
 from soma.qt_gui.qt_backend import Qt
 from . import WidgetFactory
@@ -16,7 +19,8 @@ class LiteralWidgetFactory(WidgetFactory):
         self.widget = Qt.QComboBox(parent=self.controller_widget)
         for v in literal_values(self.parent_interaction.type):
             self.widget.addItem(str(v))
-        self.widget.setSizePolicy(Qt.QSizePolicy.Expanding, Qt.QSizePolicy.Fixed)
+        self.widget.setSizePolicy(Qt.QSizePolicy.Expanding,
+                                  Qt.QSizePolicy.Fixed)
 
         self.parent_interaction.on_change_add(self.update_gui)
         self.update_gui()

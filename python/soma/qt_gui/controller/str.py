@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 
-from pydantic import ValidationError
+try:
+    from pydantic.v1 import ValidationError
+except ImportError:
+    from pydantic import ValidationError
 
 from soma.qt_gui.qt_backend import Qt
 from . import WidgetFactory

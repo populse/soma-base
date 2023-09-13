@@ -3,15 +3,16 @@
 import json
 import unittest
 
-import pydantic
+try:
+    import pydantic.v1 as pydantic
+except ImportError:
+    import pydantic
 
 from soma.controller import (Controller,
                              field,
                              OpenKeyController,
-                             Any,
                              List,
                              Literal,
-                             Tuple,
                              Union,
                              Dict,
                              Set,
@@ -21,8 +22,10 @@ from soma.controller import (Controller,
 from soma.singleton import Singleton
 from soma.undefined import undefined
 
+
 class SubController(Controller):
-    dummy : str
+    dummy: str
+
 
 class SerializableController(Controller):
     s: str
@@ -44,6 +47,7 @@ class SerializableController(Controller):
     lo: List[SubController]
     set_str: Set[str]
     set: set
+
 
 class TestController(unittest.TestCase):
 
@@ -102,17 +106,17 @@ class TestController(unittest.TestCase):
 
     def test_controller4(self):
         class Driver(Controller):
-            head : str = ''
-            arms : str = ''
-            legs : str = ''
+            head: str = ''
+            arms: str = ''
+            legs: str = ''
 
         class Car(Controller):
-            wheels : str
-            engine : str
-            driver : Driver = field(
+            wheels: str
+            engine: str
+            driver: Driver = field(
                 default_factory=lambda: Driver(),
                 doc='the guy who would better take a bus')
-            problems : OpenKeyController
+            problems: OpenKeyController
 
         my_car = Car()
         my_car.wheels = 'flat'
@@ -152,7 +156,8 @@ class TestController(unittest.TestCase):
         self.assertEqual([i.name for i in my_car.problems.fields()],
                          ['exhaust', 'windshield'])
 
-        self.assertEqual(my_car.field('driver').doc, 'the guy who would better take a bus')
+        self.assertEqual(my_car.field('driver').doc,
+                         'the guy who would better take a bus')
         manhelp = my_car.field_doc('driver')
         self.assertEqual(
             manhelp,
@@ -160,17 +165,19 @@ class TestController(unittest.TestCase):
 
     def test_dynamic_controllers(self):
         class C(Controller):
-            static_int : int = 0
-            static_str : str
+            static_int: int = 0
+            static_str: str
             static_list: list = field(default_factory=lambda: [])
             static_dict: dict = field(default_factory=lambda: {})
 
         o = C(static_str='')
 
         o.add_field('dynamic_int', int, default=0)
-        o.add_field('dynamic_str', str, default='default', custom_attribute=True)
+        o.add_field('dynamic_str', str, default='default',
+                    custom_attribute=True)
         o.add_field('dynamic_list', List[int])
-        self.assertEqual(o.field('dynamic_str').metadata('custom_attribute'), True)
+        self.assertEqual(o.field('dynamic_str').metadata('custom_attribute'),
+                         True)
 
         calls = []
         o.on_attribute_change.add(lambda: calls.append([]))

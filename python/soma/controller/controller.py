@@ -6,8 +6,12 @@ import dataclasses
 import inspect
 from typing import Union
 
-from pydantic.dataclasses import dataclass
-import pydantic
+try:
+    from pydantic.v1.dataclasses import dataclass
+    from pydantic import v1 as pydantic
+except ImportError:
+    from pydantic.dataclasses import dataclass
+    import pydantic
 
 from soma.undefined import undefined
 from .field import FieldProxy, ListProxy, field, Field
@@ -18,12 +22,13 @@ from soma.utils.weak_proxy import proxy_method
 class _ModelsConfig:
     validate_assignment = True
     arbitrary_types_allowed = True
-        
+
 
 class Event:
     ''' Notification class for Controller. An Event can be fired (:meth:`fire`)
     to notify observers who have registered callbacks.
     '''
+
     def __init__(self):
         self.callbacks = []
 
@@ -50,7 +55,7 @@ class Event:
         for callback in self.callbacks:
             try:
                 callback(*args, **kwargs)
-            except Exception as e:
+            except Exception:
                 print('Exception in Event callback:', callback,
                       file=sys.stderr)
                 print(args, kwargs, file=sys.stderr)
@@ -65,7 +70,7 @@ class Event:
                         print('all callbacks:', self.callbacks,
                               file=sys.stderr)
                 raise
-    
+
     @property
     def has_callback(self):
         ''' True if any callback has been registered.
@@ -114,7 +119,6 @@ class AttributeValueEvent(Event):
             return callback
         raise ValueError('Invalid callback signature')
 
-
     def add(self, callback, attribute_name=None):
         ''' Register a callback associated to given attribute names.
         Callbacks registered with the name None will be called every time.
@@ -128,7 +132,6 @@ class AttributeValueEvent(Event):
                                           []).append(real_callback)
         else:
             self.callbacks.setdefault(attribute_name, []).append(real_callback)
-
 
     def remove(self, callback, attribute_name=None):
         ''' Remove a callback for one or several attribute names
@@ -150,7 +153,6 @@ class AttributeValueEvent(Event):
                 # The callback was not in the list
                 return False
 
-
     def fire(self, attribute_name, new_value, old_value, controller,
              index=None):
         ''' Fire callbacks associated with a given attribute name.
@@ -160,7 +162,7 @@ class AttributeValueEvent(Event):
             callback(new_value, old_value, attribute_name, controller, index)
         for callback in self.callbacks.get(None, []):
             callback(new_value, old_value, attribute_name, controller, index)
-    
+
     @property
     def has_callback(self):
         return bool(self.callbacks)
@@ -867,4 +869,3 @@ class OpenKeyDictController(OpenKeyController, DictControllerBase,
 
 class EmptyOpenKeyDictController(OpenKeyDictController[str]):
     pass
-

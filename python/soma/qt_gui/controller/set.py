@@ -1,4 +1,9 @@
-from .list import ListStrWidgetFactory, ListIntWidgetFactory, ListFloatWidgetFactory, ListAnyWidgetFactory
+# -*- coding: utf-8 -*-
+from .list import (ListStrWidgetFactory, ListIntWidgetFactory,
+                   ListFloatWidgetFactory, ListAnyWidgetFactory)
+from . import WidgetFactory
+from functools import partial
+
 
 class SetStrWidgetFactory(ListStrWidgetFactory):
     convert_from_list = set
@@ -25,5 +30,6 @@ def find_generic_set_factory(type, subtypes):
         item_type = subtypes[0]
         widget_factory = WidgetFactory.find_factory(item_type, default=None)
         if widget_factory is not None:
-            return partial(SetAnyWidgetFactory, item_factory_class=widget_factory)
+            return partial(SetAnyWidgetFactory,
+                           item_factory_class=widget_factory)
     return None

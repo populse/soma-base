@@ -2,14 +2,11 @@
 
 # -*- coding: utf-8 -*-
 
-from pydantic import ValidationError
-
 from soma.qt_gui.qt_backend import Qt
-from . import WidgetFactory, ControllerSubwidget
-from soma.qt_gui.timered_widgets import TimeredQLineEdit
-from soma.undefined import undefined
+from . import WidgetFactory
 from ..collapsable import CollapsableWidget
 from soma.controller.field import subtypes, type_str, parse_type_str
+
 
 class DictWidgetFactory(WidgetFactory):
 
@@ -27,9 +24,10 @@ class DictWidgetFactory(WidgetFactory):
 
         self.widget = CollapsableWidget(
             self.inner_widget, label=label,
-            expanded=(self.parent_interaction.depth==0),
+            expanded=(self.parent_interaction.depth == 0),
             parent=self.controller_widget)
-        self.inner_widget.setContentsMargins(self.widget.toggle_button.sizeHint().height(),0,0,0)
+        self.inner_widget.setContentsMargins(
+            self.widget.toggle_button.sizeHint().height(), 0, 0, 0)
 
         self.controller_widget.add_widget_row(
             self.widget, label_index=0,
@@ -61,7 +59,6 @@ class DictWidgetFactory(WidgetFactory):
             self.factories = {}
             values = self.parent_interaction.get_value(default={})
             for key, value in values.items():
-                row = self._rowcount
                 type_id = type(value)
                 factory_type = self.find_factory(type_id, default=None)
                 factory = factory_type(

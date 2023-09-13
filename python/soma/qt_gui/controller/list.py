@@ -2,7 +2,10 @@
 
 from functools import partial
 
-from pydantic import ValidationError
+try:
+    from pydantic.v1 import ValidationError
+except ImportError:
+    from pydantic import ValidationError
 
 from ..qt_backend import Qt
 from . import (WidgetFactory, ListItemInteraction, WidgetsGrid,
@@ -27,12 +30,14 @@ class ListStrWidgetFactory(WidgetFactory):
         label = self.parent_interaction.get_label()
         self.grid_widget = Qt.QWidget()
         self.layout = Qt.QGridLayout(self.grid_widget)
-        self.layout.setContentsMargins(0,0,0,0)
+        self.layout.setContentsMargins(0, 0, 0, 0)
         self.inner_widgets = []
-        self.widget = CollapsableWidget(self.grid_widget, label=label, 
-            expanded=(self.parent_interaction.depth==0), 
+        self.widget = CollapsableWidget(
+            self.grid_widget, label=label,
+            expanded=(self.parent_interaction.depth == 0),
             buttons_label=['+', '-'], parent=self.controller_widget)
-        self.grid_widget.setContentsMargins(self.widget.toggle_button.sizeHint().height(),0,0,0)
+        self.grid_widget.setContentsMargins(
+            self.widget.toggle_button.sizeHint().height(), 0, 0, 0)
 
         self.update_gui()
         self.parent_interaction.on_change_add(self.update_gui)
@@ -70,13 +75,15 @@ class ListStrWidgetFactory(WidgetFactory):
             while len(values) > self.layout.count():
                 pos = self.layout.count()
                 column = pos % self.ROW_SIZE
-                row = int(pos / self.ROW_SIZE) 
+                row = int(pos / self.ROW_SIZE)
                 widget = TimeredQLineEdit(parent=self.grid_widget)
                 widget.setMinimumWidth(10)
-                widget.setSizePolicy(Qt.QSizePolicy.Ignored, Qt.QSizePolicy.Fixed)
+                widget.setSizePolicy(Qt.QSizePolicy.Ignored,
+                                     Qt.QSizePolicy.Fixed)
                 self.inner_widgets.append(widget)
                 self.layout.addWidget(widget, row, column)
-                widget.userModification.connect(partial(self.inner_widget_changed, pos))
+                widget.userModification.connect(
+                    partial(self.inner_widget_changed, pos))
             # Set values without sending modification signal
             for widget in self.inner_widgets:
                 widget.startInternalModification()
@@ -143,9 +150,10 @@ class ListStrWidgetFactory(WidgetFactory):
     #         old_value = values[index]
     #         if new_value != old_value:
     #             values[index] = new_value
-    
+
     def add_item(self):
-        values = self.convert_to_list(self.parent_interaction.get_value(default=[]))
+        values = self.convert_to_list(
+            self.parent_interaction.get_value(default=[]))
         item_type = subtypes(self.parent_interaction.type)[0]
         new_value = type_default_value(item_type)
         values = values + [new_value]
@@ -209,11 +217,14 @@ class ListAnyWidgetFactory(WidgetFactory):
     def create_widgets(self):
         self.items_widget = WidgetsGrid(self.parent_interaction.depth)
         label = self.parent_interaction.get_label()
-        self.widget = CollapsableWidget(self.items_widget, label=label, expanded=(self.items_widget.depth==0), 
+        self.widget = CollapsableWidget(
+            self.items_widget, label=label,
+            expanded=(self.items_widget.depth == 0),
             buttons_label=['+', '-'], parent=self.controller_widget)
         self.widget.setContentsMargins(0, 0, 0, 0)
         self.widget.setToolTip(self.parent_interaction.get_doc())
-        self.items_widget.setContentsMargins(self.widget.toggle_button.sizeHint().height(),0,0,0)
+        self.items_widget.setContentsMargins(
+            self.widget.toggle_button.sizeHint().height(), 0, 0, 0)
         self.item_factories = []
 
         self.update_gui()
@@ -235,7 +246,8 @@ class ListAnyWidgetFactory(WidgetFactory):
     def update_gui(self):
         if self.allow_update_gui:
             self.allow_update_gui = False
-            values = self.convert_to_list(self.parent_interaction.get_value(default=[]))
+            values = self.convert_to_list(
+                self.parent_interaction.get_value(default=[]))
             # Remove item widgets if new list is shorter than current one
             while len(values) < len(self.item_factories):
                 item_factory = self.item_factories.pop(-1)
@@ -266,7 +278,8 @@ class ListAnyWidgetFactory(WidgetFactory):
             self.allow_update_gui = True
 
     def add_item(self):
-        values = self.convert_to_list(self.parent_interaction.get_value(default=[]))
+        values = self.convert_to_list(
+            self.parent_interaction.get_value(default=[]))
         item_type = subtypes(self.parent_interaction.type)[0]
         new_value = type_default_value(item_type)
         values = values + [new_value]

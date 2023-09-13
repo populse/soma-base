@@ -5,8 +5,6 @@ import re
 import sys
 import typing
 
-from pydantic import ValidationError
-
 from soma.undefined import undefined
 
 # Import allsupported types from typing
@@ -305,7 +303,7 @@ class Field:
         if name is None:
             return self._dataclass_field.metadata['_metadata']
         return self._dataclass_field.metadata['_metadata'].get(name, default)
-    
+
     def __getattr__(self, name):
         value = self.metadata(name, undefined)
         if value is undefined:
