@@ -438,6 +438,7 @@ def field(
          field_class=Field,
          proxy_controller=None,
          proxy_field=None,
+         force_field_type=None,
          **kwargs):
     ''' :class:`Field` construction factory function. Similar to
     :func:`̀dataclasses.field` but handles :class:`~.controller.Contoller`-
@@ -461,7 +462,10 @@ def field(
             metadata = type_.metadata().copy()
         else:
             metadata = metadata.copy()
-        type_ = type_.type
+        if force_field_type is None:
+            type_ = type_.type
+        else:
+            type_ = force_field_type
     elif metadata is None:
         metadata = {}
     else:

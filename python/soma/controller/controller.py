@@ -196,6 +196,9 @@ class ControllerMeta(type):
                     field_type = None
                     type_ = annotations[i] = Union[type_, type(undefined)]
                 if isinstance(value, Field):
+                    t = getattr(value, 'type', None)
+                    if t is not type_:
+                        value = field(type_=value, force_field_type=type_.__args__[0])
                     field_type = value
                     value = undefined
                 if field_type:
@@ -213,6 +216,7 @@ class ControllerMeta(type):
                                 f'{repr(field_type._dataclass_field.default)}')
                     dataclass_namespace[i] = field_type._dataclass_field
                 else:
+
                     dataclass_namespace[i] = field(type_=type_.__args__[0], 
                                                    default=value,
                                                    class_field=class_field)._dataclass_field
