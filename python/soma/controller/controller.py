@@ -355,7 +355,7 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
                     # print('Exception in Event.fire:', self, file=sys.stderr)
                     # print(self.on_fields_change, file=sys.stderr)
                     raise
-        
+
     def add_proxy(self, name, proxy_controller, proxy_field):
         '''
         Adds a proxy field that is a link to another attribute of
@@ -621,7 +621,11 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
         '''
         if clear:
             for field in list(self.fields()):
-                delattr(self, field.name)
+                try:
+                    delattr(self, field.name)
+                except AttributeError:
+                    # this attribute was already not present, it's OK
+                    pass
         for name, value in state.items():
             field = self.field(name)
             if field:
