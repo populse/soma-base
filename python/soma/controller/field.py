@@ -620,7 +620,7 @@ class ListProxy(Field):
         if self.default_factory is not dataclasses.MISSING:
             return self.default_factory()
         return undefined
-    
+
     @property
     def optional(self):
         return self.target_field.optional
