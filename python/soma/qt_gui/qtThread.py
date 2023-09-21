@@ -1,16 +1,19 @@
 # -*- coding: utf-8 -*-
 
 """
-This module enables to make a function to be executed in qt thread (main thread).
+This module enables to make a function to be executed in qt thread (main
+thread).
 It is useful when you want to call qt functions from another thread.
-It enables to do thread safe calls because all tasks sent are executed in the same thread (qt main thread).
+It enables to do thread safe calls because all tasks sent are executed in the
+same thread (qt main thread).
 """
 __docformat__ = "restructuredtext en"
 
 import sys
 import threading
-from soma.qt_gui.qt_backend.QtCore import QObject, QTimer, QEvent, QCoreApplication
+from soma.qt_gui.qt_backend.QtCore import QObject, QEvent, QCoreApplication
 from soma import singleton
+
 
 # Copied from Python 3 six.reraise
 def reraise(tp, value, tb=None):
@@ -23,6 +26,7 @@ def reraise(tp, value, tb=None):
     finally:
         value = None
         tb = None
+
 
 class FakeQtThreadCall(QObject):
 
@@ -51,9 +55,9 @@ class FakeQtThreadCall(QObject):
 class QtThreadCall(singleton.Singleton, QObject):
 
     """
-    This object enables to send tasks to be executed by qt thread (main thread).
+    This object enables to send tasks to be executed by qt thread (main
+    thread).
     This object must be initialized in qt thread.
-    It starts a QTimer and periodically execute tasks in its actions list.
 
     Attributes
     ----------
@@ -63,8 +67,6 @@ class QtThreadCall(singleton.Singleton, QObject):
         tasks to execute
     mainThread: Thread
         current thread at object initialisation
-    timer: QTimer
-        timer to wake this object periodically
     """
 
     def __singleton_init__(self):
@@ -101,7 +103,10 @@ class QtThreadCall(singleton.Singleton, QObject):
 
     def push(self, function, *args, **kwargs):
         """
-        Add a function call to the actions list. the call is executed immediatly if current thread is main thread. Otherwise it will be executed some time in the main thread (asynchronously to the current thread). The function return value is ignored and will be lost.
+        Add a function call to the actions list. the call is executed
+        immediatly if current thread is main thread. Otherwise it will be
+        executed some time in the main thread (asynchronously to the current
+        thread). The function return value is ignored and will be lost.
 
         Parameters
         ----------
@@ -123,7 +128,8 @@ class QtThreadCall(singleton.Singleton, QObject):
 
     def call(self, function, *args, **kwargs):
         """
-        Send the function call to be executed in the qt main thread and wait for the result. The result will be returned to the calling thread.
+        Send the function call to be executed in the qt main thread and wait
+        for the result. The result will be returned to the calling thread.
 
         .. warning::
 
@@ -150,13 +156,14 @@ class QtThreadCall(singleton.Singleton, QObject):
             self.lock.acquire()
             try:
                 self.actions.append(
-                    (self._callAndWakeUp, (semaphore, function, args, kwargs), {}))
+                    (self._callAndWakeUp, (semaphore, function, args, kwargs),
+                     {}))
                 self._postEvent()
             finally:
                 self.lock.release()
             semaphore.acquire()
-                              # block until semaphore is released in
-                              # _callAndWakeUp method
+            # block until semaphore is released in
+            # _callAndWakeUp method
             result = semaphore._mainThreadActionResult
             exception = semaphore._mainThreadActionException
             if exception is not None:
@@ -165,12 +172,14 @@ class QtThreadCall(singleton.Singleton, QObject):
 
     def _callAndWakeUp(self, semaphore, function, args, kwargs):
         """
-        Call the function, set the result in semaphore attributes and release the semaphore.
+        Call the function, set the result in semaphore attributes and release
+        the semaphore.
 
         Parameters
         ----------
         semaphore: threading.Semaphore
-            thread which has added this task is blocked on this semaphore. function call's result will be kept in this semaphore attributes.
+            thread which has added this task is blocked on this semaphore.
+            function call's result will be kept in this semaphore attributes.
         function: function
             the function to call in main thread.
         """
@@ -184,8 +193,8 @@ class QtThreadCall(singleton.Singleton, QObject):
         except:  # noqa: E722
             semaphore._mainThreadActionException = sys.exc_info()
         semaphore.release()
-                          # release the semaphore to unblock the thread which
-                          # waits for the function call's result
+        # release the semaphore to unblock the thread which
+        # waits for the function call's result
 
     def isInMainThread(self):
         """
@@ -234,7 +243,8 @@ class MainThreadLife(object):
 
     .. warning::
 
-        The thing is only working if no other reference is held anywhere on the underlying object, otherwise we do not control its deletion.
+        The thing is only working if no other reference is held anywhere on the
+        underlying object, otherwise we do not control its deletion.
 
     Ex:
 
@@ -257,6 +267,7 @@ class MainThreadLife(object):
         # ... use it ...
         del widget # OK
     '''
+
     def __init__(self, obj_life=None, *args, **kwargs):
         super(MainThreadLife, self).__init__(*args, **kwargs)
         if obj_life is not None:
@@ -283,4 +294,4 @@ class MainThreadLife(object):
         lock.release()
         # now the process thread should have removed its reference on thing:
         # we can safely delete it fom here, in the main thread.
-        del thing # probably useless
+        del thing  # probably useless
