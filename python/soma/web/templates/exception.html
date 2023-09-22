@@ -1,0 +1,7 @@
+{% extends 'soma_layout.html' %}
+{%- block body %}
+<h1>Internal error</h1>
+<pre>
+{{ traceback|safe }}
+</pre>
+{% endblock %}

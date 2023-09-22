@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import
 import tarfile
 import zipfile
 import os
+
+archive_extensions = {'.zip', '.gz', '.tar', '.bz2', '.tgz'}
 
 def is_archive(filename):
     """
@@ -16,12 +17,9 @@ def is_archive(filename):
             return True
         except Exception:
             pass
-    if os.path.splitext(filename)[1] in get_archive_extensions():
+    if os.path.splitext(filename)[1] in archive_extensions:
         return True
     return False
-
-def get_archive_extensions():
-    return ['.zip', '.gz', '.tar', '.bz2', '.tgz']
 
 def unpack(input_filename, extract_dir):
     """
