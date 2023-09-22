@@ -13,6 +13,7 @@ import sys
 import threading
 from soma.qt_gui.qt_backend.QtCore import QObject, QEvent, QCoreApplication
 from soma import singleton
+from functools import partial
 
 
 # Copied from Python 3 six.reraise
@@ -295,3 +296,31 @@ class MainThreadLife(object):
         # now the process thread should have removed its reference on thing:
         # we can safely delete it fom here, in the main thread.
         del thing  # probably useless
+
+
+def gui_thread_call(function):
+    '''
+    Decorator to make a function which executes in the GUI thread (main thread,
+    actually)
+    '''
+    def gui_thread_function2(*args, **kwargs):
+        return QtThreadCall().call(function, *args, **kwargs)
+    return gui_thread_function2
+
+
+def gui_thread_push(function):
+    '''
+    Decorator to make a function which executes in the GUI thread (main thread,
+    actually), in an async way (returns immediately with no return value,
+    execution may happen later)
+    '''
+    def gui_thread_function2(*args, **kwargs):
+        return QtThreadCall().push(function, *args, **kwargs)
+    return gui_thread_function2
+
+
+def gui_thread_function(wait_return):
+    if wait_return:
+        return gui_thread_call
+    else:
+        return gui_thread_push
