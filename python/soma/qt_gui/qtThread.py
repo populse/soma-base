@@ -13,7 +13,7 @@ import sys
 import threading
 from soma.qt_gui.qt_backend.QtCore import QObject, QEvent, QCoreApplication
 from soma import singleton
-from functools import partial
+import inspect
 
 
 # Copied from Python 3 six.reraise
@@ -305,6 +305,8 @@ def gui_thread_call(function):
     '''
     def gui_thread_function2(*args, **kwargs):
         return QtThreadCall().call(function, *args, **kwargs)
+
+    gui_thread_function2.__signature__ = inspect.signature(function)
     return gui_thread_function2
 
 
@@ -316,6 +318,8 @@ def gui_thread_push(function):
     '''
     def gui_thread_function2(*args, **kwargs):
         return QtThreadCall().push(function, *args, **kwargs)
+
+    gui_thread_function2.__signature__ = inspect.signature(function)
     return gui_thread_function2
 
 
