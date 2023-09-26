@@ -9,6 +9,7 @@ from soma.controller import (Controller,
                              Set,
                              File,
                              Directory)
+from soma.qt_gui.controller import ControllerWidget
 
 class SubController(Controller):
     dummy: str
@@ -38,18 +39,39 @@ class VisibleController(Controller):
     open_key: OpenKeyController[str]
 
 
-def qt_web_gui():
+def web_server_gui(controller):
+    import http, http.server
+    from soma.web import SomaHTTPHandler
+    from soma.web.controller import ControllerRoutes, ControllerBackend
+
+    class Handler(SomaHTTPHandler, base_url='http://localhost:8080',
+            routes = ControllerRoutes(),
+            backend = ControllerBackend(),
+            title='Controller',
+            controller=controller):
+        pass
+    httpd = http.server.HTTPServer(('', 8080), Handler)
+    httpd.serve_forever()
+
+    
+def qt_web_gui(controller):
     import sys
     from soma.qt_gui.qt_backend import Qt
     from soma.web.controller import ControllerWindow
     
-    controller = VisibleController()
-    # for field in controller.fields():
-    #     print(field.name, ':', field.parse_type_str())
     app = Qt.QApplication(sys.argv)
     w = ControllerWindow(controller)
-    w.showMaximized()
+    w.show()
+    w2 = ControllerWidget(controller, readonly=True)
+    w2.show()
     app.exec_()
 
 
-qt_web_gui()
+def echo(*args):
+    print(args)
+
+if __name__ == '__main__':
+    controller = VisibleController()
+    controller.on_attribute_change.add(echo)
+    qt_web_gui(controller)
+    # web_server_gui(controller)

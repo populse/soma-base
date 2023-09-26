@@ -4,25 +4,30 @@ from .list import (ListStrWidgetFactory, ListIntWidgetFactory,
 from . import WidgetFactory
 from functools import partial
 
+from soma.undefined import undefined
 
 class SetStrWidgetFactory(ListStrWidgetFactory):
     convert_from_list = set
-    convert_to_list = list
+    convert_to_list = staticmethod(lambda x:
+                                   list(x) if x not in (None, undefined) else [])
 
 
 class SetIntWidgetFactory(ListIntWidgetFactory):
     convert_from_list = set
-    convert_to_list = list
+    convert_to_list = staticmethod(lambda x:
+                                   list(x) if x not in (None, undefined) else [])
 
 
 class SetFloatWidgetFactory(ListFloatWidgetFactory):
     convert_from_list = set
-    convert_to_list = list
+    convert_to_list = staticmethod(lambda x:
+                                   list(x) if x not in (None, undefined) else [])
 
 
 class SetAnyWidgetFactory(ListAnyWidgetFactory):
     convert_from_list = set
-    convert_to_list = list
+    convert_to_list = staticmethod(lambda x:
+                                   list(x) if x not in (None, undefined) else [])
 
 
 def find_generic_set_factory(type, subtypes):

@@ -5,6 +5,7 @@ import http, http.server
 import mimetypes
 import os
 import traceback
+import weakref
 
 import jinja2
 
@@ -149,7 +150,6 @@ class WebBackend(Qt.QObject, metaclass=WebBackendMeta):
     Methods can return anything that can be serialized using `json.dumps()`.
     '''
 
-
 class WebHandler:
     '''
     This class is used internally in web implementations. It puts together the
@@ -194,8 +194,10 @@ class WebHandler:
             templates.
         '''
         self.routes = routes
+        self.routes._handler = weakref.proxy(self)
         routes.handler = self
         self.backend = backend
+        self.backend._handler = weakref.proxy(self)
         self.static_path = []
         self.jinja_kwargs = kwargs
         self.base_url = self.jinja_kwargs['base_url'] = base_url 
@@ -271,6 +273,10 @@ class WebHandler:
                         return (fp, None)
         raise ValueError('Invalid path')
 
+
+    def __getitem__(self, key):
+        return self.jinja_kwargs[key]
+    
 
 class SomaHTTPHandlerMeta(type(http.server.BaseHTTPRequestHandler)):
     '''

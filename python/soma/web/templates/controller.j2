@@ -68,7 +68,7 @@
 
 {% macro edit_str(id, field, value, subtypes) -%}
     <td><label for="{{id}}">{{field.name}}</label></td>
-    <td><input id="{{id}}" type="text" value="{{value}}"/></td>
+    <td><input id="{{id}}" type="text" value="{{value}}" onchange="update_controller_text(this)"/></td>
 {%- endmacro %}
 
 
@@ -84,13 +84,13 @@
 
 {% macro edit_bool(id, field, value, subtypes) -%}
     <td><label for="{{id}}">{{field.name}}</label></td>
-    <td><input id="{{id}}" type="checkbox" {%- if value -%}checked{% endif %}/></td>
+    <td><input id="{{id}}" type="checkbox" {%- if value -%}checked{% endif %} onchange="update_controller_bool(this)"/></td>
 {%- endmacro %}
 
 
 {% macro edit_Literal(id, field, value, subtypes) -%}
     <td><label for="{{id}}">{{field.name}}</label></td><td>
-    <select id="{{id}}>
+    <select id="{{id}}" onchange="update_controller_text(this)">
 {%- for pv in subtypes %}
         <option value="{{pv}}"{% if pv==value %} selected{% endif %}>{{pv}}</option>
 {%- endfor %}

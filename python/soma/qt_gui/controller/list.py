@@ -61,7 +61,9 @@ class ListStrWidgetFactory(WidgetFactory):
         if self.allow_update_gui:
             self.allow_update_gui = False
             values = self.parent_interaction.get_value(default=[])
+            print('!1!', values, self.convert_to_list)
             values = self.convert_to_list(values)
+            print('!1.1!', values)
             # Remove item widgets if new list is shorter than current one
             while len(values) < self.layout.count():
                 index = self.layout.count() - 1
