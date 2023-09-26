@@ -136,7 +136,11 @@ def parse_type_str(type_str):
                     new_inner.append(inner[c:])
                     inner = ''.join(new_inner)
                 else:
-                    return (type, [i.format(**substitution) for i in inner.split(',')])
+                    if type == 'Literal':
+                        subtypes = [eval(i) for i in inner.split(',')]
+                    else:
+                        subtypes = [i.format(**substitution) for i in inner.split(',')] 
+                    return (type, subtypes)
         else:
             return (type, [])
     else:
@@ -160,7 +164,8 @@ def parse_type_str(type_str):
                     new_inner.append(inner[c:])
                     inner = ''.join(new_inner)
                 else:
-                    return (type, [i.format(**substitution) for i in inner.split(',')])
+                    subtypes = [i.format(**substitution) for i in inner.split(',')]
+                    return (type, subtypes)
         else:
             return (type, [])
 
@@ -424,6 +429,15 @@ class Field:
     @doc.deleter
     def doc(self):
         self.__delattr__('doc')
+
+    # The following methods are available as functions but global
+    # functions are not available in Jinja2 context used to create Web-based
+    # GUI. Therefore, an access to the function from a field instance had
+    # been added whenever necessary.
+
+    def parse_type_str(self):
+        return parse_type_str(self.type_str())
+
 
 def field(
          name=None, 

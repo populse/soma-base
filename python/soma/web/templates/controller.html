@@ -1,0 +1,13 @@
+{% import 'controller.j2' as cj2 %}
+{% extends 'soma_layout.html' %}
+{%- block body %}
+<h1 id="page_title"></h1>
+{{ cj2.view_Controller('view', None, controller, []) }}
+<hr>
+{{ cj2.edit_Controller('edit', None, controller, []) }}
+{% endblock %}
+{% block script %}
+<script>
+    document.getElementById('page_title').innerHTML = document.title;
+</script>
+{% endblock %}

@@ -1,0 +1,98 @@
+{% macro view_Controller(id, field, controller, subtypes) -%}
+    {%- if controller %}
+    <table id = "{{id}}">
+    {%- for f in controller.fields() -%}
+    {% set t, st = f.parse_type_str() %}
+    <tr>
+    {{('view_' + t) | macro(id + '.' + f.name, f, controller[f.name], st) or '<td>' + f.name + '</td><td> -- view_' + t + ' not implemented --</td>'}}
+    </tr>
+    {%- endfor %}
+    </table>
+{%- endif %}
+{%- endmacro %}
+
+{% macro view_str(id, field, value, subtypes) -%}
+<td>{{field.name}}</td>
+{%- if value -%}
+    <td>{{value}}</td>
+{%- else -%}
+    <td>-- no value --</td>
+{% endif %}
+{%- endmacro %}
+
+{% macro view_int(id, field, value, subtypes) -%}
+{{view_str(id, field, value, subtypes)}}
+{%- endmacro %}
+
+{% macro view_float(id, field, value, subtypes) -%}
+{{view_str(id, field, value, subtypes)}}
+{%- endmacro %}
+
+{% macro view_bool(id, field, value, subtypes) -%}
+<td>{{field.name}}</td><td>
+{%- if value -%}
+    <input type="checkbox" checked onclick="return false;" tabIndex="-1"/>
+{%- else -%}
+    <input type="checkbox" onclick="return false;" tabIndex="-1"/>
+{%- endif -%}
+</td>
+{%- endmacro %}
+
+{% macro view_Literal(id, field, value, subtypes) -%}
+{{view_str(id, field, value, subtypes)}}
+{%- endmacro %}
+
+{% macro view_File(id, field, value, subtypes) -%}
+{{view_str(id, field, value, subtypes)}}
+{%- endmacro %}
+
+{% macro view_Directory(id, field, value, subtypes) -%}
+{{view_str(id, field, value, subtypes)}}
+{%- endmacro %}
+
+
+
+{% macro edit_Controller(id, field, controller, subtypes) %}
+    {%- if controller %}
+    <form id="{{id}}"><table>
+    {%- for f in controller.fields() %}
+    {%- set t, st = f.parse_type_str() %}
+    <tr>{{('edit_' + t) | macro(id + '.' + f.name, f, controller[f.name], st) or '<td>' + f.name + '</td><td> -- edit_' + t + ' not implemented --</td>'}}</tr>
+    {%- endfor %}
+    </table></form>
+    {%- else %}
+    {%- if field %}<td>{{field.name}}</td>{% endif %}
+    <td>-- no value --</td>
+{%- endif %}
+{%- endmacro %}
+
+{% macro edit_str(id, field, value, subtypes) -%}
+    <td><label for="{{id}}">{{field.name}}</label></td>
+    <td><input id="{{id}}" type="text" value="{{value}}"/></td>
+{%- endmacro %}
+
+
+{% macro edit_int(id, field, value, subtypes) -%}
+{{edit_str(id, field, value, subtypes)}}
+{%- endmacro %}
+
+
+{% macro edit_float(id, field, value, subtypes) -%}
+{{edit_str(id, field, value, subtypes)}}
+{%- endmacro %}
+
+
+{% macro edit_bool(id, field, value, subtypes) -%}
+    <td><label for="{{id}}">{{field.name}}</label></td>
+    <td><input id="{{id}}" type="checkbox" {%- if value -%}checked{% endif %}/></td>
+{%- endmacro %}
+
+
+{% macro edit_Literal(id, field, value, subtypes) -%}
+    <td><label for="{{id}}">{{field.name}}</label></td><td>
+    <select id="{{id}}>
+{%- for pv in subtypes %}
+        <option value="{{pv}}"{% if pv==value %} selected{% endif %}>{{pv}}</option>
+{%- endfor %}
+    </select></td>
+{%- endmacro %}

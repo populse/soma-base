@@ -8,12 +8,12 @@ import traceback
 
 import jinja2
 
+from soma.undefined import undefined
 from soma.qt_gui.qt_backend import Qt, QtWidgets
 from soma.qt_gui.qt_backend.QtCore import pyqtSlot, QUrl, QBuffer, QIODevice
 from soma.qt_gui.qt_backend.QtWebEngineWidgets import QWebEngineView, QWebEngineProfile
 from soma.qt_gui.qt_backend.QtWebEngineCore import QWebEngineUrlSchemeHandler, QWebEngineUrlScheme, QWebEngineUrlRequestJob
 from soma.qt_gui.qt_backend.QtWebChannel import QWebChannel
-
 
 
 '''
@@ -30,6 +30,14 @@ things:
       a JSON object. These API URLs are defined by deriving a
       `WebBackend` class.
 '''
+
+@jinja2.pass_context
+def call_macro_by_name(context, macro_name, *args, **kwargs):
+    macro = context.vars.get(macro_name)
+    if macro:
+        return macro(*args, **kwargs)
+    else:
+        return None
 
 
 class WebRoutes:
@@ -82,11 +90,13 @@ class WebRoutes:
     ```
 
     '''
+    _templates = {}
+
     def _result(self, template, **kwargs):
         '''
         Return a valid result value that is passed to the `WebHandler` and
         will be interpreted as: an HTML page whose the result of a Jinja2
-        template using builtin variables and those given in parameters.
+        template usControllerRoutesing builtin variables and those given in parameters.
         '''
         return (template, kwargs)
 
@@ -183,8 +193,6 @@ class WebHandler:
             All supplementary keyword parameter will be passed to every Jinja2
             templates.
         '''
-        if static is None:
-            static = 'soma.web'
         self.routes = routes
         routes.handler = self
         self.backend = backend
@@ -194,7 +202,9 @@ class WebHandler:
         self.server_type = self.jinja_kwargs['server_type'] = server_type
 
         loader = jinja2.ChoiceLoader([jinja2.PackageLoader('soma.web')])
-        if isinstance(templates, str):
+        if templates is None:
+            templates = []
+        elif isinstance(templates, str):
             templates = [templates]
         for t in templates:
             if os.path.isdir(t):
@@ -205,8 +215,12 @@ class WebHandler:
             loader=loader,
             autoescape=jinja2.select_autoescape()
         )
+        self.jinja.filters['macro'] = call_macro_by_name
+        self.jinja.globals['undefined'] = undefined
 
-        if isinstance(static, str):
+        if static is None:
+            static = []
+        elif isinstance(static, str):
             static = [static]
         for s in ['soma.web'] + static:
             if os.path.isdir(s):
@@ -425,30 +439,28 @@ class SomaSchemeHandler(QWebEngineUrlSchemeHandler):
         path = url.toString().split('://', 1)[-1]
 
         try:
-            template_data = self._handler.resolve(path)
-        except ValueError as e:
-            request.fail(QWebEngineUrlRequestJob.UrlNotFound)
-            return None
-        except Exception as e:
-            request.fail(QWebEngineUrlRequestJob.Failed)
-            return None
-        body = None
-        if template_data:
-            template, data = template_data
-            if data is None:
-                body = open(template).read()
-            else:
-                try:
-                    template = self._handler.jinja.get_template(template)
-                except jinja2.TemplateNotFound:
-                    request.fail(QWebEngineUrlRequestJob.UrlNotFound)
-                    return None
-                try:
+            try:
+                template_data = self._handler.resolve(path)
+            except ValueError as e:
+                request.fail(QWebEngineUrlRequestJob.UrlNotFound)
+                return None
+            body = None
+            if template_data:
+                template, data = template_data
+                if data is None:
+                    body = open(template).read()
+                else:
+                    try:
+                        template = self._handler.jinja.get_template(template)
+                    except jinja2.TemplateNotFound:
+                        request.fail(QWebEngineUrlRequestJob.UrlNotFound)
+                        return None
                     body = template.render(**data)
-                except Exception as e:
-                    template = self._handler.jinja.get_template('exception.html')
-                    body = template.render(exception=e, traceback=traceback.format_exc())
+        except Exception as e:
+            template = self._handler.jinja.get_template('exception.html')
+            body = template.render(exception=e, traceback=traceback.format_exc())
 
+        print(body)
         if isinstance(body, str):
             body = body.encode('utf8')
         buf = QBuffer(parent=self)
@@ -505,8 +517,9 @@ class SomaBrowserWindow(QtWidgets.QMainWindow):
         # app.exec_()
 
     '''
-    def __init__(self, starting_url, 
-                 routes, backend, window_title=None, **kwargs):
+    def __init__(self, starting_url, routes, backend,
+                 templates=None, static=None, window_title=None,
+                 **kwargs):
         super(QtWidgets.QMainWindow, self).__init__()
         self.setWindowTitle(window_title or 'Soma Browser')
         self.starting_url = starting_url
@@ -519,9 +532,11 @@ class SomaBrowserWindow(QtWidgets.QMainWindow):
 
             profile = QWebEngineProfile.defaultProfile()
             SomaBrowserWindow.url_scheme_handler = SomaSchemeHandler(
-                None, 
+                self, 
                 routes=routes, 
-                backend=backend, 
+                backend=backend,
+                templates=templates,
+                static=static,
                 **kwargs)
             profile.installUrlSchemeHandler(b'soma', SomaBrowserWindow.url_scheme_handler)
 
