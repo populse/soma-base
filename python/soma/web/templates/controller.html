@@ -2,10 +2,12 @@
 {% extends 'soma_layout.html' %}
 {%- block body %}
 <h1 id="page_title"></h1>
+{%- if read_only %}
 {{ cj2.view_Controller('view', None, controller, []) }}
-<hr>
+{%- else %}
 {{ cj2.edit_Controller('edit', None, controller, []) }}
-{% endblock %}
+{%- endif %}
+{%- endblock %}
 {% block script %}
 <script>
     document.getElementById('page_title').innerHTML = document.title;

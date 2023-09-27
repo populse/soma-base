@@ -11,11 +11,13 @@ from soma.controller import (Controller,
                              Directory)
 from soma.qt_gui.controller import ControllerWidget
 
+# class SubController(Controller):
+#     o_s: str
+#     o_i: int
+#     o_f: float
+
+
 class SubController(Controller):
-    dummy: str
-
-
-class VisibleController(Controller):
     s: str = 'a string'
     i: int = 42
     n: float = 42.42
@@ -24,19 +26,18 @@ class VisibleController(Controller):
     e: Literal['one', 'two', 'three'] = 'two'
     f: File = '/somewhere/a_file'
     d: Directory = '/elsewhere/a_directory'
-    u: Union[str, List[str]]
-    m: dict
-    lm: list[dict]
-    mt: Dict[str, List[int]]
-    l: list
-    ll: List[List[str]]
-    c: Controller
-    lc: List[Controller]
-    o: SubController
-    lo: List[SubController]
-    set_str: Set[str]
-    set: set
-    open_key: OpenKeyController[str]
+    ls: field(type_=list[str], default_factory=lambda: ['a string', 'another string'])
+    li: field(type_=list[int], default_factory=lambda: [42, 24])
+    ln: field(type_=list[float], default_factory=lambda: [42.24, 24.42])
+    lb: field(type_=list[bool], default_factory=lambda: [True, False])
+    le: field(type_=list[Literal['one', 'two', 'three']], default_factory=lambda: ['one', 'two'])
+    lf: field(type_=list[File], default_factory=lambda: ['/somewhere/a_file', '/elsewhere/another_file'])
+    ld: field(type_=list[Directory], default_factory=lambda: ['/somewhere/a_directory', '/elsewhere/another_directory'])
+    ok: field(type_=OpenKeyController[str], default_factory=lambda: OpenKeyController[str]())
+
+class VisibleController(SubController):
+    o: field(type_=SubController, default_factory=lambda: SubController())
+    lo: field(type_=list[SubController], default_factory=lambda: [SubController(), SubController()])
 
 
 def web_server_gui(controller):
@@ -60,10 +61,12 @@ def qt_web_gui(controller):
     from soma.web.controller import ControllerWindow
     
     app = Qt.QApplication(sys.argv)
-    w = ControllerWindow(controller)
-    w.show()
-    w2 = ControllerWidget(controller, readonly=True)
-    w2.show()
+    rw = ControllerWindow(controller)
+    ro = ControllerWindow(controller, read_only=True)
+    qt = ControllerWidget(controller)
+    rw.show()
+    ro.show()
+    qt.show()
     app.exec_()
 
 

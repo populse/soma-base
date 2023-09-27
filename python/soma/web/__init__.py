@@ -9,6 +9,7 @@ import weakref
 
 import jinja2
 
+from soma.controller import Controller
 from soma.undefined import undefined
 from soma.qt_gui.qt_backend import Qt, QtWidgets
 from soma.qt_gui.qt_backend.QtCore import pyqtSlot, QUrl, QBuffer, QIODevice
@@ -33,12 +34,22 @@ things:
 '''
 
 @jinja2.pass_context
-def call_macro_by_name(context, macro_name, *args, **kwargs):
-    macro = context.vars.get(macro_name)
+def render_controller_value(context, field, render_type, id, value):
+    field_type = field.type
+    type_str, type_str_params = field.parse_type_str()
+    macro = context.vars.get(f'{render_type}_{type_str}')
+    if not macro:
+        if issubclass(field_type, Controller):
+            for parent_type in field_type.__mro__:
+                parent_type_str = parent_type.__name__
+                macro = context.vars.get(f'{render_type}_{parent_type_str}')
+                if macro:
+                    break
+        elif field.is_list():
+            macro = context.vars.get(f'{render_type}_list_{type_str_params[0]}')
     if macro:
-        return macro(*args, **kwargs)
-    else:
-        return None
+        return macro(id, field, value, type_str_params)
+    return None
 
 
 class WebRoutes:
@@ -217,8 +228,10 @@ class WebHandler:
             loader=loader,
             autoescape=jinja2.select_autoescape()
         )
-        self.jinja.filters['macro'] = call_macro_by_name
+        self.jinja.filters['render_controller_value'] = render_controller_value
         self.jinja.globals['undefined'] = undefined
+        self.jinja.globals['map'] = map
+        self.jinja.globals['str'] = str
 
         if static is None:
             static = []

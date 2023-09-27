@@ -1,13 +1,14 @@
 {% macro view_Controller(id, field, controller, subtypes) -%}
+    {% if field %}<td>{{field.name}}</td><td>{% endif %}
     {%- if controller %}
     <table id = "{{id}}">
     {%- for f in controller.fields() -%}
-    {% set t, st = f.parse_type_str() %}
     <tr>
-    {{('view_' + t) | macro(id + '.' + f.name, f, controller[f.name], st) or '<td>' + f.name + '</td><td> -- view_' + t + ' not implemented --</td>'}}
+    <tr>{{f | render_controller_value('view', id + '.' + f.name, controller[f.name]) or '<td>' + f.name + '</td><td> -- view for ' + f.type_str() + ' not implemented --</td>'}}</tr>
     </tr>
     {%- endfor %}
     </table>
+    {%- if not field %}</td>{% endif %}
 {%- endif %}
 {%- endmacro %}
 
@@ -50,23 +51,51 @@
 {{view_str(id, field, value, subtypes)}}
 {%- endmacro %}
 
+{% macro view_list_str(id, field, value, subtypes) -%}
+<td>{{field.name}}</td>
+{%- if value != undefined -%}
+    <td><pre>{{'\n'.join(value)}}</pre></td>
+{%- else -%}
+    <td>-- no value --</td>
+{% endif %}
+{%- endmacro %}
+
+{% macro view_list_int(id, field, value, subtypes) -%}
+<td>{{field.name}}</td>
+{%- if value != undefined -%}
+    <td><pre>{{'\n'.join(map(str,value))}}</pre></td>
+{%- else -%}
+    <td>-- no value --</td>
+{% endif %}
+{%- endmacro %}
+
+{% macro view_list_float(id, field, value, subtypes) -%}
+{{view_list_int(id, field, value, subtypes)}}
+{%- endmacro %}
+
+
 
 
 {% macro edit_Controller(id, field, controller, subtypes) %}
+    {% if field %}<td>{{field.name}}</td><td>{% endif %}
     {%- if controller %}
     <form id="{{id}}"><table>
     {%- for f in controller.fields() %}
     {%- set t, st = f.parse_type_str() %}
-    <tr>{{('edit_' + t) | macro(id + '.' + f.name, f, controller[f.name], st) or '<td>' + f.name + '</td><td> -- edit_' + t + ' not implemented --</td>'}}</tr>
+    <tr>{{f | render_controller_value('edit', id + '.' + f.name, controller[f.name]) or '<td>' + f.name + '</td><td> -- edit for ' + f.type_str() + ' not implemented --</td>'}}</tr>
     {%- endfor %}
     </table></form>
     {%- else %}
     {%- if field %}<td>{{field.name}}</td>{% endif %}
     <td>-- no value --</td>
-{%- endif %}
+    {%- endif %}
+    {% if not field %}</td>{% endif %}
 {%- endmacro %}
 
 {% macro edit_str(id, field, value, subtypes) -%}
+    {%- if value == undefined -%}
+    {%- set value='' -%}
+    {%- endif -%}
     <td><label for="{{id}}">{{field.name}}</label></td>
     <td><input id="{{id}}" type="text" value="{{value}}" onchange="update_controller_text(this)"/></td>
 {%- endmacro %}
@@ -95,4 +124,28 @@
         <option value="{{pv}}"{% if pv==value %} selected{% endif %}>{{pv}}</option>
 {%- endfor %}
     </select></td>
+{%- endmacro %}
+
+{% macro edit_list_str(id, field, value, subtypes) -%}
+    {%- if value == undefined -%}
+    {%- set value=[] -%}
+    {%- endif -%}
+    <td><label for="{{id}}">{{field.name}}</label></td>
+    <td><textarea id="{{id}}" onchange="update_controller_list_str(this)"/>{{'\n'.join(value)}}</textarea></td>
+{%- endmacro %}
+
+{% macro edit_list_int(id, field, value, subtypes) -%}
+    {%- if value == undefined -%}
+    {%- set value=[] -%}
+    {%- endif -%}
+    <td><label for="{{id}}">{{field.name}}</label></td>
+    <td><textarea id="{{id}}" onchange="update_controller_list_int(this)"/>{{'\n'.join(map(str,value))}}</textarea></td>
+{%- endmacro %}
+
+{% macro edit_list_float(id, field, value, subtypes) -%}
+    {%- if value == undefined -%}
+    {%- set value=[] -%}
+    {%- endif -%}
+    <td><label for="{{id}}">{{field.name}}</label></td>
+    <td><textarea id="{{id}}" onchange="update_controller_list_float(this)"/>{{'\n'.join(map(str,value))}}</textarea></td>
 {%- endmacro %}

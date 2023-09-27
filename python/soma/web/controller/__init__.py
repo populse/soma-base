@@ -10,12 +10,17 @@ class ControllerRoutes(WebRoutes):
     }
 
     def view(self):
-        return self._result('controller.html')
+        return self._result('controller.html', read_only=True)
+
+
+    def edit(self):
+        return self._result('controller.html', read_only=False)
 
 
 
 class ControllerBackend(WebBackend):
-    def set_value(self, id: str, value: str):
+    def set_value(self, id: str, value: 'QVariant'):
+        print('!set_value!', id, repr(value))
         try:
             indices = id.split('.')[1:]
             container = self._handler['controller']
@@ -38,11 +43,11 @@ class ControllerBackend(WebBackend):
             traceback.print_exc()
 
 class ControllerWindow(SomaBrowserWindow):
-    def __init__(self, controller, title='Controller'):
+    def __init__(self, controller, title='Controller', read_only=False):
         super().__init__(
             routes = ControllerRoutes(),
             backend = ControllerBackend(),
-            starting_url='soma://view',
+            starting_url=f'soma://{("view" if read_only else "edit")}',
             title=title,
             window_title=title,
             controller=controller,
