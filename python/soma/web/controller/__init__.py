@@ -4,11 +4,6 @@ from .. import WebRoutes, WebBackend, SomaBrowserWindow
 
 
 class ControllerRoutes(WebRoutes):
-    _templates = {
-        'qt_backend.js',
-        'html_backend.js'
-    }
-
     def view(self):
         return self._result('controller.html', read_only=True)
 

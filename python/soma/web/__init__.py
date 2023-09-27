@@ -13,7 +13,7 @@ from soma.controller import Controller
 from soma.undefined import undefined
 from soma.qt_gui.qt_backend import Qt, QtWidgets
 from soma.qt_gui.qt_backend.QtCore import pyqtSlot, QUrl, QBuffer, QIODevice
-from soma.qt_gui.qt_backend.QtWebEngineWidgets import QWebEngineView, QWebEngineProfile
+from soma.qt_gui.qt_backend.QtWebEngineWidgets import QWebEngineView, QWebEngineProfile, QWebEnginePage
 from soma.qt_gui.qt_backend.QtWebEngineCore import QWebEngineUrlSchemeHandler, QWebEngineUrlScheme, QWebEngineUrlRequestJob
 from soma.qt_gui.qt_backend.QtWebChannel import QWebChannel
 
@@ -102,7 +102,10 @@ class WebRoutes:
     ```
 
     '''
-    _templates = {}
+    _templates = {
+        'qt_backend.js',
+        'html_backend.js'
+    }
 
     def _result(self, template, **kwargs):
         '''
@@ -243,7 +246,7 @@ class WebHandler:
             else:
                 m = importlib.import_module(s)
                 self.static_path.append(os.path.join(os.path.dirname(m.__file__), 'static'))
-
+    
     def resolve(self, path, *args):
         '''
         Main method used to forge a reply to a browser request.
@@ -478,8 +481,6 @@ class SomaSchemeHandler(QWebEngineUrlSchemeHandler):
         except Exception as e:
             template = self._handler.jinja.get_template('exception.html')
             body = template.render(exception=e, traceback=traceback.format_exc())
-
-        print(body)
         if isinstance(body, str):
             body = body.encode('utf8')
         buf = QBuffer(parent=self)
@@ -493,12 +494,20 @@ class SomaSchemeHandler(QWebEngineUrlSchemeHandler):
             mime_type = 'text/html'
         request.reply(mime_type.encode(), buf)
 
+class SomaWebPage(QWebEnginePage):
+    def javaScriptConsoleMessage(self, level, msg, line, source):
+        print (msg)
 
 class SomaWebEngineView(QWebEngineView):
     '''
     Reimplements :meth:`SomaWebEngineView.createWindow` to allow the browser
     to open new windows.
     '''
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._page = SomaWebPage()
+        self.setPage(self._page)
+    
     def createWindow(self, wintype):
         w = super().createWindow(wintype)
         if not w:
