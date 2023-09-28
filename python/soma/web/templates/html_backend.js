@@ -15,7 +15,7 @@ Backend.prototype.{{name}} = function ({% for p in method._params %}{{p}}, {% en
   });
   {%- if method._return %}
     const r = f.then(response => response.json());
-    r.then(data => handler(data));
+    r.then(handler);
   {%- endif %}
 }
 {%- endfor %}

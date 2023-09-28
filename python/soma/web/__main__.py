@@ -11,11 +11,6 @@ from soma.controller import (Controller,
                              Directory)
 from soma.qt_gui.controller import ControllerWidget
 
-# class SubController(Controller):
-#     o_s: str
-#     o_i: int
-#     o_f: float
-
 
 class SubController(Controller):
     s: str = 'a string'
@@ -76,5 +71,5 @@ def echo(*args):
 if __name__ == '__main__':
     controller = VisibleController()
     controller.on_attribute_change.add(echo)
-    qt_web_gui(controller)
-    # web_server_gui(controller)
+    # qt_web_gui(controller)
+    web_server_gui(controller)

@@ -97,7 +97,7 @@
     {%- set value='' -%}
     {%- endif -%}
     <td><label for="{{id}}">{{field.name}}</label></td>
-    <td><input id="{{id}}" type="text" value="{{value}}" onchange="update_controller_text(this)"/></td>
+    <td><input id="{{id}}" type="text" value="{{value}}" onchange="update_controller_str(this)"/></td>
 {%- endmacro %}
 
 
@@ -119,7 +119,7 @@
 
 {% macro edit_Literal(id, field, value, subtypes) -%}
     <td><label for="{{id}}">{{field.name}}</label></td><td>
-    <select id="{{id}}" onchange="update_controller_text(this)">
+    <select id="{{id}}" onchange="update_controller_str(this)">
 {%- for pv in subtypes %}
         <option value="{{pv}}"{% if pv==value %} selected{% endif %}>{{pv}}</option>
 {%- endfor %}
