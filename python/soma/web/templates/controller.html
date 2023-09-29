@@ -3,9 +3,11 @@
 {%- block body %}
 <h1 id="page_title"></h1>
 {%- if read_only %}
-{{ cj2.view_Controller('view', None, controller, []) }}
+{{ cj2.view_Controller('view', None, None,controller, []) }}
 {%- else %}
-{{ cj2.edit_Controller('edit', None, controller, []) }}
+<form action="#">
+{{ cj2.edit_Controller('edit', None, None, controller, []) }}
+</form>
 {%- endif %}
 {%- endblock %}
 {% block script %}

@@ -30,9 +30,9 @@ function update_dom_str(item, result)
 
 function update_controller_bool(item) {
     if (item.checked)
-        backend.set_value(item.id, true);
+        backend.set_value(item.id, true, x => none);
     else
-        backend.set_value(item.id, false);
+        backend.set_value(item.id, false, x => none);
 }
 
 function update_controller_list_str(item) {

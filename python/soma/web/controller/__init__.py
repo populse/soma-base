@@ -27,11 +27,8 @@ class ControllerBackend(WebBackend):
                     container = container[index]
             index = indices[-1]
             if isinstance(container, Controller):
-                print('!1!', index, value)
                 setattr(container, index, value)
-                print('!2!', index, value)
                 value = getattr(container, index)
-                print('!3!', index, value)
             elif isinstance(container, list):
                 container[int(index)] = value
             else:

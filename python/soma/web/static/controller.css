@@ -3,3 +3,19 @@
     background: #CD201F;
     color: #ffffff;
 }
+
+fieldset.collapsed > * {
+    display: none;
+}
+
+fieldset.collapsed > legend {
+    display: block;
+}
+
+fieldset > legend::before {
+    content: "▼ ";
+}
+
+fieldset.collapsed > legend::before {
+    content: "▻ ";
+}

@@ -71,5 +71,5 @@ def echo(*args):
 if __name__ == '__main__':
     controller = VisibleController()
     controller.on_attribute_change.add(echo)
-    # qt_web_gui(controller)
-    web_server_gui(controller)
+    qt_web_gui(controller)
+    # web_server_gui(controller)

@@ -10,6 +10,7 @@ import weakref
 import jinja2
 
 from soma.controller import Controller
+from soma.controller.field import is_list, subtypes, parse_type_str, type_str
 from soma.undefined import undefined
 from soma.qt_gui.qt_backend import Qt, QtWidgets
 from soma.qt_gui.qt_backend.QtCore import pyqtSlot, QUrl, QBuffer, QIODevice
@@ -34,21 +35,39 @@ things:
 '''
 
 @jinja2.pass_context
-def render_controller_value(context, field, render_type, id, value):
-    field_type = field.type
-    type_str, type_str_params = field.parse_type_str()
-    macro = context.vars.get(f'{render_type}_{type_str}')
+def render_controller_value(context, field, label, item_type, editor_type, id, value):
+    type_string, type_string_params = parse_type_str(type_str(item_type))
+    macro = context.vars.get(f'{editor_type}_{type_string}')
     if not macro:
-        if issubclass(field_type, Controller):
-            for parent_type in field_type.__mro__:
-                parent_type_str = parent_type.__name__
-                macro = context.vars.get(f'{render_type}_{parent_type_str}')
+        if issubclass(item_type, Controller):
+            for parent_type in item_type.__mro__:
+                parent_type_string = parent_type.__name__
+                macro = context.vars.get(f'{editor_type}_{parent_type_string}')
                 if macro:
                     break
-        elif field.is_list():
-            macro = context.vars.get(f'{render_type}_list_{type_str_params[0]}')
+        elif is_list(item_type):
+            macro = context.vars.get(f'{editor_type}_list_{type_string_params[0]}')
+            if macro is None:
+                item_subtype = subtypes(item_type)[0]
+                subtype_string, subtype_string_params = parse_type_str(type_string_params[0])
+                macro = context.vars.get(f'{editor_type}_{subtype_string}')
+                if macro:
+                    result = []
+                    i = 0
+                    for item_value in value:
+                        result.append(render_controller_value(
+                            context,
+                            field,
+                            f'[{i}]',
+                            item_subtype,
+                            editor_type,
+                            f'{id}.{i}',
+                            item_value))
+                        i += 1
+                    list_macro = context.vars.get(f'{editor_type}_generic_list')
+                    return list_macro(id, label, field, result, type_string_params)
     if macro:
-        return macro(id, field, value, type_str_params)
+        return macro(id, label, field, value, type_string_params)
     return None
 
 
