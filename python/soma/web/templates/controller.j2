@@ -84,7 +84,6 @@
     {%- for f in controller.fields() %}
     {%- set t, st = f.parse_type_str() %}
     {{f | render_controller_value(f.name, f.type, 'edit', id + '.' + f.name, controller[f.name]) or (('<span>-- edit for ' + f.type_str() + ' not implemented --</span>') | safe)}}
-    <br>
     {%- endfor %}
     {%- else %}
     -- no value --
@@ -93,7 +92,7 @@
 {%- endmacro %}
 
 {% macro edit_str(id, label, field, value, subtypes) -%}
-    {% if label %}<label for="{{id}}">{{field.name}}</label>{% endif %}
+    {% if label %}<label for="{{id}}">{{label}}</label>{% endif %}
     {%- if value == undefined -%}
     {%- set value='' -%}
     {%- endif %}
@@ -118,14 +117,20 @@
 
 
 {% macro edit_File(id, label, field, value, subtypes) -%}
-    {% if label %}<label for="{{id}}">{{field.name}}</label>{% endif %}
-    <button for="{{id}}" onclick="file_selector(this)">📁</button><input id="{{id}}" {% if value != undefined and value != '' %} value="{{value}}"{% endif %}/>
+    {% if label %}<label for="{{id}}">{{label}}</label>{% endif %}
+    <div class="button_and_element">
+    <button for="{{id}}" onclick="file_selector(this)">📁</button>
+    <input id="{{id}}" {% if value != undefined and value != '' %} value="{{value}}"{% endif %}/>
+    </div>
 {%- endmacro %}
 
 
 {% macro edit_Directory(id, label, field, value, subtypes) -%}
-    {% if label %}<label for="{{id}}">{{field.name}}</label>{% endif %}
-    <button for="{{id}}" onclick="directory_selector(this)">📁</button><input id="{{id}}" {% if value != undefined and value != '' %} value="{{value}}"{% endif %}/>
+    {% if label %}<label for="{{id}}">{{label}}</label>{% endif %}
+    <div class="button_and_element">
+    <button for="{{id}}" onclick="directory_selector(this)">📁</button>
+    <input id="{{id}}" {% if value != undefined and value != '' %} value="{{value}}"{% endif %}/>
+    </div>
 {%- endmacro %}
 
 
@@ -167,12 +172,11 @@
     {%- if value == undefined -%}
     {%- set value=[] -%}
     {%- endif -%}
-    <fieldset class="list
+    <fieldset class="controller
     {%- if id.count('.') > 1 %} collapsed{% endif %}" id="{{id}}">
     {% if label %}<legend onclick="this.parentElement.classList.toggle('collapsed');">{{label}}</legend>{% endif %}
     {%- for i in value %}
     {{i|safe}}
-    <br>
     {%- endfor %}
     </fieldset>
 {%- endmacro %}

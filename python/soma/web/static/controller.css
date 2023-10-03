@@ -1,21 +1,61 @@
-.has_error
+input.has_error
 {
     background: #CD201F;
     color: #ffffff;
 }
 
-fieldset.collapsed > * {
+.controller {
+    width: 1fr;
+    display: grid;
+    grid-template-columns: min-content 1fr;
+    grid-column-gap: 0.2em;
+}
+
+.controller > * {
+    grid-column-start: 2;
+    grid-column-end: span 1;
+    grid-row-end: span 1;
+}
+
+.controller > label {
+    grid-column-start: 1;
+    grid-column-end: span 1;
+    grid-row-end: span 1;
+}
+
+.controller > fieldset {
+    grid-column-start: 1;
+    grid-column-end: span 2;
+    grid-row-end: span 1;
+}
+
+.controller > input[type=checkbox] {
+    justify-self: start;
+}
+
+.controller > fieldset.collapsed {
+    padding-top: 0;
+    padding-bottom: ;
+}
+
+.controller > fieldset.collapsed > * {
     display: none;
 }
 
-fieldset.collapsed > legend {
-    display: block;
+.controller > fieldset.collapsed > legend {
+    display: initial;
 }
 
-fieldset > legend::before {
+.controller > fieldset > legend::before {
     content: "▼ ";
 }
 
-fieldset.collapsed > legend::before {
+.controller > fieldset.collapsed > legend::before {
     content: "▻ ";
+}
+
+.button_and_element {
+    display: grid;
+    grid-template-columns: min-content 1fr;
+    grid-column-gap: 0.2em;
 }
