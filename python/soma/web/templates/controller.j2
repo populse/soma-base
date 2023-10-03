@@ -77,7 +77,8 @@
 
 
 {% macro edit_Controller(id, label, field, controller, subtypes) %}
-    <fieldset class="controller" id="{{id}}">
+    <fieldset class="controller
+    {%- if id.count('.') > 1 %} collapsed{% endif %}" id="{{id}}">
     {% if label %}<legend onclick="this.parentElement.classList.toggle('collapsed');">{{label}}</legend>{% endif %}
     {%- if controller %}
     {%- for f in controller.fields() %}
@@ -113,6 +114,18 @@
 {% macro edit_bool(id, label, field, value, subtypes) -%}
     {% if label %}<label for="{{id}}">{{label}}</label>{% endif %}
     <input id="{{id}}" type="checkbox" {%- if value -%}checked{% endif %} onchange="update_controller_bool(this)"/>
+{%- endmacro %}
+
+
+{% macro edit_File(id, label, field, value, subtypes) -%}
+    {% if label %}<label for="{{id}}">{{field.name}}</label>{% endif %}
+    <button for="{{id}}" onclick="file_selector(this)">📁</button><input id="{{id}}" {% if value != undefined and value != '' %} value="{{value}}"{% endif %}/>
+{%- endmacro %}
+
+
+{% macro edit_Directory(id, label, field, value, subtypes) -%}
+    {% if label %}<label for="{{id}}">{{field.name}}</label>{% endif %}
+    <button for="{{id}}" onclick="directory_selector(this)">📁</button><input id="{{id}}" {% if value != undefined and value != '' %} value="{{value}}"{% endif %}/>
 {%- endmacro %}
 
 
@@ -154,7 +167,8 @@
     {%- if value == undefined -%}
     {%- set value=[] -%}
     {%- endif -%}
-    <fieldset class="list" id="{{id}}">
+    <fieldset class="list
+    {%- if id.count('.') > 1 %} collapsed{% endif %}" id="{{id}}">
     {% if label %}<legend onclick="this.parentElement.classList.toggle('collapsed');">{{label}}</legend>{% endif %}
     {%- for i in value %}
     {{i|safe}}

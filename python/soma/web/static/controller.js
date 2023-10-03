@@ -70,3 +70,18 @@ function update_controller_list_float(item) {
     }
     backend.set_value(item.id, value, x => update_dom_list_str(item, x));
 }
+
+function file_selector(item) {
+    backend.file_selector(function (path) {
+        let input = document.getElementById(item.getAttribute("for"));
+        backend.set_value(input.id, path, x => update_dom_str(input, x));
+
+    });
+}
+
+function directory_selector(item) {
+    backend.directory_selector(function (path) {
+        let input = document.getElementById(item.getAttribute("for"));
+        backend.set_value(input.id, path, x => update_dom_str(input, x));
+    });
+}

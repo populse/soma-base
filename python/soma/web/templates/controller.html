@@ -5,7 +5,7 @@
 {%- if read_only %}
 {{ cj2.view_Controller('view', None, None,controller, []) }}
 {%- else %}
-<form action="#">
+<form onsubmit="return false;">
 {{ cj2.edit_Controller('edit', None, None, controller, []) }}
 </form>
 {%- endif %}

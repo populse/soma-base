@@ -57,11 +57,11 @@ def qt_web_gui(controller):
     
     app = Qt.QApplication(sys.argv)
     rw = ControllerWindow(controller)
-    ro = ControllerWindow(controller, read_only=True)
-    qt = ControllerWidget(controller)
+    # ro = ControllerWindow(controller, read_only=True)
+    # qt = ControllerWidget(controller)
     rw.show()
-    ro.show()
-    qt.show()
+    # ro.show()
+    # qt.show()
     app.exec_()
 
 
