@@ -708,24 +708,26 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
             return dict((i,self.json_value(j)) for i,j in value.items())
         return value
 
-def asdict(obj, dict_factory=dict, exclude_empty=False):
+def asdict(obj, dict_factory=dict, exclude_empty=False, exclude_none=False):
     if isinstance(obj, Controller):
         result = []
         for f in obj.fields():
             value = getattr(obj, f.name, undefined)
             if value is undefined:
                 continue
-            value = asdict(value, dict_factory, exclude_empty)
-            if not exclude_empty or value not in ([], {}, ()):
+            value = asdict(value, dict_factory, exclude_empty, exclude_none)
+            if (not exclude_empty or value not in ([], {}, ())) \
+                    and (not exclude_none or value is not None):
                 result.append((f.name, value))
         return dict_factory(result)
     elif isinstance(obj, (list, tuple)):
-        return type(obj)(asdict(v, dict_factory, exclude_empty) for v in obj)
+        return type(obj)(asdict(v, dict_factory, exclude_empty, exclude_none)
+                         for v in obj)
     elif isinstance(obj, dict):
         result = []
         for k, v in obj.items():
-            dk = asdict(k, dict_factory, exclude_empty)
-            dv = asdict(v, dict_factory, exclude_empty)
+            dk = asdict(k, dict_factory, exclude_empty, exclude_none)
+            dv = asdict(v, dict_factory, exclude_empty, exclude_none)
             if not exclude_empty or dv not in ([], {}, ()):
                 result.append((dk, dv))
         return dict_factory(result)
