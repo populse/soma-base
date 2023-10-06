@@ -1,4 +1,5 @@
-input.has_error
+input.has_error,
+textarea.has_error
 {
     background: #CD201F;
     color: #ffffff;
@@ -35,7 +36,7 @@ input.has_error
 
 .controller > fieldset.collapsed {
     padding-top: 0;
-    padding-bottom: ;
+    padding-bottom: 0;
 }
 
 .controller > fieldset.collapsed > * {
@@ -46,11 +47,11 @@ input.has_error
     display: initial;
 }
 
-.controller > fieldset > legend::before {
+.controller > fieldset > legend > label::before {
     content: "▼ ";
 }
 
-.controller > fieldset.collapsed > legend::before {
+.controller > fieldset.collapsed > legend > label::before {
     content: "▻ ";
 }
 

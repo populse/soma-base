@@ -1,85 +1,9 @@
-{% macro view_Controller(id, field, controller, subtypes) -%}
-    {% if field %}<td>{{field.name}}</td><td>{% endif %}
-    {%- if controller %}
-    <table id = "{{id}}">
-    {%- for f in controller.fields() -%}
-    <tr>
-    <tr>{{f | render_controller_value(f.type, 'view', id + '.' + f.name, controller[f.name]) or '<td>' + f.name + '</td><td> -- view for ' + f.type_str() + ' not implemented --</td>'}}</tr>
-    </tr>
-    {%- endfor %}
-    </table>
-    {%- if not field %}</td>{% endif %}
-{%- endif %}
-{%- endmacro %}
-
-{% macro view_str(id, field, value, subtypes) -%}
-<td>{{field.name}}</td>
-{%- if value -%}
-    <td>{{value}}</td>
-{%- else -%}
-    <td>-- no value --</td>
-{% endif %}
-{%- endmacro %}
-
-{% macro view_int(id, field, value, subtypes) -%}
-{{view_str(id, field, value, subtypes)}}
-{%- endmacro %}
-
-{% macro view_float(id, field, value, subtypes) -%}
-{{view_str(id, field, value, subtypes)}}
-{%- endmacro %}
-
-{% macro view_bool(id, field, value, subtypes) -%}
-<td>{{field.name}}</td><td>
-{%- if value -%}
-    <input type="checkbox" checked onclick="return false;" tabIndex="-1"/>
-{%- else -%}
-    <input type="checkbox" onclick="return false;" tabIndex="-1"/>
-{%- endif -%}
-</td>
-{%- endmacro %}
-
-{% macro view_Literal(id, field, value, subtypes) -%}
-{{view_str(id, field, value, subtypes)}}
-{%- endmacro %}
-
-{% macro view_File(id, field, value, subtypes) -%}
-{{view_str(id, field, value, subtypes)}}
-{%- endmacro %}
-
-{% macro view_Directory(id, field, value, subtypes) -%}
-{{view_str(id, field, value, subtypes)}}
-{%- endmacro %}
-
-{% macro view_list_str(id, field, value, subtypes) -%}
-<td>{{field.name}}</td>
-{%- if value != undefined -%}
-    <td><pre>{{'\n'.join(value)}}</pre></td>
-{%- else -%}
-    <td>-- no value --</td>
-{% endif %}
-{%- endmacro %}
-
-{% macro view_list_int(id, field, value, subtypes) -%}
-<td>{{field.name}}</td>
-{%- if value != undefined -%}
-    <td><pre>{{'\n'.join(map(str,value))}}</pre></td>
-{%- else -%}
-    <td>-- no value --</td>
-{% endif %}
-{%- endmacro %}
-
-{% macro view_list_float(id, field, value, subtypes) -%}
-{{view_list_int(id, field, value, subtypes)}}
-{%- endmacro %}
-
-
-
-
 {% macro edit_Controller(id, label, field, controller, subtypes) %}
     <fieldset class="controller
-    {%- if id.count('.') > 1 %} collapsed{% endif %}" id="{{id}}">
-    {% if label %}<legend onclick="this.parentElement.classList.toggle('collapsed');">{{label}}</legend>{% endif %}
+    {%- if id.count('.') > 1 %} collapsed{% endif %}" id="{{id}}" controller_type="Controller">
+    {% if label -%}
+    <legend><label for="{{id}}" onclick="this.parentElement.parentElement.classList.toggle('collapsed');">{{label}}</label>
+    {%- endif %}
     {%- if controller %}
     {%- for f in controller.fields() %}
     {%- set t, st = f.parse_type_str() %}
@@ -93,26 +17,26 @@
 
 {% macro edit_str(id, label, field, value, subtypes) -%}
     {% if label %}<label for="{{id}}">{{label}}</label>{% endif %}
-    {%- if value == undefined -%}
-    {%- set value='' -%}
-    {%- endif %}
-    <input id="{{id}}" type="text" value="{{value}}" onchange="update_controller_str(this)"/>
+    <input id="{{id}}" controller_type="str" type="text" {% if value %}value="{{value}}"{% endif %} onchange="update_controller_str(this)"/>
 {%- endmacro %}
 
 
 {% macro edit_int(id, label, field, value, subtypes) -%}
-{{edit_str(id, label, field, value, subtypes)}}
+    {% if label %}<label for="{{id}}">{{label}}</label>{% endif %}
+    <input id="{{id}}" controller_type="int" type="text" {% if value %}value="{{value}}"{% endif %} onchange="update_controller_str(this)"/>
 {%- endmacro %}
 
 
 {% macro edit_float(id, label, field, value, subtypes) -%}
-{{edit_str(id, label, field, value, subtypes)}}
+    {% if label %}<label for="{{id}}">{{label}}</label>{% endif %}
+    <input id="{{id}}" controller_type="float" type="text" {% if value %}value="{{value}}"{% endif %} onchange="update_controller_str(this)"/>
 {%- endmacro %}
+
 
 
 {% macro edit_bool(id, label, field, value, subtypes) -%}
     {% if label %}<label for="{{id}}">{{label}}</label>{% endif %}
-    <input id="{{id}}" type="checkbox" {%- if value -%}checked{% endif %} onchange="update_controller_bool(this)"/>
+    <input id="{{id}}" controller_type="bool" type="checkbox" {%- if value -%}checked{% endif %} onchange="update_controller_bool(this)"/>
 {%- endmacro %}
 
 
@@ -120,7 +44,7 @@
     {% if label %}<label for="{{id}}">{{label}}</label>{% endif %}
     <div class="button_and_element">
     <button for="{{id}}" onclick="file_selector(this)">📁</button>
-    <input id="{{id}}" {% if value != undefined and value != '' %} value="{{value}}"{% endif %}/>
+    <input id="{{id}}" controller_type="File" {% if value != undefined and value != '' %} value="{{value}}"{% endif %} onchange="update_controller_str(this)"/>
     </div>
 {%- endmacro %}
 
@@ -129,26 +53,27 @@
     {% if label %}<label for="{{id}}">{{label}}</label>{% endif %}
     <div class="button_and_element">
     <button for="{{id}}" onclick="directory_selector(this)">📁</button>
-    <input id="{{id}}" {% if value != undefined and value != '' %} value="{{value}}"{% endif %}/>
+    <input id="{{id}}" controller_type="Directory" {% if value != undefined and value != '' %} value="{{value}}"{% endif %} onchange="update_controller_str(this)"/>
     </div>
 {%- endmacro %}
 
 
 {% macro edit_Literal(id, label, field, value, subtypes) -%}
     {% if label %}<label for="{{id}}">{{label}}</label>{% endif %}
-    <select id="{{id}}" onchange="update_controller_str(this)">
+    <select id="{{id}}" controller_type="Literal" onchange="update_controller_str(this)">
 {%- for pv in subtypes %}
         <option value="{{pv}}"{% if pv==value %} selected{% endif %}>{{pv}}</option>
 {%- endfor %}
     </select>
 {%- endmacro %}
 
+
 {% macro edit_list_str(id, label, field, value, subtypes) -%}
     {% if label %}<label for="{{id}}">{{label}}</label>{% endif %}
     {%- if value == undefined -%}
     {%- set value=[] -%}
     {%- endif %}
-    <textarea id="{{id}}" onchange="update_controller_list_str(this)"/>{{'\n'.join(value)}}</textarea>
+    <textarea id="{{id}}" controller_type="list_str" onchange="update_controller_list_str(this)"/>{{'\n'.join(value)}}</textarea>
 {%- endmacro %}
 
 {% macro edit_list_int(id, label, field, value, subtypes) -%}
@@ -156,7 +81,7 @@
     {%- if value == undefined -%}
     {%- set value=[] -%}
     {%- endif %}
-    <textarea id="{{id}}" onchange="update_controller_list_int(this)"/>{{'\n'.join(map(str,value))}}</textarea>
+    <textarea id="{{id}}" controller_type="list_int" onchange="update_controller_list_int(this)"/>{{'\n'.join(map(str,value))}}</textarea>
 {%- endmacro %}
 
 {% macro edit_list_float(id, label, field, value, subtypes) -%}
@@ -164,7 +89,7 @@
     {%- if value == undefined -%}
     {%- set value=[] -%}
     {%- endif %}
-    <textarea id="{{id}}" onchange="update_controller_list_float(this)"/>{{'\n'.join(map(str,value))}}</textarea>
+    <textarea id="{{id}}" controller_type="list_float" onchange="update_controller_list_float(this)"/>{{'\n'.join(map(str,value))}}</textarea>
 {%- endmacro %}
 
 
@@ -172,9 +97,13 @@
     {%- if value == undefined -%}
     {%- set value=[] -%}
     {%- endif -%}
-    <fieldset class="controller
-    {%- if id.count('.') > 1 %} collapsed{% endif %}" id="{{id}}">
-    {% if label %}<legend onclick="this.parentElement.classList.toggle('collapsed');">{{label}}</legend>{% endif %}
+    <fieldset id="{{id}}" controller_type="list" class="controller
+    {%- if id.count('.') > 1 %} collapsed{% endif %}">
+    {% if label -%}
+    <legend><label for="{{id}}" onclick="this.parentElement.parentElement.classList.toggle('collapsed');">{{label}}</label>
+    <button onclick="new_list_element('{{id}}')">⊕</button>
+    <button onclick="clear_list('{{id}}')">⊖</button></legend>
+    {%- endif %}
     {%- for i in value %}
     {{i|safe}}
     {%- endfor %}

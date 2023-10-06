@@ -182,9 +182,13 @@ class ControllerMeta(type):
         controller_class = base_controllers[0]
         annotations = namespace.pop('__annotations__', None)
         dataclass_namespace = {}
+        this_class_fields = []
         if annotations:
             dataclass_namespace['__annotations__'] = annotations
-            for i in list(annotations):
+            order = 1000000
+            this_class_fields = list(annotations)
+            for i in this_class_fields:
+                order += 1
                 type_ = annotations[i]
                 value = namespace.pop(i, undefined)
                 dataclass_namespace[i] = value
@@ -208,6 +212,7 @@ class ControllerMeta(type):
                         annotations[i] = type_
                         mdata = field_type._dataclass_field.metadata['_metadata']
                         mdata['class_field'] = class_field
+                        mdata['order'] = order
                         if field_type._dataclass_field.default is undefined:
                             field_type._dataclass_field.default = value
                         elif value is not undefined and value is not field_type._dataclass_field.default:
@@ -219,7 +224,8 @@ class ControllerMeta(type):
 
                     dataclass_namespace[i] = field(type_=type_.__args__[0], 
                                                    default=value,
-                                                   class_field=class_field)._dataclass_field
+                                                   class_field=class_field,
+                                                   order=order)._dataclass_field
         controller_dataclass = getattr(controller_class, '_controller_dataclass', None)
         if controller_dataclass:
             dataclass_bases = (controller_dataclass,)
@@ -235,6 +241,7 @@ class ControllerMeta(type):
         namespace['_controller_dataclass'] = c
         namespace['__hash__'] = Controller.__hash__
         c = super().__new__(cls, name, bases + (c,) , namespace)
+        c._this_class_field_names = this_class_fields
         return c
 
 
@@ -274,6 +281,26 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
             return EmptyController()
         return super().__new__(cls)
     
+    @classmethod
+    def class_field(cls, name):
+        f = cls._controller_dataclass.__dataclass_fields__[name]
+        return f.metadata['_field_class'](f)
+
+    @classmethod
+    def class_fields(cls):
+        '''
+        Iterate over all fields defined on class including ones defined on
+        parent classes
+        '''
+        yield from (i.metadata['_field_class'](i) for i in cls._controller_dataclass.__dataclass_fields__.values())
+    
+    @classmethod
+    def this_class_fields(cls):
+        '''
+        Iterate over fields defined in this class but not in parent classes
+        '''
+        yield from (cls.class_field(i) for i in cls._this_class_field_names)
+
     def __init__(self, _set_attrs={}, **kwargs):
         object.__setattr__(self,'_dyn_fields', {})
         # self.__dict__ content is replaced somewhere in the initialization
@@ -290,6 +317,12 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
         object.__setattr__(self, 'on_inner_value_change',  Event())
         object.__setattr__(self, 'on_fields_change',  Event())
         object.__setattr__(self, 'enable_notification', True)
+
+    def has_instance_fields(self):
+        return bool(self._dyn_fields)
+
+    def instance_fields(self):
+        return self.fields(class_fields=False)
 
     def add_field(self, name, type_, default=undefined,
                   metadata=None, override=False, **kwargs):
@@ -552,18 +585,19 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
                     return
             super().__setattr__(name, value)
 
-    def fields(self):
+    def fields(self, instance_fields=True, class_fields=True):
         ''' Returns an iterator over registered fields (both class fields and
         instance fields)
         '''
-        yield from (i.metadata['_field_class'](i) for i in dataclasses.fields(self))
-        for i in super().__getattribute__('_dyn_fields').values():
-            if isinstance(i, FieldProxy):
-                yield i
-            else:
-                f = dataclasses.fields(i)[0]
-                yield f.metadata['_field_class'](f)
-        # yield from (i.metadata['_field_class'](i) for i in (dataclasses.fields(i)[0] for i in super().__getattribute__('_dyn_fields').values()))
+        if class_fields:
+            yield from (i.metadata['_field_class'](i) for i in dataclasses.fields(self))
+        if instance_fields:
+            for i in super().__getattribute__('_dyn_fields').values():
+                if isinstance(i, FieldProxy):
+                    yield i
+                else:
+                    f = dataclasses.fields(i)[0]
+                    yield f.metadata['_field_class'](f)
 
     def _field(self, name):
         field = self.__dataclass_fields__.get(name)
@@ -687,7 +721,7 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
         for field in self.fields():
             value = getattr(self, field.name, undefined)
             if value is not undefined:
-                result[field.name] = self.json_value(value)
+                result[field.name] = to_json(value)
         return result
         
     def import_json(self, json):
@@ -696,17 +730,6 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
         for field_name, json_value in json.items():
             setattr(self, field_name, json_value)
     
-
-    def json_value(self, value):
-        ''' Convert the value to a JSON-compatible representation
-        '''
-        if isinstance(value, Controller):
-            return value.json()
-        elif isinstance(value, (tuple, set, list)):
-            return [self.json_value(i) for i in value]
-        elif isinstance(value, dict):
-            return dict((i,self.json_value(j)) for i,j in value.items())
-        return value
 
 def asdict(obj, dict_factory=dict, exclude_empty=False, exclude_none=False):
     if isinstance(obj, Controller):
@@ -734,6 +757,56 @@ def asdict(obj, dict_factory=dict, exclude_empty=False, exclude_none=False):
     else:
         return copy.deepcopy(obj)
 
+def to_json(value):
+    ''' Convert the value to a JSON-compatible representation
+    '''
+    if isinstance(value, Controller):
+        return value.json()
+    elif isinstance(value, (tuple, set, list)):
+        return [to_json(i) for i in value]
+    elif isinstance(value, dict):
+        return dict((i, to_json(j)) for i,j in value.items())
+    return value
+
+
+def from_json(value, value_type):
+    '''
+    Recursively convert a JSON value to a Python value
+    and also check values.
+    '''
+    if isinstance(value_type, type) and issubclass(value_type, Controller):
+        if not isinstance(value, dict):
+            raise ValueError(f'found a value of type {type(value)} while expecting dict')
+        return value_type(**dict((k, to_json(v, value.field(k).type)) for k, v in value.items()))
+    
+    if value_type.__name__ in {'list', 'set', 'tuple'}:
+        if not isinstance(value, list):
+            raise ValueError(f'found a velue of type {type(value)} while expecting list')
+        item_type = getattr(value_type, '__args__', None)
+        if item_type:
+            item_type = item_type[0]
+            return value_type(from_json(i, item_type) for i in value)
+        else:
+            return value_type(*value)
+        
+    if value_type.__name__ == 'dict':
+        if not isinstance(value, dict):
+            raise ValueError(f'found a value of type {type(value)} while expecting dict')
+        item_type = getattr(value_type, '__args__', None)
+        if item_type:
+            item_type = item_type[1]
+            return dict((k, from_json(v, item_type)) for k, v in value.items())
+        else:
+            return value
+
+    if value_type.__name__ == 'Literal':
+        if value not in item_type.__args__:
+            raise ValueError('Invalid value')
+        return value
+
+    if isinstance(value, (list, dict)):
+        raise ValueError(f'found a value of type {type(value)} while expecting {value_type}')
+    return value_type(value)
 
 class EmptyController(Controller):
     pass

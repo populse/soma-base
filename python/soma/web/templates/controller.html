@@ -2,13 +2,12 @@
 {% extends 'soma_layout.html' %}
 {%- block body %}
 <h1 id="page_title"></h1>
-{%- if read_only %}
-{{ cj2.view_Controller('view', None, None,controller, []) }}
-{%- else %}
-<form onsubmit="return false;">
-{{ cj2.edit_Controller('edit', None, None, controller, []) }}
+<form class="controller" src="{{base_url}}/backend" onsubmit="return false;">
 </form>
-{%- endif %}
+
+<template id="controller_field">
+    <p><b><span></span></B>: <span></span><br><span></span><hr></p>
+</template>
 {%- endblock %}
 {% block script %}
 <script>

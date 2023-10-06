@@ -9,7 +9,7 @@ import weakref
 
 import jinja2
 
-from soma.controller import Controller
+from soma.controller import Controller, to_json, from_json
 from soma.controller.field import is_list, subtypes, parse_type_str, type_str
 from soma.undefined import undefined
 from soma.qt_gui.qt_backend import Qt, QtWidgets
@@ -33,6 +33,229 @@ things:
       a JSON object. These API URLs are defined by deriving a
       `WebBackend` class.
 '''
+
+
+class JSONController:
+    def __init__(self, controller):
+        self.controller = controller
+        self._schema = None
+        
+    def get_schema(self):
+        if self._schema is None:
+            schema = {
+                "$id": "http://localhost:8080/schemas/id_of_a_controller",
+                "$schema": "https://json-schema.org/draft/2020-12/schema",
+
+                "$defs": {
+                    "file": { "type": "string", "brainvisa": { "path_type": "file" }},
+                    "directory": { "type": "string", "brainvisa": { "path_type": "directory" }},
+                },
+
+                "type": "object",
+            }
+
+            defs = schema['$defs']
+
+            schema_type = self._build_json_schema(None, type(self.controller), self.controller, defs)
+            if '$ref' in schema_type:
+                schema['allOf'] = [schema_type]
+            else:
+                schema.update(schema_type)
+            self._schema = schema
+        return self._schema
+
+    def get_value(self, path):
+        container, path_item, _ = self._parse_path(path)
+        if path_item:
+            if isinstance(container, Controller):
+                value = getattr(container, path_item)
+            elif isinstance(container, list):
+                value = container[int(path_item)]
+            else:
+                value = container[path_item]
+        else:
+            value = container
+        return to_json(value)
+
+    def set_value(self, path, value):
+        container, path_item, container_type = self._parse_path(path)
+        if isinstance(container, Controller):
+            value = from_json(value, container.field(path_item).type)
+            setattr(container, path_item, value)
+        elif isinstance(container, list):
+            value = from_json([value], container_type)[0]
+            container[int(path_item)] = value
+        else:
+            container[int(path_item)] = value
+
+    def new_list_item(self, path):
+        container, path_item, container_type = self._parse_path(path)
+        if isinstance(container, Controller):
+            list_type = container.field(path_item).type
+            list_value = getattr(container, path_item, None)
+            if list_value is None:
+                list_value = []
+                setattr(container, path_item, list_value)
+        elif isinstance(container, list):
+            list_type = subtypes(container_type)[0]
+            list_value = container[int(path_item)]
+        else:
+            raise NotImplementedError()
+        item_type = getattr(list_type, '__args__', None)
+        if not item_type:
+            raise TypeError(f'Cannot create a new item for object of type {list_type}')
+        item_type = item_type[0]
+        new_value = item_type()
+        list_value.append(new_value)
+        return len(list_value) - 1
+    
+    
+    def get_type(self, path=None):
+        schema = self.get_schema()
+        current_type = self._resolve_schema_type(schema, schema)
+        if path:
+            splitted_path = path.split('/')
+            while current_type and splitted_path:
+                path_item = splitted_path.pop(0)
+                if current_type['type'] == 'object':
+                    new_type = current_type.get('properties', {}).get(path_item)
+                    if not new_type:
+                        from pprint import pprint
+                        pprint(current_type)
+                        return None
+                    current_type = self._resolve_schema_type(new_type, schema)
+                elif current_type['type'] == 'array':
+                    current_type = self._resolve_schema_type(current_type['items'], schema)
+                else:
+                    raise NotImplementedError()
+        return current_type
+
+    @staticmethod
+    def _resolve_schema_type(type, schema):
+        while '$ref' in type:
+            ref_path = type['$ref'][2:].split('/')
+            ref = schema
+            for i in ref_path:
+                ref = ref[i]
+            type = ref
+        if 'allOf' in type:
+            result = {}
+            parent_types = type['allOf']
+            for parent_type in parent_types:
+                for k, v in JSONController._resolve_schema_type(parent_type, schema).items():
+                    if k == 'properties':
+                        result.setdefault('properties', {}).update(v)
+                    else:
+                        result[k] = v
+                for k, v in type.items():
+                    if k == 'allOf' or k.startswith('$'):
+                        continue
+                    if k == 'properties':
+                        result.setdefault('properties', {}).update(v)
+                    else:
+                        result[k] = v
+            type = result
+        return type
+    
+    def _parse_path(self, path):
+        if path:
+            splitted_path = path.split('/')
+        else:
+            splitted_path = []
+        container = self.controller
+        container_type = type(container)
+        for path_item in splitted_path[:-1]:
+            if isinstance(container, Controller):
+                container_type = container.field(path_item).type
+                container = getattr(container, path_item)
+            elif isinstance(container, list):
+                container = container[int(path_item)]
+                container_type = subtypes(container_type)[0]
+            else:
+                container = container[path_item]
+        if path:
+            path_item = splitted_path[-1]
+        else:
+            path_item = None
+        return (container, path_item, container_type)
+
+    _json_simple_types = {
+        str: {'type': 'string'},
+        int: {'type': 'integer'},
+        float: {'type': 'number'},
+        bool: {'type': 'boolean'}
+    }
+
+    @classmethod
+    def _build_json_schema(cls, field, value_type, value, defs):
+        error = False
+        result = cls._json_simple_types.get(value_type)
+        if not result:
+            if isinstance(value_type, type) and issubclass(value_type, Controller):
+                if value_type.__name__ == 'OpenKeyController':
+                    result = {
+                        'type': 'object',
+                        'brainvisa': {
+                            'new_items': cls._build_json_schema(None, value_type.__args__[0], undefined, defs),
+                        },
+                        'properties': {}
+                    }
+                else:
+                    result = {}
+                    if value_type.__name__ not in defs:
+                        class_schema = defs[value_type.__name__] = {
+                            'type': 'object'
+                        }
+                        properties = class_schema['properties'] = {}
+                        for f in value_type.this_class_fields():
+                            properties[f.name] = cls._build_json_schema(f, f.type, undefined, defs)
+                        base_schemas = []
+                        for base_class in value_type.__mro__:
+                            if issubclass(base_class, Controller) and base_class not in (Controller, value_type):
+                                base_schemas.append(cls._build_json_schema(None, base_class, undefined, defs))
+                        if base_schemas:
+                            class_schema['allOf'] = base_schemas
+                if value is not undefined and value.has_instance_fields():
+                    result['type'] = 'object'
+                    if value_type.__name__ != 'OpenKeyController':
+                        result['allOf'] = [{'$ref': f'#/$defs/{value_type.__name__}'}]
+                    properties = result['properties'] = {}
+                    for f in value.instance_fields():
+                        properties[f.name] = cls._build_json_schema(f, f.type, getattr(value, f.name), defs)
+                else:
+                    if value_type.__name__ != 'OpenKeyController':
+                        result['$ref'] = f'#/$defs/{value_type.__name__}'
+            elif value_type.__name__ == 'list':
+                if hasattr(value_type, '__args__'):
+                    result = {
+                        'type': 'array',
+                        'items': cls._build_json_schema(None, value_type.__args__[0], undefined, defs)
+                    }
+                    
+                else:
+                    error = True
+            elif value_type.__name__ == 'Literal':
+                result = {
+                    "type": "string",
+                    "enum": value_type.__args__
+                }
+            elif value_type.__name__ == 'File':
+                result = { "type": "string", "brainvisa": { "path_type": "file" }}
+            elif value_type.__name__ == 'Directory':
+                result = { "type": "string", "brainvisa": { "path_type": "directory" }}
+            else:
+                error = True
+        else:
+            result = result.copy()
+        
+        if error:
+            raise TypeError(f'Type not compatible with JSON schema: {type_str(value_type)}')
+        else:
+            if field:
+                metadata = dict((k ,v) for k, v in field.metadata().items() if v is not None)
+                if metadata:
+                    result.setdefault('brainvisa', {}).update(metadata)
+            return result
 
 @jinja2.pass_context
 def render_controller_value(context, field, label, item_type, editor_type, id, value):
@@ -324,7 +547,9 @@ class WebHandler:
                 kwargs.update(self.jinja_kwargs)
                 return (template, kwargs)
             if path.startswith('backend/') and self.backend:
-                name = path[8:]
+                name, path = (path[8:].split('/', 1) + [''])[:2]
+                if path:
+                    args = (path,) + args
                 method = getattr(self.backend, name, None)
                 if method:
                     return method(*args)
@@ -357,6 +582,7 @@ class SomaHTTPHandlerMeta(type(http.server.BaseHTTPRequestHandler)):
                 raise TypeError(f'SomaHTTPHandlerMeta.__new__() missing {len(missing)} required positional arguments: {", ".join(missing)}')
             backend_methods = {
                 'file_selector': backend.file_selector,
+                'directory_selector': backend.directory_selector,
             }
             for attr in backend.__class__.__dict__:
                 if attr.startswith('_'):
@@ -426,7 +652,6 @@ class SomaHTTPHandler(http.server.BaseHTTPRequestHandler, metaclass=SomaHTTPHand
             self.send_error(500, str(e))
             raise
             return None
-        
         header = {}
         if template_data is None:
             body = None
@@ -608,12 +833,21 @@ class SomaBrowserWindow(QtWidgets.QMainWindow):
             QWebEngineUrlScheme.registerScheme(scheme)
 
             profile = QWebEngineProfile.defaultProfile()
+            backend_methods = {
+                'file_selector': backend.file_selector,
+                'directory_selector': backend.directory_selector,
+            }
+            for attr in backend.__class__.__dict__:
+                if attr.startswith('_'):
+                    continue
+                backend_methods[attr] = getattr(backend.__class__, attr)
             SomaBrowserWindow.url_scheme_handler = SomaSchemeHandler(
                 self, 
                 routes=routes, 
                 backend=backend,
                 templates=templates,
                 static=static,
+                backend_methods=backend_methods,
                 **kwargs)
             profile.installUrlSchemeHandler(b'soma', SomaBrowserWindow.url_scheme_handler)
 

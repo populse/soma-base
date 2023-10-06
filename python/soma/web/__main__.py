@@ -64,6 +64,19 @@ def qt_web_gui(controller):
     # qt.show()
     app.exec_()
 
+def json_schema(controller):
+    import json
+    import sys
+    from soma.web import JSONController
+
+    jc = JSONController(controller)
+    # json.dump(jc.get_schema(), sys.stdout, indent=2)
+    if len(sys.argv) > 1:
+        path = sys.argv[1]
+    else:
+        path = None
+    json.dump(jc.get_type(path), sys.stdout, indent=2)
+    print()
 
 def echo(*args):
     print(args)
@@ -73,3 +86,4 @@ if __name__ == '__main__':
     controller.on_attribute_change.add(echo)
     qt_web_gui(controller)
     # web_server_gui(controller)
+    # json_schema(controller)

@@ -5,11 +5,13 @@ try:
 except ImportError:
     from pydantic import ValidationError  # to expose it in the API
 
-from .controller import (Controller,
-                         asdict,
+from .controller import (asdict,
+                         Controller,
                          Event,
+                         from_json,
                          OpenKeyController,
-                         OpenKeyDictController)
+                         OpenKeyDictController,
+                         to_json)
 from .field import (
     field,
     Field,
