@@ -183,12 +183,16 @@ class ControllerMeta(type):
         annotations = namespace.pop('__annotations__', None)
         dataclass_namespace = {}
         this_class_fields = []
+        _order = 1000000
+        for base_class in bases:
+            if issubclass(base_class, Controller):
+                base_order = getattr(base_class, '_order', 0)
+                _order = max(_order, base_order)
         if annotations:
             dataclass_namespace['__annotations__'] = annotations
-            order = 1000000
             this_class_fields = list(annotations)
             for i in this_class_fields:
-                order += 1
+                _order += 1
                 type_ = annotations[i]
                 value = namespace.pop(i, undefined)
                 dataclass_namespace[i] = value
@@ -202,7 +206,7 @@ class ControllerMeta(type):
                 if isinstance(value, Field):
                     t = getattr(value, 'type', None)
                     if t is not type_:
-                        value = field(type_=value, force_field_type=type_.__args__[0])
+                        value = field(type_=value, force_field_type=type_.__args__[0], order=_order)
                     field_type = value
                     value = undefined
                 if field_type:
@@ -212,7 +216,8 @@ class ControllerMeta(type):
                         annotations[i] = type_
                         mdata = field_type._dataclass_field.metadata['_metadata']
                         mdata['class_field'] = class_field
-                        mdata['order'] = order
+                        if 'order' not in mdata:
+                            mdata['order'] = _order
                         if field_type._dataclass_field.default is undefined:
                             field_type._dataclass_field.default = value
                         elif value is not undefined and value is not field_type._dataclass_field.default:
@@ -225,7 +230,7 @@ class ControllerMeta(type):
                     dataclass_namespace[i] = field(type_=type_.__args__[0], 
                                                    default=value,
                                                    class_field=class_field,
-                                                   order=order)._dataclass_field
+                                                   order=_order)._dataclass_field
         controller_dataclass = getattr(controller_class, '_controller_dataclass', None)
         if controller_dataclass:
             dataclass_bases = (controller_dataclass,)
@@ -240,6 +245,7 @@ class ControllerMeta(type):
         c = dataclass(c, config=_ModelsConfig)
         namespace['_controller_dataclass'] = c
         namespace['__hash__'] = Controller.__hash__
+        namespace['_order'] = _order
         c = super().__new__(cls, name, bases + (c,) , namespace)
         c._this_class_field_names = this_class_fields
         return c
@@ -368,6 +374,9 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
                 else:
                     del kwargs['default_factory']
 
+            if 'order' not in kwargs:
+                self.__class__._order += 1
+                kwargs['order'] = self.__class__._order
             new_field = field(type_=type_, default=default, metadata=metadata, **kwargs)
             namespace = {
                 '__annotations__': {

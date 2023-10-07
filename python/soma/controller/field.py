@@ -251,9 +251,7 @@ class Field:
     allowed_extensions: list[str]
         for path fields, list the allowed file extensions for it. This metadata
         should be replaced with a proper format handling, in the future.
-    '''
-    _max_field_creation_order = 1000000
-    
+    '''    
     def __init__(self, dataclass_field):
         super().__setattr__('_dataclass_field', dataclass_field)
 
@@ -485,13 +483,6 @@ def field(
     else:
         metadata = metadata.copy()
     metadata.update(kwargs)
-    order = metadata.get('order')
-    if order is None:
-        Field._max_field_creation_order += 1
-        order = Field._max_field_creation_order
-    else:
-        Field._max_field_creation_order = max(Field._max_field_creation_order, order)
-    metadata['order'] = order
     if init is None:
         init=True
     if repr is None:
