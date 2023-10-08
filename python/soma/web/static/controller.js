@@ -185,9 +185,14 @@ function update_dom_list_float(element, value)
 async function build_controller_element(controller_element) {
     const controller_type = await backend.get_type(null);
     const controller_value = await backend.get_value(null);
-    for (const field_name in controller_type.properties) {
-        console.log(field_name);
-        const elements = build_elements(field_name, field_name, controller_type.properties[field_name], controller_value[field_name])
+    let sortable = [];
+    for (var i in controller_type.properties) {
+        sortable.push([i, controller_type.properties[i]]);
+    }
+    sortable.sort((a, b) => a[1].brainvisa.order - b[1].brainvisa.order);
+    for (const i in sortable) {
+        const field_name = sortable[i][0];
+        const elements = build_elements(field_name, field_name, sortable[i][1], controller_value[field_name])
         for (const element of elements) {
             controller_element.appendChild(element);
         }
