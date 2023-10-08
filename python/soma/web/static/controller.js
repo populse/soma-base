@@ -36,42 +36,22 @@ async function update_controller_boolean(element) {
 }
 
 
-async function update_controller_list_str(element) {
-    await update_controller_then_update_dom(element, element.value.split(/\r?\n|\r|\n/g));
+async function update_controller_array_string(element) {
+    await update_controller_then_update_dom(element, element.value.trim().split(/\r?\n|\r|\n/g));
 }
 
 
-async function update_controller_list_int(element) {
-    try {
-        var value = element.value.trim().split(/\s/).map(x => toInt(x));
-    } catch (error) {
-        element.classList.add("has_error");
-        return;
-    }
-    await update_controller_then_update_dom(element, value);
+async function update_controller_array_integer(element) {
+    const int_array = element.value.trim().split(/\s+/);
+    await update_controller_then_update_dom(element, int_array);
 }
 
 
-async function update_controller_list_float(element) {
-    try {
-        var value = element.value.trim().split(/\s/).map(x => toFloat(x));
-    } catch (error) {
-        element.classList.add("has_error");
-        return;
-    }
-    await update_controller_then_update_dom(element, value);
+async function update_controller_array_number(element) {
+    const int_array = element.value.trim().split(/\s+/);
+    await update_controller_then_update_dom(element, int_array);
 }
 
-// function new_list_item(id) {
-//     backend.new_list_item(id, function (result) {
-//         const element = document.getElementById(id);
-//         if (result.error_type) {
-//             return undefined;
-//         } else {
-//             return result['result'];
-//         }
-//     });
-// }
 
 function update_dom(element, value) {
     let function_name = 'update_dom_' + element.getAttribute('controller_type');
@@ -405,7 +385,7 @@ function build_elements_directory(id, label, type, value, schema) {
 
 
 function build_elements_array(id, label, type, value, schema) {
-    const builder = window[`build_elements_list_${type.items.type}`];
+    const builder = window[`build_elements_array_${type.items.type}`];
     if (builder) {
         return builder(id, label, type, value, schema);
     }
@@ -450,6 +430,49 @@ function build_elements_array(id, label, type, value, schema) {
     return [fieldset];
 }
 
+
+function build_elements_array_string(id, label, type, value, schema) {
+    const textarea = document.createElement('textarea');
+    textarea.id = id;
+    textarea.setAttribute("controller_type", `array_${type.type}`);
+    textarea.addEventListener('change', async event => await update_controller_array_string(event.target));
+    const rows = Math.min(20, Math.max(5,value.length));
+    textarea.setAttribute('rows', rows);
+    if (value !== undefined) {
+        textarea.textContent = value.join('\n');
+    }
+    if (label) {
+        const l = document.createElement('label');
+        l.setAttribute('for', id);
+        l.textContent = label;
+        return [l, textarea];
+    } else {
+        return [textarea];
+    }
+}
+
+
+function build_elements_array_integer(id, label, type, value, schema) {
+    const textarea = document.createElement('textarea');
+    textarea.id = id;
+    textarea.setAttribute("controller_type", `array_${type.type}`);
+    textarea.addEventListener('change', async event => await update_controller_array_integer(event.target));
+    if (value !== undefined) {
+        textarea.textContent = value.join(' ');
+    }
+    if (label) {
+        const l = document.createElement('label');
+        l.setAttribute('for', id);
+        l.textContent = label;
+        return [l, textarea];
+    } else {
+        return [textarea];
+    }
+}
+
+function build_elements_array_number(id, label, type, value, schema) {
+    return build_elements_array_integer(id, label, type, value, schema);
+}
 
 
 window.addEventListener("backend_ready", async (event) => {

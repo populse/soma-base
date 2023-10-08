@@ -809,7 +809,7 @@ def from_json(value, value_type):
             return value
 
     if value_type.__name__ == 'Literal':
-        if value not in item_type.__args__:
+        if value not in value_type.__args__:
             raise ValueError('Invalid value')
         return value
 
