@@ -181,46 +181,127 @@ function update_dom_list_float(element, value)
 //     return (await response.json()).result;
 // }
 
+function resolve_schema_type(type, schema) {
+    while ('$ref' in type) {
+        const ref_path = type['$ref'].substr(2).split('/');
+        let ref = schema;
+        for (const i of ref_path) {
+            ref = ref[i];
+        }
+        type = ref
+    }
+    if ('allOf' in type) {
+        let result = {}
+        const parent_types = type['allOf']
+        for (let parent_type of parent_types) {
+            parent_type =resolve_schema_type(parent_type, schema);
+            for (const k in parent_type) {
+                const v = parent_type[k];
+                if (k == 'properties') {
+                    result.properties = result.properties || {};
+                    result.properties = {
+                        ...result.properties,
+                        ...v,
+                    }
+                } else {
+                    result[k] = v
+                }
+            }
+            for (const k in type) {
+                const v = type[k]
+                if (k == 'allOf' || k[0] == '$') {
+                    continue;
+                }
+                if (k == 'properties') {
+                    result.properties = result.properties || {};
+                    result.properties = {
+                        ...result.properties,
+                        ...v,
+                    }
+                } else {
+                    result[k] = v;
+                }
+            }
+        }
+        type = result
+    }
+    return type
+}
 
 async function build_controller_element(controller_element) {
-    const controller_type = await backend.get_type(null);
+    const controller_schema = await backend.get_schema();
     const controller_value = await backend.get_value(null);
+    const controller_type = resolve_schema_type(controller_schema, controller_schema);
+    const elements = build_elements_object(null, null, controller_type, controller_value, controller_schema);
+    for (const element of elements) {
+        controller_element.appendChild(element);
+    }
+}
+
+function build_elements_object(id, label, type, value, schema) {
+    let result = [];
+    if (id) {
+        var fieldset = document.createElement('fieldset');
+        fieldset.id = id;
+        fieldset.setAttribute("controller_type", "object");
+        fieldset.classList.add('controller');
+        if (id && (id.match(/\//g) || []).length > 1) {
+            fieldset.classList.add('collapsed');
+        }
+        if (label) {
+            const legend = document.createElement('legend');
+            const l = document.createElement('label');
+            l.setAttribute('for', id);
+            l.addEventListener('click', event => event.target.parentElement.parentElement.classList.toggle('collapsed'));
+            l.textContent = label;
+            legend.appendChild(l);
+            fieldset.appendChild(legend);
+        }
+        result.push(fieldset);
+    }
     let sortable = [];
-    for (var i in controller_type.properties) {
-        sortable.push([i, controller_type.properties[i]]);
+    for (var i in type.properties) {
+        sortable.push([i, type.properties[i]]);
     }
     sortable.sort((a, b) => a[1].brainvisa.order - b[1].brainvisa.order);
     for (const i in sortable) {
         const field_name = sortable[i][0];
-        const elements = build_elements(field_name, field_name, sortable[i][1], controller_value[field_name])
+        const elements = build_elements((id ? `${id}/${field_name}` : field_name), field_name, sortable[i][1], value[field_name], schema);
         for (const element of elements) {
-            controller_element.appendChild(element);
+            if (id) {
+                fieldset.appendChild(element);
+            } else {
+                result.push(element);
+            }
         }
     }
+    return result;
 }
 
-function build_elements(id, label, schema, value) {
-    const builder = window[`build_elements_${schema.type}`];
+
+function build_elements(id, label, type, value, schema) {
+    type = resolve_schema_type(type, schema);
+    const builder = window[`build_elements_${type.type}`];
     if (builder !== undefined) {
-        return builder(id, label, schema, value);
+        return builder(id, label, type, value, schema);
     }
     return []
 }
 
-function build_elements_string(id, label, schema, value) {
-    if (schema.brainvisa) {
-        const builder = window[`build_elements_${schema.brainvisa.path_type}`];
+function build_elements_string(id, label, type, value, schema) {
+    if (type.brainvisa) {
+        const builder = window[`build_elements_${type.brainvisa.path_type}`];
         if (builder) {
-            return builder(id, label, schema, value);
+            return builder(id, label, type, value, schema);
         }
     }
-    if (schema.enum) {
-        return build_elements_enum(id, label, schema, value);
+    if (type.enum) {
+        return build_elements_enum(id, label, type, value, schema);
     }
     const input = document.createElement('input');
     input.id = id;
     input.type = "text";
-    input.setAttribute("controller_type", schema.type);
+    input.setAttribute("controller_type", type.type);
     input.addEventListener('change', async event => await update_controller_string(event.target));
     if (value !== undefined) {
         input.value = value.toString();
@@ -235,20 +316,20 @@ function build_elements_string(id, label, schema, value) {
     }
 }
 
-function build_elements_integer(id, label, schema, value) {
-    return build_elements_string(id, label, schema, value);
+function build_elements_integer(id, label, type, value, schema) {
+    return build_elements_string(id, label, type, value, schema);
 }
 
 
-function build_elements_number(id, label, schema, value) {
-    return build_elements_string(id, label, schema, value);
+function build_elements_number(id, label, type, value, schema) {
+    return build_elements_string(id, label, type, value, schema);
 }
 
-function build_elements_boolean(id, label, schema, value) {
+function build_elements_boolean(id, label, type, value, schema) {
     const checkbox = document.createElement('input');
     checkbox.id = id;
     checkbox.type = "checkbox";
-    checkbox.setAttribute("controller_type", schema.type);
+    checkbox.setAttribute("controller_type", type.type);
     checkbox.addEventListener('change', async event => await update_controller_boolean(event.target));
     if (value) {
         checkbox.checked = true;
@@ -263,12 +344,12 @@ function build_elements_boolean(id, label, schema, value) {
     }
 }
 
-function build_elements_enum(id, label, schema, value) {
+function build_elements_enum(id, label, type, value, schema) {
     const select = document.createElement('select');
     select.id = id;
     select.setAttribute("controller_type", "enum");
     select.addEventListener('change', async event => await update_controller_string(event.target));
-    for (const i of schema.enum) {
+    for (const i of type.enum) {
         const option = document.createElement('option');
         option.value = i;
         option.textContent = i;
@@ -287,21 +368,21 @@ function build_elements_enum(id, label, schema, value) {
     }
 }
 
-function build_elements_file(id, label, schema, value) {
+function build_elements_file(id, label, type, value, schema) {
     const div = document.createElement('div');
     div.classList.add("button_and_element");
     
     const button = document.createElement('button');
     button.setAttribute('for', id);
     button.textContent = '📁';
-    // const handler = window[`${schema.brainvisa.path_type}_selector`];
+    // const handler = window[`${type.brainvisa.path_type}_selector`];
     // button.addEventListener('click', event => handler(event.target));
     div.appendChild(button);
     
     const input = document.createElement('input');
     input.id = id;
     input.type = "text";
-    input.setAttribute("controller_type", schema.brainvisa.path_type);
+    input.setAttribute("controller_type", type.brainvisa.path_type);
     input.addEventListener('change', async event => await update_controller_string(event.target));
     if (value) {
         input.value = value;
@@ -318,15 +399,15 @@ function build_elements_file(id, label, schema, value) {
     }
 }
 
-function build_elements_directory(id, label, schema, value) {
-    return build_elements_file(id, label, schema, value);
+function build_elements_directory(id, label, type, value, schema) {
+    return build_elements_file(id, label, type, value, schema);
 }
 
 
-function build_elements_array(id, label, schema, value) {
-    const builder = window[`build_elements_list_${schema.items.type}`];
+function build_elements_array(id, label, type, value, schema) {
+    const builder = window[`build_elements_list_${type.items.type}`];
     if (builder) {
-        return builder(id, label, schema, value);
+        return builder(id, label, type, value, schema);
     }
     const fieldset = document.createElement('fieldset');
     fieldset.id = id;
@@ -348,7 +429,7 @@ function build_elements_array(id, label, schema, value) {
             if (index !== undefined) {
                 const new_id = `${id}/${index}`;
                 const new_value = await backend.get_value(new_id);
-                for (const element of build_elements(new_id, `[${index}]`, schema.items, new_value)) {
+                for (const element of build_elements(new_id, `[${index}]`, type.items, new_value)) {
                     fieldset.appendChild(element);
                 }
             }
@@ -362,7 +443,7 @@ function build_elements_array(id, label, schema, value) {
         fieldset.appendChild(legend);
     }
     for (const index in value) {
-        for (const element of build_elements(`${id}/${index}`, `[${index}]`, schema.items, value[index])) {
+        for (const element of build_elements(`${id}/${index}`, `[${index}]`, type.items, value[index], schema)) {
             fieldset.appendChild(element);            
         }
     }

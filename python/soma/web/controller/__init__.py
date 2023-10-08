@@ -41,6 +41,11 @@ class ControllerBackend(WebBackend):
         return wrapper
     
     @json_exception
+    def get_schema(self) -> dict:
+        return self.json_controller.get_schema()
+
+
+    @json_exception
     def get_type(self, path: str = None) -> dict:
         return self.json_controller.get_type(path)
 
