@@ -412,13 +412,21 @@ function build_elements_file(id, label, type, value, schema) {
     const div = document.createElement('div');
     div.classList.add("button_and_element");
     
-    const button = document.createElement('button');
-    button.setAttribute('for', id);
-    button.textContent = '📁';
-    // const handler = window[`${type.brainvisa.path_type}_selector`];
-    // button.addEventListener('click', event => handler(event.target));
-    div.appendChild(button);
-    
+    if (QtWebEngine) {
+        const button = document.createElement('button');
+        button.setAttribute('for', id);
+        button.textContent = '📁';
+        button.addEventListener('click', async function (event) {
+            path = await (backend[`${type.brainvisa.path_type}_selector`]());
+            console.log('!path!', path);
+            if (path) {
+                const input = document.getElementById(event.target.getAttribute('for'));
+                input.value = path;
+            }
+        });
+        div.appendChild(button);
+    }
+
     const input = document.createElement('input');
     input.id = id;
     input.type = "text";
@@ -535,10 +543,13 @@ function build_elements_array_number(id, label, type, value, schema) {
 }
 
 
+var QtWebEngine = false;
+
 window.addEventListener("backend_ready", async (event) => {
     const controller_elements = document.querySelectorAll("form.controller");
     controller_elements.forEach(function (controller_element) {
         if (navigator.userAgent.search('QtWebEngine') >= 0) {
+            QtWebEngine = true;
             controller_element.classList.add('QtWebEngine');
         }
         build_controller_element(controller_element);

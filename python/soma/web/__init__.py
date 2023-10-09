@@ -425,34 +425,7 @@ class WebBackend(Qt.QObject, metaclass=WebBackendMeta):
 
     Methods can return anything that can be serialized using `json.dumps()`.
     '''
-    _file_dialog = None
 
-    @pyqtSlot(result=str)
-    def file_selector(self):
-        if self._file_dialog is None:
-            self._file_dialog = QtWidgets.QFileDialog()
-        self._file_dialog.setFileMode(QtWidgets.QFileDialog.AnyFile)
-        if self._file_dialog.exec_():
-            selected = self._file_dialog.selectedFiles()
-            if selected:
-                return selected[0]
-        return ''
-    file_selector._params = []
-    file_selector._return = str
-
-
-    @pyqtSlot(result=str)
-    def directory_selector(self):
-        if self._file_dialog is None:
-            self._file_dialog = QtWidgets.QFileDialog()
-        self._file_dialog.setFileMode(QtWidgets.QFileDialog.Directory)
-        if self._file_dialog.exec_():
-            selected = self._file_dialog.selectedFiles()
-            if selected:
-                return selected[0]
-        return ''
-    directory_selector._params = []
-    directory_selector._return = str
 
 class WebHandler:
     '''
