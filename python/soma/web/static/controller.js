@@ -220,6 +220,7 @@ async function build_controller_element(controller_element) {
     }
 }
 
+
 function build_elements_object(id, label, type, value, schema) {
     let result = [];
     if (id) {
@@ -241,49 +242,58 @@ function build_elements_object(id, label, type, value, schema) {
             if (type.brainvisa && type.brainvisa.value_items) {
                 const new_item = document.createElement('button');
                 new_item.addEventListener('click', async function (event) {
-                    const input = document.createElement('input');
-                    input.id = "id" + uniqueIndex++;
-                    input.classList.add('label');
-                    input.setAttribute('for', id);
-                    input.value = 'new_item';
-                    fieldset.appendChild(input);
-                    input.select();
-                    input.focus();
-                    input.scrollIntoView();
-                    const div = document.createElement('div');
-                    fieldset.appendChild(div);
-                    const ok = document.createElement('button');
-                    ok.setAttribute('for', input.id);
-                    ok.textContent = '✓';
-                    ok.addEventListener('click', async function (event) {
-                        const tmp_id = event.target.getAttribute('for');
+                    fieldset.classList.remove('collapsed');
+                    async function validate_new_object_item(tmp_id, fieldset) {
                         const input = document.getElementById(tmp_id);
-                        const key = await backend.new_named_item(event.target.parentElement.parentElement.id, input.value);
+                        const key = await backend.new_named_item(fieldset.id, input.value);
                         if (key !== undefined) {
-                            event.target.parentElement.remove();
+                            input.nextElementSibling.remove();
                             input.remove();
-                            const new_id = `${id}/${key}`;
+                            const new_id = `${fieldset.id}/${key}`;
                             type.properties = (await backend.get_type(id)).properties
                             const new_value = await backend.get_value(new_id);
                             for (const element of build_elements(new_id, key, type.brainvisa.value_items, new_value, schema)) {
                                 fieldset.appendChild(element);
                             }
                         }
-
+                    }
+                    
+                    
+                    function cancel_new_object_item(tmp_id) {
+                        const input = document.getElementById(tmp_id);
+                        input.nextElementSibling.remove();
+                        input.remove();
+                    }
+                                        const input = document.createElement('input');
+                    input.id = "id" + uniqueIndex++;
+                    input.classList.add('label');
+                    input.setAttribute('for', id);
+                    input.value = 'new_item';
+                    input.addEventListener('keydown', function (event) {
+                        if (event.key == 'Enter') {
+                            validate_new_object_item(input.id, fieldset);
+                        } else if (event.key == 'Escape') {
+                            cancel_new_object_item(input.id, fieldset);
+                        }
                     });
+                    fieldset.appendChild(input);
+                    input.select();
+                    input.focus();
+                    input.scrollIntoView({block: 'nearest', inline: 'nearest'});
+                    const div = document.createElement('div');
+                    fieldset.appendChild(div);
+                    const ok = document.createElement('button');
+                    ok.setAttribute('for', input.id);
+                    ok.textContent = '✓';
+                    ok.addEventListener('click', event => validate_new_object_item(input.id, fieldset));
                     div.appendChild(ok);
                     const cancel = document.createElement('button');
                     cancel.setAttribute('for', input.id);
                     cancel.textContent = '✗';
-                    cancel.addEventListener('click', function (event) {
-                        const tmp_id = event.target.getAttribute('for');
-                        const input = document.getElementById(tmp_id);
-                        event.target.parentElement.remove();
-                        input.remove();
-                    });
+                    cancel.addEventListener('click', event => cancel_new_object_item(input.id, fieldset));
                     div.appendChild(cancel);
                 });
-                new_item.innerText = '⊕'
+                new_item.innerText = '+'
                 legend.appendChild(new_item);
             }
         }
@@ -464,7 +474,7 @@ function build_elements_array(id, label, type, value, schema) {
                 }
             }
         });
-        new_item.innerText = '⊕'
+        new_item.innerText = '+'
         legend.appendChild(new_item);
         const clear = document.createElement('button');
         clear.addEventListener('click', async event => await update_controller_then_update_dom(event.target.parentElement.parentElement, []));
