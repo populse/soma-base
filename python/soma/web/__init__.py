@@ -42,7 +42,6 @@ class JSONController:
         
     def get_schema(self):
         if self._schema is None:
-            print('!get_schema! build new schema')
             schema = {
                 "$id": "http://localhost:8080/schemas/id_of_a_controller",
                 "$schema": "https://json-schema.org/draft/2020-12/schema",
