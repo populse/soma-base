@@ -528,6 +528,9 @@ function build_elements_array_number(id, label, type, value, schema) {
 window.addEventListener("backend_ready", async (event) => {
     const controller_elements = document.querySelectorAll("form.controller");
     controller_elements.forEach(function (controller_element) {
-         build_controller_element(controller_element);
+        if (navigator.userAgent.search('QtWebEngine') >= 0) {
+            controller_element.classList.add('QtWebEngine');
+        }
+        build_controller_element(controller_element);
     });
 });

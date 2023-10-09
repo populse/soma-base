@@ -12,6 +12,10 @@ textarea.has_error
     grid-column-gap: 0.2em;
 }
 
+.QtWebEngine .controller {
+    grid-template-rows: 0;
+}
+
 .controller > * {
     grid-column-start: 2;
     grid-column-end: span 1;
