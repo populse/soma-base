@@ -133,35 +133,6 @@ function update_dom_list_float(element, value)
 }
 
 
-// function file_selector(item) {
-//     backend.file_selector(function (path) {
-//         let id = item.getAttribute("for");
-//         backend.set_value(id, path, x => update_dom(id, x));
-
-//     });
-// }
-
-// function directory_selector(item) {
-//     backend.directory_selector(function (path) {
-//         let id = item.getAttribute("for");
-//         backend.set_value(id, path, x => update_dom(id, x));
-//     });
-// }
-
-// async function get_value(path) {
-//     const url = controller_url + "/get_value";
-//     const response = await fetch(url, {
-//         method: 'POST',
-//         headers: {
-//             'Content-Type': 'application/json'
-//         },
-//         "body": "[]"
-//     });
-//     if (!response.ok) { 
-//         throw new Error(`HTTP error: ${response.status}`);
-//     }        
-//     return (await response.json()).result;
-// }
 
 function resolve_schema_type(type, schema) {
     while ('$ref' in type) {
@@ -418,7 +389,6 @@ function build_elements_file(id, label, type, value, schema) {
         button.textContent = '📁';
         button.addEventListener('click', async function (event) {
             path = await (backend[`${type.brainvisa.path_type}_selector`]());
-            console.log('!path!', path);
             if (path) {
                 const input = document.getElementById(event.target.getAttribute('for'));
                 input.value = path;
@@ -455,7 +425,10 @@ function build_elements_directory(id, label, type, value, schema) {
 function build_elements_array(id, label, type, value, schema) {
     const builder = window[`build_elements_array_${type.items.type}`];
     if (builder) {
-        return builder(id, label, type, value, schema);
+        const result = builder(id, label, type, value, schema);
+        if (result !== undefined) {
+            return result;
+        }
     }
     const fieldset = document.createElement('fieldset');
     fieldset.id = id;
@@ -500,6 +473,9 @@ function build_elements_array(id, label, type, value, schema) {
 
 
 function build_elements_array_string(id, label, type, value, schema) {
+    if (type.items.enum) {
+        return undefined;        
+    }
     const textarea = document.createElement('textarea');
     textarea.id = id;
     textarea.setAttribute("controller_type", `array_${type.type}`);

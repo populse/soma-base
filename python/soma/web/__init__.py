@@ -77,6 +77,7 @@ class JSONController:
             value = container
         return to_json(value)
 
+
     def set_value(self, path, value):
         container, path_item, container_type = self._parse_path(path)
         if isinstance(container, Controller):
@@ -87,6 +88,7 @@ class JSONController:
             container[int(path_item)] = value
         else:
             container[int(path_item)] = value
+
 
     def new_list_item(self, path):
         container, path_item, container_type = self._parse_path(path)
@@ -105,9 +107,13 @@ class JSONController:
         if not item_type:
             raise TypeError(f'Cannot create a new item for object of type {list_type}')
         item_type = item_type[0]
-        new_value = item_type()
+        if item_type.__name__ == 'Literal':
+            new_value = item_type.__args__[0]
+        else:
+            new_value = item_type()
         list_value.append(new_value)
         return len(list_value) - 1
+
 
     def new_named_item(self, path, key):
         container, path_item, container_type = self._parse_path(path)
