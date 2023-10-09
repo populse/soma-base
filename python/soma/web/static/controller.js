@@ -1,3 +1,5 @@
+var uniqueIndex = 0;
+
 function toInt(x) {
     if (/^-?\d+$/.test(x)) {
         return parseInt(x);
@@ -236,6 +238,54 @@ function build_elements_object(id, label, type, value, schema) {
             l.textContent = label;
             legend.appendChild(l);
             fieldset.appendChild(legend);
+            if (type.brainvisa && type.brainvisa.value_items) {
+                const new_item = document.createElement('button');
+                new_item.addEventListener('click', async function (event) {
+                    const input = document.createElement('input');
+                    input.id = "id" + uniqueIndex++;
+                    input.classList.add('label');
+                    input.setAttribute('for', id);
+                    input.value = 'new_item';
+                    fieldset.appendChild(input);
+                    input.select();
+                    input.focus();
+                    input.scrollIntoView();
+                    const div = document.createElement('div');
+                    fieldset.appendChild(div);
+                    const ok = document.createElement('button');
+                    ok.setAttribute('for', input.id);
+                    ok.textContent = '✓';
+                    ok.addEventListener('click', async function (event) {
+                        const tmp_id = event.target.getAttribute('for');
+                        const input = document.getElementById(tmp_id);
+                        const key = await backend.new_named_item(event.target.parentElement.parentElement.id, input.value);
+                        if (key !== undefined) {
+                            event.target.parentElement.remove();
+                            input.remove();
+                            const new_id = `${id}/${key}`;
+                            type.properties = (await backend.get_type(id)).properties
+                            const new_value = await backend.get_value(new_id);
+                            for (const element of build_elements(new_id, key, type.brainvisa.value_items, new_value, schema)) {
+                                fieldset.appendChild(element);
+                            }
+                        }
+
+                    });
+                    div.appendChild(ok);
+                    const cancel = document.createElement('button');
+                    cancel.setAttribute('for', input.id);
+                    cancel.textContent = '✗';
+                    cancel.addEventListener('click', function (event) {
+                        const tmp_id = event.target.getAttribute('for');
+                        const input = document.getElementById(tmp_id);
+                        event.target.parentElement.remove();
+                        input.remove();
+                    });
+                    div.appendChild(cancel);
+                });
+                new_item.innerText = '⊕'
+                legend.appendChild(new_item);
+            }
         }
         result.push(fieldset);
     }
@@ -409,7 +459,7 @@ function build_elements_array(id, label, type, value, schema) {
             if (index !== undefined) {
                 const new_id = `${id}/${index}`;
                 const new_value = await backend.get_value(new_id);
-                for (const element of build_elements(new_id, `[${index}]`, type.items, new_value)) {
+                for (const element of build_elements(new_id, `[${index}]`, type.items, new_value, schema)) {
                     fieldset.appendChild(element);
                 }
             }

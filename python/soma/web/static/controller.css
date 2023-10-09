@@ -18,7 +18,7 @@ textarea.has_error
     grid-row-end: span 1;
 }
 
-.controller > label {
+.controller > label, .controller > .label {
     grid-column-start: 1;
     grid-column-end: span 1;
     grid-row-end: span 1;

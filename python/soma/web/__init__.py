@@ -9,7 +9,7 @@ import weakref
 
 import jinja2
 
-from soma.controller import Controller, to_json, from_json
+from soma.controller import Controller, to_json, from_json, OpenKeyController
 from soma.controller.field import is_list, subtypes, parse_type_str, type_str
 from soma.undefined import undefined
 from soma.qt_gui.qt_backend import Qt, QtWidgets
@@ -42,6 +42,7 @@ class JSONController:
         
     def get_schema(self):
         if self._schema is None:
+            print('!get_schema! build new schema')
             schema = {
                 "$id": "http://localhost:8080/schemas/id_of_a_controller",
                 "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -108,7 +109,27 @@ class JSONController:
         new_value = item_type()
         list_value.append(new_value)
         return len(list_value) - 1
-    
+
+    def new_named_item(self, path, key):
+        container, path_item, container_type = self._parse_path(path)
+        if isinstance(container, Controller):
+            container_type = container.field(path_item).type
+            container = getattr(container, path_item, None)
+        elif isinstance(container, list):
+            container_type = subtypes(container_type)[0]
+            container = container[int(path_item)]
+        else:
+            raise NotImplementedError()
+        if not isinstance(container, OpenKeyController):
+            raise TypeError(f'Cannot create a new named item for object of type {container_type}')
+        if container.field(key) is not None:
+            raise ValueError(f'Cannot create a second field with name "{key}"')
+        item_type = container._value_type
+        new_value = item_type()
+        setattr(container, key, new_value)
+        self._schema = None
+        return key
+
     
     def get_type(self, path=None):
         schema = self.get_schema()
@@ -120,8 +141,6 @@ class JSONController:
                 if current_type['type'] == 'object':
                     new_type = current_type.get('properties', {}).get(path_item)
                     if not new_type:
-                        from pprint import pprint
-                        pprint(current_type)
                         return None
                     current_type = self._resolve_schema_type(new_type, schema)
                 elif current_type['type'] == 'array':
@@ -129,6 +148,7 @@ class JSONController:
                 else:
                     raise NotImplementedError()
         return current_type
+
 
     @staticmethod
     def _resolve_schema_type(type, schema):
@@ -196,7 +216,7 @@ class JSONController:
                     result = {
                         'type': 'object',
                         'brainvisa': {
-                            'new_items': cls._build_json_schema(None, value_type.__args__[0], undefined, defs),
+                            'value_items': cls._build_json_schema(None, value_type._value_type, undefined, defs),
                         },
                         'properties': {}
                     }
@@ -215,16 +235,17 @@ class JSONController:
                                 base_schemas.append(cls._build_json_schema(None, base_class, undefined, defs))
                         if base_schemas:
                             class_schema['allOf'] = base_schemas
-                if value is not undefined and value.has_instance_fields():
-                    result['type'] = 'object'
-                    if value_type.__name__ != 'OpenKeyController':
-                        result['allOf'] = [{'$ref': f'#/$defs/{value_type.__name__}'}]
-                    properties = result['properties'] = {}
-                    for f in value.instance_fields():
-                        properties[f.name] = cls._build_json_schema(f, f.type, getattr(value, f.name), defs)
-                else:
-                    if value_type.__name__ != 'OpenKeyController':
-                        result['$ref'] = f'#/$defs/{value_type.__name__}'
+                result['type'] = 'object'
+                if value_type.__name__ != 'OpenKeyController':
+                    result['allOf'] = [{'$ref': f'#/$defs/{value_type.__name__}'}]
+                properties = result['properties'] = {}
+                if value is not undefined:
+                    for f in value.fields():
+                        if not f.class_field or (
+                                isinstance(f.type, type) and 
+                                issubclass(f.type, Controller) and 
+                                getattr(value, f.name).has_instance_fields()):
+                            properties[f.name] = cls._build_json_schema(f, f.type, getattr(value, f.name), defs)
             elif value_type.__name__ == 'list':
                 if hasattr(value_type, '__args__'):
                     result = {

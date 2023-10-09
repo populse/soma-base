@@ -49,17 +49,25 @@ class ControllerBackend(WebBackend):
     def get_type(self, path: str = None) -> dict:
         return self.json_controller.get_type(path)
 
+
     @json_exception        
     def get_value(self, path: str = None) -> dict:
         return self.json_controller.get_value(path)
-   
+
+
     @json_exception        
     def set_value(self, path: str, value: 'QVariant') -> dict:
         self.json_controller.set_value(path, value)
 
+
     @json_exception        
     def new_list_item(self, path: str) -> int:
         return self.json_controller.new_list_item(path)
+
+
+    @json_exception        
+    def new_named_item(self, path: str, key: str) -> str:
+        return self.json_controller.new_named_item(path, key)
 
 
 class ControllerWindow(SomaBrowserWindow):

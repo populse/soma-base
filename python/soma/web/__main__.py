@@ -28,11 +28,12 @@ class SubController(Controller):
     le: field(type_=list[Literal['one', 'two', 'three']], default_factory=lambda: ['one', 'two'])
     lf: field(type_=list[File], default_factory=lambda: ['/somewhere/a_file', '/elsewhere/another_file'])
     ld: field(type_=list[Directory], default_factory=lambda: ['/somewhere/a_directory', '/elsewhere/another_directory'])
-    ok: field(type_=OpenKeyController[str], default_factory=lambda: OpenKeyController[str]())
+    oks: field(type_=OpenKeyController[str], default_factory=lambda: OpenKeyController[str]())
 
 class VisibleController(SubController):
     o: field(type_=SubController, default_factory=lambda: SubController())
     lo: field(type_=list[SubController], default_factory=lambda: [SubController(), SubController()])
+    oko: field(type_=OpenKeyController[SubController], default_factory=lambda: OpenKeyController[SubController]())
 
 
 def web_server_gui(controller):
