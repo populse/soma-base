@@ -527,11 +527,6 @@ function build_elements_array(id, label, deletable, type, value, schema) {
         });
         new_item.innerText = '+'
         legend.appendChild(new_item);
-        const clear = document.createElement('button');
-        clear.type = 'button';
-        clear.addEventListener('click', async event => await update_controller_then_update_dom(event.target.parentElement.parentElement, []));
-        clear.innerText = '⊖'
-        legend.appendChild(clear);
         if (deletable) {
             const delete_button = create_delete_button(legend, id);
             delete_button.addEventListener('click', async function() {
