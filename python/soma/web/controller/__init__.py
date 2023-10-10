@@ -74,6 +74,10 @@ class ControllerBackend(WebBackend):
     _file_dialog = None
 
     @json_exception        
+    def remove_item(self, path: str) -> bool:
+        return self.json_controller.remove_item(path)
+
+    @json_exception        
     def file_selector(self) -> str:
         if self._file_dialog is None:
             self._file_dialog = QtWidgets.QFileDialog()

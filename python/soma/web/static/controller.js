@@ -185,14 +185,25 @@ async function build_controller_element(controller_element) {
     const controller_schema = await backend.get_schema();
     const controller_value = await backend.get_value(null);
     const controller_type = resolve_schema_type(controller_schema, controller_schema);
-    const elements = build_elements_object(null, null, controller_type, controller_value, controller_schema);
+    const elements = build_elements_object(null, null, false, controller_type, controller_value, controller_schema);
     for (const element of elements) {
         controller_element.appendChild(element);
     }
 }
 
 
-function build_elements_object(id, label, type, value, schema) {
+function create_delete_button(parent, id) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.innerText = '✗';
+    button.classList.add('delete');
+    button.setAttribute('for', id);
+    parent.appendChild(button);
+    return button;
+}
+
+
+function build_elements_object(id, label, deletable, type, value, schema) {
     let result = [];
     if (id) {
         var fieldset = document.createElement('fieldset');
@@ -202,16 +213,17 @@ function build_elements_object(id, label, type, value, schema) {
         if (id && (id.match(/\//g) || []).length > 1) {
             fieldset.classList.add('collapsed');
         }
+        const legend = document.createElement('legend');
+        fieldset.appendChild(legend);
         if (label) {
-            const legend = document.createElement('legend');
             const l = document.createElement('label');
             l.setAttribute('for', id);
             l.addEventListener('click', event => event.target.parentElement.parentElement.classList.toggle('collapsed'));
             l.textContent = label;
             legend.appendChild(l);
-            fieldset.appendChild(legend);
             if (type.brainvisa && type.brainvisa.value_items) {
                 const new_item = document.createElement('button');
+                new_item.type = 'button';
                 new_item.addEventListener('click', async function (event) {
                     fieldset.classList.remove('collapsed');
                     async function validate_new_object_item(tmp_id, fieldset) {
@@ -223,7 +235,7 @@ function build_elements_object(id, label, type, value, schema) {
                             const new_id = `${fieldset.id}/${key}`;
                             type.properties = (await backend.get_type(id)).properties
                             const new_value = await backend.get_value(new_id);
-                            for (const element of build_elements(new_id, key, type.brainvisa.value_items, new_value, schema)) {
+                            for (const element of build_elements(new_id, key, true, type.brainvisa.value_items,  new_value, schema)) {
                                 fieldset.appendChild(element);
                             }
                         }
@@ -254,20 +266,23 @@ function build_elements_object(id, label, type, value, schema) {
                     const div = document.createElement('div');
                     fieldset.appendChild(div);
                     const ok = document.createElement('button');
+                    ok.type == 'button';
                     ok.setAttribute('for', input.id);
                     ok.textContent = '✓';
                     ok.addEventListener('click', event => validate_new_object_item(input.id, fieldset));
                     div.appendChild(ok);
                     const cancel = document.createElement('button');
+                    cancel.type = 'button';
                     cancel.setAttribute('for', input.id);
                     cancel.textContent = '✗';
                     cancel.addEventListener('click', event => cancel_new_object_item(input.id, fieldset));
                     div.appendChild(cancel);
                 });
-                new_item.innerText = '+'
+                new_item.innerText = '+';
                 legend.appendChild(new_item);
             }
         }
+        if (deletable) var delete_button = create_delete_button(legend, id);
         result.push(fieldset);
     }
     let sortable = [];
@@ -277,7 +292,9 @@ function build_elements_object(id, label, type, value, schema) {
     sortable.sort((a, b) => a[1].brainvisa.order - b[1].brainvisa.order);
     for (const i in sortable) {
         const field_name = sortable[i][0];
-        const elements = build_elements((id ? `${id}/${field_name}` : field_name), field_name, sortable[i][1], value[field_name], schema);
+        const field_type = sortable[i][1];
+        const field_deletable = !field_type.brainvisa.class_field;
+        const elements = build_elements((id ? `${id}/${field_name}` : field_name), field_name, field_deletable, field_type, value[field_name], schema);
         for (const element of elements) {
             if (id) {
                 fieldset.appendChild(element);
@@ -286,28 +303,38 @@ function build_elements_object(id, label, type, value, schema) {
             }
         }
     }
+    if (deletable) {
+        delete_button.addEventListener('click', async function () {
+            const deleted = await backend.remove_item(id);
+            if (deleted) {
+                for (element of result) {
+                    element.remove();
+                }
+            }
+        });
+    }
     return result;
 }
 
 
-function build_elements(id, label, type, value, schema) {
+function build_elements(id, label, deletable, type, value, schema) {
     type = resolve_schema_type(type, schema);
     const builder = window[`build_elements_${type.type}`];
     if (builder !== undefined) {
-        return builder(id, label, type, value, schema);
+        return builder(id, label, deletable, type, value, schema);
     }
     return []
 }
 
-function build_elements_string(id, label, type, value, schema) {
+function build_elements_string(id, label, deletable, type, value, schema) {
     if (type.brainvisa) {
         const builder = window[`build_elements_${type.brainvisa.path_type}`];
         if (builder) {
-            return builder(id, label, type, value, schema);
+            return builder(id, label, deletable, type, value, schema);
         }
     }
     if (type.enum) {
-        return build_elements_enum(id, label, type, value, schema);
+        return build_elements_enum(id, label, deletable, type, value, schema);
     }
     const input = document.createElement('input');
     input.id = id;
@@ -321,22 +348,32 @@ function build_elements_string(id, label, type, value, schema) {
         const l = document.createElement('label');
         l.setAttribute('for', id);
         l.textContent = label;
+        if (deletable) {
+            const delete_button = create_delete_button(l, id);
+            delete_button.addEventListener('click', async function() {
+                const deleted = await backend.remove_item(id);
+                if (deleted) {
+                    l.remove();
+                    input.remove();
+                }
+            });
+        }
         return [l, input];
     } else {
         return [input];
     }
 }
 
-function build_elements_integer(id, label, type, value, schema) {
-    return build_elements_string(id, label, type, value, schema);
+function build_elements_integer(id, label, deletable, type, value, schema) {
+    return build_elements_string(id, label, deletable, type, value, schema);
 }
 
 
-function build_elements_number(id, label, type, value, schema) {
-    return build_elements_string(id, label, type, value, schema);
+function build_elements_number(id, label, deletable, type, value, schema) {
+    return build_elements_string(id, label, deletable, type, value, schema);
 }
 
-function build_elements_boolean(id, label, type, value, schema) {
+function build_elements_boolean(id, label, deletable, type, value, schema) {
     const checkbox = document.createElement('input');
     checkbox.id = id;
     checkbox.type = "checkbox";
@@ -349,13 +386,23 @@ function build_elements_boolean(id, label, type, value, schema) {
         const l = document.createElement('label');
         l.setAttribute('for', id);
         l.textContent = label;
+        if (deletable) {
+            const delete_button = create_delete_button(l, id);
+            delete_button.addEventListener('click', async function() {
+                const deleted = await backend.remove_item(id);
+                if (deleted) {
+                    l.remove();
+                    checkbox.remove();
+                }
+            });
+        }
         return [l, checkbox];
     } else {
         return [checkbox];
     }
 }
 
-function build_elements_enum(id, label, type, value, schema) {
+function build_elements_enum(id, label, deletable, type, value, schema) {
     const select = document.createElement('select');
     select.id = id;
     select.setAttribute("controller_type", "enum");
@@ -373,13 +420,23 @@ function build_elements_enum(id, label, type, value, schema) {
         const l = document.createElement('label');
         l.setAttribute('for', id);
         l.textContent = label;
+        if (deletable) {
+            const delete_button = create_delete_button(l, id);
+            delete_button.addEventListener('click', async function() {
+                const deleted = await backend.remove_item(id);
+                if (deleted) {
+                    l.remove();
+                    select.remove();
+                }
+            });
+        }
         return [l, select];
     } else {
         return [select];
     }
 }
 
-function build_elements_file(id, label, type, value, schema) {
+function build_elements_file(id, label, deletable, type, value, schema) {
     const div = document.createElement('div');
     div.classList.add("button_and_element");
     
@@ -413,21 +470,31 @@ function build_elements_file(id, label, type, value, schema) {
         const l = document.createElement('label');
         l.setAttribute('for', id);
         l.textContent = label;
+        if (deletable) {
+            const delete_button = create_delete_button(l, id);
+            delete_button.addEventListener('click', async function() {
+                const deleted = await backend.remove_item(id);
+                if (deleted) {
+                    l.remove();
+                    div.remove();
+                }
+            });
+        }
         return [l, div];
     } else {
         return [input];
     }
 }
 
-function build_elements_directory(id, label, type, value, schema) {
-    return build_elements_file(id, label, type, value, schema);
+function build_elements_directory(id, label, deletable, type, value, schema) {
+    return build_elements_file(id, label, deletable, type, value, schema);
 }
 
 
-function build_elements_array(id, label, type, value, schema) {
+function build_elements_array(id, label, deletable, type, value, schema) {
     const builder = window[`build_elements_array_${type.items.type}`];
     if (builder) {
-        const result = builder(id, label, type, value, schema);
+        const result = builder(id, label, deletable, type, value, schema);
         if (result !== undefined) {
             return result;
         }
@@ -447,12 +514,13 @@ function build_elements_array(id, label, type, value, schema) {
         l.textContent = label;
         legend.appendChild(l);
         const new_item = document.createElement('button');
+        new_item.type = 'button';
         new_item.addEventListener('click', async function (event) {
             const index = await backend.new_list_item(event.target.parentElement.parentElement.id);
             if (index !== undefined) {
                 const new_id = `${id}/${index}`;
                 const new_value = await backend.get_value(new_id);
-                for (const element of build_elements(new_id, `[${index}]`, type.items, new_value, schema)) {
+                for (const element of build_elements(new_id, `[${index}]`, true, type.items, new_value, schema)) {
                     fieldset.appendChild(element);
                 }
             }
@@ -460,13 +528,23 @@ function build_elements_array(id, label, type, value, schema) {
         new_item.innerText = '+'
         legend.appendChild(new_item);
         const clear = document.createElement('button');
+        clear.type = 'button';
         clear.addEventListener('click', async event => await update_controller_then_update_dom(event.target.parentElement.parentElement, []));
         clear.innerText = '⊖'
         legend.appendChild(clear);
+        if (deletable) {
+            const delete_button = create_delete_button(legend, id);
+            delete_button.addEventListener('click', async function() {
+                const deleted = await backend.remove_item(id);
+                if (deleted) {
+                    fieldset.remove();
+                }
+            });
+        }
         fieldset.appendChild(legend);
     }
     for (const index in value) {
-        for (const element of build_elements(`${id}/${index}`, `[${index}]`, type.items, value[index], schema)) {
+        for (const element of build_elements(`${id}/${index}`, `[${index}]`, true, type.items, value[index], schema)) {
             fieldset.appendChild(element);            
         }
     }
@@ -474,8 +552,9 @@ function build_elements_array(id, label, type, value, schema) {
 }
 
 
-function build_elements_array_string(id, label, type, value, schema) {
-    if (type.items.enum) {
+function build_elements_array_string(id, label, deletable, type, value, schema) {
+    if (type.items.enum ||
+        (QtWebEngine && type.brainvisa.path_type)) {
         return undefined;        
     }
     const textarea = document.createElement('textarea');
@@ -491,6 +570,16 @@ function build_elements_array_string(id, label, type, value, schema) {
         const l = document.createElement('label');
         l.setAttribute('for', id);
         l.textContent = label;
+        if (deletable) {
+            const delete_button = create_delete_button(l, id);
+            delete_button.addEventListener('click', async function() {
+                const deleted = await backend.remove_item(id);
+                if (deleted) {
+                    l.remove();
+                    textarea.remove();
+                }
+            });
+        }
         return [l, textarea];
     } else {
         return [textarea];
@@ -498,7 +587,7 @@ function build_elements_array_string(id, label, type, value, schema) {
 }
 
 
-function build_elements_array_integer(id, label, type, value, schema) {
+function build_elements_array_integer(id, label, deletable, type, value, schema) {
     const textarea = document.createElement('textarea');
     textarea.id = id;
     textarea.setAttribute("controller_type", `array_${type.type}`);
@@ -510,14 +599,24 @@ function build_elements_array_integer(id, label, type, value, schema) {
         const l = document.createElement('label');
         l.setAttribute('for', id);
         l.textContent = label;
+        if (deletable) {
+            const delete_button = create_delete_button(l, id);
+            delete_button.addEventListener('click', async function() {
+                const deleted = await backend.remove_item(id);
+                if (deleted) {
+                    l.remove();
+                    textarea.remove();
+                }
+            });
+        }
         return [l, textarea];
     } else {
         return [textarea];
     }
 }
 
-function build_elements_array_number(id, label, type, value, schema) {
-    return build_elements_array_integer(id, label, type, value, schema);
+function build_elements_array_number(id, label, deletable, type, value, schema) {
+    return build_elements_array_integer(id, label, deletable, type, value, schema);
 }
 
 

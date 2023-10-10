@@ -12,6 +12,11 @@ textarea.has_error
     grid-column-gap: 0.2em;
 }
 
+.controller button.delete {
+    color:red;
+    margin-left: 0.5em;
+}
+
 .QtWebEngine .controller {
     grid-template-rows: 0;
 }
@@ -26,6 +31,11 @@ textarea.has_error
     grid-column-start: 1;
     grid-column-end: span 1;
     grid-row-end: span 1;
+    white-space: nowrap;
+}
+
+.controller legend button {
+    margin-left: 0.5em;
 }
 
 .controller > fieldset {

@@ -115,6 +115,18 @@ class JSONController:
         return len(list_value) - 1
 
 
+    def remove_item(self, path):
+        container, path_item, container_type = self._parse_path(path)
+        if isinstance(container, Controller):
+            container.remove_field(path_item)
+        elif isinstance(container, list):
+            del container[int(path_item)]
+        else:
+            raise NotImplementedError()
+        self._schema = None
+        return True
+    
+
     def new_named_item(self, path, key):
         container, path_item, container_type = self._parse_path(path)
         if isinstance(container, Controller):
