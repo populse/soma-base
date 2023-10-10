@@ -342,7 +342,7 @@ function build_elements_boolean(id, label, type, value, schema) {
     checkbox.type = "checkbox";
     checkbox.setAttribute("controller_type", type.type);
     checkbox.addEventListener('change', async event => await update_controller_boolean(event.target));
-    if (value) {
+    if (value) {
         checkbox.checked = true;
     }
     if (label) {
@@ -386,8 +386,10 @@ function build_elements_file(id, label, type, value, schema) {
     if (QtWebEngine) {
         const button = document.createElement('button');
         button.setAttribute('for', id);
+        button.type = 'button';
         button.textContent = '📁';
         button.addEventListener('click', async function (event) {
+            console.log('ici');
             path = await (backend[`${type.brainvisa.path_type}_selector`]());
             if (path) {
                 const input = document.getElementById(event.target.getAttribute('for'));
