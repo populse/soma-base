@@ -1,24 +1,69 @@
+var QtWebEngine = (navigator.userAgent.search('QtWebEngine') >= 0);
 var uniqueIndex = 0;
+var backend_url = 'http://localhost:8080/backend'
+var backend = null;
 
-function toInt(x) {
-    if (/^-?\d+$/.test(x)) {
-        return parseInt(x);
+if (QtWebEngine) {
+    var qt_channel = null;
+    var backend_ready = new CustomEvent('backend_ready');
+
+    window.addEventListener("load", (event) => {
+        new QWebChannel(qt.webChannelTransport, async function(channel) {
+            qt_channel= channel.objects.backend;
+            const controller_elements = document.querySelectorAll("form.controller");
+            controller_elements.forEach(function (controller_element) {
+                controller_element.classList.add('QtWebEngine');
+                build_controller_element(controller_element);
+            });
+        });
+    });
+
+    backend = async function qt_backend(name, path, ...params) {
+        const data = await qt_channel.resolve(`backend/${name}/${path}`, params);
+        if (data['error_type']) {
+            throw new Error(`${data['error_message']}`);
+        } else {
+            return data.result;
+        }
     }
-    throw new SyntaxError('Not a valid integer')
-}
 
+    const script = document.createElement('script');
+    script.type = 'text/javascript';
+    script.src = 'qrc:///qtwebchannel/qwebchannel.js';
+    document.head.appendChild(script);
+} else {
+    backend = async function html_backend(name, path, ...params) {
+        const response = await fetch(`${backend_url}/${name}/${path}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(params)
+        });
+        if (! response.ok) {
+            throw new Error(`HTTP error: ${response.status}`);
+        }
 
-function toFloat(x) {
-    if (/^[-+]?(?:\d+\.?|\.\d)\d*(?:[Ee][-+]?\d+)?$/.test(x)) {
-        return parseFloat(x);
+        const data = await response.json();
+        if (data['error_type']) {
+            throw new Error(`${data['error_message']}`);
+        } else {
+            return data.result;
+        }
     }
-    throw new SyntaxError('Not a valid number')
+
+    window.addEventListener("load", async (event) => {
+        const controller_elements = document.querySelectorAll("form.controller");
+        controller_elements.forEach(function (controller_element) {
+            build_controller_element(controller_element);
+        });
+    });
 }
 
 
 async function update_controller_then_update_dom(element, value) {
     try {
-        await backend.set_value(element.id, value);
+        await backend('set_value', element.id, value);
         element.classList.remove("has_error");
     }
     catch ( error ) {
@@ -182,10 +227,11 @@ function resolve_schema_type(type, schema) {
 }
 
 async function build_controller_element(controller_element) {
-    const controller_schema = await backend.get_schema();
-    const controller_value = await backend.get_value(null);
+    const controller_name = controller_element.getAttribute('name');
+    const controller_schema = await backend('get_schema', controller_name);
+    const controller_value = await backend('get_value', controller_name);
     const controller_type = resolve_schema_type(controller_schema, controller_schema);
-    const elements = build_elements_object(null, null, false, controller_type, controller_value, controller_schema);
+    const elements = build_elements_object(controller_name, null, false, controller_type, controller_value, controller_schema);
     for (const element of elements) {
         controller_element.appendChild(element);
     }
@@ -205,12 +251,12 @@ function create_delete_button(parent, id) {
 
 function build_elements_object(id, label, deletable, type, value, schema) {
     let result = [];
-    if (id) {
+    if (label) {
         var fieldset = document.createElement('fieldset');
         fieldset.id = id;
         fieldset.setAttribute("controller_type", "object");
         fieldset.classList.add('controller');
-        if (id && (id.match(/\//g) || []).length > 1) {
+        if (id && (id.match(/\//g) || []).length > 2) {
             fieldset.classList.add('collapsed');
         }
         const legend = document.createElement('legend');
@@ -228,13 +274,13 @@ function build_elements_object(id, label, deletable, type, value, schema) {
                     fieldset.classList.remove('collapsed');
                     async function validate_new_object_item(tmp_id, fieldset) {
                         const input = document.getElementById(tmp_id);
-                        const key = await backend.new_named_item(fieldset.id, input.value);
+                        const key = await backend('new_named_item', fieldset.id, input.value);
                         if (key !== undefined) {
                             input.nextElementSibling.remove();
                             input.remove();
                             const new_id = `${fieldset.id}/${key}`;
-                            type.properties = (await backend.get_type(id)).properties
-                            const new_value = await backend.get_value(new_id);
+                            type.properties = (await backend('get_type', id)).properties
+                            const new_value = await backend('get_value', new_id);
                             for (const element of build_elements(new_id, key, true, type.brainvisa.value_items,  new_value, schema)) {
                                 fieldset.appendChild(element);
                             }
@@ -296,7 +342,7 @@ function build_elements_object(id, label, deletable, type, value, schema) {
         const field_deletable = !field_type.brainvisa.class_field;
         const elements = build_elements((id ? `${id}/${field_name}` : field_name), field_name, field_deletable, field_type, value[field_name], schema);
         for (const element of elements) {
-            if (id) {
+            if (label) {
                 fieldset.appendChild(element);
             } else {
                 result.push(element);
@@ -305,7 +351,7 @@ function build_elements_object(id, label, deletable, type, value, schema) {
     }
     if (deletable) {
         delete_button.addEventListener('click', async function () {
-            const deleted = await backend.remove_item(id);
+            const deleted = await backend('remove_item', id);
             if (deleted) {
                 for (element of result) {
                     element.remove();
@@ -351,7 +397,7 @@ function build_elements_string(id, label, deletable, type, value, schema) {
         if (deletable) {
             const delete_button = create_delete_button(l, id);
             delete_button.addEventListener('click', async function() {
-                const deleted = await backend.remove_item(id);
+                const deleted = await backend('remove_item', id);
                 if (deleted) {
                     l.remove();
                     input.remove();
@@ -389,7 +435,7 @@ function build_elements_boolean(id, label, deletable, type, value, schema) {
         if (deletable) {
             const delete_button = create_delete_button(l, id);
             delete_button.addEventListener('click', async function() {
-                const deleted = await backend.remove_item(id);
+                const deleted = await backend('remove_item', id);
                 if (deleted) {
                     l.remove();
                     checkbox.remove();
@@ -423,7 +469,7 @@ function build_elements_enum(id, label, deletable, type, value, schema) {
         if (deletable) {
             const delete_button = create_delete_button(l, id);
             delete_button.addEventListener('click', async function() {
-                const deleted = await backend.remove_item(id);
+                const deleted = await backend('remove_item', id);
                 if (deleted) {
                     l.remove();
                     select.remove();
@@ -446,11 +492,10 @@ function build_elements_file(id, label, deletable, type, value, schema) {
         button.type = 'button';
         button.textContent = '📁';
         button.addEventListener('click', async function (event) {
-            console.log('ici');
-            path = await (backend[`${type.brainvisa.path_type}_selector`]());
-            if (path) {
+            path = await (qt_channel[`${type.brainvisa.path_type}_selector`]());
+            if (path.result !== undefined) {
                 const input = document.getElementById(event.target.getAttribute('for'));
-                input.value = path;
+                input.value = path.result;
             }
         });
         div.appendChild(button);
@@ -473,7 +518,7 @@ function build_elements_file(id, label, deletable, type, value, schema) {
         if (deletable) {
             const delete_button = create_delete_button(l, id);
             delete_button.addEventListener('click', async function() {
-                const deleted = await backend.remove_item(id);
+                const deleted = await backend('remove_item', id);
                 if (deleted) {
                     l.remove();
                     div.remove();
@@ -503,7 +548,7 @@ function build_elements_array(id, label, deletable, type, value, schema) {
     fieldset.id = id;
     fieldset.setAttribute("controller_type", "array");
     fieldset.classList.add('controller');
-    if ((id.match(/\//g) || []).length > 1) {
+    if ((id.match(/\//g) || []).length > 2) {
         fieldset.classList.add('collapsed');
     }
     if (label) {
@@ -516,10 +561,10 @@ function build_elements_array(id, label, deletable, type, value, schema) {
         const new_item = document.createElement('button');
         new_item.type = 'button';
         new_item.addEventListener('click', async function (event) {
-            const index = await backend.new_list_item(event.target.parentElement.parentElement.id);
+            const index = await backend('new_list_item', event.target.parentElement.parentElement.id);
             if (index !== undefined) {
                 const new_id = `${id}/${index}`;
-                const new_value = await backend.get_value(new_id);
+                const new_value = await backend('get_value', new_id);
                 for (const element of build_elements(new_id, `[${index}]`, true, type.items, new_value, schema)) {
                     fieldset.appendChild(element);
                 }
@@ -530,7 +575,7 @@ function build_elements_array(id, label, deletable, type, value, schema) {
         if (deletable) {
             const delete_button = create_delete_button(legend, id);
             delete_button.addEventListener('click', async function() {
-                const deleted = await backend.remove_item(id);
+                const deleted = await backend('remove_item', id);
                 if (deleted) {
                     fieldset.remove();
                 }
@@ -568,7 +613,7 @@ function build_elements_array_string(id, label, deletable, type, value, schema) 
         if (deletable) {
             const delete_button = create_delete_button(l, id);
             delete_button.addEventListener('click', async function() {
-                const deleted = await backend.remove_item(id);
+                const deleted = await backend('remove_item', id);
                 if (deleted) {
                     l.remove();
                     textarea.remove();
@@ -597,7 +642,7 @@ function build_elements_array_integer(id, label, deletable, type, value, schema)
         if (deletable) {
             const delete_button = create_delete_button(l, id);
             delete_button.addEventListener('click', async function() {
-                const deleted = await backend.remove_item(id);
+                const deleted = await backend('remove_item', id);
                 if (deleted) {
                     l.remove();
                     textarea.remove();
@@ -613,17 +658,3 @@ function build_elements_array_integer(id, label, deletable, type, value, schema)
 function build_elements_array_number(id, label, deletable, type, value, schema) {
     return build_elements_array_integer(id, label, deletable, type, value, schema);
 }
-
-
-var QtWebEngine = false;
-
-window.addEventListener("backend_ready", async (event) => {
-    const controller_elements = document.querySelectorAll("form.controller");
-    controller_elements.forEach(function (controller_element) {
-        if (navigator.userAgent.search('QtWebEngine') >= 0) {
-            QtWebEngine = true;
-            controller_element.classList.add('QtWebEngine');
-        }
-        build_controller_element(controller_element);
-    });
-});

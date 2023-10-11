@@ -9,7 +9,6 @@ from soma.controller import (Controller,
                              Set,
                              File,
                              Directory)
-from soma.qt_gui.controller import ControllerWidget
 
 
 class SubController(Controller):
@@ -39,13 +38,8 @@ class VisibleController(SubController):
 def web_server_gui(controller):
     import http, http.server
     from soma.web import SomaHTTPHandler
-    from soma.web.controller import ControllerRoutes, ControllerBackend
 
-    class Handler(SomaHTTPHandler, base_url='http://localhost:8080',
-            routes = ControllerRoutes(),
-            backend = ControllerBackend(),
-            title='Controller',
-            controller=controller):
+    class Handler(SomaHTTPHandler, test=controller):
         pass
     httpd = http.server.HTTPServer(('', 8080), Handler)
     httpd.serve_forever()
@@ -54,30 +48,15 @@ def web_server_gui(controller):
 def qt_web_gui(controller):
     import sys
     from soma.qt_gui.qt_backend import Qt
-    from soma.web.controller import ControllerWindow
+    from soma.web import SomaBrowserWindow
     
     app = Qt.QApplication(sys.argv)
-    rw = ControllerWindow(controller)
-    # ro = ControllerWindow(controller, read_only=True)
+    rw = SomaBrowserWindow(test=controller)
     # qt = ControllerWidget(controller)
     rw.show()
-    # ro.show()
     # qt.show()
     app.exec_()
 
-def json_schema(controller):
-    import json
-    import sys
-    from soma.web import JSONController
-
-    jc = JSONController(controller)
-    # json.dump(jc.get_schema(), sys.stdout, indent=2)
-    if len(sys.argv) > 1:
-        path = sys.argv[1]
-    else:
-        path = None
-    json.dump(jc.get_type(path), sys.stdout, indent=2)
-    print()
 
 def echo(*args):
     print(args)
@@ -85,6 +64,5 @@ def echo(*args):
 if __name__ == '__main__':
     controller = VisibleController()
     controller.on_attribute_change.add(echo)
-    # qt_web_gui(controller)
-    web_server_gui(controller)
-    # json_schema(controller)
+    qt_web_gui(controller)
+    # web_server_gui(controller)
