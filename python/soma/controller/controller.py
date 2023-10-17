@@ -14,7 +14,7 @@ except ImportError:
     import pydantic
 
 from soma.undefined import undefined
-from .field import FieldProxy, ListProxy, field, Field
+from .field import FieldProxy, ListProxy, field, Field, Path
 import sys
 from soma.utils.weak_proxy import proxy_method
 
@@ -775,6 +775,12 @@ def to_json(value):
         return [to_json(i) for i in value]
     elif isinstance(value, dict):
         return dict((i, to_json(j)) for i,j in value.items())
+    elif isinstance(value, Path):
+        # Subclasses of str are not supported by QWebChannel. When
+        # transfered to Javascript, the received value is null 
+        # (i.e. None). Therefore value is converted to a true
+        # str instance.
+        return str(value)
     return value
 
 

@@ -675,7 +675,6 @@ class Path(str):
     ''' Path represents a :class:`File` or a :class:`Directory`.
     No actual link with the filesystem is made, since we want to manipulate paths for remote filesystems.
     '''
-    pass
 
 class File(Path):
     ''' File

@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import functools
 import json
 import http, http.server
 import mimetypes
@@ -24,8 +25,9 @@ real web server or in a server-less QtWebEngineWidget.
 class JSONController:
     def __init__(self, controller):
         self.controller = controller
-        self._schema = None
-        
+        self._schema = None    
+
+
     def get_schema(self):
         if self._schema is None:
             schema = {
@@ -49,6 +51,7 @@ class JSONController:
                 schema.update(schema_type)
             self._schema = schema
         return self._schema
+
 
     def get_value(self, path=None):
         container, path_item, _ = self._parse_path(path)
@@ -283,23 +286,62 @@ class JSONController:
 
 
 
-class WebHandler(QObject):
+class WebBackend(QObject):
     '''
-    This class is used internally in web implementations. It puts together the
-    various objects and parameters necessary to answer to all browser queries. 
+    WebBackend methods that are pyqtSlot are callable from javascript in the
+    clien browser through a communication channel (AJAX for web server or
+    QtWebChannel for QWebBrowser). WebBackend instances enable inspection and
+    modification of several controllers through JSONController objects.
     '''
-
-    static_path = os.path.join(os.path.dirname(__file__), 'static')
-
     def __init__(self, **controllers):
         super().__init__()
         self.json_controller = {}
+        self.status = {}
         for name, controller in controllers.items():
             self.json_controller[name] = JSONController(controller)
+            self.status[name] = {}
         self._file_dialog = None
-    
+
+
+    def json_exception(callable):
+        @functools.wraps(callable)
+        def wrapper(*args, **kwargs):
+            try:
+                result = callable(*args, **kwargs)
+                if isinstance(result, dict) and (
+                    '_json_result' in result or
+                    'json_error_type' in result):
+                    return result
+                result = {
+                    '_json_result':result
+                }
+                return result
+            except Exception as e:
+                return {
+                    '_json_error_type': e.__class__.__name__,
+                    '_json_error_message': str(e),
+                    '_json_traceback': traceback.format_exc(),
+                }
+        return wrapper
+
+
+    @pyqtSlot(str, result=QVariant)
+    @json_exception
+    def get_view(self, name):
+        json_controller = self.json_controller.get(name)
+        if not json_controller:
+            raise ValueError(f'No controller recorded with name "{name}"')
+        result = {
+            'value': json_controller.get_value(),
+            'schema': json_controller.get_schema(),
+            'status': self.status[name],
+        }
+        return result
+
+
     @pyqtSlot(str, QVariant, result=QVariant)
-    def resolve(self, path, args):
+    @json_exception
+    def call(self, path, args):
         '''
         Main method used to forge a reply to a browser request.
 
@@ -314,78 +356,89 @@ class WebHandler(QObject):
             passed to the method correponding to `path`.
         
         '''
-        try:
-            if path:
-                if path[0] == '/':
-                    path = path[1:]
-                paths = path.split('/')
-                if paths:
-                    if paths[0] == 'static':
-                        return (os.path.join(self.static_path, *paths[1:]), )
-                    elif paths[0] == 'backend' and len(paths) >= 3:
-                        _, method_name, controller_name = paths[:3]
-                        method_path = '/'.join(paths[3:])
-                        method = getattr(self.json_controller.get(controller_name), method_name, None)
-                        if method:
-                            if method_path:
-                                args = [method_path] + args
-                            return { 'result': method(*args) }                            
-            raise ValueError(f'Invalid path: {path}')
-        except Exception as e:
-            return {
-                'error_type': e.__class__.__name__,
-                'error_message': str(e),
-                'traceback': traceback.format_exc(),
-            }
+        if path:
+            if path[0] == '/':
+                path = path[1:]
+            paths = path.split('/')
+            method = getattr(self, paths[0], None)
+            if method:
+                return method('/'.join(paths[1:]), *args)
+            if len(paths) >= 2:
+                method_name, controller_name = paths[:2]
+                method_path = '/'.join(paths[2:])
+                method = getattr(self.json_controller.get(controller_name), method_name, None)
+                if method:
+                    if method_path:
+                        args = [method_path] + args
+                    return method(*args)                            
+        raise ValueError(f'Invalid path: {path}')
+
 
     @pyqtSlot(result=QVariant)
+    @json_exception
     def file_selector(self):
-        try:
-            if self._file_dialog is None:
-                self._file_dialog = QtWidgets.QFileDialog()
-            self._file_dialog.setFileMode(QtWidgets.QFileDialog.AnyFile)
-            if self._file_dialog.exec_():
-                selected = self._file_dialog.selectedFiles()
-                if selected:
-                    return {'result': selected[0]}
-            return ''
-        except Exception as e:
-            return {
-                'error_type': e.__class__.__name__,
-                'error_message': str(e),
-                'traceback': traceback.format_exc(),
-            }
+        if self._file_dialog is None:
+            self._file_dialog = QtWidgets.QFileDialog()
+        self._file_dialog.setFileMode(QtWidgets.QFileDialog.AnyFile)
+        if self._file_dialog.exec_():
+            selected = self._file_dialog.selectedFiles()
+            if selected:
+                return selected[0]
+        return ''
 
 
     @pyqtSlot(result=QVariant)
+    @json_exception
     def directory_selector(self):
-        try:
-            if self._file_dialog is None:
-                self._file_dialog = QtWidgets.QFileDialog()
-            self._file_dialog.setFileMode(QtWidgets.QFileDialog.Directory)
-            if self._file_dialog.exec_():
-                selected = self._file_dialog.selectedFiles()
-                if selected:
-                    return {'result': selected[0]}
-            return ''
-        except Exception as e:
-            return {
-                'error_type': e.__class__.__name__,
-                'error_message': str(e),
-                'traceback': traceback.format_exc(),
-            }
+        if self._file_dialog is None:
+            self._file_dialog = QtWidgets.QFileDialog()
+        self._file_dialog.setFileMode(QtWidgets.QFileDialog.Directory)
+        if self._file_dialog.exec_():
+            selected = self._file_dialog.selectedFiles()
+            if selected:
+                return selected[0]
+        return ''
 
- 
+
+    @pyqtSlot(str, QVariant, result=str)
+    @json_exception
+    def set_status(self, id, value):
+        splitted = id.split('/', 1)
+        controller_name = splitted[0]
+        status = self.status.get(controller_name)
+        if status is not None:
+            if len(splitted) == 2:
+                splitted = splitted[1].rsplit('/', 1)
+                splitted[-1] = '_' + splitted[-1]
+                path = '/'.join(splitted)
+                status[path] = value
+                return path
+        return None    
+
+    @pyqtSlot(str, result=QVariant)
+    @json_exception
+    def get_status(self, id):
+        splitted = id.split(id, 1)
+        controller_name = splitted[0]
+        status = self.status.get(controller_name)
+        if status:
+            if len(splitted) == 2:
+                splitted = splitted[1].rsplit('/', 1)
+                splitted[-1] = '_' + splitted[-1]
+                path = '/'.join(splitted)
+                return status.get(path)
+        return None    
+
 
 class SomaHTTPHandlerMeta(type(http.server.BaseHTTPRequestHandler)):
     '''
     Python standard HTTP server needs a handler class. This metaclass
     allows to instanciate this class with parameters required to
-    build a :class:`WebHandler`.
+    build a :class:`WebBackend`.
     '''
     def __new__(cls, name, bases, dict, **kwargs):
         if name != 'SomaHTTPHandler':
-            dict['_handler'] = WebHandler(**kwargs)
+            dict['_handler'] = WebBackend(**kwargs)
         return super().__new__(cls, name, bases, dict)
 
 
@@ -419,6 +472,8 @@ class SomaHTTPHandler(http.server.BaseHTTPRequestHandler, metaclass=SomaHTTPHand
         # httpd.serve_forever()
     '''
     
+    static_path = os.path.join(os.path.dirname(__file__), 'static')
+
     def __init__(self, request, client_address, server):
         super().__init__(request, client_address, server)
 
@@ -430,10 +485,36 @@ class SomaHTTPHandler(http.server.BaseHTTPRequestHandler, metaclass=SomaHTTPHand
                 args = json.loads(self.rfile.read(length))
         else:
             args = []
+        header = {}
         try:
             path = self.path.split('?',1)[0]
-            path = path.split('#',1)[0]            
-            filename_or_json = self._handler.resolve(path, args)
+            path = path.split('#',1)[0]
+            if path.startswith('/'):
+                path = path[1:]
+            s = path.split('/', 1)
+            bad_path = True
+            if len(s) == 2:
+                type, path = s
+                if type == 'static':
+                    filename = os.path.join(self.static_path, path)
+                    try:
+                        s = os.stat(filename)
+                    except FileNotFoundError:
+                        self.send_error(http.HTTPStatus.NOT_FOUND, "File not found")
+                        return None
+                    _, extension = os.path.splitext(filename)
+                    mime_type = mimetypes.types_map.get(extension, 'text/plain')
+                    header['Content-Type'] = mime_type
+                    header['Last-Modified'] = self.date_time_string(s.st_mtime)
+                    body = open(filename).read()
+                    bad_path = False
+                elif type == 'backend':
+                    data = self._handler.call(path, args)
+                    header['Content-Type'] = 'application/json'
+                    body = json.dumps(data)
+                    bad_path = False
+            if bad_path:
+                raise ValueError('Invalid path')
         except ValueError as e:
             self.send_error(400, str(e))
             return None
@@ -441,24 +522,6 @@ class SomaHTTPHandler(http.server.BaseHTTPRequestHandler, metaclass=SomaHTTPHand
             self.send_error(500, str(e))
             raise
             return None
-        header = {}
-        if filename_or_json is None:
-            body = None
-        elif isinstance(filename_or_json, tuple):
-            filename = filename_or_json[0]
-            try:
-                s = os.stat(filename)
-            except FileNotFoundError:
-                self.send_error(http.HTTPStatus.NOT_FOUND, "File not found")
-                return None
-            _, extension = os.path.splitext(filename)
-            mime_type = mimetypes.types_map.get(extension, 'text/plain')
-            header['Content-Type'] = mime_type
-            header['Last-Modified'] = self.date_time_string(s.st_mtime)
-            body = open(filename).read()
-        else:
-            header['Content-Type'] = 'application/json'
-            body = json.dumps(filename_or_json)
         
         self.send_response(http.HTTPStatus.OK)
         # The following line introduces a security issue by allowing any 
@@ -494,71 +557,62 @@ class SomaHTTPHandler(http.server.BaseHTTPRequestHandler, metaclass=SomaHTTPHand
 
 class SomaWebPage(QWebEnginePage):
     def javaScriptConsoleMessage(self, level, msg, line, source):
-        print (msg)
+        print(msg)
+        super().javaScriptConsoleMessage(level, msg, line, source)
 
 
-class SomaWebEngineView(QWebEngineView):
+class SomaBrowserWidget(QWebEngineView):
     '''
-    Reimplements :meth:`SomaWebEngineView.createWindow` to allow the browser
-    to open new windows.
+    Top level widget to display Soma GUI in Qt.
     '''
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._page = SomaWebPage()
-        self.setPage(self._page)
     
     def createWindow(self, wintype):
+        '''
+        Reimplements :meth:`SomaWebEngineView.createWindow` to allow the browser
+        to open new windows.
+        '''
         w = super().createWindow(wintype)
         if not w:
             try:
-                parent = self.parent()
-                self.source_window = SomaBrowserWindow(
-                    starting_url = parent.starting_url,
+                self.source_window = SomaBrowserWidget(
+                    starting_url = self.starting_url,
                 )
                 self.source_window.show()
-                w = self.source_window.browser
+                w = self.source_window
             except Exception as e:
                 print('ERROR: Cannot create browser window:', e)
                 w = None
         return w
 
 
-class SomaBrowserWindow(QtWidgets.QMainWindow):
-    '''
-    Top level widget to display Soma GUI in Qt.
-
-    ::
-
-        #
-        # This exapmle is obsolete and must be rewritten
-        #
-        # import sys
-        # from soma.qt_gui.qt_backend import Qt
-        # from soma.web import SomaBrowserWindow
-
-        # app = Qt.QApplication(sys.argv)
-        # w = SomaBrowserWindow()
-        # w.show()
-        # app.exec_()
-
-    '''
     def __init__(self, starting_url=None, window_title=None,
+                 read_only=False,
                  **kwargs):
-        super(QtWidgets.QMainWindow, self).__init__()
+        super().__init__()
+        self._page = SomaWebPage()
+        self.setPage(self._page)
         self.setWindowTitle(window_title or 'Soma Browser')
         if starting_url:
             self.starting_url = starting_url
         else:
             s = os.path.split(os.path.dirname(__file__)) + ('static', 'controller.html')
             self.starting_url = f'file://{"/".join(s)}'
-        self._handler = WebHandler(**kwargs)
-        self.browser = SomaWebEngineView()
+        self._handler = WebBackend(**kwargs)
+        self._handler.set_status('controller/read_only', read_only)
         self.channel = QWebChannel()
         self.channel.registerObject('backend', self._handler)
-        self.browser.page().setWebChannel(self.channel)
-        self.setCentralWidget(self.browser)
-        self.browser.iconChanged.connect(self.set_icon)
-        self.browser.setUrl(QUrl(self.starting_url))
+        self.page().setWebChannel(self.channel)
+        self.iconChanged.connect(self.set_icon)
+        self.setUrl(QUrl(self.starting_url))
 
     def set_icon(self):
         self.setWindowIcon(self.browser.icon())
+
+
+class ControllerWidget(SomaBrowserWidget):
+    def __init__(self, controller, read_only=False, starting_url=None, window_title=None, **kwargs):
+        super().__init__(starting_url=starting_url,
+                         window_title=window_title,
+                         read_only=read_only,
+                         controller=controller,
+                         **kwargs)

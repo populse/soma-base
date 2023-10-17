@@ -39,7 +39,7 @@ def web_server_gui(controller):
     import http, http.server
     from soma.web import SomaHTTPHandler
 
-    class Handler(SomaHTTPHandler, test=controller):
+    class Handler(SomaHTTPHandler, controller=controller):
         pass
     httpd = http.server.HTTPServer(('', 8080), Handler)
     httpd.serve_forever()
@@ -48,11 +48,13 @@ def web_server_gui(controller):
 def qt_web_gui(controller):
     import sys
     from soma.qt_gui.qt_backend import Qt
-    from soma.web import SomaBrowserWindow
+    from soma.web import ControllerWidget
     
     app = Qt.QApplication(sys.argv)
-    rw = SomaBrowserWindow(test=controller)
+    rw = ControllerWidget(controller, window_title='read-write')
+    ro = ControllerWidget(controller, window_title='read-only', read_only=True)
     # qt = ControllerWidget(controller)
+    ro.show()
     rw.show()
     # qt.show()
     app.exec_()
