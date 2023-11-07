@@ -3,7 +3,7 @@
 var QtWebEngine = (navigator.userAgent.search('QtWebEngine') >= 0);
 var uniqueIndex = 0;
 var WebBackend;
-
+const backend_ready = new Event('backend_ready');
 
 if (QtWebEngine) {
     const script = document.createElement('script');
@@ -21,6 +21,7 @@ if (QtWebEngine) {
                 this.web_channel = new QWebChannel(qt.webChannelTransport, 
                     async (channel) => {
                         this.backend = this.web_channel.objects.backend;
+                        window.dispatchEvent(backend_ready);
                         const controller_elements = document.querySelectorAll(".controller");
                         controller_elements.forEach(async (controller_element) => {
                             controller_element.classList.add('QtWebEngine');
@@ -32,7 +33,13 @@ if (QtWebEngine) {
         }
 
         async  call(name, path, ...params) {
-            const data = await this.backend.call(`${name}/${path}`, params);
+            let named_path;
+            if (path === undefined) {
+                named_path = name;
+            } else {
+                named_path = `${name}/${path}`;
+            }
+            const data = await this.backend.call(named_path, params);
             if (data._json_error_type) {
                 throw new Error(`${data._json_error_message}`);
             } else {
@@ -142,7 +149,7 @@ class DomController {
         } else {
             p = `${this.controller_name}/${path}`;
         }
-        return await controllers_backend.call(name, p, ...params);
+        return await web_backend.call(name, p, ...params);
     }
 
     async build_dom() {

@@ -13,6 +13,7 @@ from soma.qt_gui.qt_backend import QtWidgets
 from soma.qt_gui.qt_backend.Qt import QObject, QVariant
 from soma.qt_gui.qt_backend.QtCore import QUrl, pyqtSlot
 from soma.qt_gui.qt_backend.QtWebEngineWidgets import QWebEngineView, QWebEnginePage
+from soma.qt_gui.qt_backend.QtWebEngineCore import QWebEngineUrlRequestInterceptor
 from soma.qt_gui.qt_backend.QtWebChannel import QWebChannel
 
 
@@ -285,6 +286,27 @@ class JSONController:
             return result
 
 
+def json_exception(callable):
+    @functools.wraps(callable)
+    def wrapper(*args, **kwargs):
+        try:
+            result = callable(*args, **kwargs)
+            if isinstance(result, dict) and (
+                '_json_result' in result or
+                'json_error_type' in result):
+                return result
+            result = {
+                '_json_result':result
+            }
+            return result
+        except Exception as e:
+            return {
+                '_json_error_type': e.__class__.__name__,
+                '_json_error_message': str(e),
+                '_json_traceback': traceback.format_exc(),
+            }
+    return wrapper
+
 
 class WebBackend(QObject):
     '''
@@ -301,28 +323,6 @@ class WebBackend(QObject):
             self.json_controller[name] = JSONController(controller)
             self.status[name] = {}
         self._file_dialog = None
-
-
-    def json_exception(callable):
-        @functools.wraps(callable)
-        def wrapper(*args, **kwargs):
-            try:
-                result = callable(*args, **kwargs)
-                if isinstance(result, dict) and (
-                    '_json_result' in result or
-                    'json_error_type' in result):
-                    return result
-                result = {
-                    '_json_result':result
-                }
-                return result
-            except Exception as e:
-                return {
-                    '_json_error_type': e.__class__.__name__,
-                    '_json_error_message': str(e),
-                    '_json_traceback': traceback.format_exc(),
-                }
-        return wrapper
 
 
     @pyqtSlot(str, result=QVariant)
@@ -362,7 +362,10 @@ class WebBackend(QObject):
             paths = path.split('/')
             method = getattr(self, paths[0], None)
             if method:
-                return method('/'.join(paths[1:]), *args)
+                if len(paths) > 1:
+                    return method('/'.join(paths[1:]), *args)
+                else:
+                    return method(*args)
             if len(paths) >= 2:
                 method_name, controller_name = paths[:2]
                 method_path = '/'.join(paths[2:])
@@ -436,9 +439,9 @@ class SomaHTTPHandlerMeta(type(http.server.BaseHTTPRequestHandler)):
     allows to instanciate this class with parameters required to
     build a :class:`WebBackend`.
     '''
-    def __new__(cls, name, bases, dict, **kwargs):
+    def __new__(cls, name, bases, dict, web_backend=None):
         if name != 'SomaHTTPHandler':
-            dict['_handler'] = WebBackend(**kwargs)
+            dict['_handler'] = web_backend
         return super().__new__(cls, name, bases, dict)
 
 
@@ -561,6 +564,23 @@ class SomaWebPage(QWebEnginePage):
         super().javaScriptConsoleMessage(level, msg, line, source)
 
 
+class SomaUrlRequestInterceptor(QWebEngineUrlRequestInterceptor):
+    def __init__(self, browser_widget):
+        super().__init__()
+        self.browser_widget = browser_widget
+    
+    def interceptRequest(self, info):
+        url = info.requestUrl()
+        path = url.path()
+        if path.startswith(self.browser_widget.static_path[-1]) and not os.path.exists(path):
+            _, file = path.rsplit('/',1)
+            for static_path in reversed(self.browser_widget.static_path[:-1]):
+                other_path = f'{static_path}/{file}'
+                if os.path.exists(other_path):
+                    url.setPath(other_path)
+                    info.redirect(url)
+                    break
+
 class SomaBrowserWidget(QWebEngineView):
     '''
     Top level widget to display Soma GUI in Qt.
@@ -575,6 +595,7 @@ class SomaBrowserWidget(QWebEngineView):
         if not w:
             try:
                 self.source_window = SomaBrowserWidget(
+                    web_backend=self._handler,
                     starting_url = self.starting_url,
                 )
                 self.source_window.show()
@@ -585,19 +606,22 @@ class SomaBrowserWidget(QWebEngineView):
         return w
 
 
-    def __init__(self, starting_url=None, window_title=None,
-                 read_only=False,
-                 **kwargs):
+    def __init__(self, web_backend, 
+                 starting_url=None, window_title=None,
+                 read_only=False):
         super().__init__()
         self._page = SomaWebPage()
+        self._interceptor = SomaUrlRequestInterceptor(self)
+        self._page.profile().setUrlRequestInterceptor(self._interceptor)
         self.setPage(self._page)
         self.setWindowTitle(window_title or 'Soma Browser')
+        s = os.path.split(os.path.dirname(__file__)) + ('static',)
+        self.static_path = ["/".join(s)]
         if starting_url:
             self.starting_url = starting_url
         else:
-            s = os.path.split(os.path.dirname(__file__)) + ('static', 'controller.html')
-            self.starting_url = f'file://{"/".join(s)}'
-        self._handler = WebBackend(**kwargs)
+            self.starting_url = f'file://{self.static_path[0]}/controller.html'
+        self._handler = web_backend
         self._handler.set_status('controller/read_only', read_only)
         self.channel = QWebChannel()
         self.channel.registerObject('backend', self._handler)
@@ -606,13 +630,12 @@ class SomaBrowserWidget(QWebEngineView):
         self.setUrl(QUrl(self.starting_url))
 
     def set_icon(self):
-        self.setWindowIcon(self.browser.icon())
+        self.setWindowIcon(self.icon())
 
 
 class ControllerWidget(SomaBrowserWidget):
-    def __init__(self, controller, read_only=False, starting_url=None, window_title=None, **kwargs):
-        super().__init__(starting_url=starting_url,
+    def __init__(self, controller, read_only=False, starting_url=None, window_title=None):
+        super().__init__(web_backend=WebBackend(controller=controller),
+                         starting_url=starting_url,
                          window_title=window_title,
-                         read_only=read_only,
-                         controller=controller,
-                         **kwargs)
+                         read_only=read_only)

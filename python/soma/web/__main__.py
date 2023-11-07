@@ -37,9 +37,9 @@ class VisibleController(SubController):
 
 def web_server_gui(controller):
     import http, http.server
-    from soma.web import SomaHTTPHandler
+    from soma.web import SomaHTTPHandler, WebBackend
 
-    class Handler(SomaHTTPHandler, controller=controller):
+    class Handler(SomaHTTPHandler, web_backend=WebBackend(controller=controller)):
         pass
     httpd = http.server.HTTPServer(('', 8080), Handler)
     httpd.serve_forever()
