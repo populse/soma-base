@@ -317,6 +317,8 @@ class WebBackend(QObject):
     '''
     def __init__(self, **controllers):
         super().__init__()
+        s = os.path.split(os.path.dirname(__file__)) + ('static',)
+        self.static_path = ["/".join(s)]
         self.json_controller = {}
         self.status = {}
         for name, controller in controllers.items():
@@ -475,8 +477,6 @@ class SomaHTTPHandler(http.server.BaseHTTPRequestHandler, metaclass=SomaHTTPHand
         # httpd.serve_forever()
     '''
     
-    static_path = os.path.join(os.path.dirname(__file__), 'static')
-
     def __init__(self, request, client_address, server):
         super().__init__(request, client_address, server)
 
@@ -499,16 +499,19 @@ class SomaHTTPHandler(http.server.BaseHTTPRequestHandler, metaclass=SomaHTTPHand
             if len(s) == 2:
                 type, path = s
                 if type == 'static':
-                    filename = os.path.join(self.static_path, path)
-                    try:
-                        s = os.stat(filename)
-                    except FileNotFoundError:
+                    filename = None
+                    for static_path in reversed(self._handler.static_path):
+                        f = os.path.join(static_path, path)
+                        if os.path.exists(f):
+                            filename = f
+                            break
+                    if not filename:
                         self.send_error(http.HTTPStatus.NOT_FOUND, "File not found")
                         return None
                     _, extension = os.path.splitext(filename)
                     mime_type = mimetypes.types_map.get(extension, 'text/plain')
                     header['Content-Type'] = mime_type
-                    header['Last-Modified'] = self.date_time_string(s.st_mtime)
+                    header['Last-Modified'] = self.date_time_string(os.stat(filename).st_mtime)
                     body = open(filename).read()
                     bad_path = False
                 elif type == 'backend':
@@ -572,9 +575,9 @@ class SomaUrlRequestInterceptor(QWebEngineUrlRequestInterceptor):
     def interceptRequest(self, info):
         url = info.requestUrl()
         path = url.path()
-        if path.startswith(self.browser_widget.static_path[-1]) and not os.path.exists(path):
+        if path.startswith(self.browser_widget._handler.static_path[-1]) and not os.path.exists(path):
             _, file = path.rsplit('/',1)
-            for static_path in reversed(self.browser_widget.static_path[:-1]):
+            for static_path in reversed(self.browser_widget._handler.static_path[:-1]):
                 other_path = f'{static_path}/{file}'
                 if os.path.exists(other_path):
                     url.setPath(other_path)
@@ -615,14 +618,12 @@ class SomaBrowserWidget(QWebEngineView):
         self._page.profile().setUrlRequestInterceptor(self._interceptor)
         self.setPage(self._page)
         self.setWindowTitle(window_title or 'Soma Browser')
-        s = os.path.split(os.path.dirname(__file__)) + ('static',)
-        self.static_path = ["/".join(s)]
+        self._handler = web_backend
+        self._handler.set_status('controller/read_only', read_only)
         if starting_url:
             self.starting_url = starting_url
         else:
-            self.starting_url = f'file://{self.static_path[0]}/controller.html'
-        self._handler = web_backend
-        self._handler.set_status('controller/read_only', read_only)
+            self.starting_url = f'file://{self._handler.static_path[0]}/controller.html'
         self.channel = QWebChannel()
         self.channel.registerObject('backend', self._handler)
         self.page().setWebChannel(self.channel)

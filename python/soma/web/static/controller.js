@@ -54,6 +54,7 @@ if (QtWebEngine) {
         constructor(backend_url) {
             this.backend_url = backend_url;
             window.addEventListener("load", async (event) => {
+                window.dispatchEvent(backend_ready);
                 const controller_elements = document.querySelectorAll(".controller");
                 controller_elements.forEach((controller_element) => {
                     this.dom_controller = new DomController(controller_element);
@@ -64,7 +65,13 @@ if (QtWebEngine) {
         }
 
         async call(name, path, ...params) {
-            const response = await fetch(`${this.backend_url}/${name}/${path}`, {
+            let named_path;
+            if (path === undefined) {
+                named_path = name;
+            } else {
+                named_path = `${name}/${path}`;
+            }
+            const response = await fetch(`${this.backend_url}/${named_path}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -159,7 +166,6 @@ class DomController {
         if (this.controller_element.hasAttribute('read_only')) {
             await this.set_status(`${this.controller_name}/read_only`, true);
         }
-        console.log('!build_dom!', JSON.stringify(this.status));
         const elements = this.build_elements(null, null, false, this.schema, view.value);
         for (const element of elements) {
             this.controller_element.appendChild(element);
@@ -463,13 +469,11 @@ class DomController {
             button.type = 'button';
             button.textContent = '📁';
             button.addEventListener('click', async (event) => {
-                const path = await (this.backend_call(`${type.brainvisa.path_type}_selector`));
-                if (path._json_result !== undefined) {
-                    const input = document.getElementById(event.target.getAttribute('for'));
-                    await this.update_controller_then_update_dom(input, path._json_result);
-                    const check = await this.backend_call('get_value', input.id)
-                    input.value = path._json_result;
-                }
+                const path = await (web_backend.call(`${type.brainvisa.path_type}_selector`));
+                const input = document.getElementById(event.target.getAttribute('for'));
+                await this.update_controller_then_update_dom(input, path);
+                const check = await this.backend_call('get_value', input.id)
+                input.value = path;
             });
             div.appendChild(button);
         }
