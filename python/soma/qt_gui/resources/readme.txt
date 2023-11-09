@@ -6,5 +6,5 @@
 # for details.
 ##########################################################################
 
-compile ressources:
+compile resources:
     rcc -binary widgets_icons.qrc -o widgets_icons.rcc

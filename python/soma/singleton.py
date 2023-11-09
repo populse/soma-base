@@ -13,9 +13,9 @@ class Singleton(object):
 
     '''
     Implements the singleton pattern. A class deriving from ``Singleton`` can
-    have only one instance. The first instanciation will create an object and
-    other instanciations return the same object. Note that the :meth:`__init__`
-    method (if any) is still called at each instanciation (on the same object).
+    have only one instance. The first instantiation will create an object and
+    other instantiations return the same object. Note that the :meth:`__init__`
+    method (if any) is still called at each instantiation (on the same object).
     Therefore, :class:`Singleton` derived classes should define
     :meth:`__singleton_init__`
     instead of :py:meth:`__init__` because the former is only called once.

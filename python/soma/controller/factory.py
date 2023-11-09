@@ -9,7 +9,7 @@
 
 '''Base classes for the management of association between Python objects and
 factories (i.e. a function that create something for an object) taking into
-account classes hierachy but without storing anything in the objects classes.
+account classes hierarchy but without storing anything in the objects classes.
 '''
 
 from __future__ import absolute_import
@@ -21,7 +21,7 @@ class MetaFactories(type):
 
     '''This is the metaclass of Factories.
     It intercepts Factories class creation to make sure that they have
-    a _global_factories attibute.'''
+    a _global_factories attribute.'''
 
     def __new__(mcs, name, bases, dictionary):
         if '_global_factories' not in dictionary:

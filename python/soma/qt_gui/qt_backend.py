@@ -6,7 +6,7 @@ This modules handles differences between PyQt and PySide APIs and behaviours,
 and offers a few functions to make it easier to build neutral GUI code, which
 can run using either backend.
 
-The main funcion here is set_qt_backend() which must be called to initialize
+The main function here is set_qt_backend() which must be called to initialize
 the appropriate backend. Most functions of this module assume set_qt_backend()
 has been called first to setup internal variables.
 
@@ -228,7 +228,7 @@ def set_qt_backend(backend=None, pyqt_api=1, compatible_qt5=None):
     See: https://ipython.org/ipython-doc/dev/interactive/reference.html#pyqt-and-pyside
 
     More precisely this means:
-    * If QT_API environement variable is not set, use PyQt5
+    * If QT_API environment variable is not set, use PyQt5
     * if QT_API is set to "pyqt" or "pyqt4", use PyQt4, with PyQt API v2
     * if QT_API is set to "pyside", use PySide
     * if QT_API is set to "pyqt5", use PyQt5
@@ -679,7 +679,7 @@ def init_matplotlib_backend(force=True):
 
 def qimage_to_np(qimage):
     '''
-    Utility function to transorm a Qt QImage into a numpy array suitable
+    Utility function to transform a Qt QImage into a numpy array suitable
     for matplotlib imshow() for instance.
     '''
     import numpy as np
@@ -699,7 +699,7 @@ def qimage_to_np(qimage):
 
 def imshow_widget(widget, figure=None, show=False):
     '''
-    Display a shapshot of a QWidget into a Matplotlib figure using
+    Display a snapshot of a QWidget into a Matplotlib figure using
     pylab.imshow(). This is useful to use the sphinx_gallery module for
     documentation.
     '''

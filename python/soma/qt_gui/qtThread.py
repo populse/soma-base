@@ -105,7 +105,7 @@ class QtThreadCall(singleton.Singleton, QObject):
     def push(self, function, *args, **kwargs):
         """
         Add a function call to the actions list. the call is executed
-        immediatly if current thread is main thread. Otherwise it will be
+        immediately if current thread is main thread. Otherwise it will be
         executed some time in the main thread (asynchronously to the current
         thread). The function return value is ignored and will be lost.
 
@@ -294,7 +294,7 @@ class MainThreadLife(object):
         lock.acquire()
         lock.release()
         # now the process thread should have removed its reference on thing:
-        # we can safely delete it fom here, in the main thread.
+        # we can safely delete it from here, in the main thread.
         del thing  # probably useless
 
 

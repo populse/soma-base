@@ -10,7 +10,7 @@ class GraphNode(object):
     meta : object
         a python object stored in the node
     links_to : list
-         object to store the graph edges: sucessor
+         object to store the graph edges: successor
     links_from : list
         object to store the graph edges: predecessor
     links_to_degree : int

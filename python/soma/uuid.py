@@ -25,7 +25,7 @@ class Uuid(object):
 
     def __init__(self, uuid=None):
         '''
-        Uuid constructor. If *uuid* is ommited or *None*, a new random
+        Uuid constructor. If *uuid* is omitted or *None*, a new random
         Uuid is created; if it is a string if must be 36 characters long and
         follow the pattern::
 

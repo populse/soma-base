@@ -71,7 +71,7 @@ class MinfWriter(metaclass=RegisterMinfWriterClass):
     def createWriter(destFile, format, reducer):
         '''
         This static method create a L{MinfWriter} instance by looking for a
-        registered L{MinfWriter} derived classe named C{format}. Parameters
+        registered L{MinfWriter} derived class named C{format}. Parameters
         C{destFile} and C{reducer} are passed to the derived class constructor.
         @param format: name of the minf format.
         @type  format: string

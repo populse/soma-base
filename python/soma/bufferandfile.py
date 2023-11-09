@@ -50,7 +50,7 @@ class BufferAndFile(object):
     '''
     This class is a read only file-like object that allows to read ahead and
     push data back into the stream. All pushed back data are stored in a buffer
-    that is "read" by all subsequent read acces until it is empty. When the
+    that is "read" by all subsequent read access until it is empty. When the
     buffer is empty, reading is done directly on the attached file object.
 
     Example::
@@ -84,8 +84,8 @@ class BufferAndFile(object):
 
     def unread(self, string_value):
         '''
-        Adds data at the begining of the internal buffer. Data in the internal
-        buffer will be returned by all subsequent read acces until the buffer is empty.
+        Adds data at the beginning of the internal buffer. Data in the internal
+        buffer will be returned by all subsequent read access until the buffer is empty.
         '''
         self.__buffer = string_value + self.__buffer
 

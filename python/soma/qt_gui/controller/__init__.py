@@ -81,10 +81,10 @@ class ScrollableWidgetsGrid(Qt.QScrollArea):
     """
     A widget that is used for Controller main windows (i.e.
     top level widget).
-    It has a 2 colums grid layout aligned ont the top of the
+    It has a 2 columns grid layout aligned ont the top of the
     window. It allows to add many inner_widgets rows. Each
     row contains either 1 or 2 widgets. A single widget uses
-    the two colums of the row.
+    the two columns of the row.
     """
 
     def __init__(self, depth=0, *args, **kwargs):

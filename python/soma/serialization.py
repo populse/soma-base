@@ -28,7 +28,7 @@ class JSONSerializable(object):
     def to_json(self):
         '''
         Return a JSON serialization of self. The returned object can be given
-        to :func:`from_json` to create another instance that is eqivalent to
+        to :func:`from_json` to create another instance that is equivalent to
         self.
         Here, equivalent means that all attributes values are the same and the
         methods called with the same parameters give the same results.
@@ -107,7 +107,7 @@ def find_factory(reference):
     separated by a dot. For instance ``'my_packages.my_module.my_factory'``
     would refer to the item *my_factory* in the module
     ``my_packages.my_module``.
-    This funcion simply loads the module and returns the module attribute with
+    This function simply loads the module and returns the module attribute with
     the factory name.
     
     :class:`exceptions.ValueError` is raised if the factory cannot be found.

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 def dict_to_table(data_dict, shape_dict):
-    ''' Tranform a dictionary into a table shape
+    ''' Transform a dictionary into a table shape
     (list of list, each sublist having the same size)
 
     The first line will be the header (name of columns).
