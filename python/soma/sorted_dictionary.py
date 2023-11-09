@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 '''
 Sorted dictionary behave like a dictionary but keep the item insertion
 order.

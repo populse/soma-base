@@ -1,10 +1,9 @@
-# -*- coding: utf-8 -*-
 from collections.abc import MutableMapping, MutableSequence
 
 '''
 This module define DictWithProxy and ListWithPRoxy classes that behave like
 dict and list but allows to proxy to values. When the same proxy is used at
-several places in these containers, any change to one proxy value also changes 
+several places in these containers, any change to one proxy value also changes
 all other values of the same proxy.
 
 
@@ -44,7 +43,7 @@ class ContainerWithProxy:
         elif all_proxies == False:
             all_proxies = None
         self.all_proxies = all_proxies
-        
+
     def proxy(self, value):
         '''
         Add the value to the list of shared values of the container and the
@@ -142,7 +141,7 @@ class ContainerWithProxy:
         if no_proxy is not None:
             return no_proxy()
         return value
-    
+
 class DictWithProxy(MutableMapping, ContainerWithProxy):
     def __init__(self, init=None, all_proxies=False, _content=None, _proxy_values=None):
         '''
@@ -159,7 +158,7 @@ class DictWithProxy(MutableMapping, ContainerWithProxy):
 
     def __getitem__(self, key):
         return self.get_value(self.content[key])
-    
+
     def __setitem__(self, key, value):
         current_value = self.content.get(key)
         if self.is_proxy(current_value):
@@ -169,10 +168,10 @@ class DictWithProxy(MutableMapping, ContainerWithProxy):
 
     def __delitem__(self, key):
         del self.content[key]
-    
+
     def __iter__(self):
         return self.content.__iter__()
-    
+
     def __len__(self):
         return self.content.__len__()
 
@@ -195,10 +194,10 @@ class ListWithProxy(MutableSequence, ContainerWithProxy):
         if init is not None:
             for v in init:
                 self.append(v)
-            
+
     def __getitem__(self, index):
         return self.get_value(self.content[index])
-    
+
     def __setitem__(self, index, value):
         current_value = self.content[index]
         if self.is_proxy(current_value):
@@ -208,7 +207,7 @@ class ListWithProxy(MutableSequence, ContainerWithProxy):
 
     def __delitem__(self, key):
         del self.content[key]
-        
+
     def __len__(self):
         return self.content.__len__()
 

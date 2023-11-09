@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 '''
 QLineEditModificationTimer and TimeredQLineEdit classes associate a
 QtCore.QTimer to a QtGui.QLineEdit in order to signal user
@@ -163,7 +161,7 @@ class TimeredQLineEdit(QPredefLineEdit):
     def focusInEvent(self, event):
         super().focusInEvent(event)
         self.focusChange.emit(True)
-    
+
     def focusOutEvent(self, event):
         super().focusOutEvent(event)
         self.focusChange.emit(False)

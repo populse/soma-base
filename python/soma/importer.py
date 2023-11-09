@@ -1,6 +1,3 @@
-# -*- coding: utf-8 -*-
-
-
 '''
 Utility classes and functions for Python import and sip namespace renaming.
 '''

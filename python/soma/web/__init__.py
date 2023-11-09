@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import functools
 import json
 import http, http.server
@@ -26,7 +25,7 @@ real web server or in a server-less QtWebEngineWidget.
 class JSONController:
     def __init__(self, controller):
         self.controller = controller
-        self._schema = None    
+        self._schema = None
 
 
     def get_schema(self):
@@ -115,7 +114,7 @@ class JSONController:
             raise NotImplementedError()
         self._schema = None
         return True
-    
+
 
     def new_named_item(self, path, key):
         container, path_item, container_type = self._parse_path(path)
@@ -137,7 +136,7 @@ class JSONController:
         self._schema = None
         return key
 
-    
+
     def get_type(self, path=None):
         schema = self.get_schema()
         current_type = self._resolve_schema_type(schema, schema)
@@ -183,7 +182,7 @@ class JSONController:
                         result[k] = v
             type = result
         return type
-    
+
     def _parse_path(self, path):
         if path:
             split_path = path.split('/')
@@ -249,8 +248,8 @@ class JSONController:
                 if value is not undefined:
                     for f in value.fields():
                         if not f.class_field or (
-                                isinstance(f.type, type) and 
-                                issubclass(f.type, Controller) and 
+                                isinstance(f.type, type) and
+                                issubclass(f.type, Controller) and
                                 getattr(value, f.name).has_instance_fields()):
                             properties[f.name] = cls._build_json_schema(f, f.type, getattr(value, f.name), defs)
             elif value_type.__name__ == 'list':
@@ -259,7 +258,7 @@ class JSONController:
                         'type': 'array',
                         'items': cls._build_json_schema(None, value_type.__args__[0], undefined, defs)
                     }
-                    
+
                 else:
                     error = True
             elif value_type.__name__ == 'Literal':
@@ -275,7 +274,7 @@ class JSONController:
                 error = True
         else:
             result = result.copy()
-        
+
         if error:
             raise TypeError(f'Type not compatible with JSON schema: {type_str(value_type)}')
         else:
@@ -351,12 +350,12 @@ class WebBackend(QObject):
         ----------
         path: str
             path extracted from the request URL. If the URL path contains
-            several / separated elements, this parameter only contains the 
+            several / separated elements, this parameter only contains the
             first one. The others are passed in `args`.
         args: list[str]
             List of parameters extracted from URL path. These parameters are
             passed to the method corresponding to `path`.
-        
+
         '''
         if path:
             if path[0] == '/':
@@ -375,7 +374,7 @@ class WebBackend(QObject):
                 if method:
                     if method_path:
                         args = [method_path] + args
-                    return method(*args)                            
+                    return method(*args)
         raise ValueError(f'Invalid path: {path}')
 
 
@@ -418,7 +417,7 @@ class WebBackend(QObject):
                 path = '/'.join(splitted)
                 status[path] = value
                 return path
-        return None    
+        return None
 
     @pyqtSlot(str, result=QVariant)
     @json_exception
@@ -432,7 +431,7 @@ class WebBackend(QObject):
                 splitted[-1] = '_' + splitted[-1]
                 path = '/'.join(splitted)
                 return status.get(path)
-        return None    
+        return None
 
 
 class SomaHTTPHandlerMeta(type(http.server.BaseHTTPRequestHandler)):
@@ -476,7 +475,7 @@ class SomaHTTPHandler(http.server.BaseHTTPRequestHandler, metaclass=SomaHTTPHand
         # httpd = http.server.HTTPServer(('', 8080), Handler)
         # httpd.serve_forever()
     '''
-    
+
     def __init__(self, request, client_address, server):
         super().__init__(request, client_address, server)
 
@@ -528,9 +527,9 @@ class SomaHTTPHandler(http.server.BaseHTTPRequestHandler, metaclass=SomaHTTPHand
             self.send_error(500, str(e))
             raise
             return None
-        
+
         self.send_response(http.HTTPStatus.OK)
-        # The following line introduces a security issue by allowing any 
+        # The following line introduces a security issue by allowing any
         # site to use the backend. But this is a demo only server.
         self.send_header('Access-Control-Allow-Origin', '*')
         self.send_header('Access-Control-Allow-Methods', 'GET,POST')
@@ -548,7 +547,7 @@ class SomaHTTPHandler(http.server.BaseHTTPRequestHandler, metaclass=SomaHTTPHand
             self.end_headers()
 
     def do_OPTIONS(self):
-        # The following line introduces a security issue by allowing any 
+        # The following line introduces a security issue by allowing any
         # site to use the backend. But this is a demo only server.
         self.send_response(http.HTTPStatus.OK)
         self.send_header('Access-Control-Allow-Origin', '*')
@@ -571,7 +570,7 @@ class SomaUrlRequestInterceptor(QWebEngineUrlRequestInterceptor):
     def __init__(self, browser_widget):
         super().__init__()
         self.browser_widget = browser_widget
-    
+
     def interceptRequest(self, info):
         url = info.requestUrl()
         path = url.path()
@@ -588,7 +587,7 @@ class SomaBrowserWidget(QWebEngineView):
     '''
     Top level widget to display Soma GUI in Qt.
     '''
-    
+
     def createWindow(self, wintype):
         '''
         Reimplements :meth:`SomaWebEngineView.createWindow` to allow the browser
@@ -609,7 +608,7 @@ class SomaBrowserWidget(QWebEngineView):
         return w
 
 
-    def __init__(self, web_backend, 
+    def __init__(self, web_backend,
                  starting_url=None, window_title=None,
                  read_only=False):
         super().__init__()

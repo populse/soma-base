@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import sys
 
 
@@ -15,7 +14,7 @@ class JSONSerializable(object):
     '''
     Instances of classes deriving from `JSONSerializable` can be serialized
     in a JSON compatible object with :meth:`to_json` method. This JSON object
-    contains a reference to a factory as well as the full state of the 
+    contains a reference to a factory as well as the full state of the
     instance. Calling the factory with the state of the instance makes it
     possible to recreate the instance (this is what function :func:`from_json`
     is doing). A typical usage of this serialization system is to store the
@@ -58,7 +57,7 @@ def from_json(json_serialization):
     Takes a JSON serialization object (typically created by a
     :meth:`JSONSerializable.to_json` method) and create and return the
     corresponding instance.
-    
+
     A JSON serialization object can have one of the following structures:
     - A simple string containing a factory reference
     - A list with one, two or three of the following items:
@@ -69,10 +68,10 @@ def from_json(json_serialization):
           for the factory
         - kwargs: an optional item containing a dictionary of parameters
           for the factory
-    
+
     A reference to a factory identifies a :class:`callable` (e.g a function or
     a class) in a Python module. It is a string containing the module name
-    and the callable name separated by a dot. For instance 
+    and the callable name separated by a dot. For instance
     ``'catidb.data_models.catidb_3_4'`` would identify the *catidb_3_4*
     callable in the *catidb.data_models* module.
     '''
@@ -109,7 +108,7 @@ def find_factory(reference):
     ``my_packages.my_module``.
     This function simply loads the module and returns the module attribute with
     the factory name.
-    
+
     :class:`exceptions.ValueError` is raised if the factory cannot be found.
     '''
     split = reference.rsplit('.', 1)

@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 from soma.controller import Controller
 
 from soma.undefined import undefined

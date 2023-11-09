@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 '''
 This module contains the L{XHTML} class that contains an XHTML tree that
 can be saved in minf files.

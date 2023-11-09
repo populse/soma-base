@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 
 from soma.qt_gui.qt_backend import Qt, QtCore
 from soma.undefined import undefined
@@ -372,7 +371,7 @@ class ControllerFieldInteraction:
 
     def get_label(self):
         return self.field.metadata('label', self.field.name)
-    
+
     def on_change_add(self, callback):
         self.controller.on_attribute_change.add(callback, self.field.name)
 
@@ -418,7 +417,7 @@ class ListItemInteraction:
     def set_value(self, value):
         self.parent_interaction.get_value()[self.index] = value
         self.parent_interaction.inner_value_changed([self.index])
-        
+
     def set_inner_value(self, value, index):
         all_values = self.get_value()
         container = type(all_values)
@@ -438,7 +437,7 @@ class ListItemInteraction:
 
     def get_label(self):
         return f'{self.parent_interaction.get_label()}[{self.index}]'
-    
+
     def on_change_add(self, callback):
         pass
 
@@ -458,7 +457,7 @@ class ListItemInteraction:
         doc = '<b>item type:</b> %s' % str(self.type_str)
         return doc
 
- 
+
 
 class DefaultWidgetFactory(WidgetFactory):
     def create_widgets(self):

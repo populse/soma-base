@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """QImage <-> numpy.ndarray conversion module.
 
 *** ATTENTION: This code is outdated - I released a better extension

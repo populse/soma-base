@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from .list import (ListStrWidgetFactory, ListIntWidgetFactory,
                    ListFloatWidgetFactory, ListAnyWidgetFactory)
 from . import WidgetFactory

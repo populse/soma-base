@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 '''
 Base classes for writing various minf formats (XML, HDF5, Python's pickle, etc.)
 '''

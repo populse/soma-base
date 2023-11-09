@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 '''
 This module contains all the framework necessary to customize, read and
 write minf files. A minf file is composed of structured data saved in

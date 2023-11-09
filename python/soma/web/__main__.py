@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from soma.controller import (Controller,
                              field,
                              OpenKeyController,
@@ -44,12 +43,12 @@ def web_server_gui(controller):
     httpd = http.server.HTTPServer(('', 8080), Handler)
     httpd.serve_forever()
 
-    
+
 def qt_web_gui(controller):
     import sys
     from soma.qt_gui.qt_backend import Qt
     from soma.web import ControllerWidget
-    
+
     app = Qt.QApplication(sys.argv)
     rw = ControllerWidget(controller, window_title='read-write')
     ro = ControllerWidget(controller, window_title='read-only', read_only=True)

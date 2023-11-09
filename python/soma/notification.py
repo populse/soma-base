@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 '''
 This module provides a notification system that can be used to register
 callbacks (*i.e* Python callables) that will all be called by a single

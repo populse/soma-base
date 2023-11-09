@@ -9,16 +9,16 @@ if (QtWebEngine) {
     const script = document.createElement('script');
     script.type = 'text/javascript';
     script.src = 'qrc:///qtwebchannel/qwebchannel.js';
-    document.head.appendChild(script);        
+    document.head.appendChild(script);
 
     WebBackend = class {
         web_channel;
         backend;
-        
+
         constructor(backend_url) {
 
             window.addEventListener("load", (event) => {
-                this.web_channel = new QWebChannel(qt.webChannelTransport, 
+                this.web_channel = new QWebChannel(qt.webChannelTransport,
                     async (channel) => {
                         this.backend = this.web_channel.objects.backend;
                         window.dispatchEvent(backend_ready);
@@ -45,7 +45,7 @@ if (QtWebEngine) {
             } else {
                 return data._json_result;
             }
-        }        
+        }
     }
 } else {
     WebBackend = class {
@@ -61,7 +61,7 @@ if (QtWebEngine) {
                     this.dom_controller.build_dom();
                 });
             });
-        
+
         }
 
         async call(name, path, ...params) {
@@ -140,7 +140,7 @@ class DomController {
         return type
     }
 
-    
+
     constructor (controller_element) {
         this.controller_element = controller_element;
         this.controller_name = controller_element.getAttribute('name');
@@ -179,7 +179,7 @@ class DomController {
         return this.status[splitted.join('/')];
     }
 
-    
+
     async set_status(path, value) {
         const p = await this.backend_call('set_status', `${controller_name}/${id}`, value);
         let splitted = p.split('/');
@@ -263,8 +263,8 @@ class DomController {
                                 }
                             }
                         }
-                        
-                        
+
+
                         const cancel_new_object_item = (tmp_id) => {
                             const input = document.getElementById(tmp_id);
                             input.nextElementSibling.remove();
@@ -357,7 +357,7 @@ class DomController {
         if (this.is_read_only(id)) {
             input.setAttribute('readonly', "");
         }
-        input.addEventListener('change', async event => 
+        input.addEventListener('change', async event =>
             await this.update_controller_then_update_dom(event.target, event.target.value));
         if (value !== undefined) {
             input.value = value.toString();
@@ -460,7 +460,7 @@ class DomController {
     }
 
     build_elements_file(id, label, deletable, type, value) {
-        let div;        
+        let div;
         if (! this.is_read_only(id) && QtWebEngine) {
             div = document.createElement('div');
             div.classList.add("button_and_element");
@@ -491,7 +491,7 @@ class DomController {
             input.value = value;
         }
         if (div) div.appendChild(input);
-        
+
         if (label) {
             const l = document.createElement('label');
             l.setAttribute('for', id);
@@ -578,7 +578,7 @@ class DomController {
         for (const index in value) {
             const deletable = ! this.is_read_only(id);
             for (const element of this.build_elements(`${id}/${index}`, `[${index}]`, deletable, type.items, value[index])) {
-                fieldset.appendChild(element);            
+                fieldset.appendChild(element);
             }
         }
         return [fieldset];
@@ -588,7 +588,7 @@ class DomController {
     build_elements_array_string(id, label, deletable, type, value) {
         if (type.items.enum ||
             (QtWebEngine && type.brainvisa.path_type)) {
-            return undefined;        
+            return undefined;
         }
         const textarea = document.createElement('textarea');
         textarea.id = id;
@@ -598,7 +598,7 @@ class DomController {
         }
         textarea.addEventListener('change', async event =>
             await this.update_controller_then_update_dom(
-                event.target, 
+                event.target,
                 event.target.value.trim().split(/\r?\n|\r|\n/g)));
         const rows = Math.min(20, Math.max(5,value.length));
         textarea.setAttribute('rows', rows);

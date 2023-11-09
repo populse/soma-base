@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 
 from . import ControllerWidgetFactory, ControllerSubwidget
 from ..collapsible import CollapsibleWidget

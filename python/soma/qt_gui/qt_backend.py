@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 '''Compatibility module for PyQt and PySide. Currently supports PyQt4,
 PySide, and PyQt5.
 This modules handles differences between PyQt and PySide APIs and behaviours,
@@ -90,7 +88,7 @@ class QtImporter(object):
 
         if name == 'sip':
             return sip
-        
+
         if imp_module_name == 'Qt' and (qt_backend in ('PySide', 'PyQt6')
                                         or sip.SIP_VERSION >= 0x060000):
             # PySide and PyQt6 don't define the aggregating Qt module

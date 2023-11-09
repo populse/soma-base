@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import re, inspect, textwrap, pydoc
 import sphinx
 import collections

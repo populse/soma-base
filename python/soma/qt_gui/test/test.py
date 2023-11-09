@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import sys
 
 from soma.qt_gui.qt_backend import Qt
@@ -13,7 +12,7 @@ from soma.controller import (
     Union,
     Dict,
     Set
-) 
+)
 
 class CustomController(Controller):
     s: str
@@ -37,7 +36,7 @@ class TestControls(Controller):
 
     n: field(type_=float, group='float')
     on: field(type_=float, optional=True, group='float')
-    ln: field(type_=List[float], group='float') 
+    ln: field(type_=List[float], group='float')
     oln: field(type_=List[float], output=True, group='float')
     lln: field(type_=List[List[float]], label='list^2[float]', group='float')
     llln: field(type_=List[List[List[float]]], label='list^3[float]', group='float')
@@ -51,12 +50,12 @@ class TestControls(Controller):
     oe: field(type_=Literal['one', 'two', 'three'], output=True, group='enum')
     le: field(type_=List[Literal['one', 'two', 'three']], group='enum')
     ole: field(type_=List[Literal['one', 'two', 'three']], output=True, group='enum')
-    
+
     f: file(group='file')
     of: file(write=True, group='file')
     lf: field(type_=List[file()], group='file')
     olf: field(type_=List[file(write=True)], group='file')
-    
+
     d: directory(group='directory')
     od: directory(write=True, group='directory')
     ld: field(type_=List[directory()], group='directory')

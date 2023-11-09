@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 '''
 Some useful functions to manage file or directorie names.
 '''
@@ -156,13 +154,13 @@ def parse_query_string(path):
     =======
     '''
     from urllib import parse as urlparse
-        
+
     url_parsed = urlparse.urlparse(path)
     qs_parsed = urlparse.parse_qs(url_parsed.query)
-    
+
     return dict([(k, v[0]) if isinstance(v, list) and len(v) == 1 else (k, v) \
                  for k, v in qs_parsed.items()])
-    
+
 
 class QueryStringParamUpdateMode(object):
     REPLACE = 0
@@ -315,10 +313,10 @@ def update_query_string(
 
     url_parsed = strict_urlparse(path)
     url_params = urlparse.parse_qs(url_parsed.query)
-    
+
     if isinstance(params, (list, tuple)):
         params = dict([(p, '') for p in params])
-        
+
 
     # Update parameters dictionary
     for p, v in params.items():
@@ -339,17 +337,17 @@ def update_query_string(
 
             else:
                 url_params.setdefault(p, list()).append(v)
-                
+
         elif update_mode == QueryStringParamUpdateMode.REMOVE:
             del url_params[p]
-            
+
         else:
             raise RuntimeError('params_update_mode is not specified correctly. %s is '
                                'not a valid value for parameter %s. Valid values are '
                                'either QueryStringParamUpdateMode.APPEND, either'
                                'QueryStringParamUpdateMode.REPLACE.' % (v, p))
-        
-        
+
+
     url_new = list(url_parsed)
     url_new[4] = urllib.urlencode(url_params, doseq=True)
 

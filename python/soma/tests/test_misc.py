@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 from __future__ import print_function
 
 # obsolete modules which seem never to be used:
@@ -115,7 +113,7 @@ class TestSomaMisc(unittest.TestCase):
 
         def other_func(x, y, z, t):
             return x + y + z + t
-        
+
         class TmpObject(object):
             def meth(self, x, y, z, t):
                 return x + y + z + t
