@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import json
 import unittest
 
@@ -200,15 +198,15 @@ class TestController(unittest.TestCase):
 
         self.maxDiff = 1000
         self.assertEqual(calls, [
-            [], 
-            [42], 
-            [42, 0], 
+            [],
+            [42],
+            [42, 0],
             [42, 0, 'static_int'],
             [42, 0, 'static_int', o],
             [42, 0, 'static_int', o, None],
-            [], 
-            ['x'], 
-            ['x', 'default'], 
+            [],
+            ['x'],
+            ['x', 'default'],
             ['x', 'default', 'dynamic_str'],
             ['x', 'default', 'dynamic_str', o],
             ['x', 'default', 'dynamic_str', o, None],
@@ -220,7 +218,7 @@ class TestController(unittest.TestCase):
         self.assertEqual(f.type, int)
         self.assertEqual(f.default, 0)
         self.assertEqual(f.metadata('class_field'), False)
-        
+
         n = 'dynamic_str'
         f = o.field(n)
         self.assertEqual(f.name, 'dynamic_str')
@@ -254,15 +252,15 @@ class TestController(unittest.TestCase):
     def test_open_key_controller(self):
         class ControllerOfController(OpenKeyController[OpenKeyController]):
             static : str = 'present'
-        
+
         o = ControllerOfController()
         o.new_controller = {'first': 1,
                             'second': 'two'}
         self.assertEqual(o.static, 'present')
         self.assertEqual([i.name for i in o.fields()], ['static', 'new_controller'])
         self.assertEqual(o.new_controller.asdict(), {'first': '1', 'second': 'two'})
-    
-    
+
+
     def test_field_doc(self):
         class Blop(Controller):
             pass
@@ -311,35 +309,35 @@ class TestController(unittest.TestCase):
         class Base(Controller):
             def __init__(self, **kwargs):
                 super().__init__(**kwargs)
-            
+
             base1: str
             base2: str = 'base2'
-        
+
         class Derived(Base):
             derived1: str
             derived2: str = 'derived2'
-        
+
         o = Base()
         o = Derived()
         o.add_field('instance1', str)
         o.add_field('instance2', str, default='instance2')
-        self.assertEqual([i.name for i in o.fields()], 
-                         ['base1', 'base2', 
+        self.assertEqual([i.name for i in o.fields()],
+                         ['base1', 'base2',
                           'derived1', 'derived2',
                           'instance1', 'instance2'])
-        self.assertEqual(o.asdict(), 
-            {'base2': 'base2', 
+        self.assertEqual(o.asdict(),
+            {'base2': 'base2',
              'derived2': 'derived2',
              'instance2': 'instance2'})
 
 
     def test_modify_metadata(self):
-        class C(Controller):        
+        class C(Controller):
             s: field(type_=str,
                      default='',
                      custom='value')
-        
-        
+
+
         o = C()
         o.add_field('d', str, another='value')
 
@@ -355,7 +353,7 @@ class TestController(unittest.TestCase):
         self.assertEqual(o.field('d').new, 'value')
         self.assertGreater(o.field('d').order, o.field('s').order)
 
-    def test_field_types(self):        
+    def test_field_types(self):
         class C(Controller):
             s: str
             os: field(type_=str, output=True)
@@ -381,12 +379,12 @@ class TestController(unittest.TestCase):
             oe: field(type_=Literal['one', 'two', 'three'], output=True)
             le: List[Literal['one', 'two', 'three']]
             ole: field(type_=List[Literal['one', 'two', 'three']], output=True)
-            
+
             f: File
             of: field(type_=File, write=True)
             lf: List[File]
             olf: field(type_=List[File], write=True)
-            
+
             d: Directory
             od: field(type_=Directory, write=True)
             ld: List[Directory]
@@ -726,7 +724,7 @@ class TestController(unittest.TestCase):
                     'name': 'olu',
                     'output': True,
                     'str': 'List[Union[str,List[str]]]'},
-            
+
             'm': {
                     'path_type': None,
                     'is_path': False,
@@ -763,7 +761,7 @@ class TestController(unittest.TestCase):
                     'name': 'olm',
                     'output': True,
                     'str': 'List[dict]'},
-            
+
             'mt': {
                     'path_type': None,
                     'is_path': False,
@@ -975,7 +973,7 @@ class TestController(unittest.TestCase):
     def test_json(self):
 
         c1 = SerializableController(
-            s='toto', 
+            s='toto',
             i=42,
             n=12.34,
             b=True,
@@ -992,7 +990,7 @@ class TestController(unittest.TestCase):
             # Here the field type is Controller but the value type
             # is SerializableController.
             # c=SerializableController(
-            #     s='toto', 
+            #     s='toto',
             #     i=42,
             #     n=12.34,
             #     b=True),
@@ -1010,7 +1008,7 @@ class TestController(unittest.TestCase):
     def test_validator(self):
         class C(Controller):
             s : Literal['a', 'b']
-        
+
             @pydantic.validator('*', pre=True)
             def to_lower(cls, value):
                 if isinstance(value, str):
@@ -1026,7 +1024,7 @@ class TestController(unittest.TestCase):
             class_file: File
             class_int: int = 32
             class_not_list: File = '/here'
-        
+
         c = C()
         c.add_field('instance_file', type_=File)
         c.add_field('instance_int', type_=int)
@@ -1077,7 +1075,7 @@ class TestController(unittest.TestCase):
         ic.change_proxy('list_changing', proxy_field='instance_file')
         self.assertEqual(ic.field('list_changing').type, list[File])
         self.assertEqual(ic.field('list_changing').path_type, 'file')
-        
+
 def test():
     suite = unittest.TestLoader().loadTestsFromTestCase(TestController)
     runtime = unittest.TextTestRunner(verbosity=2).run(suite)

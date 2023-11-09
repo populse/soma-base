@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 '''
 A minf tree is used to convert Python objects into a structure that can be written in any minf format. When a Python object is written into a minf file, if it cannot be directly stored in the chosen minf format, it is transformed in a minf tree by a L{MinfReducer}. During reading, minf trees are converted into Python objects by a L{MinfExpander}. Whatever the minf format used (XML, Python, HDF5, etc.) reading and writing objects is always done with a L{MinfReducer}/L{MinfExpander} pair. Each L{MinfReducer}/L{MinfExpander} pair is identified by a name. The name of one L{MinfReducer}/L{MinfExpander} pair must be chosen when writing a minf file, this name is recorded in the minf file and used for reading.
 

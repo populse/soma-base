@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 '''
 Writing of XML minf format.
 '''

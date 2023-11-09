@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 This module contains some classes to manage python tests.
 

@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 '''
 Run worker functions in separate processes.
 

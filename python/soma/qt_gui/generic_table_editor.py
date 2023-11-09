@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 from soma.qt_gui.qt_backend.Qt import *
 import re
 import os

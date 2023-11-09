@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import dataclasses
 import re
 import sys
@@ -139,7 +137,7 @@ def parse_type_str(type_str):
                     if type == 'Literal':
                         subtypes = [eval(i) for i in inner.split(',')]
                     else:
-                        subtypes = [i.format(**substitution) for i in inner.split(',')] 
+                        subtypes = [i.format(**substitution) for i in inner.split(',')]
                     return (type, subtypes)
         else:
             return (type, [])
@@ -251,7 +249,7 @@ class Field:
     allowed_extensions: list[str]
         for path fields, list the allowed file extensions for it. This metadata
         should be replaced with a proper format handling, in the future.
-    '''    
+    '''
     def __init__(self, dataclass_field):
         super().__setattr__('_dataclass_field', dataclass_field)
 
@@ -261,7 +259,7 @@ class Field:
         :class:`~.controller.Controller` field name.
         '''
         return self._dataclass_field.name
-    
+
     @property
     def type(self):
         ''' field type
@@ -277,13 +275,13 @@ class Field:
         ''' For internal use only. Use default_value() instead.
         '''
         return self._dataclass_field.default
-    
+
     @property
     def default_factory(self):
         ''' default value factory. See :func:`dataclasses.field` for more
         details.
         '''
-        return self._dataclass_field.default_factory        
+        return self._dataclass_field.default_factory
 
     def type_str(self):
         ''' string representation of the field type
@@ -355,7 +353,7 @@ class Field:
     @property
     def output(self):
         return self.metadata('output', False)
-    
+
     def is_output(self):
         ''' Tells is the field is an output, from a pipelining point of view.
 
@@ -390,12 +388,12 @@ class Field:
         if value is undefined:
             value = self.type()
         return value
-    
+
     def is_list(self):
         ''' True if the field type is a list
         '''
         return is_list(self.type)
-    
+
     @property
     def optional(self):
         ''' True if the field is optional, that is a value is not needed for the parent :class:`~.controller.Controller` to be valid.
@@ -423,7 +421,7 @@ class Field:
     @doc.setter
     def doc(self, doc):
         self.__setattr__('doc', doc)
-    
+
     @doc.deleter
     def doc(self):
         self.__delattr__('doc')
@@ -438,14 +436,14 @@ class Field:
 
 
 def field(
-         name=None, 
+         name=None,
          type_=None,
-         default=dataclasses.MISSING, 
-         default_factory=dataclasses.MISSING, 
-         init=None, 
+         default=dataclasses.MISSING,
+         default_factory=dataclasses.MISSING,
+         init=None,
          repr=None,
-         hash=None, 
-         compare=None, 
+         hash=None,
+         compare=None,
          metadata=None,
          field_class=Field,
          proxy_controller=None,
@@ -550,7 +548,7 @@ class FieldProxy:
         if name == self.name:
             return getattr(self._proxy_controller, self._proxy_field)
         return getattr(self.target_field, name)
-    
+
     def __setattr__(self, name, value):
         if name == self.name:
             setattr(self._proxy_controller, self._proxy_field, value)
@@ -574,13 +572,13 @@ class ListProxy(Field):
         metadata = self._dataclass_field.metadata
         return metadata['_proxy_controller'].field(
             metadata['_proxy_field'])
-    
+
     @property
     def name(self):
         if self._name is None:
             return self.target_field.name
         return self._name
-    
+
     @property
     def type(self):
         return list[self.target_field.type]
@@ -590,22 +588,22 @@ class ListProxy(Field):
         if self._default is dataclasses.MISSING:
             return self.target_field.default
         return self._default
-    
+
     @property
     def default_factory(self):
         if self._default_factory is dataclasses.MISSING:
             return self.target_field.default_factory
         return self._default_factory
-    
+
     def metadata(self, name=None, default=None):
         return self.target_field.metadata(name=name, default=default)
-    
+
     def __getattr__(self, name):
         value = self._dataclass_field.metadata['_metadata'].get(name, undefined)
         if value is undefined:
             value =  getattr(self.target_field, name)
         return value
-    
+
     def __delattr__(self, name):
         raise TypeError('ListProxy are read-only')
 
@@ -648,7 +646,7 @@ class ListProxy(Field):
     @doc.setter
     def doc(self, doc):
         raise TypeError('ProxyField are read-only')
-    
+
     @doc.deleter
     def doc(self):
         raise TypeError('ProxyField are read-only')
@@ -659,7 +657,7 @@ class ListMeta(type):
     def __getitem__(cls, type):
         if isinstance(type, Field):
             result = field(
-                type_=List[type.type], 
+                type_=List[type.type],
                 metadata=type.metadata())
         else:
             result = typing.List[type]

@@ -6,9 +6,9 @@ dedicated class derived from :py:class:`WidgetFactory`. This class must define
 two methods:
 
 - :py:meth:`create_widgets` that creates one or two widget to interact with the
-  controller field and add them to the layout with 
+  controller field and add them to the layout with
   ``self.controller_widget.add_widget_row(widget1, widget2)``
-- :py:meth:`delete_widgets` that calls 
+- :py:meth:`delete_widgets` that calls
   ``self.controller_widget.remove_widget_row()`` to remove the widgets from the
   parent layout and then free any resource created for the widgets.
 
@@ -66,5 +66,3 @@ controller are:
 - :py:meth:`is_optional`: get the optional metadata of this item.
 - :py:meth:`inner_value_changed`: indicate that an inner item value had been changed
   to launch the necessary callbacks.
-
-  

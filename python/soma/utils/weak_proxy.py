@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 '''Utility functions to make a weak proxy which also keeps an access to its original object reference. :func:`weakref.proxy` doesn't allow this, but functions that check types (C+/Python bindings for instance) cannot work with proxies.
 
 We build such a proxy by setting a :func:`weakref.ref` object in the proxy (actually in the object itself).

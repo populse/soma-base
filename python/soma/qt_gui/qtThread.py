@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 This module enables to make a function to be executed in qt thread (main
 thread).

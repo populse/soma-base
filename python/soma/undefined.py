@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 from soma.singleton import Singleton
 '''
 attr:`undefined` is a constant that can be used as

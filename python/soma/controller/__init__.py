@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 try:
     from pydantic.v1 import ValidationError
 except ImportError:

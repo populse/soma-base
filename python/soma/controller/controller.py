@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 from collections import OrderedDict
 import copy
 import dataclasses
@@ -227,7 +225,7 @@ class ControllerMeta(type):
                     dataclass_namespace[i] = field_type._dataclass_field
                 else:
 
-                    dataclass_namespace[i] = field(type_=type_.__args__[0], 
+                    dataclass_namespace[i] = field(type_=type_.__args__[0],
                                                    default=value,
                                                    class_field=class_field,
                                                    order=_order)._dataclass_field
@@ -286,7 +284,7 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
         if cls is Controller:
             return EmptyController()
         return super().__new__(cls)
-    
+
     @classmethod
     def class_field(cls, name):
         f = cls._controller_dataclass.__dataclass_fields__[name]
@@ -299,7 +297,7 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
         parent classes
         '''
         yield from (i.metadata['_field_class'](i) for i in cls._controller_dataclass.__dataclass_fields__.values())
-    
+
     @classmethod
     def this_class_fields(cls):
         '''
@@ -355,7 +353,7 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
                 del super().__getattribute__('_dyn_fields')[name]
             else:
                 raise ValueError(f'a field named {name} already exists')
-        
+
         if isinstance(type_, FieldProxy):
             self.add_proxy(name, proxy_controller=type_._proxy_controller, proxy_field=type_._proxy_field)
         else:
@@ -420,12 +418,12 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
                 print('Exception in Event.fire:', self, file=sys.stderr)
                 print(self.on_fields_change, file=sys.stderr)
                 raise
-            
+
 
     def add_list_proxy(self, name, proxy_controller, proxy_field):
         '''
-        Adds a proxy field that is a list version of another controller field. 
-        The created field is a real field of type 
+        Adds a proxy field that is a list version of another controller field.
+        The created field is a real field of type
         `list[other controller field type]` . The proxy has its own attribute
         value but its type is is linked to target field and metadata are taken
         from target field.
@@ -433,9 +431,9 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
         The linked controller and field can be changed with :meth:`change_proxy`
         '''
         list_type = list[Union[proxy_controller.field(proxy_field).type, type(undefined)]]
-        self.add_field(name, type_=list_type, 
+        self.add_field(name, type_=list_type,
             field_class=ListProxy,
-            proxy_controller=proxy_controller, 
+            proxy_controller=proxy_controller,
             proxy_field=proxy_field)
 
     def change_proxy(self, name, proxy_controller=None, proxy_field=None):
@@ -456,7 +454,7 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
 
         class ListOfC(Controller):
             ...
-        
+
         c = C()
         lc = ListOfC()
         # Create a list proxy on a field of type int
@@ -481,7 +479,7 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
             else:
                 proxy_field = proxy._dataclass_field.metadata['_proxy_field']
         if isinstance(proxy, FieldProxy):
-            self.remove_field(name)    
+            self.remove_field(name)
             self.add_proxy(name, proxy_controller, proxy_field)
         else:
             value = getattr(self, name, undefined)
@@ -514,7 +512,7 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
     def getattr(self, name, default=undefined):
         '''
         This method always return the default value whereas the attribute
-        is not defined or has the value `undefined`. 
+        is not defined or has the value `undefined`.
         '''
         value = getattr(self, name, ...)
         if value is ... or value is undefined:
@@ -620,7 +618,7 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
 
     def has_field(self, name):
         return bool(self._field(name))
-    
+
     def field(self, name):
         ''' Query the fiend associated with the given name
         '''
@@ -635,7 +633,7 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
         """Reorder dynamic fields according to a new ordered list.
 
         If the new list does not contain all user traits, the remaining ones
-        will be appended at the end (sorted by their order attribute or hash 
+        will be appended at the end (sorted by their order attribute or hash
         value).
 
         Parameters
@@ -657,7 +655,7 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
         ''' Returns fields values in a dictionary.
         '''
         return asdict(self, **kwargs)
-    
+
 
     def import_dict(self, state, clear=False):
         ''' Set fields values from a dict
@@ -690,7 +688,7 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
         if with_values:
             result.import_dict(self.asdict())
         return result
-    
+
     def field_doc(self, field_or_name):
         ''' Get the doc for a field, with some metadata precisions
         '''
@@ -777,7 +775,7 @@ def to_json(value):
         return dict((i, to_json(j)) for i,j in value.items())
     elif isinstance(value, Path):
         # Subclasses of str are not supported by QWebChannel. When
-        # transferred to Javascript, the received value is null 
+        # transferred to Javascript, the received value is null
         # (i.e. None). Therefore value is converted to a true
         # str instance.
         return str(value)
@@ -793,7 +791,7 @@ def from_json(value, value_type):
         if not isinstance(value, dict):
             raise ValueError(f'found a value of type {type(value)} while expecting dict')
         return value_type(**dict((k, to_json(v, value.field(k).type)) for k, v in value.items()))
-    
+
     if value_type.__name__ in {'list', 'set', 'tuple'}:
         if not isinstance(value, list):
             raise ValueError(f'found a velue of type {type(value)} while expecting list')
@@ -803,7 +801,7 @@ def from_json(value, value_type):
             return value_type(from_json(i, item_type) for i in value)
         else:
             return value_type(*value)
-        
+
     if value_type.__name__ == 'dict':
         if not isinstance(value, dict):
             raise ValueError(f'found a value of type {type(value)} while expecting dict')
