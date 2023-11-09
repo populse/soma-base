@@ -15,13 +15,13 @@ def find_subclasses_in_module(module_name, parent_class):
     into submodules.
     '''
     if isinstance(parent_class, six.string_types):
-        check = lambda item: (isinstance(item, type) and 
-                              item.__module__ == module_name and 
-                              parent_class in (i.__name__ 
+        check = lambda item: (isinstance(item, type) and
+                              item.__module__ == module_name and
+                              parent_class in (i.__name__
                                                for i in item.__mro__))
     else:
-        check = lambda item: (isinstance(item, type) and 
-                              item.__module__ == module_name and 
+        check = lambda item: (isinstance(item, type) and
+                              item.__module__ == module_name and
                               issubclass(item, parent_class))
     for i in find_items_in_module(module_name, check):
         yield i
@@ -37,14 +37,14 @@ def find_items_in_module(module_name, check):
         module = import_module(module_name)
     except ImportError:
         return
-    
+
     for i in six.itervalues(module.__dict__):
         if check(i):
             yield i
     path = getattr(module, '__path__', None)
     if path:
         for importer, submodule_name, ispkg in iter_modules(path):
-            for j in find_items_in_module('%s.%s' % 
+            for j in find_items_in_module('%s.%s' %
                     (module.__name__, submodule_name), check):
                 yield j
 
@@ -54,7 +54,7 @@ class ClassFactory(object):
     *ClassFactory* is the base class for creating factories that can look
     for classes in Python modules and create instances.
     '''
-    
+
     def __init__(self, class_types={}):
         # List of Python modules where classes are looked for
         self.module_path = []
@@ -65,7 +65,7 @@ class ClassFactory(object):
         # Cache of instances returned by get method. This is a dictionary
         # whose keys are (class_type, factory_id) and values are instances.
         self.instances = {}
-    
+
     def find_class(self, class_type, factory_id):
         '''
         Finds a class deriving of the class corresponding to *class_type* and
@@ -81,7 +81,7 @@ class ClassFactory(object):
                 if cls.factory_id == factory_id:
                     return cls
         return None
-    
+
     def get_class(self, class_type):
         '''
         Returns the class corresponding to a given class type. First look
@@ -127,6 +127,6 @@ class ClassFactory(object):
                 self.instances[(class_type, factory_id)] = instance
             else:
                 raise ValueError('Cannot find a class for class type "%s" '
-                                 'and factory id "%s"' % (class_type, 
+                                 'and factory id "%s"' % (class_type,
                                                           factory_id))
         return instance

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
- 
+
 from __future__ import print_function
 
 from __future__ import absolute_import
@@ -13,7 +13,7 @@ class TestSerializable(JSONSerializable):
     def __init__(self, a, b):
         self.a = a
         self.b = b
-        
+
     # python3 does not support __cmp__()
     def __eq__(self, other):
         return self.a == other.a and self.b == other.b
@@ -24,10 +24,10 @@ class TestSerializable(JSONSerializable):
     def to_json(self):
         return ['soma.tests.test_serialization.test_serializable',
                 [self.a, self.b]]
-    
+
     def __str__(self):
         return 'TestSerializable({0}, {1}'.format(self.a, self.b)
-    
+
 def test_serializable(a=None, b=None):
     return TestSerializable(a, b)
 

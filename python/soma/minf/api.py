@@ -116,7 +116,7 @@ def minfFormat(source):
                 opened_source_file = open(source)
             else:
                 opened_source_file = open(source, encoding='UTF-8')
-                
+
             source = BufferAndFile(opened_source_file)
         elif not isinstance(source, BufferAndFile):
             source.seek(0)

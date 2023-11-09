@@ -84,7 +84,7 @@ class Controller(HasTraits):
         # with definition ordered trait name. These names will correspond
         # to user trait sorted dictionary keys
         if class_traits:
-            
+
             sorted_names = []
             for name, trait in six.iteritems(class_traits):
                 if self.is_user_trait(trait):
@@ -93,7 +93,7 @@ class Controller(HasTraits):
                         sorted_names.append((getattr(trait, 'order'), name))
                     else:
                         sorted_names.append((-1, name))
-                    
+
             sorted_names = [sorted_name[1] for sorted_name in sorted(sorted_names)]
 
             # Go through all trait names that have been ordered
