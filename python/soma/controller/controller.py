@@ -714,7 +714,7 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
         if doc:
             result.append(': ' + doc)
         return ''.join(result)
-    
+
     def ensure_field(self, field_or_name):
         ''' Get a :class:`field.Field` object for a given Field or name
         '''
@@ -724,7 +724,7 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
             return field_or_name
 
     def json(self):
-        ''' Retuern a JSON dict for the current Controller
+        ''' Return a JSON dict for the current Controller
         '''
         result = {}
         for field in self.fields():
@@ -732,13 +732,13 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
             if value is not undefined:
                 result[field.name] = to_json(value)
         return result
-        
+
     def import_json(self, json):
         ''' Set the Controller state from a JSON dict
         '''
         for field_name, json_value in json.items():
             setattr(self, field_name, json_value)
-    
+
 
 def asdict(obj, dict_factory=dict, exclude_empty=False, exclude_none=False):
     if isinstance(obj, Controller):
