@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from collections.abc import MutableMapping, MutableSequence
 
 '''
@@ -220,4 +221,3 @@ class ListWithProxy(MutableSequence, ContainerWithProxy):
         Recursively resolve all proxies to shared values and return a standard dict.
         '''
         return [self.no_proxy(v) for v in self]
-
