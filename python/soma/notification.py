@@ -60,7 +60,7 @@ class Notifier(object):
 
     '''
     Register a series of functions (or Notifier instances) which are all called
-    whith the :meth:`notify` method. The calling order is the registering
+    with the :meth:`notify` method. The calling order is the registering
     order. If a Notifier is registered, its :meth:`notify` method is called
     whenever *self.notify()* is called.
     '''
@@ -503,7 +503,7 @@ class ObservableAttributes(object):
 class ObservableList(list):
 
     """
-    A list that notifies its changes to registred listeners.
+    A list that notifies its changes to registered listeners.
     Inherits from python list and contains an instance of :class:`Notifier`
     (:attr:`onChangeNotifier`).
 
@@ -551,7 +551,7 @@ class ObservableList(list):
         # views can register update callbacks on this notifier
         # to be aware of any change in the model
         # On change, this object calls Notifier.notify(args)
-        # which calls every registred function with args
+        # which calls every registered function with args
         # args = action (insert, remove, modify), elems list, position
         self.onChangeNotifier = Notifier()
         if content:
@@ -633,7 +633,7 @@ class ObservableList(list):
         self.onChangeNotifier.notify(self.INSERT_ACTION, [elem], index)
 
     def remove(self, elem):
-        """Removes the first occurence of elem in the list.
+        """Removes the first occurrence of elem in the list.
 
         Notifies a remove action. """
         super(ObservableList, self).remove(elem)
@@ -960,7 +960,7 @@ class EditableTree(ObservableAttributes, ObservableSortedDictionary):
     - an item leaf: doesn't have children
 
     The list of items is an :class:`ObservableSortedDictionary` which notifies
-    its changes to registred listeners.
+    its changes to registered listeners.
 
     If the tree is modifiable, new items can be added.
 
@@ -969,7 +969,7 @@ class EditableTree(ObservableAttributes, ObservableSortedDictionary):
     *EditableTree* is iterable over its items.
 
     *EditableTree* also inherits from :class:`ObservableAttributes`, so
-    registred listeners can be notified of attributes value change.
+    registered listeners can be notified of attributes value change.
 
     To call a method when item list changes::
 
@@ -997,7 +997,7 @@ class EditableTree(ObservableAttributes, ObservableSortedDictionary):
         tree identifier (a hash by default)
     modifiable: bool
         if *True*, new items can be added, items can be deleted and modified
-    unamed: bool
+    unnamed: bool
         indicates if *name* parameter was none, so the tree has the default
         name.
     visible: bool
@@ -1029,10 +1029,10 @@ class EditableTree(ObservableAttributes, ObservableSortedDictionary):
         super(EditableTree, self).__init__(*dictContent)
         if name is None:
             self.name = self.defaultName
-            self.unamed = True
+            self.unnamed = True
         else:
             self.name = name
-            self.unamed = False
+            self.unnamed = False
         if id is None:
             self.id = str(hash(self))
         else:
@@ -1093,7 +1093,7 @@ class EditableTree(ObservableAttributes, ObservableSortedDictionary):
 
     def removeEmptyBranches(self):
         """If a branch item doesn't contain any leaf or branch that contains
-        leaf recursivly, the item is removed from the tree. """
+        leaf recursively, the item is removed from the tree. """
         toRemove = []
         for child in self.values():
             if not child.isLeaf():
@@ -1116,7 +1116,7 @@ class EditableTree(ObservableAttributes, ObservableSortedDictionary):
         """Key function
         """
         i1 = self[id]
-        # names are translated in lowercase to make an alphabetical sort independant of the case
+        # names are translated in lowercase to make an alphabetical sort independent of the case
         # by default (uppercase letters are < to lowecase letters)
         n1 = i1.name.lower()
         # print "comp", i1.name,i1.isLeaf(), i2.name,i2.isLeaf(), res
@@ -1140,7 +1140,7 @@ class EditableTree(ObservableAttributes, ObservableSortedDictionary):
         elif (i1.isLeaf() and not i2.isLeaf()):
             res = 1
         else:
-            # names are translated in lowercase to make an alphabetical sort independant of the case
+            # names are translated in lowercase to make an alphabetical sort independent of the case
             # by default (uppercase letters are < to lowecase letters)
             n1 = i1.name.lower()
             n2 = i2.name.lower()
@@ -1152,7 +1152,7 @@ class EditableTree(ObservableAttributes, ObservableSortedDictionary):
         return res
 
     def addListenerRec(self, listener):
-        """Add a listener to the tree recursivly at every level.
+        """Add a listener to the tree recursively at every level.
         The listener is added to the notifier of all branches of the tree."""
         self.addListener(listener)
         for item in self.values():
@@ -1161,7 +1161,7 @@ class EditableTree(ObservableAttributes, ObservableSortedDictionary):
 
     def onAttributeChangeRec(self, attributeName, listener):
         """Add a listener of the changes of this attribute value in the tree
-        recursivly at every level.
+        recursively at every level.
 
         The listener is added to the attribute change notifier of all branches
         of the tree.
@@ -1177,7 +1177,7 @@ class EditableTree(ObservableAttributes, ObservableSortedDictionary):
         """Base element of an :class:`EditableTree`
 
         *Item* inherits from :class:`ObservableAttributes`, so it can notify
-        registred listeners of attributes changes (for example :attr:`name`).
+        registered listeners of attributes changes (for example :attr:`name`).
 
         Attributes
         ----------
@@ -1218,7 +1218,7 @@ class EditableTree(ObservableAttributes, ObservableSortedDictionary):
             self.visible = visible
             self.enabled = enabled
             self.onChangeNotifier = Notifier()
-            self.unamed = False
+            self.unnamed = False
 
         def __getnewargs__(self):
             """Returns the args to pass to the __init__ method to construct this object.
@@ -1253,7 +1253,7 @@ class EditableTree(ObservableAttributes, ObservableSortedDictionary):
             pass
 
         def setAllModificationsEnabled(self, bool):
-            """Recursivly enables or disables item's modification."""
+            """Recursively enables or disables item's modification."""
             # self.copyEnabled=bool # copy is always enabled. there's no use to
             # have 3 different booleans, an editable should be sufficient
             self.modifiable = bool
@@ -1302,10 +1302,10 @@ class EditableTree(ObservableAttributes, ObservableSortedDictionary):
                                                       copyEnabled, modifiable, delEnabled, visible, enabled, *dictContent)
             if name is None:
                 self.name = self.defaultName
-                self.unamed = True
+                self.unnamed = True
             else:
                 self.name = name
-                self.unamed = False
+                self.unnamed = False
 
         def __getnewargs__(self):
             content = list(self.values())
@@ -1372,7 +1372,7 @@ class EditableTree(ObservableAttributes, ObservableSortedDictionary):
         def _keyItems(self, id):
             '''Sorting key function'''
             i1 = self[id]
-            # names are translated in lowercase to make an alphabetical sort independant of the case
+            # names are translated in lowercase to make an alphabetical sort independent of the case
             # by default (uppercase letters are < to lowecase letters)
             n1 = i1.name.lower()
             # print "comp", i1.name,i1.isLeaf(), i2.name,i2.isLeaf(), res
@@ -1398,7 +1398,7 @@ class EditableTree(ObservableAttributes, ObservableSortedDictionary):
             elif (i1.isLeaf() and not i2.isLeaf()):
                 res = 1
             else:
-                # names are translated in lowercase to make an alphabetical sort independant of the case
+                # names are translated in lowercase to make an alphabetical sort independent of the case
                 # by default (uppercase letters are < to lowecase letters)
                 n1 = i1.name.lower()
                 n2 = i2.name.lower()
@@ -1443,13 +1443,13 @@ class ObservableNotifier(Notifier):
     listener is removed.
 
     It enables to use the notifier only when there are some listeners
-    registred.
+    registered.
 
     Attributes
     ----------
     onAddFirstListener: :class:`Notifier`
         register a listener on this notifier to be called when the first
-        listener is registred on ObservableNotifier
+        listener is registered on ObservableNotifier
     onRemoveLastListener: :class:`Notifier`
         register a listener on this notifier to be called when the last
         listener is removed from ObservableNotifier

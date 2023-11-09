@@ -222,7 +222,7 @@ def update_query_string(
           The path to update parameters within.
 
     params: dict|list
-          A dictionnary that contains keys and parameters to set in the query
+          A dictionary that contains keys and parameters to set in the query
           string
 
     params_update_mode: dict|string|list|int

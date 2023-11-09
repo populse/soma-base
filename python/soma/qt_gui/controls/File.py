@@ -62,7 +62,7 @@ class FileControlWidget(object):
         yellow = QtGui.QColor(255, 255, 200)
 
         # If the control value contains a file, the control is valid and the
-        # backgound color of the control is white
+        # background color of the control is white
         is_valid = False
         if control_value is traits.Undefined:
             # Undefined is an exception: allow to reset it (File instances,
@@ -80,14 +80,14 @@ class FileControlWidget(object):
                 is_valid = True
 
             # If the control value is optional, the control is valid and the
-            # backgound color of the control is yellow
+            # background color of the control is yellow
             elif control_instance.optional \
                     and control_value in ("", ):
                 color = yellow
                 is_valid = True
 
             # If the control value is empty, the control is not valid and the
-            # backgound color of the control is red
+            # background color of the control is red
             else:
                 if not control_instance.optional:
                     color = red
@@ -111,26 +111,26 @@ class FileControlWidget(object):
             the control widget we want to validate
         """
         # Hook: function that will be called to check for typo
-        # when a 'userModification' qt signal is emited
+        # when a 'userModification' qt signal is emitted
         widget_callback = partial(cls.is_valid, weak_proxy(control_instance))
 
         # The first time execute manually the control check method
         widget_callback()
 
-        # When a qt 'userModification' signal is emited, check if the new
+        # When a qt 'userModification' signal is emitted, check if the new
         # user value is correct
         control_instance.path.userModification.connect(widget_callback)
 
     @staticmethod
     def add_callback(callback, control_instance):
         """ Method to add a callback to the control instance when a 'userModification'
-        signal is emited.
+        signal is emitted.
 
         Parameters
         ----------
         callback: @function (mandatory)
             the function that will be called when a 'userModification' signal is
-            emited.
+            emitted.
         control_instance: QWidget (mandatory)
             the control widget we want to validate
         """
@@ -335,14 +335,14 @@ class FileControlWidget(object):
 
             # Update one element of the controller.
             # Hook: function that will be called to update a specific
-            # controller trait when a 'userModification' qt signal is emited
+            # controller trait when a 'userModification' qt signal is emitted
             widget_hook = partial(cls.update_controller,
                                   weak_proxy(controller_widget),
                                   control_name,
                                   weak_proxy(control_instance),
                                   False)
 
-            # When a qt 'userModification' signal is emited, update the
+            # When a qt 'userModification' signal is emitted, update the
             # 'control_name' controller trait value
             control_instance.path.userModification.connect(widget_hook)
 

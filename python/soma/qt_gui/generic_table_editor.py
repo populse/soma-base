@@ -221,7 +221,7 @@ class GenericTableEditor(QWidget):
         # the items position while inserting them
         sortstate = self.gui_table.isSortingEnabled()
         self.gui_table.setSortingEnabled(False)
-        # udpate gui table size if needed
+        # update gui table size if needed
         if self.gui_table.columnCount() != self.numCols():
             self.gui_table.setColumnCount(self.numCols())
         if self.gui_table.rowCount() != self.numRows():
@@ -270,7 +270,7 @@ class GenericTableEditor(QWidget):
         selection = []
         for item in self.gui_table.selectedItems():
             selection.append(str(item.text()))
-        # send an 'inputSelection' event with the selection as paramater
+        # send an 'inputSelection' event with the selection as parameter
         if self.context:
             self.context.event('inputSelection', selection)
 
@@ -378,7 +378,7 @@ class GenericTableEditor(QWidget):
         return selectedCellsContent
 
     def setBufValFromStr(self, row, col, valstr):
-        """ Set a value and the apropiate type in the data table from a string"""
+        """ Set a value and the appropriate type in the data table from a string"""
         typeConversionRequired = False
         if self.col_types[col] == 'integer':
             try:
@@ -513,7 +513,7 @@ class GenericTableEditor(QWidget):
             # - Header names and types
             columns = QWidget(self.widget)
             columnsLayout = QHBoxLayout()
-            colums.setLayout(columnsLayout)
+            columns.setLayout(columnsLayout)
             self.columns = []
             labels = QWidget(columns)
             columnsLayout.addWidget(labels)

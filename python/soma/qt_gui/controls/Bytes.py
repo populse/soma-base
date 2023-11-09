@@ -60,13 +60,13 @@ class BytesControlWidget(StrControlWidget):
         yellow = QtGui.QColor(255, 255, 200)
 
         # If the control value is not empty, the control is valid and the
-        # backgound color of the control is white
+        # background color of the control is white
         is_valid = False
 
         if control_value in (b'', None, traits.Undefined):
             if control_instance.optional:
                 # If the control value is optional, the control is valid and
-                # the backgound color of the control is yellow
+                # the background color of the control is yellow
                 color = yellow
                 is_valid = True
             else:

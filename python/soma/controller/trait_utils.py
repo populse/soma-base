@@ -32,7 +32,7 @@ _type_to_trait_id = {
     float: "Float"
 }
 # In order to convert nipype special traits, we define a dict of
-# correspondances
+# correspondences
 _trait_cvt_table = {
     "InputMultiPath_TraitCompound": "List",
     "InputMultiPath": "List",
@@ -92,7 +92,7 @@ def get_trait_desc(trait_name, trait, def_val=None, use_wrap=True):
     else:
         def_val = ""
 
-    # Get the paramter type (optional or mandatory)
+    # Get the parameter type (optional or mandatory)
     if trait.optional:
         dtype = "optional"
     else:
@@ -224,7 +224,7 @@ def trait_ids(trait, modules=set()):
     if main_id in ["Either", "TraitCompound"]:
 
         # Debug message
-        logger.debug("A coumpound trait has been found %s", repr(
+        logger.debug("A compound trait has been found %s", repr(
             handler.handlers))
 
         # Build each trait compound description
@@ -305,7 +305,7 @@ def relax_exists_constraint(trait):
     trait: trait
         a trait that will be relaxed from the exist constraint
     """
-    # If we have a single trait, just modify the 'exists' contrain
+    # If we have a single trait, just modify the 'exists' constraint
     # if specified
     if hasattr(trait.handler, "exists"):
         trait.handler.exists = False

@@ -37,7 +37,7 @@ class Controller(HasTraits):
     ----------
     `user_traits_changed` : Event
         single event that can be sent when several traits changes. This event
-        has to be triggered explicitely to take into account changes due to
+        has to be triggered explicitly to take into account changes due to
         call(s) to add_trait or remove_trait.
 
     Methods
@@ -53,7 +53,7 @@ class Controller(HasTraits):
     # removed with remove_trait and because it is sometimes better to send
     # a single event when several traits changes are done (especially
     # when GUI is updated on real time). This event have to be triggered
-    # explicitely to take into account changes due to call(s) to
+    # explicitly to take into account changes due to call(s) to
     # add_trait or remove_trait.
     user_traits_changed = Event
 
@@ -73,7 +73,7 @@ class Controller(HasTraits):
         # Inheritance
         super(Controller, self).__init__(*args, **kwargs)
 
-        # Create a sorted dictionnary with user parameters
+        # Create a sorted dictionary with user parameters
         # The dictionary order correspond to the definition order
         self._user_traits = SortedDictionary()
 
@@ -127,7 +127,7 @@ class Controller(HasTraits):
         ----------
         clone: CTrait (mandatory)
             the input trait to clone.
-        metadata: dict (opional, default None)
+        metadata: dict (optional, default None)
             some metadata than can be added to the trait __dict__.
 
         Returns
@@ -187,7 +187,7 @@ class Controller(HasTraits):
         if main_id in ["Either", "TraitCompound"]:
 
             # Debug message
-            logger.debug("A coumpound trait has been found %s", repr(
+            logger.debug("A compound trait has been found %s", repr(
                 handler.handlers))
 
             # Update each trait compound optional parameter
@@ -213,7 +213,7 @@ class Controller(HasTraits):
         Returns
         -------
         out: dict
-            a dictionnary containing class traits and instance traits
+            a dictionary containing class traits and instance traits
             defined by user (i.e.  the traits that are not automatically
             defined by HasTraits or Controller). Returned values are
             sorted according to the 'order' trait meta-attribute.
@@ -238,7 +238,7 @@ class Controller(HasTraits):
         """ Check the trait and build a new one if needed.
 
         This function mainly checks the default value of the given trait,
-        and tests in some ways whether it is valid ot not. If not, a new
+        and tests in some ways whether it is valid or not. If not, a new
         trait is created to replace it.
 
         For now it just checks that lists with a non-null minlen will actually
@@ -296,7 +296,7 @@ class Controller(HasTraits):
         super(Controller, self).add_trait(name, *trait)
 
         # Get the trait instance and if it is a user trait load the traits
-        # to get it direcly from the instance (as a property) and add it
+        # to get it directly from the instance (as a property) and add it
         # to the class '_user_traits' attributes
         trait_instance = self.trait(name)
         if self.is_user_trait(trait_instance):
@@ -442,7 +442,7 @@ class Controller(HasTraits):
         Parameters
         ----------
         with_values: bool (optional, default: False)
-            if True, traits values will be copied, otherwise the defaut trait
+            if True, traits values will be copied, otherwise the default trait
             value will be left in the copy.
 
         Returns
@@ -599,7 +599,7 @@ class OpenKeyController(Controller):
         #Parameters
         #----------
         #with_values: bool (optional, default: False)
-            #if True, traits values will be copied, otherwise the defaut trait
+            #if True, traits values will be copied, otherwise the default trait
             #value will be left in the copy.
 
         #Returns

@@ -10,7 +10,7 @@
 '''Importation of this module activate a
 `virtualenv <https://virtualenv.pypa.io/>`_ if
 ``os.environ['SOMA_VIRTUALENV']`` contains the directory path of the
-*virutalenv*.
+*virtualenv*.
 
 This module makes it possible to use a specific *virtualenv* directory in
 contexts where it is difficult activate it (for instance in crontab). For
@@ -19,11 +19,11 @@ instance, a script importing cubicweb the following way::
     from soma import activate_virtualenv
     import cubicweb
 
-can be set to use a specific *virutalenv* install of *cubicweb*:
+can be set to use a specific *virtualenv* install of *cubicweb*:
 
 .. code-block:: bash
 
-    env SOMA_VIRTUALENV=/path/to/virutalenv python /path/to/script.py
+    env SOMA_VIRTUALENV=/path/to/virtualenv python /path/to/script.py
 '''
 
 from __future__ import absolute_import

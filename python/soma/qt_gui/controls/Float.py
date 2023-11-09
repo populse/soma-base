@@ -64,7 +64,7 @@ class FloatControlWidget(StrControlWidget):
         yellow = QtGui.QColor(255, 255, 200)
 
         # If the control value contains only digits, the control is valid and
-        # the backgound color of the control is white
+        # the background color of the control is white
         is_valid = False
         if control_value.isdigit():
             control_palette.setColor(
@@ -72,13 +72,13 @@ class FloatControlWidget(StrControlWidget):
             is_valid = True
 
         # If the control value is optional, the control is valid and the
-        # backgound color of the control is yellow
+        # background color of the control is yellow
         elif control_instance.optional is True and control_value == "":
             control_palette.setColor(control_instance.backgroundRole(), yellow)
             is_valid = True
 
         # If the control value is empty, the control is not valid and the
-        # backgound color of the control is red
+        # background color of the control is red
         else:
             control_palette.setColor(control_instance.backgroundRole(), red)
 

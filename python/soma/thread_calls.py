@@ -37,7 +37,7 @@ This module is useful whenever you need to be sure that a function (more
 exactly anything that can be called by python) is executed in a particular
 thread.
 
-For exemple, if you use PyMat (which is an interface between Python and a Matlab,
+For example, if you use PyMat (which is an interface between Python and a Matlab,
 see U{http://claymore.engineer.gvsu.edu/~steriana/Python} for more information)
 it is necessary that all calls to pymat.eval are done by the same thread that
 called pymat.open. If you want to use PyMat in a multi-threaded application,
@@ -47,7 +47,7 @@ this module.
 The main idea is to use a list containing functions to be called with their
 parameters. A single thread is used to get entries from the list and execute
 the corresponding functions. Any thread can put a call request on the list
-either asynchonously (the requesting thread continues to run without waiting
+either asynchronously (the requesting thread continues to run without waiting
 for the call to be done) or synchronously (the requesting thread is stopped
 until the call is done and the result available).
 
@@ -184,7 +184,7 @@ class SingleThreadCalls(object):
     def push(self, function, *args, **kwargs):
         '''
         Same as the :meth:`call` method but always puts the function on the
-        queue and returns immediatly. If :meth:`push` is called from the
+        queue and returns immediately. If :meth:`push` is called from the
         processing thread, the function is called immediately (*i.e.*
         synchronously).
 

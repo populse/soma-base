@@ -82,7 +82,7 @@ class ThreadSafeSQLiteConnection(object):
 
     def __del__(self):
         if threading is None:
-            # The interpretor is exiting and we cannot access threading
+            # The interpreter is exiting and we cannot access threading
             # module. We cannot do anything.
             return
         if self.__args is not None:
@@ -99,7 +99,7 @@ class ThreadSafeSQLiteConnection(object):
                               + str(self._id)
                               + ') is being deleted in thread', currentThread
                               + '. Method currentThreadCleanup() should have been called from',
-                              thread, 'to supress this warning.', file=sys.stderr)
+                              thread, 'to suppress this warning.', file=sys.stderr)
             except ImportError:
                 # python is shutting down
                 pass

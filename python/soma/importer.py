@@ -204,7 +204,7 @@ class GenericHandlers(object):
     @staticmethod
     def moveChildren(namespace, extendedModule, referedModule):
         '''
-        This static method is used to move child objects of a refered module to the extended module.
+        This static method is used to move child objects of a referred module to the extended module.
 
         Parameters
         ----------
@@ -213,7 +213,7 @@ class GenericHandlers(object):
         extendedModule: ExtendedModule
             :class:`ExtendedModule` object into which move objects.
         referedModule: module
-            refered module object to get objects to move from.
+            referred module object to get objects to move from.
         '''
 
         # during this whole function we should avoid tu use
@@ -306,7 +306,7 @@ class GenericHandlers(object):
         extendedModule: ExtendedModule
             :class:`ExtendedModule` object to remove objects from.
         referedModule: module
-            refered module object.
+            referred module object.
         '''
         locals = extendedModule.locals
 
