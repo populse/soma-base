@@ -46,7 +46,7 @@ import six
 import sys
 
 #------------------------------------------------------------------------------
-#: mapping of charaters to be escaped for HTML
+#: mapping of characters to be escaped for HTML
 _htmlEscape = None
 _lesserHtmlEscape = None
 
@@ -56,7 +56,7 @@ _lesserHtmlEscape = None
 # standard library function html.escape does in Python 3.2 and later).
 
 def htmlEscape(msg):
-    """Replace special characters by their correponding html entity.
+    """Replace special characters by their corresponding html entity.
 
     All characters that have a corresponding named HTML entity are replaced.
 
@@ -78,7 +78,7 @@ def htmlEscape(msg):
 
 
 def lesserHtmlEscape(msg):
-    """Replace special characters by their correponding html entity.
+    """Replace special characters by their corresponding html entity.
 
     All characters that have a corresponding named HTML entity are replaced,
     except accented characters commonly used in French text (éàèâêôîûàö) and

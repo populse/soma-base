@@ -97,7 +97,7 @@ class ScrollControllerWidget(Qt.QScrollArea):
         self.setSizePolicy(QtGui.QSizePolicy.Preferred,
                            QtGui.QSizePolicy.Preferred)
 
-        # Display a surounding box
+        # Display a surrounding box
         self.setFrameShape(QtGui.QFrame.StyledPanel)
 
         # Create the controller widget
@@ -246,7 +246,7 @@ class ControllerWidget(QtGui.QWidget):
         self.editable_labels = editable_labels
         self.user_data = user_data
 
-        # If possilbe, set the widget name
+        # If possible, set the widget name
         if name:
             self.setObjectName(name)
 
@@ -265,7 +265,7 @@ class ControllerWidget(QtGui.QWidget):
         self._create_controls()
         self.connect_keys()
 
-        # Start the event loop that check for wrong edited fields (usefull
+        # Start the event loop that check for wrong edited fields (useful
         # when we work off line, otherwise the traits make the job but it is
         # still user friendly).
         self._check()
@@ -361,7 +361,7 @@ class ControllerWidget(QtGui.QWidget):
         """ Connect the controller trait and the controller widget controls
 
         At the end al control will be connected with the associated trait, and
-        when a 'user_traits_changed' signal is emited, the controls are updated
+        when a 'user_traits_changed' signal is emitted, the controls are updated
         (ie, deleted if necessary).
         """
         # If the controller and controller widget are not yet connected
@@ -587,7 +587,7 @@ class ControllerWidget(QtGui.QWidget):
         """ Method that will create a control for each user trait of the
         controller.
 
-        Controller trait parameters that cannot be maped to controls
+        Controller trait parameters that cannot be mapped to controls
         will not appear in the user interface.
         """
         # Select only the controller traits of interest
@@ -827,7 +827,7 @@ class ControllerWidget(QtGui.QWidget):
 
         # Get the last empty row in the grid layout
         # Trick: If the grid layout is empty check the element 0
-        # (not realistic but te grid layout return None)
+        # (not realistic but the grid layout returns None)
         last_row = layout.rowCount()
         widget_item = layout.itemAtPosition(last_row, 1)
         while widget_item is None and last_row > 0:
@@ -883,7 +883,7 @@ class ControllerWidget(QtGui.QWidget):
             layout.addWidget(
                 control_instance, last_row, 1, 1, 1)
 
-        # Store some informations about the inserted control in the
+        # Store some information about the inserted control in the
         # private '_controls' class parameter
         # Keys: the trait names
         # Parameters: the trait - the control name - the control - and

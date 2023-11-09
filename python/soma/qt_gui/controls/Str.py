@@ -60,13 +60,13 @@ class StrControlWidget(object):
         yellow = QtGui.QColor(255, 255, 200)
 
         # If the control value is not empty, the control is valid and the
-        # backgound color of the control is white
+        # background color of the control is white
         is_valid = False
 
         if control_value in ('', None, traits.Undefined):
             if control_instance.optional:
                 # If the control value is optional, the control is valid and
-                # the backgound color of the control is yellow
+                # the background color of the control is yellow
                 color = yellow
                 is_valid = True
             else:
@@ -96,26 +96,26 @@ class StrControlWidget(object):
             the control widget we want to validate
         """
         # Hook: function that will be called to check for typo
-        # when a 'userModification' qt signal is emited
+        # when a 'userModification' qt signal is emitted
         widget_callback = partial(cls.is_valid, weak_proxy(control_instance))
 
         # The first time execute manually the control check method
         widget_callback()
 
-        # When a qt 'userModification' signal is emited, check if the new
+        # When a qt 'userModification' signal is emitted, check if the new
         # user value is correct
         control_instance.userModification.connect(widget_callback)
 
     @staticmethod
     def add_callback(callback, control_instance):
         """ Method to add a callback to the control instance when a 'userModification'
-        signal is emited.
+        signal is emitted.
 
         Parameters
         ----------
         callback: @function (mandatory)
             the function that will be called when a 'userModification' signal is
-            emited.
+            emitted.
         control_instance: QLineEdit (mandatory)
             the control widget we want to validate
         """
@@ -281,13 +281,13 @@ class StrControlWidget(object):
 
             # Update one element of the controller.
             # Hook: function that will be called to update a specific
-            # controller trait when a 'userModification' qt signal is emited
+            # controller trait when a 'userModification' qt signal is emitted
             widget_hook = partial(cls.update_controller,
                                   weak_proxy(controller_widget),
                                   control_name, weak_proxy(control_instance),
                                   False)
 
-            # When a qt 'userModification' signal is emited, update the
+            # When a qt 'userModification' signal is emitted, update the
             # 'control_name' controller trait value
             control_instance.userModification.connect(widget_hook)
 

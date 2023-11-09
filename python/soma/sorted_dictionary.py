@@ -221,7 +221,7 @@ class SortedDictionary(dict):
 
     def compValues(self, key1, key2):
         """
-        Use this comparaison function in sort method parameter in order to sort
+        Use this comparison function in sort method parameter in order to sort
         the dictionary by values.
         if data[key1]<data[key2] return -1
         if data[key1]>data[key2] return 1

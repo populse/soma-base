@@ -134,7 +134,7 @@ class TestController(unittest.TestCase):
         """
         trait = traits.CTrait(0)
         trait.handler = traits.Float()
-        trait.ouptut = False
+        trait.output = False
         trait.optional = True
         trait.desc = "bla"
         manhelp = get_trait_desc("float_trait", trait, 5)
@@ -146,7 +146,7 @@ class TestController(unittest.TestCase):
     def test_trait_utils2(self):
         trait = traits.CTrait(0)
         trait.handler = traits.Float()
-        trait.ouptut = True
+        trait.output = True
         trait.optional = False
         manhelp = get_trait_desc("float_trait", trait, 5)
         self.assertEqual(
@@ -159,7 +159,7 @@ class TestController(unittest.TestCase):
             pass
         trait = traits.CTrait(0)
         trait.handler = traits.Instance(Blop())
-        trait.ouptut = False
+        trait.output = False
         trait.optional = False
         manhelp = get_trait_desc("blop", trait, None)
         desc = ' '.join([x.strip() for x in manhelp[:-1]])
@@ -171,7 +171,7 @@ class TestController(unittest.TestCase):
 
     def test_trait_utils4(self):
         trait = traits.Either(traits.Int(47), traits.Str("vovo")).as_ctrait()
-        trait.ouptut = False
+        trait.output = False
         trait.optional = False
         manhelp = get_trait_desc("choice", trait, None)
         desc = ' '.join([x.strip() for x in manhelp[:-1]])
@@ -184,7 +184,7 @@ class TestController(unittest.TestCase):
 
 
     def test_trait(self):
-        """ Method to test trait characterisitics: value, type.
+        """ Method to test trait characteristics: value, type.
         """
         self.assertTrue(is_trait_value_defined(5))
         self.assertFalse(is_trait_value_defined(""))

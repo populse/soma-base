@@ -127,7 +127,7 @@ class ListControlWidget(object):
         ----------
         callback: @function (mandatory)
             the function that will be called when a 'textChanged' signal is
-            emited.
+            emitted.
         control_instance: QFrame (mandatory)
             the control widget we want to validate
         """
@@ -167,7 +167,7 @@ class ListControlWidget(object):
         if len(trait.handler.inner_traits()) == 1:
             inner_trait = trait.handler.inner_traits()[0]
         elif len(trait.handler.inner_traits()) == 0:
-            # maybe a generic list, or a compount trait
+            # maybe a generic list, or a compound trait
             if hasattr(trait.handler, 'handlers') \
                     and len(trait.handler.handlers) > 0 \
                     and hasattr(trait.handler.handlers[0], 'inner_traits') \

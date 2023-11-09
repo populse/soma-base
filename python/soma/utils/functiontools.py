@@ -92,7 +92,7 @@ class SomaPartial(object):
     @property
     def func_code(self):
         '''
-        This property make SomaPartial useable with traits module. The method
+        This property make SomaPartial usable with traits module. The method
         on_trait_change is requiring that the function has a func_code.co_argcount
         attribute.
         '''

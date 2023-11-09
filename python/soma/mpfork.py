@@ -164,7 +164,7 @@ def worker(q, thread_only, *args, **kwargs):
 
 
 def allocate_workers(q, nworker=0, thread_only=False, *args, **kwargs):
-    ''' Utility finction to allocate worker threads.
+    ''' Utility function to allocate worker threads.
 
     Parameters
     ----------
@@ -180,7 +180,7 @@ def allocate_workers(q, nworker=0, thread_only=False, *args, **kwargs):
         (see :func:`multiprocessing.cpu_count`), and a negative number means
         all CPU cores except this given number.
     args, kwargs:
-        additional arguments will be pased to the jobs function(s) after
+        additional arguments will be passed to the job function(s) after
         individual jobs arguments: they are args common to all jobs (if any)
 
     Returns

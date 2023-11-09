@@ -117,7 +117,7 @@ class DictControlWidget(object):
         ----------
         callback: @function (mandatory)
             the function that will be called when a 'textChanged' signal is
-            emited.
+            emitted.
         control_instance: QFrame (mandatory)
             the control widget we want to validate
         """

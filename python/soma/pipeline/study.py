@@ -18,7 +18,7 @@ from soma.application import Application
 
 class Study(Controller):
     _instance = None
-    """Class to write and save informations about process in the json"""
+    """Class to write and save information about a process into JSON."""
 
     def __init__(self):
         super(Study, self).__init__()

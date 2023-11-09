@@ -58,26 +58,26 @@ class EnumControlWidget(object):
             the control widget we want to validate
         """
         # Hook: function that will be called to check for typo
-        # when a 'textEdited' qt signal is emited
+        # when a 'textEdited' qt signal is emitted
         widget_callback = partial(cls.is_valid, weak_proxy(control_instance))
 
         # Execute manually the first time the control check method
         widget_callback()
 
-        # When a qt 'editTextChanged' signal is emited, check if the new
+        # When a qt 'editTextChanged' signal is emitted, check if the new
         # user value is correct
         control_instance.editTextChanged.connect(widget_callback)
 
     @staticmethod
     def add_callback(callback, control_instance):
         """ Method to add a callback to the control instance when a 'editTextChanged'
-        signal is emited.
+        signal is emitted.
 
         Parameters
         ----------
         callback: @function (mandatory)
             the function that will be called when a 'editTextChanged' signal is
-            emited.
+            emitted.
         control_instance: QComboBox (mandatory)
             the control widget we want to validate
         """
@@ -241,12 +241,12 @@ class EnumControlWidget(object):
         """
         # Update one element of the controller.
         # Hook: function that will be called to update a specific
-        # controller trait when an 'activated' qt signal is emited
+        # controller trait when an 'activated' qt signal is emitted
         widget_hook = partial(cls.update_controller,
                               weak_proxy(controller_widget),
                               control_name, weak_proxy(control_instance))
 
-        # When a qt 'activated' signal is emited, update the
+        # When a qt 'activated' signal is emitted, update the
         # 'control_name' controller trait value
         control_instance.activated.connect(widget_hook)
 

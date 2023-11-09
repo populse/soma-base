@@ -94,7 +94,7 @@ class MinfXMLWriter(MinfWriter):
                                      '=' + xml_quoteattr(reducer) + '>')
 
     def close(self):
-        """Close the Minf sytax tree. The underlying file is NOT closed."""
+        """Close the Minf syntax tree. The underlying file is NOT closed."""
         if self.__file is not None:
             self.__file.flush()
             self._encodeAndWriteLine('</' + minfTag + '>')

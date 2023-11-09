@@ -46,7 +46,7 @@ class DirectoryControlWidget(FileControlWidget):
         yellow = QtGui.QColor(255, 255, 200)
 
         # If the control value contains a file, the control is valid and the
-        # backgound color of the control is white
+        # background color of the control is white
         is_valid = False
         if control_value is traits.Undefined:
             # Undefined is an exception: allow to reset it (File instances,
@@ -63,13 +63,13 @@ class DirectoryControlWidget(FileControlWidget):
                 is_valid = True
 
             # If the control value is optional, the control is valid and the
-            # backgound color of the control is yellow
+            # background color of the control is yellow
             elif control_instance.optional is True and control_value == "":
                 color = yellow
                 is_valid = True
 
             # If the control value is empty, the control is not valid and the
-            # backgound color of the control is red
+            # background color of the control is red
             else:
                 color = red
 

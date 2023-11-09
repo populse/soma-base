@@ -17,7 +17,7 @@ TODO:
   (i.e. grok the output of qimage2numpy)
 - support unusual widths/alignments also in gray2qimage and
   rgb2qimage
-- make it possible to choose between views and copys of the data
+- make it possible to choose between views and copies of the data
   (eventually in both directions, when implemented in C++)
 - allow for normalization in numpy->QImage conversion
   (i.e. to quickly visualize images with different value ranges)

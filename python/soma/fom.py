@@ -91,7 +91,7 @@ The dictionary may contain:
 
         "input:{acquisition}/<subject>"
 
-    here ``{aquisition}`` is the *shared pattern* "aquisition", and
+    here ``{acquisition}`` is the *shared pattern* "acquisition", and
     ``<subject>`` is the *attribute* "subject"
 
     A pattern definition may also use attributes between ``<attribute_name>``
@@ -419,11 +419,11 @@ class DirectoriesCache(object):
 class FileOrganizationModelManager(object):
 
     '''
-    Manage the discovery and instanciation of available FileOrganizationModel
+    Manage the discovery and instantiation of available FileOrganizationModel
     (FOM). A FOM can be represented as a YAML/JSON file (or a series of
     YAML/JSON files in a directory). This class allows to identify these files
     contained in a predefined set of directories (see find_fom method) and to
-    instanciate a FileOrganizationModel for each identified file (see get_fom
+    instantiate a FileOrganizationModel for each identified file (see get_fom
     method).
     '''
 
@@ -947,7 +947,7 @@ class PathToAttributes(object):
     def _parse_directory(self, dirdict, parsing_list, single_match, all_unknown, log):
         for name, content in six.iteritems(dirdict):
             st, content = content
-            # Split extention on left most dot
+            # Split extension on left most dot
             l = name.split('.')
             possible_extension_split = [('.'.join(l[:i]), '.'.join(l[i:]))
                                         for i in range(1, len(l) + 1)]
