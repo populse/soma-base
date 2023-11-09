@@ -68,5 +68,3 @@ controller are:
   to launch the necessary callbacks.
 
   
-
-
