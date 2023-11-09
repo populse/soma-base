@@ -128,7 +128,7 @@ class Graph(object):
 
     def create_node(self, name, meta):
         """Create a new Graph node and adds it to the graph
- 
+
          Parameters
         ----------
         name: str (mandatory)
@@ -140,7 +140,7 @@ class Graph(object):
         node = GraphNode(name, meta)
         self.add_node(node)
         return node
-        
+
     def add_node(self, node):
         """ Method to add a GraphNode in the Graph
 

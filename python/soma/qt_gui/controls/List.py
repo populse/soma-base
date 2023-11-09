@@ -187,7 +187,7 @@ class ListControlWidget(object):
         elif not isinstance(control_value, (list, tuple)):
             # in nipype MultiPath, single values are not in a list
             control_value = [control_value]
-            
+
         # Create the list widget: a frame
         parent = get_ref(parent)
         frame = QtGui.QFrame(parent=parent)
