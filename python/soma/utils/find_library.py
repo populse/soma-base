@@ -37,7 +37,7 @@ def find_library(name):
         exts = ['.dll', '.DLL']
         patterns = ['.*' + ext for ext in exts]
     else:
-        # other undetermined system (bsd, othe unix...?), assume ELF
+        # other undetermined system (BSD, other unix...?), assume ELF
         envar = 'LD_LIBRARY_PATH'
     paths = os.environ.get(envar)
     if paths is None:

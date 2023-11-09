@@ -174,7 +174,7 @@ class TestSomaMisc(unittest.TestCase):
                 # trunkcate archive
                 content = open(arfile, 'rb').read()
                 open(arfile, 'wb').write(content[:50])
-                self.assertTrue(archive.is_archive(arfile)) # shoud rather fail
+                self.assertTrue(archive.is_archive(arfile)) # should rather fail
                 unpacked = os.path.join(d, 'unpacked')
                 try:
                     self.assertRaises(OSError, archive.unpack, arfile,

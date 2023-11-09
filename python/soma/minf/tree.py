@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 '''
-A minf tree is used to convert Python objects into a structure that can be written in any minf format. When a Python object is written into a minf file, if it cannot be directly stored in the choosen minf format, it is transformed in a minf tree by a L{MinfReducer}. During reading, minf trees are converted into Python objects by a L{MinfExpander}. Whatever the minf format used (XML, Python, HDF5, etc.) reading and writing objects is always done with a L{MinfReducer}/L{MinfExpander} pair. Each L{MinfReducer}/L{MinfExpander} pair is identified by a name. The name of one L{MinfReducer}/L{MinfExpander} pair must be choosen when writing a minf file, this name is recorded in the minf file and used for reading.
+A minf tree is used to convert Python objects into a structure that can be written in any minf format. When a Python object is written into a minf file, if it cannot be directly stored in the chosen minf format, it is transformed in a minf tree by a L{MinfReducer}. During reading, minf trees are converted into Python objects by a L{MinfExpander}. Whatever the minf format used (XML, Python, HDF5, etc.) reading and writing objects is always done with a L{MinfReducer}/L{MinfExpander} pair. Each L{MinfReducer}/L{MinfExpander} pair is identified by a name. The name of one L{MinfReducer}/L{MinfExpander} pair must be chosen when writing a minf file, this name is recorded in the minf file and used for reading.
 
 A minf tree is always accessed via an iterator on its content. This content is composed of atoms and special structure objects. Atoms are any Python objects that can be directly stored in the minf file format (without need for reducing or expanding these objects). Other objects are reduced in a structure starting with a L{StartStructure} instance and terminated by an L{EndStructure} instance. Between the L{StartStructure}/L{EndStructure} pair, there can be any atoms and/or special structure objects.
 
@@ -38,7 +38,7 @@ dictStructure = 'dict'
 class StartStructure(object):
 
     '''
-    When iterating over a minf tree, a L{StartStructure} indicate the begining of
+    When iterating over a minf tree, a L{StartStructure} indicate the beginning of
     a subtree. Subtrees are identified by their type which is a string
     defining how the object has been reduced (and how to expand it). There are
     three built-in structures:
@@ -74,7 +74,7 @@ class StartStructure(object):
           referencing).
         @type  identifier: string or C{None}
         @param attributes: attributes of the structure. Possible name/values
-          for attributes are dependant on the structure type.
+          for attributes are dependent on the structure type.
         @type  attributes: dict
         '''
         self.type = structureNodeType

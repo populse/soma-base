@@ -3,7 +3,7 @@
 from soma.qt_gui.qt_backend import Qt, QtCore
 
 
-class CollapsableWidget(Qt.QWidget):
+class CollapsibleWidget(Qt.QWidget):
     '''
     A widget able to show or hide another widget. It has a grid layout
     with first row containing a clickable label and second row containing

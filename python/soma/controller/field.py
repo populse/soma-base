@@ -216,7 +216,7 @@ class Field:
     doc: str
         field documentation
     optional: bool
-        if the field parameter is otional in the Controller.
+        if the field parameter is optional in the Controller.
     output: bool
         if the field parameter is an output parameter.
 
@@ -384,7 +384,7 @@ class Field:
 
     def valid_value(self):
         '''Build a valid value for the field. Used either the default value
-        or the default construtor od the field type (i.e. self.type())
+        or the default constructor od the field type (i.e. self.type())
         '''
         value = self.default_value()
         if value is undefined:
@@ -453,7 +453,7 @@ def field(
          force_field_type=None,
          **kwargs):
     ''' :class:`Field` construction factory function. Similar to
-    :func:`̀dataclasses.field` but handles :class:`~.controller.Contoller`-
+    :func:`̀dataclasses.field` but handles :class:`~.controller.Controller`-
     specific metadata, and returns a :class:`Field` instance (from soma) which
     wraps :class:`dataclasses.Field`.
     '''

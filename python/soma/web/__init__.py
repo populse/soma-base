@@ -142,9 +142,9 @@ class JSONController:
         schema = self.get_schema()
         current_type = self._resolve_schema_type(schema, schema)
         if path:
-            splitted_path = path.split('/')
-            while current_type and splitted_path:
-                path_item = splitted_path.pop(0)
+            split_path = path.split('/')
+            while current_type and split_path:
+                path_item = split_path.pop(0)
                 if current_type['type'] == 'object':
                     new_type = current_type.get('properties', {}).get(path_item)
                     if not new_type:
@@ -186,12 +186,12 @@ class JSONController:
     
     def _parse_path(self, path):
         if path:
-            splitted_path = path.split('/')
+            split_path = path.split('/')
         else:
-            splitted_path = []
+            split_path = []
         container = self.controller
         container_type = type(container)
-        for path_item in splitted_path[:-1]:
+        for path_item in split_path[:-1]:
             if isinstance(container, Controller):
                 container_type = container.field(path_item).type
                 container = getattr(container, path_item)
@@ -201,7 +201,7 @@ class JSONController:
             else:
                 container = container[path_item]
         if path:
-            path_item = splitted_path[-1]
+            path_item = split_path[-1]
         else:
             path_item = None
         return (container, path_item, container_type)
@@ -355,7 +355,7 @@ class WebBackend(QObject):
             first one. The others are passed in `args`.
         args: list[str]
             List of parameters extracted from URL path. These parameters are
-            passed to the method correponding to `path`.
+            passed to the method corresponding to `path`.
         
         '''
         if path:
@@ -438,7 +438,7 @@ class WebBackend(QObject):
 class SomaHTTPHandlerMeta(type(http.server.BaseHTTPRequestHandler)):
     '''
     Python standard HTTP server needs a handler class. This metaclass
-    allows to instanciate this class with parameters required to
+    allows to instantiate this class with parameters required to
     build a :class:`WebBackend`.
     '''
     def __new__(cls, name, bases, dict, web_backend=None):

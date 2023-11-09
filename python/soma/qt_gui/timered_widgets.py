@@ -17,7 +17,7 @@ import weakref
 class QLineEditModificationTimer(QtCore.QObject):
 
     '''
-    A QLineEditModificationTimer instance is accociated to a
+    A QLineEditModificationTimer instance is associated to a
     QtGui.QLineEdit instance, it listens all user modification (Qt
     signal 'textChanged( const QString & )') and emits a
     signal 'userModification()' when timerInterval milliseconds passed
@@ -116,7 +116,7 @@ class TimeredQLineEdit(QPredefLineEdit):
     Create a QLineEdit instance that has an private attribute
     containing a QLineEditModificationTimer associated to self. Whenever
     the internal QLineEditModificationTimer emits a userModification
-    signal, this signal is also emited by the TimeredQLineEdit instance.
+    signal, this signal is also emitted by the TimeredQLineEdit instance.
     '''
 
     userModification = QtCore.Signal()

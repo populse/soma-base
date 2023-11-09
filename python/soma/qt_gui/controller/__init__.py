@@ -5,7 +5,7 @@ from soma.undefined import undefined
 from soma.controller import (parse_type_str, OpenKeyController,
                              type_default_value)
 from soma.controller.field import subtypes, type_str
-from ..collapsable import CollapsableWidget
+from ..collapsible import CollapsibleWidget
 from soma.utils.weak_proxy import get_ref
 from functools import partial
 import html
@@ -81,10 +81,10 @@ class ScrollableWidgetsGrid(Qt.QScrollArea):
     """
     A widget that is used for Controller main windows (i.e.
     top level widget).
-    It has a 2 colums grid layout aligned ont the top of the
+    It has a 2 columns grid layout aligned ont the top of the
     window. It allows to add many inner_widgets rows. Each
     row contains either 1 or 2 widgets. A single widget uses
-    the two colums of the row.
+    the two columns of the row.
     """
 
     def __init__(self, depth=0, *args, **kwargs):
@@ -796,7 +796,7 @@ class ControllerWidgetFactory(WidgetFactory):
             controller, depth=self.controller_widget.depth + 1,
             readonly=self.readonly)
         label = self.parent_interaction.get_label()
-        self.widget = CollapsableWidget(
+        self.widget = CollapsibleWidget(
             self.inner_widget, label=label,
             expanded=(self.parent_interaction.depth == 0),
             parent=self.controller_widget)

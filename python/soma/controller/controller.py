@@ -336,8 +336,8 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
 
         Parameters are a type, an optional default value and metadata dict, an
         optional `override` parameter specifying if an existing field of the
-        same name should be silently overriden or an exception will be raised.
-        Additonal keyword arguments are additional metadata.
+        same name should be silently overridden or an exception will be raised.
+        Additional keyword arguments are additional metadata.
 
         `type_` may be a field type such as `int`, `str` or `list[float]`. It
         may also be a compound type: `Union[str, list[str]]`,
@@ -405,7 +405,7 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
         access to field metadata or corresponding attribute value
         are directed to the other controller.
 
-        The linked contoller and field can be changed with :meth:`change_proxy`
+        The linked controller and field can be changed with :meth:`change_proxy`
         '''
         proxy = FieldProxy(name, proxy_controller, proxy_field)
         namespace = {
@@ -430,7 +430,7 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
         value but its type is is linked to target field and metadata are taken
         from target field.
 
-        The linked contoller and field can be changed with :meth:`change_proxy`
+        The linked controller and field can be changed with :meth:`change_proxy`
         '''
         list_type = list[Union[proxy_controller.field(proxy_field).type, type(undefined)]]
         self.add_field(name, type_=list_type, 
@@ -622,7 +622,7 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
         return bool(self._field(name))
     
     def field(self, name):
-        ''' Query the fiend assiciated with the given name
+        ''' Query the fiend associated with the given name
         '''
         field = self._field(name)
         if field is None:
@@ -777,7 +777,7 @@ def to_json(value):
         return dict((i, to_json(j)) for i,j in value.items())
     elif isinstance(value, Path):
         # Subclasses of str are not supported by QWebChannel. When
-        # transfered to Javascript, the received value is null 
+        # transferred to Javascript, the received value is null 
         # (i.e. None). Therefore value is converted to a true
         # str instance.
         return str(value)

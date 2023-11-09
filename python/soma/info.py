@@ -40,7 +40,7 @@ long_description = """
 SOMA-BASE
 =========
 
-Miscelaneous all-purpose classes and functions in Python.
+Miscellaneous all-purpose classes and functions in Python.
 
 """
 

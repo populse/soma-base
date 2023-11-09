@@ -33,17 +33,17 @@ class Application(Singleton, Controller):
         '''Replaces __init__ in Singleton.'''
         super(Application, self).__singleton_init__(*args, **kwargs)
         # Warning : Traits bug
-        # Using the trait Directory() might instanciate a QApplication (seems to depend on the
-        # traits release). If it is declared in the class, the QApplication is instanciated at
+        # Using the trait Directory() might instantiate a QApplication (seems to depend on the
+        # traits release). If it is declared in the class, the QApplication is instantiated at
         # module importation which prevent to customize QApplication.
         self.add_field('install_directory', Directory,
                        doc='Base directory where the application is installed')
         self.add_field('user_directory', Directory,
                        doc='Base directory where user specific information can be find')
         self.add_field('application_directory', Directory,
-                       doc='Base directory where application specifc information can be find')
+                       doc='Base directory where application specific information can be find')
         self.add_field('site_directory',  Directory,
-                       doc='Base directory where site specifc information can be find')
+                       doc='Base directory where site specific information can be find')
         self._controller_factories = None
 
         if name is None:

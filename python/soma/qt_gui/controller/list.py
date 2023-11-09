@@ -10,7 +10,7 @@ except ImportError:
 from ..qt_backend import Qt
 from . import (WidgetFactory, ListItemInteraction, WidgetsGrid,
                DefaultWidgetFactory)
-from ..collapsable import CollapsableWidget
+from ..collapsible import CollapsibleWidget
 from ..timered_widgets import TimeredQLineEdit
 from soma.undefined import undefined
 from ...controller import subtypes, type_default_value
@@ -32,7 +32,7 @@ class ListStrWidgetFactory(WidgetFactory):
         self.layout = Qt.QGridLayout(self.grid_widget)
         self.layout.setContentsMargins(0, 0, 0, 0)
         self.inner_widgets = []
-        self.widget = CollapsableWidget(
+        self.widget = CollapsibleWidget(
             self.grid_widget, label=label,
             expanded=(self.parent_interaction.depth == 0),
             buttons_label=['+', '-'], parent=self.controller_widget)
@@ -217,7 +217,7 @@ class ListAnyWidgetFactory(WidgetFactory):
     def create_widgets(self):
         self.items_widget = WidgetsGrid(self.parent_interaction.depth)
         label = self.parent_interaction.get_label()
-        self.widget = CollapsableWidget(
+        self.widget = CollapsibleWidget(
             self.items_widget, label=label,
             expanded=(self.items_widget.depth == 0),
             buttons_label=['+', '-'], parent=self.controller_widget)

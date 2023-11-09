@@ -16,7 +16,7 @@ def sip4_to_sip6_enums(module, recursive=True):
 
         instance.EnumType.ENUM_VALUE
 
-    In order to maintain code compatible, we duplicat these values. If using
+    In order to maintain code compatible, we duplicate these values. If using
     sip4, then we copy values inside the enum types as sip6 does.
 
     If recursive (the default), sub-modules are also scanned and modified.
@@ -54,7 +54,7 @@ def sip6_to_sip4(module, recursive=True):
 
         instance.EnumType.ENUM_VALUE
 
-    In order to maintain code compatible, we duplicat these values. If using
+    In order to maintain code compatible, we duplicate these values. If using
     sip6, then we copy values outside the enum types as sip4 does.
 
     If recursive (the default), sub-modules are also scanned and modified.
@@ -91,7 +91,7 @@ def sip_export_enums(module, recursive=True):
 
         instance.EnumType.ENUM_VALUE
 
-    In order to maintain code compatible, we duplicat these values. If using
+    In order to maintain code compatible, we duplicate these values. If using
     sip6, then we copy values outside the enum types as sip4 does. If using
     sip4, then we copy values inside the enum types as sip6 does.
 

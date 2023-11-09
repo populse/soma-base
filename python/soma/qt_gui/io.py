@@ -68,7 +68,7 @@ class Socket(QObject):
         self.port = port
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socketnotifier = None
-        # We are in a multi threaded environnement, so only one thread can
+        # We are in a multi threaded environment, so only one thread can
         # use the socket at the same time
         self.readLock = threading.Lock()
         self.writeLock = threading.Lock()
