@@ -5,7 +5,7 @@ from soma.undefined import undefined
 from soma.controller import (parse_type_str, OpenKeyController,
                              type_default_value)
 from soma.controller.field import subtypes, type_str
-from ..collapsable import CollapsableWidget
+from ..collapsible import CollapsibleWidget
 from soma.utils.weak_proxy import get_ref
 from functools import partial
 import html
@@ -796,7 +796,7 @@ class ControllerWidgetFactory(WidgetFactory):
             controller, depth=self.controller_widget.depth + 1,
             readonly=self.readonly)
         label = self.parent_interaction.get_label()
-        self.widget = CollapsableWidget(
+        self.widget = CollapsibleWidget(
             self.inner_widget, label=label,
             expanded=(self.parent_interaction.depth == 0),
             parent=self.controller_widget)

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from . import ControllerWidgetFactory, ControllerSubwidget
-from ..collapsable import CollapsableWidget
+from ..collapsible import CollapsibleWidget
 from soma.undefined import undefined
 
 
@@ -18,7 +18,7 @@ class OpenKeyControllerWidgetFactory(ControllerWidgetFactory):
             buttons = ['+']
         else:
             buttons = []
-        self.widget = CollapsableWidget(
+        self.widget = CollapsibleWidget(
             self.inner_widget, label=label,
             expanded=(self.parent_interaction.depth == 0),
             buttons_label=buttons,

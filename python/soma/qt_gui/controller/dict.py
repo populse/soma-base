@@ -4,7 +4,7 @@
 
 from soma.qt_gui.qt_backend import Qt
 from . import WidgetFactory
-from ..collapsable import CollapsableWidget
+from ..collapsible import CollapsibleWidget
 from soma.controller.field import subtypes, type_str, parse_type_str
 
 
@@ -22,7 +22,7 @@ class DictWidgetFactory(WidgetFactory):
         layout = Qt.QGridLayout()
         self.inner_widget.setLayout(layout)
 
-        self.widget = CollapsableWidget(
+        self.widget = CollapsibleWidget(
             self.inner_widget, label=label,
             expanded=(self.parent_interaction.depth == 0),
             parent=self.controller_widget)
