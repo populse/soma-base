@@ -615,7 +615,11 @@ class SomaBrowserWidget(QWebEngineView):
         super().__init__()
         self._page = SomaWebPage()
         self._interceptor = SomaUrlRequestInterceptor(self)
-        self._page.profile().setUrlRequestInterceptor(self._interceptor)
+        profile = self._page.profile()
+        if hasattr(profile, 'setUrlRequestInterceptor'):
+            profile.setUrlRequestInterceptor(self._interceptor)
+        else:
+            profile.setRequestInterceptor(self._interceptor)
         self.setPage(self._page)
         self.setWindowTitle(window_title or 'Soma Browser')
         self._handler = web_backend
