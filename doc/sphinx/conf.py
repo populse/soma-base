@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-#
 # totor documentation build configuration file, created by
 # sphinx-quickstart on Mon Jan 24 17:33:44 2011.
 #

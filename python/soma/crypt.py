@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 '''
 Functions to manage private/public keys encryption.
 This module needs Crypto module.
