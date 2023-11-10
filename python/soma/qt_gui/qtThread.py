@@ -219,7 +219,7 @@ class QtThreadCall(singleton.Singleton, QObject):
             self.actions = []
         finally:
             self.lock.release()
-        for (function, args, kwargs) in actions:
+        for function, args, kwargs in actions:
             try:
                 if kwargs is None or len(kwargs) == 0:
                     function(*args)

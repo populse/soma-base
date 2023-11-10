@@ -261,7 +261,6 @@ class ObservableAttributes(object):
     """
 
     def __init__(self, *args, **kwargs):
-
         #: VariableParametersNotifier instance notified whenever any attribute
         #: is modified. Use self.onAttributeChange to register a function on
         #: this notifier.
@@ -412,7 +411,6 @@ class ObservableAttributes(object):
         )
 
     def _delayAttributeNotification(self, ignoreDoubles=False, checkedObjects=None):
-
         if not checkedObjects == None:
             checkedObjects.add(self)
 
@@ -448,7 +446,6 @@ class ObservableAttributes(object):
         self._restartAttributeNotification(checkedObjects=set())
 
     def _restartAttributeNotification(self, checkedObjects=None):
-
         if not checkedObjects == None:
             checkedObjects.add(self)
 

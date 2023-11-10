@@ -13,6 +13,7 @@ getfullargspec = getattr(inspect, "getfullargspec", inspect.getargspec)
 # -------------------------------------------------------------------------
 from soma.translation import translate as _
 
+
 # -------------------------------------------------------------------------
 class Empty(object):
     pass

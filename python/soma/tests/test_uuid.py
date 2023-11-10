@@ -32,7 +32,7 @@ class TestUUID(unittest.TestCase):
         p = pickle.dumps(u1, 2)  # test Pickle protocol version 2
         self.assertEqual(u1, pickle.loads(p))
         u3 = uuid.Uuid(b"1cab3907-9056-4694-a1d5-266ed5b6ebe3")
-        u4 = uuid.Uuid(u"1cab3907-9056-4694-a1d5-266ed5b6ebe3")
+        u4 = uuid.Uuid("1cab3907-9056-4694-a1d5-266ed5b6ebe3")
         self.assertEqual(u3, u4)
 
 

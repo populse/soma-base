@@ -1000,7 +1000,6 @@ class TestController(unittest.TestCase):
         self.assertEqual([i.name for i in app2.fields()], ["toto"])
 
     def test_json(self):
-
         c1 = SerializableController(
             s="toto",
             i=42,

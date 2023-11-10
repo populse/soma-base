@@ -44,7 +44,6 @@ def load_pilots(root, path):
 
     for fname in files:
         if fname.endswith(".py") and fname.startswith("test_"):
-
             module_name = (
                 ["soma"]
                 + path[len(os.path.normpath(root)) + 1 :].split(os.path.sep)
@@ -76,7 +75,6 @@ def load_pilots(root, path):
 
 
 if __name__ == "__main__":
-
     import soma
 
     module_path = soma.__path__[0]

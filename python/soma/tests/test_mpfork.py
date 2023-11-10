@@ -10,7 +10,6 @@ import math
 
 
 class TestMPFork(unittest.TestCase):
-
     if not sys.platform.startswith("win"):
 
         def test_mpfork(self):

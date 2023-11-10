@@ -92,7 +92,7 @@ class TestSomaMisc(unittest.TestCase):
                 open(privfile, "wb").write(private_key)
 
                 msg = (
-                    u"I write a super secret message that nobody should "
+                    "I write a super secret message that nobody should "
                     "see, never.".encode("utf-8")
                 )
                 crypt_msg = crypt.encrypt_RSA(pubfile, msg)
@@ -145,7 +145,7 @@ class TestSomaMisc(unittest.TestCase):
             dir1 = os.path.join(d, "subdir")
             fullfile2 = os.path.join(dir1, "archive2.txt")
             os.mkdir(dir1)
-            open(fullfile2, "w").write(u"bebert is happy")
+            open(fullfile2, "w").write("bebert is happy")
             for ext in (".zip", ".tar", ".tgz", "tar.bz2"):
                 arfile = os.path.join(d, "archive" + ext)
                 open(arfile, "wb").write(b"bloblop")
@@ -170,7 +170,7 @@ class TestSomaMisc(unittest.TestCase):
                     content2 = open(
                         os.path.join(unpacked, "subdir", "archive2.txt"), "r"
                     ).read()
-                    self.assertEqual(content2, u"bebert is happy")
+                    self.assertEqual(content2, "bebert is happy")
                 finally:
                     try:
                         shutil.rmtree(unpacked)

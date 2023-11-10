@@ -198,7 +198,6 @@ class GenericHandlers(object):
         mobject = ExtendedImporterHelper.getModuleObject(referedModule, namespace)
 
         if mobject is not None:
-
             # Changes child objects locals declaration
             for childName in list(object.__getattribute__(mobject, "__dict__").keys()):
                 # in sip >= 4.8, obj.__dict__[key] and getattr(obj, key)
@@ -211,13 +210,12 @@ class GenericHandlers(object):
                 # childObject = object.__getattribute__(mobject, childName)
                 childObject = getattr(mobject, childName)
                 if not childName.startswith("__"):
-
                     locals[childName] = childObject
 
             # Changes child objects module, recursively and avoiding loops
             stack = []
             done = []
-            for (childName, childObject) in locals.items():
+            for childName, childObject in locals.items():
                 if not childName.startswith("__"):
                     try:
                         mod = object.__getattribute__(childObject, "__module__")

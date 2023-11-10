@@ -42,7 +42,7 @@ class Uuid(object):
         if uuid is None:
             # Generate a new 128 bits uuid
             self.__uuid = struct.pack(
-                "QQ", random.randrange(2 ** 64 - 1), random.randrange(2 ** 64 - 1)
+                "QQ", random.randrange(2**64 - 1), random.randrange(2**64 - 1)
             )
         else:
             try:

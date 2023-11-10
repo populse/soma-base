@@ -362,7 +362,6 @@ class DirectoryAsDict(object):
     def _get_statistics(
         dirdict, debug, directories, files, links, files_size, path_size, errors, count
     ):
-
         if debug and count % 100 == 0:
             debug.info(
                 "%s files=%d, directories=%d, size=%d"
@@ -1501,7 +1500,6 @@ class AttributesToPaths(object):
 
 
 def call_before_application_initialization(application):
-
     application.add_field(
         "fom_path",
         List[str],
@@ -1555,11 +1553,11 @@ if __name__ == "__main__":
         debug=logging,
     )
     d = {
-        "protocol": u"subjects",
+        "protocol": "subjects",
         "analysis": "default_analysis",
         "fom_parameter": "head_mesh",
         "acquisition": "default_acquisition",
-        "subject": u"002_S_0816_S18402_I40732",
+        "subject": "002_S_0816_S18402_I40732",
         "fom_format": "fom_preferred",
     }
     for p, a in atp.find_paths(d, debug=logging):

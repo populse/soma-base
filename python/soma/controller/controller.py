@@ -235,7 +235,6 @@ class ControllerMeta(type):
                             )
                     dataclass_namespace[i] = field_type._dataclass_field
                 else:
-
                     dataclass_namespace[i] = field(
                         type_=type_.__args__[0],
                         default=value,

@@ -26,7 +26,7 @@ def htmlEscape(msg):
     global _htmlEscape
     if _htmlEscape is None:
         _htmlEscape = {
-            codepoint: u"&" + name + u";" for codepoint, name in codepoint2name.items()
+            codepoint: "&" + name + ";" for codepoint, name in codepoint2name.items()
         }
     if not isinstance(msg, str):
         # htmlEscape is sometimes used on non-string types (as print) like
@@ -47,21 +47,21 @@ def lesserHtmlEscape(msg):
     global _lesserHtmlEscape
     if _lesserHtmlEscape is None:
         _lesserHtmlEscape = {
-            codepoint: u"&" + name + u";"
+            codepoint: "&" + name + ";"
             for codepoint, name in codepoint2name.items()
             if chr(codepoint)
             not in (
-                u'"',
-                u"é",
-                u"à",
-                u"è",
-                u"â",
-                u"ê",
-                u"ô",
-                u"î",
-                u"û",
-                u"ù",
-                u"ö",
+                '"',
+                "é",
+                "à",
+                "è",
+                "â",
+                "ê",
+                "ô",
+                "î",
+                "û",
+                "ù",
+                "ö",
             )
         }
     msg = str(msg)
