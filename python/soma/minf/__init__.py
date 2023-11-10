@@ -30,11 +30,11 @@
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL-B license and that you accept its terms.
 
-'''
+"""
 See :py:mod:`minf.api <soma.minf.api>` module for documentation.
 
 * author: Yann Cointepas
 * organization: `NeuroSpin <http://www.neurospin.org>`_
 * license: `CeCILL B <http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html>`_
-'''
+"""
 __docformat__ = "restructuredtext en"

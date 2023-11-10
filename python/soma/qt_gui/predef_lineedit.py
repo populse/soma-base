@@ -1,4 +1,5 @@
 from soma.qt_gui.qt_backend import Qt
+
 try:
     from traits.api import Undefined
 except ImportError:
@@ -7,7 +8,7 @@ from functools import partial
 
 
 class QPredefLineEdit(Qt.QLineEdit):
-    '''
+    """
     A QLineEdit variant allowing to select predefined values using a right-
     click popup.
 
@@ -18,23 +19,36 @@ class QPredefLineEdit(Qt.QLineEdit):
     and "<undefined>" respectively, when allow_none and/or allow_undefined are
     enabled. These special values can be queried using :meth:`value` instead of
     :meth:`text`.
-    '''
-    def __init__(self, parent_or_contents=None, parent=None,
-                 predefined_values=None, allow_none=False,
-                 allow_undefined=False, *args, **kwargs):
+    """
+
+    def __init__(
+        self,
+        parent_or_contents=None,
+        parent=None,
+        predefined_values=None,
+        allow_none=False,
+        allow_undefined=False,
+        *args,
+        **kwargs
+    ):
         if parent is not None:
-            args = (parent, ) + args
+            args = (parent,) + args
         if parent_or_contents is not None:
-            args = (parent_or_contents, ) + args
+            args = (parent_or_contents,) + args
         super(QPredefLineEdit, self).__init__(*args, **kwargs)
         if predefined_values is None:
             predefined_values = []
         self.predefined_values = predefined_values
-        self.allow_none = allow_none or None in predefined_values \
-            or ('<none>', None) in predefined_values
-        self.allow_undefined = allow_undefined \
-            or Undefined in predefined_values \
-            or ('<undefined>', Undefined) in predefined_values
+        self.allow_none = (
+            allow_none
+            or None in predefined_values
+            or ("<none>", None) in predefined_values
+        )
+        self.allow_undefined = (
+            allow_undefined
+            or Undefined in predefined_values
+            or ("<undefined>", Undefined) in predefined_values
+        )
 
     def contextMenuEvent(self, event):
         menu = self.createStandardContextMenu()
@@ -54,9 +68,9 @@ class QPredefLineEdit(Qt.QLineEdit):
 
     def text_repr(self, value):
         if value is None:
-            return '<none>'
+            return "<none>"
         if value is Undefined:
-            return '<undefined>'
+            return "<undefined>"
         if not isinstance(value, (str, bytes)):
             value = str(value)
         if isinstance(value, bytes):
@@ -65,9 +79,9 @@ class QPredefLineEdit(Qt.QLineEdit):
 
     def value(self):
         text = self.text()
-        if self.allow_none and text == '<none>':
+        if self.allow_none and text == "<none>":
             return None
-        if self.allow_undefined and text == '<undefined>':
+        if self.allow_undefined and text == "<undefined>":
             return Undefined
         return text
 

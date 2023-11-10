@@ -30,31 +30,31 @@
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL-B license and that you accept its terms.
 
-'''
+"""
 This module defines only "constants" containing the names of the tags
 and the attributes used in XML minf format.
 
 * author: Yann Cointepas
 * organization: `NeuroSpin <http://www.neurospin.org>`_
 * license: `CeCILL B <http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html>`_
-'''
+"""
 __docformat__ = "restructuredtext en"
 
 
-noneTag = u'none'
-trueTag = u'true'
-falseTag = u'false'
-numberTag = u'n'
-stringTag = u's'
-listTag = u'l'
-dictionaryTag = u'd'
-factoryTag = u'f'
-xhtmlTag = u'xhtml'
-minfTag = u'minf'
-referenceTag = u'ref'
+noneTag = "none"
+trueTag = "true"
+falseTag = "false"
+numberTag = "n"
+stringTag = "s"
+listTag = "l"
+dictionaryTag = "d"
+factoryTag = "f"
+xhtmlTag = "xhtml"
+minfTag = "minf"
+referenceTag = "ref"
 
-expanderAttribute = u'expander'
-lengthAttribute = u'length'
-nameAttribute = u'name'
-objectTypeAttribute = u'type'
-identifierAttribute = u'identifier'
+expanderAttribute = "expander"
+lengthAttribute = "length"
+nameAttribute = "name"
+objectTypeAttribute = "type"
+identifierAttribute = "identifier"

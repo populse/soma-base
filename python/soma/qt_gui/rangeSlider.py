@@ -32,6 +32,7 @@
 # ------------------------------------------------------------------------
 
 from __future__ import absolute_import
+
 __author__ = "Ryan Galloway <ryan@rsgalloway.com>"
 __version__ = "0.1"
 
@@ -64,7 +65,7 @@ try:
 except AttributeError:
     _fromUtf8 = lambda s: s
 
-__all__ = ['QRangeSlider']
+__all__ = ["QRangeSlider"]
 
 DEFAULT_CSS = """
 QRangeSlider * {
@@ -129,12 +130,12 @@ class Ui_Form(object):
         QtCore.QMetaObject.connectSlotsByName(Form)
 
     def retranslateUi(self, Form):
-        Form.setWindowTitle(Qt.QApplication.translate(
-            "QRangeSlider", "QRangeSlider", None))
+        Form.setWindowTitle(
+            Qt.QApplication.translate("QRangeSlider", "QRangeSlider", None)
+        )
 
 
 class Element(Qt.QGroupBox):
-
     def __init__(self, parent, main):
         super(Element, self).__init__(parent)
         self.main = main
@@ -145,7 +146,7 @@ class Element(Qt.QGroupBox):
 
     def textColor(self):
         """text paint color"""
-        return getattr(self, '__textColor', Qt.QColor(125, 125, 125))
+        return getattr(self, "__textColor", Qt.QColor(125, 125, 125))
 
     def setTextColor(self, color):
         """set the text paint color"""
@@ -153,7 +154,7 @@ class Element(Qt.QGroupBox):
             color = Qt.QColor(color[0], color[1], color[2])
         elif type(color) == int:
             color = Qt.QColor(color, color, color)
-        setattr(self, '__textColor', color)
+        setattr(self, "__textColor", color)
 
     def paintEvent(self, event):
         """overrides paint event to handle text"""
@@ -173,7 +174,7 @@ class Head(Element):
 
     def drawText(self, event, qp):
         qp.setPen(self.textColor())
-        qp.setFont(Qt.QFont('Arial', 10))
+        qp.setFont(Qt.QFont("Arial", 10))
 
 
 class Tail(Element):
@@ -185,7 +186,7 @@ class Tail(Element):
 
     def drawText(self, event, qp):
         qp.setPen(self.textColor())
-        qp.setFont(Qt.QFont('Arial', 10))
+        qp.setFont(Qt.QFont("Arial", 10))
 
 
 class Handle(Element):
@@ -197,20 +198,20 @@ class Handle(Element):
 
     def drawText(self, event, qp):
         qp.setPen(self.textColor())
-        qp.setFont(Qt.QFont('Arial', 10))
+        qp.setFont(Qt.QFont("Arial", 10))
 
     def mouseMoveEvent(self, event):
         event.accept()
         mx = event.globalX()
-        _mx = getattr(self, '__mx', None)
+        _mx = getattr(self, "__mx", None)
 
         if not _mx:
-            setattr(self, '__mx', mx)
+            setattr(self, "__mx", mx)
             dx = 0
         else:
             dx = mx - _mx
 
-        setattr(self, '__mx', mx)
+        setattr(self, "__mx", mx)
 
         if dx == 0:
             event.ignore()
@@ -359,35 +360,35 @@ class QRangeSlider(Qt.QWidget, Ui_Form):
 
     def min(self):
         """:return: minimum value"""
-        return getattr(self, '__min', None)
+        return getattr(self, "__min", None)
 
     def max(self):
         """:return: maximum value"""
-        return getattr(self, '__max', None)
+        return getattr(self, "__max", None)
 
     def setMin(self, value):
         """sets minimum value"""
         assert type(value) is int
-        setattr(self, '__min', value)
+        setattr(self, "__min", value)
         self.minValueChanged.emit(value)
 
     def setMax(self, value):
         """sets maximum value"""
         assert type(value) is int
-        setattr(self, '__max', value)
+        setattr(self, "__max", value)
         self.maxValueChanged.emit(value)
 
     def start(self):
         """:return: range slider start value"""
-        return getattr(self, '__start', None)
+        return getattr(self, "__start", None)
 
     def end(self):
         """:return: range slider end value"""
-        return getattr(self, '__end', None)
+        return getattr(self, "__end", None)
 
     def _setStart(self, value):
         """stores the start value only"""
-        setattr(self, '__start', value)
+        setattr(self, "__start", value)
         self.startValueChanged.emit(value)
 
     def setStart(self, value):
@@ -399,7 +400,7 @@ class QRangeSlider(Qt.QWidget, Ui_Form):
 
     def _setEnd(self, value):
         """stores the end value only"""
-        setattr(self, '__end', value)
+        setattr(self, "__end", value)
         self.endValueChanged.emit(value)
 
     def setEnd(self, value):
@@ -411,12 +412,12 @@ class QRangeSlider(Qt.QWidget, Ui_Form):
 
     def drawValues(self):
         """:return: True if slider values will be drawn"""
-        return getattr(self, '__drawValues', None)
+        return getattr(self, "__drawValues", None)
 
     def setDrawValues(self, draw):
         """sets draw values boolean to draw slider values"""
         assert type(draw) is bool
-        setattr(self, '__drawValues', draw)
+        setattr(self, "__drawValues", draw)
 
     def getRange(self):
         """:return: the start and end values as a tuple"""
@@ -459,7 +460,9 @@ class QRangeSlider(Qt.QWidget, Ui_Form):
 
     def _posToValue(self, xpos):
         """converts local pixel x coord to slider value"""
-        return int(((xpos + self._splitter.handleWidth()) / float(self.width())) * self.max())
+        return int(
+            ((xpos + self._splitter.handleWidth()) / float(self.width())) * self.max()
+        )
 
     def _handleMoveSplitter(self, xpos, index):
         """private method for handling moving splitter handles"""
@@ -498,13 +501,16 @@ class QRangeSlider(Qt.QWidget, Ui_Form):
         _unlockWidth(self._head)
         _unlockWidth(self._handle)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     app = Qt.QApplication(sys.argv)
     rs = QRangeSlider()
     rs.show()
     rs.setRange(15, 35)
     rs.setBackgroundStyle(
-        'background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #222, stop:1 #333);')
+        "background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #222, stop:1 #333);"
+    )
     rs.handle.setStyleSheet(
-        'background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #282, stop:1 #393);')
+        "background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #282, stop:1 #393);"
+    )
     app.exec_()

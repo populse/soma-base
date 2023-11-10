@@ -20,35 +20,40 @@ import argparse
 
 import unittest
 
-ref_mode = 'ref'
-run_mode = 'run'
+ref_mode = "ref"
+run_mode = "run"
 test_modes = [run_mode, ref_mode]
 default_mode = run_mode
 
 
 class SomaTestLoader(unittest.TestLoader):
     """Base class for test loader that allows to pass keyword arguments to the
-       test case class and use the environment to set the location of reference
-       files. Inspired from http://stackoverflow.com/questions/11380413/ (but
-       here we modify the test case classes themselves).
-       The ArgumentParser is defined in the __init__ method. While it could be
-       a class atrtibute, this makes easier to modify it in subclasses.
-       The static method `default_parser` is used to create a new instance of
-       the basic parser.
+    test case class and use the environment to set the location of reference
+    files. Inspired from http://stackoverflow.com/questions/11380413/ (but
+    here we modify the test case classes themselves).
+    The ArgumentParser is defined in the __init__ method. While it could be
+    a class atrtibute, this makes easier to modify it in subclasses.
+    The static method `default_parser` is used to create a new instance of
+    the basic parser.
     """
 
     @staticmethod
     def default_parser(description):
         parser = argparse.ArgumentParser(
             description=description,
-            epilog=("Note that the options are usually passed by make via "
-                    "bv_maker.")
+            epilog=(
+                "Note that the options are usually passed by make via " "bv_maker."
+            ),
         )
         parser.add_argument(
-            '--test_mode', choices=test_modes,
+            "--test_mode",
+            choices=test_modes,
             default=default_mode,
-            help=('Mode to use (\'run\' for normal tests, '
-                  '\'ref\' for generating the reference files).'))
+            help=(
+                "Mode to use ('run' for normal tests, "
+                "'ref' for generating the reference files)."
+            ),
+        )
         return parser
 
     def __init__(self):
@@ -56,28 +61,28 @@ class SomaTestLoader(unittest.TestLoader):
 
     def parse_args_and_env(self, argv):
         args = vars(self.parser.parse_args(argv))
-        args['base_ref_data_dir'] = os.environ.get(
-            'BRAINVISA_TEST_REF_DATA_DIR'
-        )
-        args['base_run_data_dir'] = os.environ.get(
-            'BRAINVISA_TEST_RUN_DATA_DIR'
-        )
-        if args['test_mode'] == run_mode and not args['base_run_data_dir']:
-            msg = ("BRAINVISA_TEST_RUN_DATA_DIR must be set in environment "
-                   "when using 'run' mode")
+        args["base_ref_data_dir"] = os.environ.get("BRAINVISA_TEST_REF_DATA_DIR")
+        args["base_run_data_dir"] = os.environ.get("BRAINVISA_TEST_RUN_DATA_DIR")
+        if args["test_mode"] == run_mode and not args["base_run_data_dir"]:
+            msg = (
+                "BRAINVISA_TEST_RUN_DATA_DIR must be set in environment "
+                "when using 'run' mode"
+            )
             raise ValueError(msg)
         return args
 
     def loadTestsFromTestCase(self, testCaseClass, argv=None):
         """Return a suite of all tests cases contained in
-           testCaseClass."""
+        testCaseClass."""
         if issubclass(testCaseClass, unittest.TestSuite):
-            raise TypeError("Test cases should not be derived from "
-                            "TestSuite. Maybe you meant to derive from"
-                            " TestCase?")
+            raise TypeError(
+                "Test cases should not be derived from "
+                "TestSuite. Maybe you meant to derive from"
+                " TestCase?"
+            )
         testCaseNames = self.getTestCaseNames(testCaseClass)
-        if not testCaseNames and hasattr(testCaseClass, 'runTest'):
-            testCaseNames = ['runTest']
+        if not testCaseNames and hasattr(testCaseClass, "runTest"):
+            testCaseNames = ["runTest"]
 
         args = self.parse_args_and_env(argv)
 
@@ -86,9 +91,7 @@ class SomaTestLoader(unittest.TestLoader):
         for test_case_name in testCaseNames:
             for k, v in args.items():
                 setattr(testCaseClass, k, v)
-            test_cases.append(
-                testCaseClass(test_case_name)
-            )
+            test_cases.append(testCaseClass(test_case_name))
         loaded_suite = self.suiteClass(test_cases)
 
         return loaded_suite
@@ -120,8 +123,7 @@ class BaseSomaTestCase(unittest.TestCase):
     def __init__(self, testName):
         super(BaseSomaTestCase, self).__init__(testName)
         if self.test_mode == run_mode and not self.base_run_data_dir:
-            msg_fmt = \
-                "base_run_data_dir must be provided when using '%s' mode"
+            msg_fmt = "base_run_data_dir must be provided when using '%s' mode"
             msg = msg_fmt % run_mode
             raise ValueError(msg)
 
@@ -193,8 +195,7 @@ class SomaTestCase(BaseSomaTestCase):
     @classmethod
     def setUpClass(cls):
         if not cls.base_ref_data_dir:
-            msg_fmt = \
-                "base_ref_data_dir must be provided for test %s"
+            msg_fmt = "base_ref_data_dir must be provided for test %s"
             msg = msg_fmt % cls.__name__
             raise EnvironmentError(msg)
         if cls.test_mode == ref_mode:

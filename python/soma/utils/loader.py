@@ -12,7 +12,7 @@ import sys
 
 
 def load_objects(module_name, object_name=None, allowed_instances=None):
-    """ Load a python object
+    """Load a python object
 
     The object is described by a string `module_name` and `object_name`.
     If `object_name` is None import the full module content.
@@ -46,33 +46,29 @@ def load_objects(module_name, object_name=None, allowed_instances=None):
     tools = []
     if object_name:
         try:
-            insert_tool(tools, getattr(module, object_name),
-                        allowed_instances)
+            insert_tool(tools, getattr(module, object_name), allowed_instances)
         except ImportError as e:
-            raise Exception("Could not import {0}: {1}".format(object_name,
-                                                               e))
+            raise Exception("Could not import {0}: {1}".format(object_name, e))
     else:
         for tool_name in dir(module):
             if tool_name.startswith("_"):
                 continue
             try:
-                insert_tool(tools, getattr(module, tool_name),
-                            allowed_instances)
+                insert_tool(tools, getattr(module, tool_name), allowed_instances)
             except ImportError as e:
-                raise Exception("Could not import {0}: {1}".format(
-                                tool_name, e))
+                raise Exception("Could not import {0}: {1}".format(tool_name, e))
 
     return tools
 
 
 def cleanup(attribute):
-    """ cleanup avoiding:
+    """cleanup avoiding:
 
-        * Windows reserved characters
-        * '_' since it is reserved by Brainvisa
-        * tab, newline and null character
+    * Windows reserved characters
+    * '_' since it is reserved by Brainvisa
+    * tab, newline and null character
     """
-    cleanup_table = string.maketrans('(){} \t\r\n\0', '         ')
+    cleanup_table = string.maketrans("(){} \t\r\n\0", "         ")
 
     attribute = attribute.translate(cleanup_table)
     attribute = attribute.replace(" ", "")
@@ -81,10 +77,12 @@ def cleanup(attribute):
 
 
 def insert_tool(tools, tool, allowed_instances):
-    """ Add tool to list if tool is sub class
+    """Add tool to list if tool is sub class
     of one item in allowed_instances
     """
-    allowed_instances = allowed_instances or [object, ]
+    allowed_instances = allowed_instances or [
+        object,
+    ]
     for check_instance in allowed_instances:
         if isinstance(tool, type) and issubclass(tool, check_instance):
             tools.append(tool)

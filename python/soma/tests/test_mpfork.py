@@ -10,8 +10,7 @@ import math
 
 
 class TestMPFork(unittest.TestCase):
-
-    if not sys.platform.startswith('win'):
+    if not sys.platform.startswith("win"):
 
         def test_mpfork(self):
             njobs = 10
@@ -20,7 +19,7 @@ class TestMPFork(unittest.TestCase):
             workers = mpfork.allocate_workers(q, 4)
             self.assertEqual(len(workers), 4)
             for i in range(njobs):
-                job = (i, sum, ((i, i), ), {}, res)
+                job = (i, sum, ((i, i),), {}, res)
                 q.put(job)
 
             # add as many empty jobs as the workers number to end them
@@ -33,7 +32,7 @@ class TestMPFork(unittest.TestCase):
             for w in workers:
                 w.join()
 
-            self.assertEqual(res, [i*2 for i in range(njobs)])
+            self.assertEqual(res, [i * 2 for i in range(njobs)])
 
         def test_mpfork_with_exception1(self):
             njobs = 10
@@ -42,7 +41,7 @@ class TestMPFork(unittest.TestCase):
             workers = mpfork.allocate_workers(q, -10)
             self.assertTrue(len(workers) >= 1)
             for i in range(njobs):
-                job = (i, math.sqrt, (i-2, ), {}, res)
+                job = (i, math.sqrt, (i - 2,), {}, res)
                 q.put(job)
 
             # add as many empty jobs as the workers number to end them
@@ -74,7 +73,7 @@ class TestMPFork(unittest.TestCase):
                 sys.exit(int(x))
 
             for i in range(njobs):
-                job = (i, job_func1, (i, ), {}, res)
+                job = (i, job_func1, (i,), {}, res)
                 q.put(job)
 
             # add as many empty jobs as the workers number to end them
@@ -87,7 +86,7 @@ class TestMPFork(unittest.TestCase):
             for w in workers:
                 w.join()
 
-            #print(res, file=sys.stderr)
+            # print(res, file=sys.stderr)
             self.assertTrue(isinstance(res[0], tuple))
             self.assertTrue(res[0][0] is OSError)
             self.assertTrue(isinstance(res[1], tuple))

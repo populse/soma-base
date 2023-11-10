@@ -30,20 +30,19 @@
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL-B license and that you accept its terms.
 
-'''
+"""
 This module contains text related functions.
 
 * author: Yann Cointepas
 * organization: NeuroSpin
 * license: `CeCILL B <http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html>`_
-'''
+"""
 __docformat__ = "restructuredtext en"
 
 
 def string_to_list(s):
-    """
-    """
-    s = s.strip(' ')
+    """ """
+    s = s.strip(" ")
     while s:
         if s[0] == '"':
             i = 1
@@ -54,44 +53,41 @@ def string_to_list(s):
                     # return the rest of the string and exit
                     yield s[1:]
                     return
-                if s[i + j - 1] == '\\':
+                if s[i + j - 1] == "\\":
                     i = i + j + 1
                 else:
                     break
-            yield s[1: i + j]
-            s = s[i + j + 2:].strip(' ')
+            yield s[1 : i + j]
+            s = s[i + j + 2 :].strip(" ")
         else:
-            l = s.split(' ', 1)
+            l = s.split(" ", 1)
             yield l[0]
             if len(l) > 1:
-                s = l[1].strip(' ')
+                s = l[1].strip(" ")
             else:
-                s = ''
+                s = ""
 
 
 def list_to_string(l):
-    """
-    """
-    return ' '.join((quote_string(i) for i in l))
+    """ """
+    return " ".join((quote_string(i) for i in l))
 
 
 def quote_string(unquoted):
-    """
-    """
+    """ """
     if unquoted:
-        if unquoted.find(' ') > -1:
+        if unquoted.find(" ") > -1:
             return '"' + unquoted.replace('"', '\\"') + '"'
         else:
             return unquoted
-    return ''
+    return ""
 
 
 def unquote_string(quoted):
-    """
-    """
+    """ """
     if quoted and quoted[0] == '"':
         if quoted[-1] == '"':
-            quoted = quoted[1: -1]
+            quoted = quoted[1:-1]
         else:
             # There is a syntax error here, quoted should
             # be terminated by a double quote

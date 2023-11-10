@@ -1,28 +1,29 @@
-'''
+"""
 Universal unique identifier.
-'''
+"""
 __docformat__ = "epytext en"
 
 import struct
 import random
 import binascii
 
-#-------------------------------------------------------------------------
+# -------------------------------------------------------------------------
 
 
 class Uuid(object):
 
-    '''
+    """
     An Uuid instance is a universal unique identifier. It is a 128 bits
     random value.
-    '''
+    """
+
     def __new__(cls, value=None):
         if isinstance(value, Uuid):
             return value
         return object.__new__(cls)
 
     def __init__(self, uuid=None):
-        '''
+        """
         Uuid constructor. If *uuid* is omitted or *None*, a new random
         Uuid is created; if it is a string if must be 36 characters long and
         follow the pattern::
@@ -35,40 +36,47 @@ class Uuid(object):
 
         If *uuid* is an Uuid instance, no new instance is created, in this
         case, *Uuid(uuid)* returns *uuid*.
-        '''
+        """
         if isinstance(uuid, Uuid):
             return
         if uuid is None:
             # Generate a new 128 bits uuid
-            self.__uuid = struct.pack('QQ', random.randrange(2 ** 64 - 1),
-                                      random.randrange(2 ** 64 - 1))
+            self.__uuid = struct.pack(
+                "QQ", random.randrange(2**64 - 1), random.randrange(2**64 - 1)
+            )
         else:
             try:
                 if isinstance(uuid, str):
-                    uuid = uuid.encode(encoding='ascii')
-                self.__uuid = binascii.unhexlify(uuid[0:8] + uuid[9:13] +
-                                                 uuid[14:18] + uuid[19:23] +
-                                                 uuid[24:36])
+                    uuid = uuid.encode(encoding="ascii")
+                self.__uuid = binascii.unhexlify(
+                    uuid[0:8] + uuid[9:13] + uuid[14:18] + uuid[19:23] + uuid[24:36]
+                )
             except Exception:
-                raise ValueError("Invalid uuid string %s" % (repr(uuid), ))
+                raise ValueError("Invalid uuid string %s" % (repr(uuid),))
 
     def __getnewargs__(self):
-        return (str(self), )
+        return (str(self),)
 
     def __str__(self):
         if not isinstance(self.__uuid, bytes):
             # this should not happen, but has been seen in some places
             import warnings
-            warnings.warn('soma.uuid.Uuid: self.__uuid is not of type bytes, '
-                          'but {0}. This is not supposed to happen.'
-                          .format(type(self.__uuid)))
-            self.__uuid = bytes(self.__uuid, encoding='utf-8')
+
+            warnings.warn(
+                "soma.uuid.Uuid: self.__uuid is not of type bytes, "
+                "but {0}. This is not supposed to happen.".format(type(self.__uuid))
+            )
+            self.__uuid = bytes(self.__uuid, encoding="utf-8")
         return (
-            binascii.hexlify(self.__uuid[0:4]) + b'-' +
-            binascii.hexlify(self.__uuid[4:6]) + b'-' +
-            binascii.hexlify(self.__uuid[6:8]) + b'-' +
-            binascii.hexlify(self.__uuid[8:10]) + b'-' +
-            binascii.hexlify(self.__uuid[10:16])
+            binascii.hexlify(self.__uuid[0:4])
+            + b"-"
+            + binascii.hexlify(self.__uuid[4:6])
+            + b"-"
+            + binascii.hexlify(self.__uuid[6:8])
+            + b"-"
+            + binascii.hexlify(self.__uuid[8:10])
+            + b"-"
+            + binascii.hexlify(self.__uuid[10:16])
         ).decode()
 
     def __repr__(self):

@@ -6,7 +6,7 @@
 # for details.
 #
 
-'''Importation of this module activate a
+"""Importation of this module activate a
 `virtualenv <https://virtualenv.pypa.io/>`_ if
 ``os.environ['SOMA_VIRTUALENV']`` contains the directory path of the
 *virtualenv*.
@@ -23,15 +23,15 @@ can be set to use a specific *virtualenv* install of *cubicweb*:
 .. code-block:: bash
 
     env SOMA_VIRTUALENV=/path/to/virtualenv python /path/to/script.py
-'''
+"""
 
 from __future__ import absolute_import
 import soma.importer
 import os
 
-venv = os.environ.get('SOMA_VIRTUALENV')
+venv = os.environ.get("SOMA_VIRTUALENV")
 if venv:
-    activate = os.path.join(venv, 'bin', 'activate_this.py')
+    activate = os.path.join(venv, "bin", "activate_this.py")
     if os.path.exists(activate):
         # This is the way to activate a virtualenv from Python
         soma.importer.execfile(activate, dict(__file__=activate))

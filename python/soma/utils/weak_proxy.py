@@ -1,37 +1,38 @@
-'''Utility functions to make a weak proxy which also keeps an access to its original object reference. :func:`weakref.proxy` doesn't allow this, but functions that check types (C+/Python bindings for instance) cannot work with proxies.
+"""Utility functions to make a weak proxy which also keeps an access to its original object reference. :func:`weakref.proxy` doesn't allow this, but functions that check types (C+/Python bindings for instance) cannot work with proxies.
 
 We build such a proxy by setting a :func:`weakref.ref` object in the proxy (actually in the object itself).
-'''
+"""
 
 from __future__ import absolute_import
 import weakref
 
+
 def get_ref(obj):
-    ''' Get a regular reference to an object, whether it is already a regular
+    """Get a regular reference to an object, whether it is already a regular
     reference, a weak reference, or a weak proxy which holds an access to the
     original reference (built using :func:`weak_proxy`).
     In case of a weak proxy not built using :func:`weak_proxy`, we try to get
     the ``self`` from a bound method of the object, namely
     ``obj.__init__.__self__``, if it exists.
-    '''
+    """
     if isinstance(obj, weakref.ReferenceType):
         return obj()
     elif isinstance(obj, weakref.ProxyTypes):
-        if hasattr(obj, '_weakref'):
+        if hasattr(obj, "_weakref"):
             return obj._weakref()
-        elif hasattr(obj, '__init__'):
+        elif hasattr(obj, "__init__"):
             # try to get the 'self' of a bound method
             return obj.__init__.__self__
     return obj
 
 
 def weak_proxy(obj, callback=None):
-    ''' Build a weak proxy (:class:`weakref.ProxyType`) from an object, if it
+    """Build a weak proxy (:class:`weakref.ProxyType`) from an object, if it
     is not already one, and keep a reference to the original object (via a
     :class:`weakref.ReferenceType`) in it.
 
     *callback* is passed to :func:`weakref.proxy`.
-    '''
+    """
     if isinstance(obj, weakref.ProxyTypes):
         return obj
     real_obj = get_ref(obj)
@@ -44,7 +45,7 @@ def weak_proxy(obj, callback=None):
 
 
 class proxy_method(object):
-    ''' Indirect proxy for a bound method
+    """Indirect proxy for a bound method
 
     It replaces a bound method, ie ``a.method`` with a proxy callable which
     does not take a reference on ``a``.
@@ -67,12 +68,13 @@ class proxy_method(object):
     would increment the reference count on a, because ``a.enableListening``,
     as a *bound method*, contains a reference to a, and will prevent the
     deletion of ``a`` (here the Anatomist application)
-    '''
+    """
+
     def __init__(self, obj, method=None):
-        '''
+        """
         The constructor takes as parameters, either the object and its method
         name (as a string), or the bound method itself.
-        '''
+        """
         if method is None:
             method = obj.__name__
             obj = obj.__self__

@@ -1,8 +1,8 @@
-'''
+"""
 This module provides a notification system that can be used to register
 callbacks (*i.e* Python callables) that will all be called by a single
 :meth:`Notifier.notify` call.
-'''
+"""
 __docformat__ = "restructuredtext en"
 
 from soma.translation import translate as _
@@ -10,32 +10,32 @@ from soma.functiontools import checkParameterCount, numberOfParameterRange
 from soma.undefined import Undefined
 from soma.sorted_dictionary import SortedDictionary
 
-#-------------------------------------------------------------------------
+# -------------------------------------------------------------------------
 
 
 class Notifier(object):
 
-    '''
+    """
     Register a series of functions (or Notifier instances) which are all called
     with the :meth:`notify` method. The calling order is the registering
     order. If a Notifier is registered, its :meth:`notify` method is called
     whenever *self.notify()* is called.
-    '''
+    """
 
     def __init__(self, parameterCount=None):
-        '''
+        """
         Parameters
         ----------
         parameterCount: int
             if not None, each registered function must be callable with that
             number of arguments (checking is done on registration).
-        '''
+        """
         self._listeners = []
         self._parameterCount = parameterCount
         self._delayedNotification = None
 
     def add(self, listener):
-        '''
+        """
         Register a callable or a Notifier that will be called whenever
         :meth:`notify` is called. If the notifier has a *parameterCount*,
         :func:`checkParameterCount <soma.utils.functiontools.checkParameterCount>` is used to verify that
@@ -45,24 +45,32 @@ class Notifier(object):
         ----------
         listener: Python callable (function, method, *etc*.) or :class:`Notifier` instance
             item to add to the notification list.
-        '''
+        """
 
         if listener not in self._listeners:
             if self._parameterCount is not None:
                 if isinstance(listener, Notifier):
-                    if listener._parameterCount is not None and \
-                       listener._parameterCount != self._parameterCount:
-                        raise RuntimeError(_('Impossible to register a notifier with'
-                                             '%(other)d parameter(s) to a notifier '
-                                             'with %(self)d parameter(s)')
-                                           % {'self': self._parameterCount,
-                                              'other': listener._parameterCount})
+                    if (
+                        listener._parameterCount is not None
+                        and listener._parameterCount != self._parameterCount
+                    ):
+                        raise RuntimeError(
+                            _(
+                                "Impossible to register a notifier with"
+                                "%(other)d parameter(s) to a notifier "
+                                "with %(self)d parameter(s)"
+                            )
+                            % {
+                                "self": self._parameterCount,
+                                "other": listener._parameterCount,
+                            }
+                        )
                 else:
                     checkParameterCount(listener, self._parameterCount)
             self._listeners.append(listener)
 
     def remove(self, listener):
-        '''
+        """
         Remove an item from the notification list. Do nothing if *listener* is
         not in the list.
 
@@ -74,7 +82,7 @@ class Notifier(object):
         -------
         bool:
             *True* if a listener has been removed, *False* otherwise.
-        '''
+        """
 
         try:
             self._listeners.remove(listener)
@@ -84,14 +92,14 @@ class Notifier(object):
         return result
 
     def notify(self, *args):
-        '''
+        """
         Calls all the registered items in the notification list. All the
         parameters given to :meth:`notify` are passed to the items in the list.
         For items in the list that are :class:`Notifier` instance, their
         :meth:`notify` method is called
 
         .. seealso:: :meth:`delayNotification`, :meth:`restartNotification`
-        '''
+        """
         if self._delayedNotification is None:
             # if self._listeners: print '!notify!', self, ':', args, '(' + str(len( self._listeners )), 'listeners)'
             # Iterate on a copy of self._listeners because this list can be modified
@@ -115,7 +123,7 @@ class Notifier(object):
                 self._delayedNotification.append(args)
 
     def delayNotification(self, ignoreDoubles=False):
-        '''
+        """
         Stop notification until :meth:`restartNotification` is called. After a
         call to :meth`delayNotification`, all calls to :meth:`notify` will only
         store the notification parameters until :meth:`restartNotification` is
@@ -127,17 +135,17 @@ class Notifier(object):
             If *True* (the default), all calls to :meth:`notify` with
             the same parameters as a previous call will be ignored (*i.e.*
             notification will be done only once for two identical calls).
-        '''
+        """
         self._delayedNotification = []
         self._delayedNotificationIgnoreDoubles = ignoreDoubles
 
     def restartNotification(self):
-        '''
+        """
         Restart notifications that have been delayed by
         :meth:`delayNotification`. All the calls to :meth:`notify` that have
         been done between the call to :meth:`delayNotification` and the call to
         :meth:`restartNotification`, are applied immediately.
-        '''
+        """
         delayedNotification = self._delayedNotification
         if delayedNotification is not None:
             self._delayedNotification = None
@@ -145,12 +153,12 @@ class Notifier(object):
                 self.notify(*args)
 
 
-#-------------------------------------------------------------------------
+# -------------------------------------------------------------------------
 class ReorderedCall(object):
 
-    '''
+    """
     **todo:** documentation
-    '''
+    """
 
     def __init__(self, function, parametersOrder):
         self._function = function
@@ -160,24 +168,22 @@ class ReorderedCall(object):
         return self._function(*[args[i] for i in self._order])
 
 
-#-------------------------------------------------------------------------
+# -------------------------------------------------------------------------
 class VariableParametersNotifier(Notifier):
 
-    '''
+    """
     This class is a notifier that can register functions with various arguments
     count.
-    '''
+    """
 
     def __init__(self, mainParameters, *otherParameters):
-        '''
+        """
         .. seealso:: :class:`Notifier`
 
         **todo** documentation
-        '''
+        """
         Notifier.__init__(self, len(mainParameters))
-        self.__parameters = {
-            len(mainParameters): list(range(len(mainParameters)))
-        }
+        self.__parameters = {len(mainParameters): list(range(len(mainParameters)))}
         self.__min = len(mainParameters)
         self.__max = len(mainParameters)
         # Converting to list because it has the index method (which tuple has
@@ -187,22 +193,30 @@ class VariableParametersNotifier(Notifier):
         for p in otherParameters:
             other = set(p)
             if other - main:
-                raise RuntimeError(_('Invalid parameters definition (%(other)s is'
-                                     ' not a subset of %(main)s)') %
-                                   {'other': str(other), 'main': str(main)})
+                raise RuntimeError(
+                    _(
+                        "Invalid parameters definition (%(other)s is"
+                        " not a subset of %(main)s)"
+                    )
+                    % {"other": str(other), "main": str(main)}
+                )
             if len(p) in self.__parameters:
-                raise RuntimeError(_('Invalid parameters definition (several sets'
-                                     ' of %d parameters defined)') % (len(p),))
-            self.__parameters[len(p)] = [
-                mainParameters.index(i) for i in p]
+                raise RuntimeError(
+                    _(
+                        "Invalid parameters definition (several sets"
+                        " of %d parameters defined)"
+                    )
+                    % (len(p),)
+                )
+            self.__parameters[len(p)] = [mainParameters.index(i) for i in p]
             self.__min = min(self.__min, len(mainParameters))
 
     def add(self, listener):
-        '''
+        """
         .. seealso:: :meth:`Notifier.add`
 
         **todo:** documentation
-        '''
+        """
         if isinstance(listener, Notifier):
             realListener = listener
         else:
@@ -213,105 +227,106 @@ class VariableParametersNotifier(Notifier):
                 paramCount = max
             paramOrder = self.__parameters.get(paramCount)
             if paramOrder is None:
-                raise RuntimeError(_('%(f)s has an invalid parameter count '
-                                     '(%(c)d)') %
-                                   {'f': str(listener), 'c': paramCount})
+                raise RuntimeError(
+                    _("%(f)s has an invalid parameter count " "(%(c)d)")
+                    % {"f": str(listener), "c": paramCount}
+                )
             realListener = ReorderedCall(listener, paramOrder)
         Notifier.add(self, realListener)
 
     def remove(self, listener):
-        '''
+        """
         .. seealso:: :meth:`Notifier.remove`
 
         **todo:** documentation
-        '''
+        """
 
         for i in range(len(self._listeners)):
             c = self._listeners[i]
-            if ( isinstance( c, ReorderedCall ) and c._function == listener ) or \
-                    c == listener:
+            if (
+                isinstance(c, ReorderedCall) and c._function == listener
+            ) or c == listener:
                 del self._listeners[i]
                 return True
         return False
 
 
-#-------------------------------------------------------------------------
+# -------------------------------------------------------------------------
 class ObservableAttributes(object):
 
-    '''
+    """
     ObservableAttributes allows to track modification of attributes at
     runtime. By registering callbacks, it is possible to be warn of the
     modification (setting and deletion) of any attribute of the instance.
-    '''
+    """
 
     def __init__(self, *args, **kwargs):
-
         #: VariableParametersNotifier instance notified whenever any attribute
         #: is modified. Use self.onAttributeChange to register a function on
         #: this notifier.
-#    self.__dict__[ '_onAnyAttributeChange' ] = \
-#      self._createAttributeNotifier()
-        super(ObservableAttributes, self).__setattr__('_onAnyAttributeChange',
-                                                      self._createAttributeNotifier())
+        #    self.__dict__[ '_onAnyAttributeChange' ] = \
+        #      self._createAttributeNotifier()
+        super(ObservableAttributes, self).__setattr__(
+            "_onAnyAttributeChange", self._createAttributeNotifier()
+        )
 
         #: Dictionary whose keys are attribute names and values are
         #: L{VariableParametersNotifier} instances. Whenever an attribute is
         #: modified, the corresponding L{VariableParametersNotifier} is notified.
         #: Use L{self.onAttributeChange} to register a function on these notifiers.
-#    self.__dict__[ '_onAttributeChange' ] = {}
-        super(ObservableAttributes, self).__setattr__(
-            '_onAttributeChange', {})
+        #    self.__dict__[ '_onAttributeChange' ] = {}
+        super(ObservableAttributes, self).__setattr__("_onAttributeChange", {})
         super(ObservableAttributes, self).__init__(*args, **kwargs)
 
     @staticmethod
     def _createAttributeNotifier():
-        '''
+        """
         Static method creating a :class:`VariableParametersNotifier` instance
         for attribute modification notification.
 
         see :meth:`notifyAttributeChange`.
-        '''
+        """
         return VariableParametersNotifier(
-            ('object', 'attributeName', 'newValue', 'oldValue'),
+            ("object", "attributeName", "newValue", "oldValue"),
             (),
-            ('newValue', ),
-            ('newValue', 'oldValue'),
-            ('attributeName', 'newValue', 'oldValue'),
+            ("newValue",),
+            ("newValue", "oldValue"),
+            ("attributeName", "newValue", "oldValue"),
         )
 
     def notifyAttributeChange(self, name, value, oldValue=Undefined):
-        '''
+        """
         First, calls functions registered for modification of the attribute
         named *name*, then call functions registered for modification of any
         attribute.
 
         .. seealso:: :meth:`onAttributeChange`
-        '''
+        """
         # Notify the change of this attribute
-        if hasattr(self, '_onAttributeChange'):
+        if hasattr(self, "_onAttributeChange"):
             notifier = self._onAttributeChange.get(name)
             if notifier is not None:
                 notifier.notify(self, name, value, oldValue)
 
-        if hasattr(self, '_onAnyAttributeChange'):
+        if hasattr(self, "_onAnyAttributeChange"):
             # Notify the change of one attribute
             self._onAnyAttributeChange.notify(self, name, value, oldValue)
 
     def __setattr__(self, name, value):
-        '''
+        """
         Changes the value of attribute *name* then calls
         :meth:`notifyAttributeChange`.
-        '''
+        """
         oldValue = getattr(self, name, Undefined)
         super(ObservableAttributes, self).__setattr__(name, value)
         if value != oldValue:
             self.notifyAttributeChange(name, value, oldValue)
 
     def __delattr__(self, name):
-        '''
+        """
         Deletes the attribute *name* then calls :meth:`notifyAttributeChange`
         with ``newValue = :class:`Undefined` ``.
-        '''
+        """
         oldValue = getattr(self, name, Undefined)
         super(ObservableAttributes, self).__delattr__(name)
         self.notifyAttributeChange(name, Undefined, oldValue)
@@ -319,7 +334,7 @@ class ObservableAttributes(object):
         self._onAttributeChange.pop(name, None)
 
     def onAttributeChange(self, first, second=None):
-        '''
+        """
         Registers a function to be called when an attribute is modified or
         deleted. To call the function for any attribute modification, use the
         following syntax::
@@ -351,12 +366,12 @@ class ObservableAttributes(object):
 
         If the function accepts a variable number of parameters, it will be
         called with the maximum number of arguments possible.
-        '''
+        """
         if second is None:
-            if hasattr(self, '_onAnyAttributeChange'):
+            if hasattr(self, "_onAnyAttributeChange"):
                 self._onAnyAttributeChange.add(first)
         else:
-            if hasattr(self, '_onAttributeChange'):
+            if hasattr(self, "_onAttributeChange"):
                 notifier = self._onAttributeChange.get(first)
                 if notifier is None:
                     notifier = self._createAttributeNotifier()
@@ -364,12 +379,12 @@ class ObservableAttributes(object):
                 notifier.add(second)
 
     def removeOnAttributeChange(self, first, second=None):
-        '''
+        """
         Remove a function previously registered with :meth:`onAttributeChange`.
         To remove a function, the arguments of :meth:`removeOnAttributeChange`
         must be the same as those passed to :meth:`onAttributeChange` to
         register the function.
-        '''
+        """
         if second is None:
             result = self._onAnyAttributeChange.remove(first)
         else:
@@ -377,7 +392,7 @@ class ObservableAttributes(object):
         return result
 
     def delayAttributeNotification(self, ignoreDoubles=False):
-        '''
+        """
         Stop attribute modification notification until
         :meth:`restartAttributeNotification` is called. After a call to
         :meth:`delayAttributeNotification`, all modification notification will
@@ -390,13 +405,12 @@ class ObservableAttributes(object):
         ignoreDoubles: bool
             If True (False is the default), all notification with the same
             parameters as a previous notification will be ignored (*i.e.* notification will be done only once for two identical events).
-        '''
+        """
         self._delayAttributeNotification(
-            ignoreDoubles=ignoreDoubles, checkedObjects=set())
+            ignoreDoubles=ignoreDoubles, checkedObjects=set()
+        )
 
-    def _delayAttributeNotification(self, ignoreDoubles=False,
-                                    checkedObjects=None):
-
+    def _delayAttributeNotification(self, ignoreDoubles=False, checkedObjects=None):
         if not checkedObjects == None:
             checkedObjects.add(self)
 
@@ -414,25 +428,24 @@ class ObservableAttributes(object):
                     # _delayAttributeNotification
                     if not value in checkedObjects:
                         value._delayAttributeNotification(
-                            ignoreDoubles=ignoreDoubles, checkedObjects=checkedObjects)
+                            ignoreDoubles=ignoreDoubles, checkedObjects=checkedObjects
+                        )
                 else:
-                    value._delayAttributeNotification(
-                        ignoreDoubles=ignoreDoubles)
+                    value._delayAttributeNotification(ignoreDoubles=ignoreDoubles)
 
         if not checkedObjects == None:
             checkedObjects.pop()
 
     def restartAttributeNotification(self):
-        '''
+        """
         Restarts notifications that have been delayed by
         :meth:`delayAttributeNotification`. All the modifications that happened
         between the call to :meth:`delayAttributeNotification` and the call to
         :meth:`restartAttributeNotification`, are notified immediately.
-        '''
+        """
         self._restartAttributeNotification(checkedObjects=set())
 
     def _restartAttributeNotification(self, checkedObjects=None):
-
         if not checkedObjects == None:
             checkedObjects.add(self)
 
@@ -454,7 +467,8 @@ class ObservableAttributes(object):
         if not checkedObjects == None:
             checkedObjects.pop()
 
-#----------------------------------------------------------------------------
+
+# ----------------------------------------------------------------------------
 
 
 class ObservableList(list):
@@ -527,7 +541,7 @@ class ObservableList(list):
         """
         content = []
         content.extend(self)
-        return (content)
+        return content
 
     def __reduce__(self):
         """This method is redefined for enable deepcopy of this object (and
@@ -576,7 +590,7 @@ class ObservableList(list):
 
     def extend(self, l):
         """Adds the content of the list l at the end of current list.
-        Notifies an insert action. """
+        Notifies an insert action."""
         index = len(self)
         super(ObservableList, self).extend(l)
         self.onChangeNotifier.notify(self.INSERT_ACTION, l, index)
@@ -592,7 +606,7 @@ class ObservableList(list):
     def remove(self, elem):
         """Removes the first occurrence of elem in the list.
 
-        Notifies a remove action. """
+        Notifies a remove action."""
         super(ObservableList, self).remove(elem)
         self.onChangeNotifier.notify(self.REMOVE_ACTION, [elem])
 
@@ -688,9 +702,11 @@ class ObservableList(list):
                 # values in the interval are used to modify the list,
                 # the rest is inserted at indexJ position
                 self.onChangeNotifier.notify(
-                    self.MODIFY_ACTION, seq[0:lenInter], indexI)
+                    self.MODIFY_ACTION, seq[0:lenInter], indexI
+                )
                 self.onChangeNotifier.notify(
-                    self.INSERT_ACTION, seq[lenInter:lenSeq], indexJ)
+                    self.INSERT_ACTION, seq[lenInter:lenSeq], indexJ
+                )
 
     def __delslice__(self, i, j):
         """Removes elements in the interval i,j.
@@ -773,7 +789,8 @@ class ObservableList(list):
             i = -1
         return i
 
-#----------------------------------------------------------------------------
+
+# ----------------------------------------------------------------------------
 
 
 class ObservableSortedDictionary(SortedDictionary):
@@ -811,9 +828,9 @@ class ObservableSortedDictionary(SortedDictionary):
     MODIFY_ACTION = 2
 
     def __init__(self, *args):
-        '''
+        """
         Initialize the dictionary with a list of ( key, value ) pairs.
-        '''
+        """
         self.onChangeNotifier = Notifier()
         super(ObservableSortedDictionary, self).__init__(*args)
 
@@ -827,7 +844,7 @@ class ObservableSortedDictionary(SortedDictionary):
             this object
         """
         content = list(self.items())
-        return (content)
+        return content
 
     def addListener(self, listener):
         """Registers the listener callback method in the notifier.
@@ -852,11 +869,11 @@ class ObservableSortedDictionary(SortedDictionary):
         insertion = key not in self
         super(ObservableSortedDictionary, self).__setitem__(key, value)
         if insertion:
-            self.onChangeNotifier.notify(
-                self.INSERT_ACTION, [value], len(self) - 1)
+            self.onChangeNotifier.notify(self.INSERT_ACTION, [value], len(self) - 1)
         else:
             self.onChangeNotifier.notify(
-                self.MODIFY_ACTION, [value], self.sortedKeys.index(key))
+                self.MODIFY_ACTION, [value], self.sortedKeys.index(key)
+            )
 
     def __delitem__(self, key):
         index = self.sortedKeys.index(key)
@@ -864,7 +881,7 @@ class ObservableSortedDictionary(SortedDictionary):
         self.onChangeNotifier.notify(self.REMOVE_ACTION, [], index)
 
     def insert(self, index, key, value):
-        '''
+        """
         inserts a (*key*, *value*) pair in the sorted dictionary before
         position *index*. If *key* is already in the dictionary, a
         :class:`KeyError <exceptions.KeyError>` is raised.
@@ -880,14 +897,14 @@ class ObservableSortedDictionary(SortedDictionary):
         -------
         index: integer
             index of C{key} in the sorted keys
-        '''
+        """
         super(ObservableSortedDictionary, self).insert(index, key, value)
         self.onChangeNotifier.notify(self.INSERT_ACTION, [value], index)
 
     def clear(self):
-        '''
+        """
         Removes all items from dictionary
-        '''
+        """
         super(ObservableSortedDictionary, self).clear()
         self.onChangeNotifier.notify(self.REMOVE_ACTION, list(self.values()), 0)
 
@@ -905,7 +922,7 @@ class ObservableSortedDictionary(SortedDictionary):
         self.onChangeNotifier.notify(self.MODIFY_ACTION, list(self.values()), 0)
 
 
-#----------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
 class EditableTree(ObservableAttributes, ObservableSortedDictionary):
 
     """The base class to model a tree of items.
@@ -961,10 +978,18 @@ class EditableTree(ObservableAttributes, ObservableSortedDictionary):
         indicates if the tree is visible (if not it may be hidden in a
         graphical representation)
     """
+
     defaultName = "tree"
 
-    def __init__(self, name=None, id=None, modifiable=True, content=[],
-                 visible=True, enabled=True):
+    def __init__(
+        self,
+        name=None,
+        id=None,
+        modifiable=True,
+        content=[],
+        visible=True,
+        enabled=True,
+    ):
         """
         Parameters
         ----------
@@ -1009,7 +1034,14 @@ class EditableTree(ObservableAttributes, ObservableSortedDictionary):
         # elements in the tuple must be serializable with minf, so the content
         # must be of type list
         content = list(self.values())
-        return (self.name, self.id, self.modifiable, content, self.visible, self.enabled)
+        return (
+            self.name,
+            self.id,
+            self.modifiable,
+            content,
+            self.visible,
+            self.enabled,
+        )
 
     def __str__(self):
         s = self.name + " ("
@@ -1030,8 +1062,14 @@ class EditableTree(ObservableAttributes, ObservableSortedDictionary):
         """
         key = item.id
         if key in self:
-            if not item.isLeaf():  # if the item is a leaf and is already in the tree, nothing to do
-                for v in item.values():  # item is also a dictionary and contains several elements, add each value in the tree item
+            if (
+                not item.isLeaf()
+            ):  # if the item is a leaf and is already in the tree, nothing to do
+                for (
+                    v
+                ) in (
+                    item.values()
+                ):  # item is also a dictionary and contains several elements, add each value in the tree item
                     self[key].add(v)
             # also set current name for the current object
             self[key].name = item.name
@@ -1050,28 +1088,29 @@ class EditableTree(ObservableAttributes, ObservableSortedDictionary):
 
     def removeEmptyBranches(self):
         """If a branch item doesn't contain any leaf or branch that contains
-        leaf recursively, the item is removed from the tree. """
+        leaf recursively, the item is removed from the tree."""
         toRemove = []
         for child in self.values():
             if not child.isLeaf():
                 child.removeEmptyBranches()
-                if list(child.values()) == []:  # it isn't possible to remove an element during iteration on the list
+                if (
+                    list(child.values()) == []
+                ):  # it isn't possible to remove an element during iteration on the list
                     toRemove.append(
-                        child)  # so it's put on a remove list and will be removed from the tree outside the loop
+                        child
+                    )  # so it's put on a remove list and will be removed from the tree outside the loop
         for item in toRemove:
             del self[item.id]
 
     def sort(self, key=None, reverse=False):
-        """Recursive sort of the tree: items are sorted in all branches.
-        """
+        """Recursive sort of the tree: items are sorted in all branches."""
         ObservableSortedDictionary.sort(self, self._keyItems)
         for item in self.values():
             if not item.isLeaf():
                 item.sort(key=key, reverse=reverse)
 
     def _keyItems(self, id):
-        """Key function
-        """
+        """Key function"""
         i1 = self[id]
         # names are translated in lowercase to make an alphabetical sort independent of the case
         # by default (uppercase letters are < to lowecase letters)
@@ -1090,11 +1129,11 @@ class EditableTree(ObservableAttributes, ObservableSortedDictionary):
         res = 0
         i1 = self[id1]
         i2 = self[id2]
-        if (not i1.isLeaf() and i2.isLeaf()):
+        if not i1.isLeaf() and i2.isLeaf():
             # if one item is a branch and the other is a leaf, the branch must
             # be before the leaf
             res = -1
-        elif (i1.isLeaf() and not i2.isLeaf()):
+        elif i1.isLeaf() and not i2.isLeaf():
             res = 1
         else:
             # names are translated in lowercase to make an alphabetical sort independent of the case
@@ -1128,7 +1167,7 @@ class EditableTree(ObservableAttributes, ObservableSortedDictionary):
             if not item.isLeaf():
                 item.onAttributeChangeRec(attributeName, listener)
 
-    #-------------------------------------------------------------------------
+    # -------------------------------------------------------------------------
     class Item(ObservableAttributes):
 
         """Base element of an :class:`EditableTree`
@@ -1160,7 +1199,19 @@ class EditableTree(ObservableAttributes, ObservableSortedDictionary):
 
         """
 
-        def __init__(self, name=None, id=None, icon=None, tooltip=None, copyEnabled=True, modifiable=True, delEnabled=True, visible=True, enabled=True, *args):
+        def __init__(
+            self,
+            name=None,
+            id=None,
+            icon=None,
+            tooltip=None,
+            copyEnabled=True,
+            modifiable=True,
+            delEnabled=True,
+            visible=True,
+            enabled=True,
+            *args
+        ):
             super(EditableTree.Item, self).__init__(*args)
             self.icon = icon
             self.name = name
@@ -1186,7 +1237,17 @@ class EditableTree(ObservableAttributes, ObservableSortedDictionary):
                 arg content to pass to the __init__ method for creating a copy
                 of this object
             """
-            return (self.name, self.id, self.icon, self.tooltip, self.copyEnabled, self.modifiable, self.delEnabled, self.visible, self.enabled)
+            return (
+                self.name,
+                self.id,
+                self.icon,
+                self.tooltip,
+                self.copyEnabled,
+                self.modifiable,
+                self.delEnabled,
+                self.visible,
+                self.enabled,
+            )
 
         def __reduce__(self):
             """This method is redefined for enable deepcopy of this object (and
@@ -1237,26 +1298,49 @@ class EditableTree(ObservableAttributes, ObservableSortedDictionary):
                         break
             return found
 
-    #-------------------------------------------------------------------------
+    # -------------------------------------------------------------------------
     class Branch(Item, ObservableSortedDictionary):
 
-        """ A Branch is an :class:`Item <EditableTree.Item>` that can contain
+        """A Branch is an :class:`Item <EditableTree.Item>` that can contain
         other items.
 
         It inherits from :class:`Item <EditableTree.Item>` and from
         :class:`ObservableSortedDictionary`, so it can have children items.
         """
+
         defaultName = "new"
 
-        def __init__(self, name=None, id=None, icon=None, tooltip=None, copyEnabled=True, modifiable=True, delEnabled=True, content=[], visible=True, enabled=True):
+        def __init__(
+            self,
+            name=None,
+            id=None,
+            icon=None,
+            tooltip=None,
+            copyEnabled=True,
+            modifiable=True,
+            delEnabled=True,
+            content=[],
+            visible=True,
+            enabled=True,
+        ):
             """All parameters must have default values to be able to create new
             elements automatically"""
             # super(EditableTree.Branch, self).__init__(content)  #, name, icon, tooltip, copyEnabled, modifiable, delEnabled)
             # EditableTree.Item.__init__(self, name, icon, tooltip,
             # copyEnabled, modifiable, delEnabled)
             dictContent = [(i.id, i) for i in content]
-            super(EditableTree.Branch, self).__init__(name, id, icon, tooltip,
-                                                      copyEnabled, modifiable, delEnabled, visible, enabled, *dictContent)
+            super(EditableTree.Branch, self).__init__(
+                name,
+                id,
+                icon,
+                tooltip,
+                copyEnabled,
+                modifiable,
+                delEnabled,
+                visible,
+                enabled,
+                *dictContent
+            )
             if name is None:
                 self.name = self.defaultName
                 self.unnamed = True
@@ -1266,7 +1350,18 @@ class EditableTree(ObservableAttributes, ObservableSortedDictionary):
 
         def __getnewargs__(self):
             content = list(self.values())
-            return (self.name, self.id, self.icon, self.tooltip, self.copyEnabled, self.modifiable, self.delEnabled, content, self.visible, self.enabled)
+            return (
+                self.name,
+                self.id,
+                self.icon,
+                self.tooltip,
+                self.copyEnabled,
+                self.modifiable,
+                self.delEnabled,
+                content,
+                self.visible,
+                self.enabled,
+            )
 
         def __reduce__(self):
             """This method is redefined for enable deepcopy of this object (and
@@ -1298,8 +1393,14 @@ class EditableTree(ObservableAttributes, ObservableSortedDictionary):
             """
             key = item.id
             if key in self:
-                if not self[key].isLeaf():  # if the item is a leaf and is already in the tree, nothing to do
-                    for v in item.values():  # item is also a dictionary and contains several elements, add each value in the tree item
+                if not self[
+                    key
+                ].isLeaf():  # if the item is a leaf and is already in the tree, nothing to do
+                    for (
+                        v
+                    ) in (
+                        item.values()
+                    ):  # item is also a dictionary and contains several elements, add each value in the tree item
                         self[key].add(v)
 
                 # also set current name for the current object
@@ -1319,15 +1420,14 @@ class EditableTree(ObservableAttributes, ObservableSortedDictionary):
                 del self[item.id]
 
         def sort(self, key=None, reverse=False):
-            """Recursive sort of the tree: items are sorted in all branches.
-            """
+            """Recursive sort of the tree: items are sorted in all branches."""
             ObservableSortedDictionary.sort(self, self._keyItems)
             for item in self.values():
                 if not item.isLeaf():
                     item.sort(key=key, reverse=reverse)
 
         def _keyItems(self, id):
-            '''Sorting key function'''
+            """Sorting key function"""
             i1 = self[id]
             # names are translated in lowercase to make an alphabetical sort independent of the case
             # by default (uppercase letters are < to lowecase letters)
@@ -1335,7 +1435,6 @@ class EditableTree(ObservableAttributes, ObservableSortedDictionary):
             # print "comp", i1.name,i1.isLeaf(), i2.name,i2.isLeaf(), res
             # leafs must go after subtrees
             return (not i1.isLeaf(), n1)
-
 
         def compItems(self, id1, id2):
             """Comparison function
@@ -1348,11 +1447,11 @@ class EditableTree(ObservableAttributes, ObservableSortedDictionary):
             res = 0
             i1 = self[id1]
             i2 = self[id2]
-            if (not i1.isLeaf() and i2.isLeaf()):
+            if not i1.isLeaf() and i2.isLeaf():
                 # if one item is a branch and the other is a leaf, the branch
                 # must be before the leaf
                 res = -1
-            elif (i1.isLeaf() and not i2.isLeaf()):
+            elif i1.isLeaf() and not i2.isLeaf():
                 res = 1
             else:
                 # names are translated in lowercase to make an alphabetical sort independent of the case
@@ -1378,19 +1477,39 @@ class EditableTree(ObservableAttributes, ObservableSortedDictionary):
                 if not item.isLeaf():
                     item.onAttributeChangeRec(attributeName, listener)
 
-    #-------------------------------------------------------------------------
+    # -------------------------------------------------------------------------
     class Leaf(Item):
 
         """A tree item that cannot have children items"""
 
-        def __init__(self, name="new", id=None, icon=None, tooltip=None, copyEnabled=True, modifiable=True, delEnabled=True, visible=True, enabled=True):
+        def __init__(
+            self,
+            name="new",
+            id=None,
+            icon=None,
+            tooltip=None,
+            copyEnabled=True,
+            modifiable=True,
+            delEnabled=True,
+            visible=True,
+            enabled=True,
+        ):
             super(EditableTree.Leaf, self).__init__(
-                name, id, icon, tooltip, copyEnabled, modifiable, delEnabled, visible, enabled)
+                name,
+                id,
+                icon,
+                tooltip,
+                copyEnabled,
+                modifiable,
+                delEnabled,
+                visible,
+                enabled,
+            )
 
         def isLeaf(self):
             return True
 
-    #-------------------------------------------------------------------------
+    # -------------------------------------------------------------------------
 
 
 class ObservableNotifier(Notifier):
@@ -1427,13 +1546,17 @@ class ObservableNotifier(Notifier):
     def add(self, listener):
         nbListenersBefore = len(self._listeners)
         Notifier.add(self, listener)
-        if nbListenersBefore == 0:  # before add : 0 listener, after : 1 listener -> add first listener
+        if (
+            nbListenersBefore == 0
+        ):  # before add : 0 listener, after : 1 listener -> add first listener
             if len(self._listeners) == 1:
                 self.onAddFirstListener.notify()
 
     def remove(self, listener):
         nbListenersBefore = len(self._listeners)
         Notifier.remove(self, listener)
-        if nbListenersBefore == 1:  # before add : 1 listener, after : 0 listener -> remove last listener
+        if (
+            nbListenersBefore == 1
+        ):  # before add : 1 listener, after : 0 listener -> remove last listener
             if len(self._listeners) == 0:
                 self.onRemoveLastListener.notify()

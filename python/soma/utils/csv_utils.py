@@ -1,5 +1,5 @@
 def dict_to_table(data_dict, shape_dict):
-    ''' Transform a dictionary into a table shape
+    """Transform a dictionary into a table shape
     (list of list, each sublist having the same size)
 
     The first line will be the header (name of columns).
@@ -54,17 +54,17 @@ def dict_to_table(data_dict, shape_dict):
          ['maman', 0, 7, 1300.6187744140625, 323.5833],
          ['maman', 0, 8, None, 103.076324],
          ['maman', 1, 2, 350.5135, None]]
-    '''
+    """
 
     todo = [(data_dict, shape_dict, {})]
     line_items = []
     while todo:
         data, shape, keys = todo.pop(0)
         if isinstance(data, dict):
-            if 'fixed_attributes' in data:
-                keys.update(data['fixed_attributes'])
+            if "fixed_attributes" in data:
+                keys.update(data["fixed_attributes"])
                 data = dict(data)
-                del data['fixed_attributes']
+                del data["fixed_attributes"]
             if len(shape) == 1:
                 key, sshape = next(iter(shape.items()))
                 for k, v in data.items():

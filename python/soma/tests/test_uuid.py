@@ -9,9 +9,7 @@ from soma import uuid
 import pickle
 
 
-
 class TestUUID(unittest.TestCase):
-
     def test_uuid(self):
         u1 = uuid.Uuid()
         u2 = uuid.Uuid()
@@ -23,18 +21,18 @@ class TestUUID(unittest.TestCase):
         self.assertIs(u1, uuid.Uuid(u1))
         self.assertEqual(u1, str(u1))
         self.assertTrue(u1 != str(u2))
-        self.assertTrue(u1 != 'bloblo')
+        self.assertTrue(u1 != "bloblo")
         self.assertTrue(u1 != 12)
-        self.assertTrue(not(u1 == 'bloblo'))
-        self.assertTrue(not(u1 == 12))
+        self.assertTrue(not (u1 == "bloblo"))
+        self.assertTrue(not (u1 == 12))
         with self.assertRaises(ValueError):
-            uuid.Uuid('blablah0-bouh-bidi-bada-popogugurbav')
+            uuid.Uuid("blablah0-bouh-bidi-bada-popogugurbav")
         p = pickle.dumps(u1)
         self.assertEqual(u1, pickle.loads(p))
         p = pickle.dumps(u1, 2)  # test Pickle protocol version 2
         self.assertEqual(u1, pickle.loads(p))
-        u3 = uuid.Uuid(b'1cab3907-9056-4694-a1d5-266ed5b6ebe3')
-        u4 = uuid.Uuid(u'1cab3907-9056-4694-a1d5-266ed5b6ebe3')
+        u3 = uuid.Uuid(b"1cab3907-9056-4694-a1d5-266ed5b6ebe3")
+        u4 = uuid.Uuid("1cab3907-9056-4694-a1d5-266ed5b6ebe3")
         self.assertEqual(u3, u4)
 
 

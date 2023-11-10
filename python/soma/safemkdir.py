@@ -36,8 +36,7 @@ import errno
 
 
 def mkdir(dirname, mode=0o777):
-    '''Same as os.mkdir, but try to prevent errors occurring from concurrent creation by several threads/processes.
-    '''
+    """Same as os.mkdir, but try to prevent errors occurring from concurrent creation by several threads/processes."""
     try:
         os.mkdir(dirname, mode)
     except OSError as e:
@@ -47,8 +46,7 @@ def mkdir(dirname, mode=0o777):
 
 
 def makedirs(dirname, mode=0o777):
-    '''Same as os.makedirs, but try to prevent errors occurring from concurrent creation by several threads/processes.
-    '''
+    """Same as os.makedirs, but try to prevent errors occurring from concurrent creation by several threads/processes."""
     ok = False
     while not ok:
         try:

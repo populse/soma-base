@@ -30,7 +30,7 @@
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL-B license and that you accept its terms.
 
-'''
+"""
 Importing this module defines a :func:`translate` function that translates
 messages of an application. The current implementation does nothing but
 defines a minimum API.
@@ -47,13 +47,13 @@ Example::
 * author: Yann Cointepas
 * organization: NeuroSpin
 * license: `CeCILL B <http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html>`_
-'''
+"""
 __docformat__ = "restructuredtext en"
 
 
-#------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 def translate(message):
-    '''
+    """
     Translate *message* into the current application language.
     The current implementation does nothing, *message* is returned untouched.
 
@@ -61,5 +61,5 @@ def translate(message):
     ----------
     message: unicode
         message to translate
-    '''
+    """
     return message
