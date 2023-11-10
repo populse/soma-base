@@ -1,6 +1,6 @@
-'''
+"""
 Reading of XML minf format.
-'''
+"""
 __docformat__ = "restructuredtext en"
 
 from xml.sax.saxutils import quoteattr as xml_quoteattr
@@ -14,26 +14,32 @@ from soma.undefined import Undefined
 from soma.minf.error import MinfError
 
 from soma.minf.reader import MinfReader
-from soma.minf.tree import minfStructure, listStructure, dictStructure, \
-    StartStructure, EndStructure, Reference
+from soma.minf.tree import (
+    minfStructure,
+    listStructure,
+    dictStructure,
+    StartStructure,
+    EndStructure,
+    Reference,
+)
 from soma.minf.xhtml import XHTML
 
 # This module only contains a definition of XML tags and attributes.
 # It is designed to allow "import *".
 from soma.minf.xml_tags import *
 
-#------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 
 
 class MinfXMLReader(MinfReader, ErrorHandler):
 
-    '''
+    """
     Specialization of L{MinfReader} class for reading XML minf format.
-    '''
-    name = 'XML'
+    """
+
+    name = "XML"
 
     class SaxHandler(ContentHandler):
-
         def __init__(self, parser):
             self.parser = parser
             self.parser._handler = MinfXMLHandler(parser)
@@ -42,8 +48,7 @@ class MinfXMLReader(MinfReader, ErrorHandler):
         def startElement(self, name, attrs):
             # Convert to builtin Python types
             name = str(name)
-            attrs = dict([(str(i[0]), str(i[1]))
-                         for i in attrs.items()])
+            attrs = dict([(str(i[0]), str(i[1])) for i in attrs.items()])
             self.parser._stack.append(name)
             self.parser._handler.startElement(self.parser, name, attrs)
 
@@ -72,8 +77,8 @@ class MinfXMLReader(MinfReader, ErrorHandler):
                 break
             self._sax_parser.feed(line)
         if self._nodesToProduce:
-            return (self._nodesToProduce[0].attributes['reduction'], ''.join(buffer))
-        return (None, ''.join(buffer))
+            return (self._nodesToProduce[0].attributes["reduction"], "".join(buffer))
+        return (None, "".join(buffer))
 
     def nodeIterator(self, source):
         self._nodesToProduce = []
@@ -96,7 +101,7 @@ class MinfXMLReader(MinfReader, ErrorHandler):
                     # Log files may be read while not finished, therefore the closing
                     # tag is missing. It is append to avoid XML parser error
                     # message.
-                    self._sax_parser.feed('<' + minfTag + '/>')
+                    self._sax_parser.feed("<" + minfTag + "/>")
                 self._minfFinished = True
                 break
             self._sax_parser.feed(line)
@@ -108,25 +113,29 @@ class MinfXMLReader(MinfReader, ErrorHandler):
         self.fatalError(errorMessage)
 
     def fatalError(self, error):
-        raise MinfError(_('XML parse error: %s') %
-                       (str(error), ) + ' (stack = ' +
-                        ','.join(['"' + i + '"' for i in self._stack]) + ')')
+        raise MinfError(
+            _("XML parse error: %s") % (str(error),)
+            + " (stack = "
+            + ",".join(['"' + i + '"' for i in self._stack])
+            + ")"
+        )
 
     def checkNoMoreAttributes(self, attributes):
         if attributes:
-            self.parseError(_('Invalid attribute": %(attributes)s') %
-                            {'attributes': ', '.join(['"' + n + '"' for n in attributes])})
+            self.parseError(
+                _('Invalid attribute": %(attributes)s')
+                % {"attributes": ", ".join(['"' + n + '"' for n in attributes])}
+            )
 
 
-#------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 class XMLHandler(object):
-
     def __init__(self, parser, parent, name, attributes):
         self.parent = parent
         parser.checkNoMoreAttributes(attributes)
 
     def startElement(self, parser, name, attributes):
-        parser.parseError(_('Unexpected tag "%s"') % (name, ))
+        parser.parseError(_('Unexpected tag "%s"') % (name,))
 
     def endElement(self, parser, name):
         parser._handler = self.parent
@@ -136,33 +145,29 @@ class XMLHandler(object):
         pass
 
 
-#------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 class NoneXMLHandler(XMLHandler):
-
     def endElement(self, parser, name):
         parser._nodesToProduce.append(None)
         XMLHandler.endElement(self, parser, name)
 
 
-#------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 class TrueXMLHandler(XMLHandler):
-
     def endElement(self, parser, name):
         parser._nodesToProduce.append(True)
         XMLHandler.endElement(self, parser, name)
 
 
-#------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 class FalseXMLHandler(XMLHandler):
-
     def endElement(self, parser, name):
         parser._nodesToProduce.append(False)
         XMLHandler.endElement(self, parser, name)
 
 
-#------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 class NumberXMLHandler(XMLHandler):
-
     def __init__(self, parser, parent, name, attributes):
         XMLHandler.__init__(self, parser, parent, name, attributes)
         self._stringValue = []
@@ -171,7 +176,7 @@ class NumberXMLHandler(XMLHandler):
         self._stringValue.append(content)
 
     def endElement(self, parser, name):
-        stringValue = ''.join(self._stringValue)
+        stringValue = "".join(self._stringValue)
         ttypes = (int, float)
         for ttype in ttypes:
             try:
@@ -185,9 +190,8 @@ class NumberXMLHandler(XMLHandler):
         XMLHandler.endElement(self, parser, name)
 
 
-#------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 class StringXMLHandler(XMLHandler):
-
     def __init__(self, parser, parent, name, attributes):
         XMLHandler.__init__(self, parser, parent, name, attributes)
         self._value = []
@@ -196,29 +200,29 @@ class StringXMLHandler(XMLHandler):
         self._value.append(content)
 
     def endElement(self, parser, name):
-        parser._nodesToProduce.append(''.join(self._value))
+        parser._nodesToProduce.append("".join(self._value))
         XMLHandler.endElement(self, parser, name)
 
 
-#------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 class ListXMLHandler(XMLHandler):
-
     def __init__(self, parser, parent, name, attributes):
         length = attributes.pop(lengthAttribute, None)
         identifier = attributes.pop(identifierAttribute, None)
         if length is not None:
-            parser._nodesToProduce.append(StartStructure(listStructure,
-                                                         identifier=identifier,
-                                                         length=length))
+            parser._nodesToProduce.append(
+                StartStructure(listStructure, identifier=identifier, length=length)
+            )
         else:
-            parser._nodesToProduce.append(StartStructure(listStructure,
-                                                         identifier=identifier))
+            parser._nodesToProduce.append(
+                StartStructure(listStructure, identifier=identifier)
+            )
         XMLHandler.__init__(self, parser, parent, name, attributes)
 
     def startElement(self, parser, name, attributes):
         newHandler = MinfXMLHandler.getHandler(parser, self, name, attributes)
         if newHandler is None:
-            parser.parseError(_('Unexpected tag "%s"') % (name, ))
+            parser.parseError(_('Unexpected tag "%s"') % (name,))
         parser._handler = newHandler
 
     def endElement(self, parser, name):
@@ -226,19 +230,19 @@ class ListXMLHandler(XMLHandler):
         XMLHandler.endElement(self, parser, name)
 
 
-#------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 class DictionaryXMLHandler(XMLHandler):
-
     def __init__(self, parser, parent, name, attributes):
         length = attributes.pop(lengthAttribute, None)
         identifier = attributes.pop(identifierAttribute, None)
         if length is not None:
-            parser._nodesToProduce.append(StartStructure(dictStructure,
-                                                         identifier=identifier,
-                                                         length=length))
+            parser._nodesToProduce.append(
+                StartStructure(dictStructure, identifier=identifier, length=length)
+            )
         else:
-            parser._nodesToProduce.append(StartStructure(dictStructure,
-                                                         identifier=identifier))
+            parser._nodesToProduce.append(
+                StartStructure(dictStructure, identifier=identifier)
+            )
         XMLHandler.__init__(self, parser, parent, name, attributes)
 
     def startElement(self, parser, name, attributes):
@@ -247,7 +251,7 @@ class DictionaryXMLHandler(XMLHandler):
             parser._nodesToProduce.append(nameAttr)
         newHandler = MinfXMLHandler.getHandler(parser, self, name, attributes)
         if newHandler is None:
-            parser.parseError(_('Unexpected tag "%s"') % (name, ))
+            parser.parseError(_('Unexpected tag "%s"') % (name,))
         parser._handler = newHandler
 
     def endElement(self, parser, name):
@@ -255,17 +259,14 @@ class DictionaryXMLHandler(XMLHandler):
         XMLHandler.endElement(self, parser, name)
 
 
-#------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 class FactoryXMLHandler(XMLHandler):
-
     def __init__(self, parser, parent, name, attributes):
         self.type = attributes.pop(objectTypeAttribute, None)
         if self.type is None:
-            parser.parseError(
-                _('%s attribute missing') % (objectTypeAttribute, ))
+            parser.parseError(_("%s attribute missing") % (objectTypeAttribute,))
         identifier = attributes.pop(identifierAttribute, None)
-        parser._nodesToProduce.append(
-            StartStructure(self.type, identifier=identifier))
+        parser._nodesToProduce.append(StartStructure(self.type, identifier=identifier))
         XMLHandler.__init__(self, parser, parent, name, attributes)
 
     def startElement(self, parser, name, attributes):
@@ -273,7 +274,7 @@ class FactoryXMLHandler(XMLHandler):
         parser._nodesToProduce.append(nameAttr)
         newHandler = MinfXMLHandler.getHandler(parser, self, name, attributes)
         if newHandler is None:
-            parser.parseError(_('Unexpected tag "%s"') % (name, ))
+            parser.parseError(_('Unexpected tag "%s"') % (name,))
         parser._handler = newHandler
 
     def endElement(self, parser, name):
@@ -281,14 +282,12 @@ class FactoryXMLHandler(XMLHandler):
         XMLHandler.endElement(self, parser, name)
 
 
-#------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 class ReferenceXMLHandler(XMLHandler):
-
     def __init__(self, parser, parent, name, attributes):
         identifier = attributes.pop(identifierAttribute, None)
         if self.type is None:
-            parser.parseError(
-                _('%s attribute missing') % (identifierAttribute, ))
+            parser.parseError(_("%s attribute missing") % (identifierAttribute,))
         parser._nodesToProduce.append(Reference(identifier=identifier))
         XMLHandler.__init__(self, parser, parent, name, attributes)
 
@@ -296,9 +295,8 @@ class ReferenceXMLHandler(XMLHandler):
         XMLHandler.endElement(self, parser, name)
 
 
-#------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 class XHTMLHandler(XMLHandler):
-
     def __init__(self, parser, parent, name, attributes):
         self.stack = [XHTML(name, attributes)]
         self._characters = []
@@ -308,7 +306,7 @@ class XHTMLHandler(XMLHandler):
         self._characters.append(content)
 
     def startElement(self, parser, name, attributes):
-        c = ''.join(self._characters)
+        c = "".join(self._characters)
         if c:
             self.stack[-1].content.append(c)
         self._characters = []
@@ -318,7 +316,7 @@ class XHTMLHandler(XMLHandler):
 
     def endElement(self, parser, name):
         item = self.stack.pop()
-        c = ''.join(self._characters)
+        c = "".join(self._characters)
         self._characters = []
         if c:
             item.content.append(c)
@@ -327,7 +325,7 @@ class XHTMLHandler(XMLHandler):
             XMLHandler.endElement(self, parser, name)
 
 
-#------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 class MinfXMLHandler(XMLHandler):
     _handlers = {
         noneTag: NoneXMLHandler,
@@ -350,6 +348,7 @@ class MinfXMLHandler(XMLHandler):
         if handler is not None:
             handler = handler(parser, parent, name, attributes)
         return handler
+
     getHandler = staticmethod(getHandler)
 
     def startElement(self, parser, name, attributes):
@@ -358,41 +357,49 @@ class MinfXMLHandler(XMLHandler):
             if nameAttr is None:
                 if self._obsoleteFormat:
                     parser.parseError(
-                        _('%s attribute required for minf_1.0') % (nameAttribute,))
+                        _("%s attribute required for minf_1.0") % (nameAttribute,)
+                    )
             else:
                 if self._obsoleteFormat:
                     parser._nodesToProduce.append(nameAttr)
                 else:
-                    parser.parseError(
-                        _('Unexpected attribute %s') % (nameAttribute, ))
-            newHandler = MinfXMLHandler.getHandler(
-                parser, self, name, attributes)
+                    parser.parseError(_("Unexpected attribute %s") % (nameAttribute,))
+            newHandler = MinfXMLHandler.getHandler(parser, self, name, attributes)
             if newHandler is None:
-                parser.parseError(_('Unexpected tag "%s"') % (name, ))
+                parser.parseError(_('Unexpected tag "%s"') % (name,))
             parser._handler = newHandler
         else:
             if name != minfTag:
                 # Document is not a minf file
                 parser.parseError(
-                    _('Wrong document type, expecting "%(minf)s" instead of '
-                        '"%(other)s>"') % {'minf': minfTag, 'other': name})
+                    _(
+                        'Wrong document type, expecting "%(minf)s" instead of '
+                        '"%(other)s>"'
+                    )
+                    % {"minf": minfTag, "other": name}
+                )
             # Checking minf format
             self._obsoleteFormat = False
             expanderName = attributes.pop(expanderAttribute, None)
             if expanderName is None:
                 # Compatibility with obsolete minf 1.0 XML format
-                version = attributes.pop('version', None)
+                version = attributes.pop("version", None)
                 if version is None:
-                    expanderName = 'minf_2.0'
+                    expanderName = "minf_2.0"
                 else:
-                    if version != '1.0':
-                        parser.parseError(_('Wrong value for attribute "version", found '
-                                            '"%s" but only "1.0" is accepted') %
-                                          (version, ))
+                    if version != "1.0":
+                        parser.parseError(
+                            _(
+                                'Wrong value for attribute "version", found '
+                                '"%s" but only "1.0" is accepted'
+                            )
+                            % (version,)
+                        )
                     self._obsoleteFormat = True
-                    expanderName = 'minf_1.0'
+                    expanderName = "minf_1.0"
             parser._nodesToProduce.append(
-                StartStructure(minfStructure, reduction=expanderName))
+                StartStructure(minfStructure, reduction=expanderName)
+            )
             # Compatibility with obsolete minf 1.0 XML format
             if self._obsoleteFormat:
                 parser._nodesToProduce.append(StartStructure(dictStructure))

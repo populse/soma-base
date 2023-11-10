@@ -1,4 +1,4 @@
-'''
+"""
 Module content
 ==============
 
@@ -20,7 +20,7 @@ Advanced classes
 ----------------
 - :class:`Singleton <soma.singleton.Singleton>`: A class deriving from
   Singleton can have only one instance.
-'''
+"""
 
 
 from .singleton import Singleton

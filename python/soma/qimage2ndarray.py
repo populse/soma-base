@@ -26,29 +26,34 @@ TODO:
 import numpy
 from soma.qt_gui.qt_backend.QtGui import QImage, QColor
 
-bgra_dtype = numpy.dtype({'b': (numpy.uint8, 0),
-                          'g': (numpy.uint8, 1),
-                          'r': (numpy.uint8, 2),
-                          'a': (numpy.uint8, 3)})
+bgra_dtype = numpy.dtype(
+    {
+        "b": (numpy.uint8, 0),
+        "g": (numpy.uint8, 1),
+        "r": (numpy.uint8, 2),
+        "a": (numpy.uint8, 3),
+    }
+)
 
 
-def qimage2numpy(qimage, dtype='array'):
+def qimage2numpy(qimage, dtype="array"):
     """Convert QImage to numpy.ndarray.  The dtype defaults to uint8
     for QImage.Format_Indexed8 or `bgra_dtype` (i.e. a record array)
     for 32bit color images.  You can pass a different dtype to use, or
     'array' to get a 3D uint8 array for color images."""
     result_shape = (qimage.height(), qimage.width())
-    temp_shape = (qimage.height(),
-                  qimage.bytesPerLine() * 8 / qimage.depth())
-    if qimage.format() in (QImage.Format_ARGB32_Premultiplied,
-                           QImage.Format_ARGB32,
-                           QImage.Format_RGB32):
-        if dtype == 'rec':
+    temp_shape = (qimage.height(), qimage.bytesPerLine() * 8 / qimage.depth())
+    if qimage.format() in (
+        QImage.Format_ARGB32_Premultiplied,
+        QImage.Format_ARGB32,
+        QImage.Format_RGB32,
+    ):
+        if dtype == "rec":
             dtype = bgra_dtype
-        elif dtype == 'array':
+        elif dtype == "array":
             dtype = numpy.uint8
-            result_shape += (4, )
-            temp_shape += (4, )
+            result_shape += (4,)
+            temp_shape += (4,)
     elif qimage.format() == QImage.Format_Indexed8:
         dtype = numpy.uint8
     else:
@@ -57,7 +62,7 @@ def qimage2numpy(qimage, dtype='array'):
     buf = qimage.bits().asstring(qimage.numBytes())
     result = numpy.frombuffer(buf, dtype).reshape(temp_shape)
     if result_shape != temp_shape:
-        result = result[:, :result_shape[1]]
+        result = result[:, : result_shape[1]]
     if qimage.format() == QImage.Format_RGB32 and dtype == numpy.uint8:
         result = result[..., :3]
     return result
@@ -84,7 +89,7 @@ def gray2qimage(gray):
     if len(gray.shape) != 2:
         raise ValueError("gray2QImage can only convert 2D arrays")
 
-    gray = numpy.require(gray, numpy.uint8, 'C')
+    gray = numpy.require(gray, numpy.uint8, "C")
 
     h, w = gray.shape
 
@@ -109,12 +114,13 @@ def rgb2qimage(rgb):
         raise ValueError("rgb2QImage can only convert 3D arrays")
     if rgb.shape[2] not in (3, 4):
         raise ValueError(
-            "rgb2QImage can expects the last dimension to contain exactly three (R,G,B) or four (R,G,B,A) channels")
+            "rgb2QImage can expects the last dimension to contain exactly three (R,G,B) or four (R,G,B,A) channels"
+        )
 
     h, w, channels = rgb.shape
 
     # Qt expects 32bit BGRA data for color images:
-    bgra = numpy.empty((h, w, 4), numpy.uint8, 'C')
+    bgra = numpy.empty((h, w, 4), numpy.uint8, "C")
     bgra[..., 0] = rgb[..., 2]
     bgra[..., 1] = rgb[..., 1]
     bgra[..., 2] = rgb[..., 0]
@@ -129,10 +135,12 @@ def rgb2qimage(rgb):
     result.ndarray = bgra
     return result
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     import pylab
+
     i = QImage()
-#    i.load("qimage2ndarray_test.png")
+    #    i.load("qimage2ndarray_test.png")
     i.load("qimage2ndarray_test_lenna.jpg")
     v = qimage2numpy(i, "rec")
     v2 = qimage2numpy(i, "array")
@@ -140,7 +148,7 @@ if __name__ == '__main__':
     pylab.show()
 
     # v is a recarray; make it MPL-compatible for showing:
-    rgb = numpy.empty(v.shape + (3, ), dtype=numpy.uint8)
+    rgb = numpy.empty(v.shape + (3,), dtype=numpy.uint8)
     rgb[..., 0] = v["r"]
     rgb[..., 1] = v["g"]
     rgb[..., 2] = v["b"]

@@ -2,42 +2,43 @@ from soma.controller import Controller
 
 from soma.undefined import undefined
 
+
 def to_json(value):
-    '''
+    """
     Convert value to an object which will mark some types through JSON
     serialization. Typically, tuples will be replaced with lists which firsst
     element is '<tuple>', Undefined with ['<undefined'], sets with ['<set>,
     items], etc.
 
     "Decding" can be done using :func:`from_json`
-    '''
+    """
     if isinstance(value, tuple):
-        value = ['<tuple>'] + [to_json(x) for x in value]
+        value = ["<tuple>"] + [to_json(x) for x in value]
     if isinstance(value, set):
-        value = ['<set>'] + [to_json(x) for x in value]
+        value = ["<set>"] + [to_json(x) for x in value]
     elif isinstance(value, list):
         value = [to_json(x) for x in value]
     elif isinstance(value, Controller):
         value = to_json(value.export_to_dict())
-    elif getattr(value, 'items', None):
+    elif getattr(value, "items", None):
         # (hasattr may answer True for HasTraits)
         new_value = {}
         for key, item in value.items():
             new_value[key] = to_json(item)
         value = new_value
     elif value is undefined:
-        value = ['<undefined>']
+        value = ["<undefined>"]
     return value
 
 
 def from_json(value):
-    '''
+    """
     Reverse of :func:`to_json`
 
     Convert value from an object which matches JSON serialization, containing
     "code" for some types. Typically, tuples, sets, Undefined, etc.
-    '''
-    if hasattr(value, 'items'):
+    """
+    if hasattr(value, "items"):
         new_value = type(value)()
         for key, item in value.items():
             new_value[key] = from_json(item)
@@ -47,10 +48,10 @@ def from_json(value):
     if len(value) < 1:
         return value
     code = value[0]
-    if code == '<tuple>':
+    if code == "<tuple>":
         return tuple([from_json(x) for x in value[1:]])
-    elif code == '<undefined>':
+    elif code == "<undefined>":
         return undefined
-    elif code == '<set>':
+    elif code == "<set>":
         return set([from_json(x) for x in value[1:]])
     return [from_json(x) for x in value]

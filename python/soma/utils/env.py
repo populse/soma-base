@@ -30,18 +30,19 @@
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL-B license and that you accept its terms.
 
-'''
+"""
 Env variables parsing tools
-'''
+"""
 
 
 def parse_env_lines(text, asdict=False):
-    ''' Separate text (generally the output of the ``env`` command) into multi-
+    """Separate text (generally the output of the ``env`` command) into multi-
     line elements, avoiding separations inside () or {} blocks.
 
     If ``asdict`` is ``True``, then the result is returned as a dict
     ``{variable: value}`` (see :func:`env_to_dict`)
-    '''
+    """
+
     def push(obj, l, depth, tags, start_tag=None):
         while depth:
             l = l[-1]
@@ -65,8 +66,7 @@ def parse_env_lines(text, asdict=False):
         return tags[0]
 
     def parse_parentheses(s):
-        rev_char = {'(': ')', '{': '}', #'[': ']',
-                    '"': '"', "'": "'"}
+        rev_char = {"(": ")", "{": "}", '"': '"', "'": "'"}  #'[': ']',
         groups = []
         tags = [None, []]
         depth = 0
@@ -74,10 +74,10 @@ def parse_env_lines(text, asdict=False):
 
         try:
             for char in s:
-                if s == '\\':
+                if s == "\\":
                     escape = not escape
                     if escape:
-                       push(char, groups, depth, tags)
+                        push(char, groups, depth, tags)
 
                 if char == rev_char.get(current_tag(tags, depth)):
                     # close tag (counterpart of the tag)
@@ -93,9 +93,9 @@ def parse_env_lines(text, asdict=False):
                     push(char, groups, depth, tags)
 
         except IndexError:
-            raise ValueError('Parentheses mismatch', depth, groups)
+            raise ValueError("Parentheses mismatch", depth, groups)
         if depth > 0:
-            raise ValueError('Parentheses mismatch 2', depth, groups)
+            raise ValueError("Parentheses mismatch 2", depth, groups)
         else:
             return groups
 
@@ -104,7 +104,7 @@ def parse_env_lines(text, asdict=False):
         for item in parsed:
             if isinstance(item, str):
                 if breaks:
-                    newlines = item.split('\n')
+                    newlines = item.split("\n")
                 else:
                     newlines = [item]
             else:
@@ -124,15 +124,15 @@ def parse_env_lines(text, asdict=False):
 
 
 def env_to_dict(lines):
-    ''' Separate each text line in the lines list into variable: value.
+    """Separate each text line in the lines list into variable: value.
     Each line is expected to be in the shape ``VAR=value``, as expected from
     the output of the ``env`` command, parsed by the :func:`parse_env_lines`
     function. Note that :func:`parse_env_lines` with the option ``asdict=True``
     will already call this function.
-    '''
+    """
     denv = {}
     for line in lines:
-        var, value = line.split('=', 1)
+        var, value = line.split("=", 1)
         denv[var.strip()] = value.strip()
 
     return denv

@@ -30,35 +30,40 @@
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL-B license and that you accept its terms.
 
-'''
+"""
 Utility classes and functions for time handling.
 
 * author: Yann Cointepas
 * organization: NeuroSpin
 * license: CeCILL B (http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html)
-'''
+"""
 from __future__ import absolute_import
+
 __docformat__ = "restructuredtext en"
 
 from soma.translation import translate as _
 
-#----------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
 
 
 def timeDifferenceToString(difference):
-    """
-    """
+    """ """
     days = int(difference / 86400)
     difference -= days * 86400
     hours = int(difference / 3600)
     difference -= hours * 3600
     minutes = int(difference / 60)
     seconds = int(difference - minutes * 60)
-    result = ''
+    result = ""
     if days:
-        return(_('%d days %d hours %d minutes %d seconds') % (days, hours, minutes, seconds))
+        return _("%d days %d hours %d minutes %d seconds") % (
+            days,
+            hours,
+            minutes,
+            seconds,
+        )
     if hours:
-        return(_('%d hours %d minutes %d seconds') % (hours, minutes, seconds))
+        return _("%d hours %d minutes %d seconds") % (hours, minutes, seconds)
     if minutes:
-        return(_('%d minutes %d seconds') % (minutes, seconds))
-    return(_('%d seconds') % (seconds, ))
+        return _("%d minutes %d seconds") % (minutes, seconds)
+    return _("%d seconds") % (seconds,)

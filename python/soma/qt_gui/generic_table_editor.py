@@ -4,8 +4,7 @@ import os
 
 
 class GenericTableEditor(QWidget):
-    ''' Table viewer / editor widget
-    '''
+    """Table viewer / editor widget"""
 
     def __init__(self, file=None, context=None, parent=None):
         QWidget.__init__(self, parent)
@@ -14,7 +13,7 @@ class GenericTableEditor(QWidget):
         self.params = None
         self.cell2tab = None
         # - ------------------------------------------------------------- - #
-        self.working_dir = '.'
+        self.working_dir = "."
         self.precision = 4
         self.buf_table = None
         #
@@ -58,23 +57,23 @@ class GenericTableEditor(QWidget):
         self.precisionButtonGrp = QActionGroup(self)
         self.precisionButtonGrp.setExclusive(True)
 
-        self.precision_full = QAction('Full precision', self.menu_view)
-        self.precision_full.setObjectName('Precision1')
+        self.precision_full = QAction("Full precision", self.menu_view)
+        self.precision_full.setObjectName("Precision1")
         self.precision_full.setCheckable(True)
 
-        self.precision_4 = QAction('10^-4', self.menu_view)
-        self.precision_4.setObjectName('Precision2')
+        self.precision_4 = QAction("10^-4", self.menu_view)
+        self.precision_4.setObjectName("Precision2")
         self.precision_4.setCheckable(True)
         self.precision_4.setChecked(True)
 
-        self.precision_2 = QAction('10^-2', self.menu_view)
-        self.precision_2.setObjectName('Precision')
+        self.precision_2 = QAction("10^-2", self.menu_view)
+        self.precision_2.setObjectName("Precision")
         self.precision_2.setCheckable(True)
 
         self.precisionButtonGrp.addAction(self.precision_full)
         self.precisionButtonGrp.addAction(self.precision_2)
         self.precisionButtonGrp.addAction(self.precision_4)
-       # self.precision_full.show()
+        # self.precision_full.show()
 
         self.menu_view.addAction(self.precision_full)
         self.menu_view.addAction(self.precision_4)
@@ -95,8 +94,7 @@ class GenericTableEditor(QWidget):
         self.gui_table.setSortingEnabled(False)
         self.layout.addWidget(self.gui_table)
         self.gui_table.cellChanged.connect(self.guiVal2BufVal)
-        self.gui_table.horizontalHeader().sectionClicked.connect(
-            self.buf_table_sort)
+        self.gui_table.horizontalHeader().sectionClicked.connect(self.buf_table_sort)
 
         # - ------------------------------------------------------------- - #
         # - Operation
@@ -125,12 +123,11 @@ class GenericTableEditor(QWidget):
         self.fileStructure = None
         self.col_names = None
         self.col_types = None
-        self.setWindowTitle('No File loaded')
+        self.setWindowTitle("No File loaded")
         self.buf_2_gui()
 
     def load_from_file(self, file=None, fileStructure=None):
-        ''' This function needs the pandas module
-        '''
+        """This function needs the pandas module"""
         if file:
             self.file = file
         self.fileStructure = fileStructure
@@ -138,6 +135,7 @@ class GenericTableEditor(QWidget):
         # - clear the table
         self.gui_table.clear()
         import pandas as pd
+
         print(self.fileStructure)
         self.data = pd.read_csv(self.file)
         if self.data.shape[1] <= 1:
@@ -150,7 +148,8 @@ class GenericTableEditor(QWidget):
 
         col_types = pd.Series([self.data[col].dtype for col in self.data])
         col_types = col_types.replace(
-            {"object": "varchar", "float64": "float", "int64": "integer"})
+            {"object": "varchar", "float64": "float", "int64": "integer"}
+        )
         self.col_types = [t for t in col_types]
         self.buf_table = [l for l in self.data.itertuples(index=False)]
         self.gui_table.setColumnCount(self.data.shape[1])
@@ -200,7 +199,7 @@ class GenericTableEditor(QWidget):
                     if self.precision and isinstance(val, float):
                         val = round(val, self.precision)
                     elif val is None:
-                        val = '-'
+                        val = "-"
                     it = QTableWidgetItem(str(val))
                     self.gui_table.setItem(i, j, it)
             self.gui_table.blockSignals(False)
@@ -216,14 +215,20 @@ class GenericTableEditor(QWidget):
         return 0
 
     def menu_open_action(self):
-        file = str(QFileDialog.getOpenFileName(
-                   self, "", "", "", None, QtGui.QFileDialog.DontUseNativeDialog))
-        if file and file != '':
+        file = str(
+            QFileDialog.getOpenFileName(
+                self, "", "", "", None, QtGui.QFileDialog.DontUseNativeDialog
+            )
+        )
+        if file and file != "":
             self.load_from_file(file=file)
 
     def menu_save_as_action(self):
-        file = str(QFileDialog.getSaveFileName(
-            self, "", "", "", None, QtGui.QFileDialog.DontUseNativeDialog))
+        file = str(
+            QFileDialog.getSaveFileName(
+                self, "", "", "", None, QtGui.QFileDialog.DontUseNativeDialog
+            )
+        )
         self.data.to_csv(file, index=False)
 
     def menu_select_action(self):
@@ -232,20 +237,31 @@ class GenericTableEditor(QWidget):
             selection.append(str(item.text()))
         # send an 'inputSelection' event with the selection as parameter
         if self.context:
-            self.context.event('inputSelection', selection)
+            self.context.event("inputSelection", selection)
 
     def menu_replace_action(self):
         try:
             from_str = str(
                 QInputDialog.getText(
-                    self, 'Enter regular expression',
-                    'Enter query to replace', QLineEdit.Normal, '')[0])
+                    self,
+                    "Enter regular expression",
+                    "Enter query to replace",
+                    QLineEdit.Normal,
+                    "",
+                )[0]
+            )
             if not from_str:
                 return None
             from_re = re.compile(from_str)
-            to_str = str(QInputDialog.getText(
-                self, 'Enter regular expression',
-                'Replace ' + from_str + ' with', QLineEdit.Normal, '')[0])
+            to_str = str(
+                QInputDialog.getText(
+                    self,
+                    "Enter regular expression",
+                    "Replace " + from_str + " with",
+                    QLineEdit.Normal,
+                    "",
+                )[0]
+            )
             if not to_str:
                 return None
             for tSelec in self.gui_table.selectedRanges():
@@ -262,8 +278,11 @@ class GenericTableEditor(QWidget):
             return None
 
     def menu_addCol(self):
-        name = str(QInputDialog.getText(self, 'Add column',
-                                        'Enter column name', QLineEdit.Normal, '')[0])
+        name = str(
+            QInputDialog.getText(
+                self, "Add column", "Enter column name", QLineEdit.Normal, ""
+            )[0]
+        )
         if not name:
             return None
         # add an item for each line in the buf tab
@@ -280,16 +299,17 @@ class GenericTableEditor(QWidget):
         nbDeleted = 0
         for c in selectedCols:
             for line in self.buf_table:
-                del(line[c - nbDeleted])
+                del line[c - nbDeleted]
             if self.col_names:
-                del(self.col_names[c - nbDeleted])
-            del(self.col_types[c - nbDeleted])
+                del self.col_names[c - nbDeleted]
+            del self.col_types[c - nbDeleted]
             nbDeleted += 1
         self.buf_2_gui()
 
     def menu_addLine(self):
-        nbline = QInputDialog.getInteger(self, 'Add line(s)',
-                                         'Enter number line(s) to add',  1, 1, 2147483647, 1)[0]
+        nbline = QInputDialog.getInteger(
+            self, "Add line(s)", "Enter number line(s) to add", 1, 1, 2147483647, 1
+        )[0]
         for i in range(nbline):
             self.buf_table.append([0] * len(self.numCols()))
         self.buf_2_gui()
@@ -300,7 +320,7 @@ class GenericTableEditor(QWidget):
         # remove in table
         nbDeleted = 0
         for r in selectedRows:
-            del(self.buf_table[r - nbDeleted])
+            del self.buf_table[r - nbDeleted]
             nbDeleted += 1
         self.buf_2_gui()
 
@@ -334,41 +354,42 @@ class GenericTableEditor(QWidget):
                     if not cell in selectedCells:
                         selectedCells.append(cell)
                         selectedCellsContent.append(
-                            str(self.gui_table.item(row, col).text()))
+                            str(self.gui_table.item(row, col).text())
+                        )
         return selectedCellsContent
 
     def setBufValFromStr(self, row, col, valstr):
-        """ Set a value and the appropriate type in the data table from a string"""
+        """Set a value and the appropriate type in the data table from a string"""
         typeConversionRequired = False
-        if self.col_types[col] == 'integer':
+        if self.col_types[col] == "integer":
             try:
                 self.buf_table[row][col] = int(valstr)
             except ValueError:
                 try:
                     typeConversionRequired = True
                     self.buf_table[row][col] = float(valstr)
-                    self.col_types[col] = 'float'
+                    self.col_types[col] = "float"
                 except ValueError:
                     self.buf_table[row][col] = valstr
-                    self.col_types[col] = 'varchar'
-        elif self.col_types[col] == 'float':
+                    self.col_types[col] = "varchar"
+        elif self.col_types[col] == "float":
             try:
                 self.buf_table[row][col] = float(valstr)
             except ValueError:
                 typeConversionRequired = True
                 self.buf_table[row][col] = valstr
-                self.col_types[col] = 'varchar'
+                self.col_types[col] = "varchar"
         else:
             self.buf_table[row][col] = valstr
         if typeConversionRequired:
-            GenericTableEditor.convTab2NativType(self.buf_table,
-                                                 self.col_types)
+            GenericTableEditor.convTab2NativType(self.buf_table, self.col_types)
 
     def guiVal2BufVal(self, row, col):
         guiVal = str(self.gui_table.item(row, col).text())
         self.setBufValFromStr(row, col, guiVal)
 
-    def getMenuBar(self): return self.menuBar
+    def getMenuBar(self):
+        return self.menuBar
 
     def showParamsBox(self):
         if not self.params:
@@ -384,28 +405,26 @@ class GenericTableEditor(QWidget):
         elif button is self.precision_2:
             self.precision = 2
         else:
-            print('unknown precision')
+            print("unknown precision")
         self.buf_2_gui()
 
     @staticmethod
     def convTab2NativType(data, colTypes):
         for col in range(len(colTypes)):
-            if colTypes[col] == 'integer':
+            if colTypes[col] == "integer":
                 for tuple in data:
                     if tuple[col]:
                         tuple[col] = int(tuple[col])
-            elif colTypes[col] == 'float':
+            elif colTypes[col] == "float":
                 for tuple in data:
                     if tuple[col]:
                         tuple[col] = float(tuple[col])
-            elif colTypes[col] == 'varchar':
+            elif colTypes[col] == "varchar":
                 for tuple in data:
                     if tuple[col]:
                         tuple[col] = str(tuple[col])
 
-
     class Parameters(QMainWindow):
-
         def __init__(self, tableEditor):
             QMainWindow.__init__(self, tableEditor)
             self.setWindowTitle("File reader/writer parameters")
@@ -422,11 +441,10 @@ class GenericTableEditor(QWidget):
             # if not fileStructure : fileStructure={}
 
             # - Header
-            self.header = QCheckBox('Header', self.widget)
+            self.header = QCheckBox("Header", self.widget)
             widgetLayout.addWidget(self.header)
-            if self.fileStructure is not None \
-                    and 'header' in self.fileStructure:
-                header = self.fileStructure['header']
+            if self.fileStructure is not None and "header" in self.fileStructure:
+                header = self.fileStructure["header"]
                 if header:
                     self.header.setChecked(True)
                 else:
@@ -434,21 +452,20 @@ class GenericTableEditor(QWidget):
                     # self.header.show()
 
             # - Quoted
-            self.quoted = QCheckBox('Quoted', self.widget)
+            self.quoted = QCheckBox("Quoted", self.widget)
             widgetLayout.addWidget(self.quoted)
-            if self.fileStructure is not None \
-                    and 'quoted' in self.fileStructure:
-                self.quoted.setChecked(self.fileStructure['quoted'])
+            if self.fileStructure is not None and "quoted" in self.fileStructure:
+                self.quoted.setChecked(self.fileStructure["quoted"])
 
             # - Speparators
             separator = QWidget(self.widget)
             widgetLayout.addWidget(separator)
             separatorLayout = QHBoxLayout()
             separator.setLayout(separatorLayout)
-            separatorLayout.addWidget(QLabel('Separator'))
+            separatorLayout.addWidget(QLabel("Separator"))
             self.separator = QComboBox()
             separatorLayout.addWidget(self.separator)
-            self.separator.setObjectName('Separator')
+            self.separator.setObjectName("Separator")
             self.separator.addItem('""')
             self.separator.addItem('" "')
             self.separator.addItem('"\t"')
@@ -456,11 +473,10 @@ class GenericTableEditor(QWidget):
             self.separator.addItem('","')
             self.separator.setEditable(True)
 
-            if self.fileStructure is not None \
-                    and 'separator' in self.fileStructure:
-                sep = self.fileStructure['separator']
+            if self.fileStructure is not None and "separator" in self.fileStructure:
+                sep = self.fileStructure["separator"]
                 if not sep:
-                    sep = ''
+                    sep = ""
                 self.separator.setEditText('"' + sep + '"')
             # self.displayColsNamesTypes()
 
@@ -479,8 +495,8 @@ class GenericTableEditor(QWidget):
             columnsLayout.addWidget(labels)
             labelsLayout = QVBoxLayout()
             labels.setLayout(labelsLayout)
-            labelsLayout.addWidget(QLabel('Header'))
-            labelsLayout.addWidget(QLabel('Types'))
+            labelsLayout.addWidget(QLabel("Header"))
+            labelsLayout.addWidget(QLabel("Types"))
 
             # - Get the number of columns from the gui
             try:
@@ -488,25 +504,22 @@ class GenericTableEditor(QWidget):
             except ValueError:
                 nbCols = 0
 
-            if self.fileStructure is not None \
-                    and 'header' in self.fileStructure:
-                header = self.fileStructure['header']
+            if self.fileStructure is not None and "header" in self.fileStructure:
+                header = self.fileStructure["header"]
             else:
                 header = False
 
-            if self.fileStructure is not None \
-                    and 'types' in self.fileStructure:
-                types = self.fileStructure['types']
+            if self.fileStructure is not None and "types" in self.fileStructure:
+                types = self.fileStructure["types"]
             else:
                 types = None
 
             class TypesQComboBox(QComboBox):
-
                 def __init__(self, parent, type):
                     QComboBox.__init__(self, parent)
-                    self.addItem('integer')
-                    self.addItem('float')
-                    self.addItem('varchar')
+                    self.addItem("integer")
+                    self.addItem("float")
+                    self.addItem("varchar")
                     if type:
                         self.setEditText(type)
 
@@ -519,9 +532,9 @@ class GenericTableEditor(QWidget):
                     try:
                         lab = header[col]
                     except IndexError:
-                        lab = ''
+                        lab = ""
                 else:
-                    lab = ''
+                    lab = ""
                 if types:
                     try:
                         type = types[col]
@@ -531,7 +544,8 @@ class GenericTableEditor(QWidget):
                     types = None
 
                 self.columns.append(
-                    (QLineEdit(lab, current), TypesQComboBox(current, type)))
+                    (QLineEdit(lab, current), TypesQComboBox(current, type))
+                )
 
         def clickupdate(self):
             # Rebuild the structFile from GUI
@@ -545,9 +559,11 @@ class GenericTableEditor(QWidget):
             quoted = self.quoted.isChecked()
 
             # - Separator
-            separator = str(self.separator.currentText()).replace('"', '')
+            separator = str(self.separator.currentText()).replace('"', "")
 
-            structFile = {'header': header, 'quoted': quoted,
-                          'separator': separator}  # , 'nbCols': nbCols}
-            self.genericTableEditor.load_from_file(
-                file=None, fileStructure=structFile)
+            structFile = {
+                "header": header,
+                "quoted": quoted,
+                "separator": separator,
+            }  # , 'nbCols': nbCols}
+            self.genericTableEditor.load_from_file(file=None, fileStructure=structFile)

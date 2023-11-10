@@ -1,30 +1,32 @@
-'''
+"""
 Utility classes and functions for Python callable.
-'''
+"""
 
 __docformat__ = "restructuredtext en"
 
 from functools import partial
 import inspect
-# handle deprecation of getargspec in python3
-getfullargspec = getattr(inspect, 'getfullargspec', inspect.getargspec)
 
-#-------------------------------------------------------------------------
+# handle deprecation of getargspec in python3
+getfullargspec = getattr(inspect, "getfullargspec", inspect.getargspec)
+
+# -------------------------------------------------------------------------
 from soma.translation import translate as _
 
-#-------------------------------------------------------------------------
+# -------------------------------------------------------------------------
 class Empty(object):
     pass
 
-#-------------------------------------------------------------------------
+
+# -------------------------------------------------------------------------
 # Obsolete, kept fonly or backward compatibility. Do not use it.
 SomaPartial = partial
 
-#-------------------------------------------------------------------------
+# -------------------------------------------------------------------------
 
 
 def getArgumentsSpecification(callable):
-    '''
+    """
     This is an extension of Python module :py:mod:`inspect.getargspec` that
     accepts classes and returns only information about the parameters that can
     be used in a call to *callable* (*e.g.* the first *self* parameter of bound
@@ -44,7 +46,7 @@ def getArgumentsSpecification(callable):
         argument names (it may contain nested lists). *varargs* and *varkw* are
         the names of the ``*`` and ``**`` arguments or *None*. *defaults* is a
         n-tuple of the default values of the last *n* arguments.
-    '''
+    """
     if inspect.isfunction(callable):
         return getfullargspec(callable)[:4]
     elif inspect.ismethod(callable):
@@ -58,8 +60,7 @@ def getArgumentsSpecification(callable):
             return [], None, None, None
         return getArgumentsSpecification(init)
     elif isinstance(callable, (partial, SomaPartial)):
-        args, varargs, varkw, defaults = getArgumentsSpecification(
-            callable.func)
+        args, varargs, varkw, defaults = getArgumentsSpecification(callable.func)
         if defaults:
             d = dict(zip(reversed(args), reversed(defaults)))
         else:
@@ -69,7 +70,7 @@ def getArgumentsSpecification(callable):
             d.update(callable.keywords)
 
         if len(d):
-            defaults = tuple((d[i] for i in args[-len(d):]))
+            defaults = tuple((d[i] for i in args[-len(d) :]))
         else:
             defaults = d
 
@@ -78,15 +79,15 @@ def getArgumentsSpecification(callable):
         try:
             call = callable.__call__
         except AttributeError:
-            raise TypeError(_('%s is not callable') %
-                            repr(callable))
+            raise TypeError(_("%s is not callable") % repr(callable))
         return getArgumentsSpecification(call)
 
-#-------------------------------------------------------------------------
+
+# -------------------------------------------------------------------------
 
 
 def getCallableString(callable):
-    '''
+    """
     Returns a translated human readable string representing a callable.
 
     Parameters
@@ -98,23 +99,25 @@ def getCallableString(callable):
     --------
     string:
         type and name of the callable
-    '''
+    """
     if inspect.isfunction(callable):
-        name = _('function %s') % (callable.__name__, )
+        name = _("function %s") % (callable.__name__,)
     elif inspect.ismethod(callable):
-        name = _('method %s') % (callable.__self__.__class__.__name__ + '.' +
-                                 callable.__name__, )
+        name = _("method %s") % (
+            callable.__self__.__class__.__name__ + "." + callable.__name__,
+        )
     elif inspect.isclass(callable):
-        name = _('class %s') % (callable.__name__, )
+        name = _("class %s") % (callable.__name__,)
     else:
         name = str(callable)
     return name
 
-#-------------------------------------------------------------------------
+
+# -------------------------------------------------------------------------
 
 
 def hasParameter(callable, parameterName):
-    '''
+    """
     Returns *True* if *callable* can be called with a parameter named
     *parameterName*. Otherwise, returns *False*.
 
@@ -131,15 +134,16 @@ def hasParameter(callable, parameterName):
     -------
     bool:
 
-    '''
+    """
     args, varargs, varkw, defaults = getArgumentsSpecification(callable)
     return varkw is not None or parameterName in args
 
-#-------------------------------------------------------------------------
+
+# -------------------------------------------------------------------------
 
 
 def numberOfParameterRange(callable):
-    '''
+    """
     Returns the minimum and maximum number of parameter that can be used to
     call a function. If the maximum number of argument is not defined, it is
     set to *None*.
@@ -156,7 +160,7 @@ def numberOfParameterRange(callable):
     tuple:
         two elements (minimum, maximum)
 
-    '''
+    """
     args, varargs, varkw, defaults = getArgumentsSpecification(callable)
     if defaults is None or len(defaults) > len(args):
         lenDefault = 0
@@ -170,9 +174,9 @@ def numberOfParameterRange(callable):
     return minimum, maximum
 
 
-#-------------------------------------------------------------------------
+# -------------------------------------------------------------------------
 def checkParameterCount(callable, paramCount):
-    '''
+    """
     Checks that a callable can be called with *paramCount* arguments. If not, a
     RuntimeError is raised.
 
@@ -185,23 +189,23 @@ def checkParameterCount(callable, paramCount):
     paramCount: int
         number of parameters
 
-    '''
+    """
     minimum, maximum = numberOfParameterRange(callable)
-    if ( maximum is not None and paramCount > maximum ) or \
-       paramCount < minimum:
+    if (maximum is not None and paramCount > maximum) or paramCount < minimum:
         raise RuntimeError(
-            _('%(callable)s cannot be called with %(paramCount)d arguments') %
-            {'callable': getCallableString(callable),
-             'paramCount': paramCount})
+            _("%(callable)s cannot be called with %(paramCount)d arguments")
+            % {"callable": getCallableString(callable), "paramCount": paramCount}
+        )
 
-#-------------------------------------------------------------------------
+
+# -------------------------------------------------------------------------
 
 
 def drange(start, stop, step=1):
-    '''
+    """
     Creates lists containing arithmetic progressions of any number type (int,
     float, ...)
-    '''
+    """
     r = start
     while r < stop:
         yield r

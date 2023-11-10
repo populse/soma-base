@@ -49,7 +49,7 @@ class Socket(QObject):
         class attribute: default port for socket server
     """
 
-    loopRetry = 60      # Retry to connect 60 times (1 minute)
+    loopRetry = 60  # Retry to connect 60 times (1 minute)
     defaultPort = 50007
 
     def __init__(self, host, port=None):
@@ -103,14 +103,13 @@ class Socket(QObject):
                 # retry to connect
                 time.sleep(1)
                 self.socket.close()
-                self.socket = socket.socket(socket.AF_INET,
-                                            socket.SOCK_STREAM)
+                self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 i = i + 1
             else:
                 # Connection successful, exit from the while loop
                 break
 
-        if findPlatform() == 'windows':
+        if findPlatform() == "windows":
             # on windows, QSocketNotifier seems to make the socket fail
             self.usethread = 1
         else:
@@ -127,7 +126,8 @@ class Socket(QObject):
         else:
             # QSocketNotifier that signals that data is enable for reading
             self.socketnotifier = QSocketNotifier(
-                self.socket.fileno(), QSocketNotifier.Read)  # , self )
+                self.socket.fileno(), QSocketNotifier.Read
+            )  # , self )
             self.socketnotifier.activated.connect(self.messageHandler)
             self.socketnotifier.setEnabled(True)
             self.initialized = 1
@@ -146,22 +146,21 @@ class Socket(QObject):
         self.processMessage(msg, excep)
 
     def getMessage(self, timeout=30):
-        '''
+        """
         Called by message handler to gets the last received message.
         If socket communication is managed by a QSocketNotifier, the message is not yet read, so this method read it.
         If reading is in another process, the message is already read and it is in messages queue.
-        '''
+        """
         if not self.initialized:
-            return '', ''
+            return "", ""
         if self.usethread:
-        # block until a message arrives in queue
+            # block until a message arrives in queue
             self.lock.acquire()
             try:
                 try:
                     msg = self._messages.get(True, timeout)
                 except queue.Empty as e:
-                    raise IOError(
-                        errno.ETIMEDOUT,  'socket communication timed out')
+                    raise IOError(errno.ETIMEDOUT, "socket communication timed out")
             finally:
                 self.lock.release()
         else:
@@ -197,7 +196,7 @@ class Socket(QObject):
         self.writeLock.acquire()
         # sendall() only appeared in python 2.1.12
         # self.socket.sendall( msg )
-        if hasattr(msg, 'encode'):
+        if hasattr(msg, "encode"):
             # encode to bytes (python3)
             msg = msg.encode()
         n = 0
@@ -249,31 +248,28 @@ class Socket(QObject):
         timeout: int
             max time to wait before reading the message.
         """
-        msg = b''
-        char = b''
+        msg = b""
+        char = b""
         waitedTime = 0
         # Receive the message atomically
-        while char != b'\n':
-            if char != b'':
+        while char != b"\n":
+            if char != b"":
                 msg += char
             try:
                 char = self.socket.recv(1)
                 waitedTime = 0
-                if char == b'\0' or char == b'':
-                    e = IOError(
-                        errno.EPIPE, 'socket communication interrupted')
+                if char == b"\0" or char == b"":
+                    e = IOError(errno.EPIPE, "socket communication interrupted")
                     raise e
             except socket.error as e:
                 if e.errno == errno.EWOULDBLOCK:
-                    char = b''
+                    char = b""
                     time.sleep(0.02)
                     waitedTime += 0.02
                     if waitedTime >= timeout:
-                        raise IOError(
-                            errno.ETIMEDOUT, 'socket communication timed out')
+                        raise IOError(errno.ETIMEDOUT, "socket communication timed out")
                 else:
-                    raise IOError(
-                        errno.EPIPE, 'socket communication interrupted')
+                    raise IOError(errno.EPIPE, "socket communication interrupted")
         return msg.decode()
 
     def readMessage(self, timeout=30):
@@ -309,15 +305,13 @@ class Socket(QObject):
         else:
             startport = Socket.defaultPort
         res = 0
-        tmpsocket = socket.socket(socket.AF_INET,
-                                  socket.SOCK_STREAM)
+        tmpsocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         while res == 0:
             res = tmpsocket.connect_ex((self.dest, startport))
             tmpsocket.close()
             if res != 0:
                 return startport
-            tmpsocket = socket.socket(socket.AF_INET,
-                                      socket.SOCK_STREAM)
+            tmpsocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             startport += 1
 
     def disableHandler(self):
@@ -362,14 +356,14 @@ def findPlatform():
       - None: unknown
     """
     if sys.platform[:3] == "win":
-        return 'windows'
+        return "windows"
     else:
-        if sys.platform.find('linux') != -1:
-            return 'linux'
-        if sys.platform.find('sunos') != -1:
-            return 'sunos'
-        if sys.platform.find('darwin') != -1:
-            return 'darwin'
-        if sys.platform.find('irix') != -1:
-            return 'irix'
+        if sys.platform.find("linux") != -1:
+            return "linux"
+        if sys.platform.find("sunos") != -1:
+            return "sunos"
+        if sys.platform.find("darwin") != -1:
+            return "darwin"
+        if sys.platform.find("irix") != -1:
+            return "irix"
         return sys.platform

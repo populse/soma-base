@@ -1,14 +1,14 @@
-
 import os
 
 from soma.qt_gui.qt_backend import (
-    Qt, QtCore,
+    Qt,
+    QtCore,
     getOpenFileName,
     getSaveFileName,
     getExistingDirectory,
 )
 from soma.qt_gui.timered_widgets import TimeredQLineEdit
-from.str import StrWidgetFactory
+from .str import StrWidgetFactory
 
 
 class FileWidgetFactory(StrWidgetFactory):
@@ -22,9 +22,8 @@ class FileWidgetFactory(StrWidgetFactory):
         self.text_widget = TimeredQLineEdit(parent=self.controller_widget)
         self.layout.addWidget(self.text_widget)
         self.button = Qt.QToolButton(self.widget)
-        self.button.setText('📂')
-        self.button.setSizePolicy(Qt.QSizePolicy.Minimum,
-                                  Qt.QSizePolicy.Minimum)
+        self.button.setText("📂")
+        self.button.setSizePolicy(Qt.QSizePolicy.Minimum, Qt.QSizePolicy.Minimum)
         self.button.setFocusPolicy(QtCore.Qt.NoFocus)
         self.button.setFocusProxy(self.text_widget)
         self.layout.addWidget(self.button)
@@ -63,19 +62,29 @@ class FileWidgetFactory(StrWidgetFactory):
         #     ext = trait.allowed_extensions
         # if trait.extensions:
         #     ext = trait.extensions
-        ext = ' '.join(f'*{e}' for e in ext)
+        ext = " ".join(f"*{e}" for e in ext)
         if ext:
-            ext += ';; All files (*)'
+            ext += ";; All files (*)"
         # Create a dialog to select a file
         value = self.parent_interaction.get_value(os.getcwd())
         if self.parent_interaction.is_output:
             fname = getSaveFileName(
-                self.controller_widget, "Output file", value, ext,
-                None, Qt.QFileDialog.DontUseNativeDialog)
+                self.controller_widget,
+                "Output file",
+                value,
+                ext,
+                None,
+                Qt.QFileDialog.DontUseNativeDialog,
+            )
         else:
             fname = getOpenFileName(
-                self.controller_widget, "Select file", value, ext, None,
-                Qt.QFileDialog.DontUseNativeDialog)
+                self.controller_widget,
+                "Select file",
+                value,
+                ext,
+                None,
+                Qt.QFileDialog.DontUseNativeDialog,
+            )
         self.parent_interaction.set_value(fname)
 
     def set_visible(self, on):
@@ -87,9 +96,13 @@ class DirectoryWidgetFactory(FileWidgetFactory):
     def select_path_dialog(self):
         # Create a dialog to select a directory
         value = self.parent_interaction.get_value(
-            os.path.dirname(os.path.abspath(os.getcwd())))
+            os.path.dirname(os.path.abspath(os.getcwd()))
+        )
         # Create a dialog to select a directory
         folder = getExistingDirectory(
-            self.controller_widget, "Open directory", value,
-            Qt.QFileDialog.ShowDirsOnly | Qt.QFileDialog.DontUseNativeDialog)
+            self.controller_widget,
+            "Open directory",
+            value,
+            Qt.QFileDialog.ShowDirsOnly | Qt.QFileDialog.DontUseNativeDialog,
+        )
         self.parent_interaction.set_value(folder)

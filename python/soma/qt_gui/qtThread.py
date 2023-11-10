@@ -29,11 +29,13 @@ def reraise(tp, value, tb=None):
 
 class FakeQtThreadCall(QObject):
 
-    '''
+    """
     Fake QtThreadCall that behave as if always used from main thread.
-    '''
+    """
+
     def isInMainThread():
         return True
+
     isInMainThread = staticmethod(isInMainThread)
 
     def push(function, *args, **kwargs):
@@ -41,6 +43,7 @@ class FakeQtThreadCall(QObject):
             function(*args)
         else:
             function(*args, **kwargs)
+
     push = staticmethod(push)
 
     def call(function, *args, **kwargs):
@@ -48,6 +51,7 @@ class FakeQtThreadCall(QObject):
             return function(*args)
         else:
             return function(*args, **kwargs)
+
     call = staticmethod(call)
 
 
@@ -81,17 +85,16 @@ class QtThreadCall(singleton.Singleton, QObject):
                 self.mainThread = thread
                 break
         if not mainthreadfound:
-            print('Warning: main thread not found')
+            print("Warning: main thread not found")
             self.mainThread = threading.current_thread()
 
     def _postEvent(self):
         class QtThreadCallEvent(QEvent):
-
             def __init__(self, qthreadcall):
                 QEvent.__init__(self, QEvent.Type(QEvent.User + 24))
                 self.qthreadcall = qthreadcall
-        QCoreApplication.instance().postEvent(self,
-                                              QtThreadCallEvent(self))
+
+        QCoreApplication.instance().postEvent(self, QtThreadCallEvent(self))
 
     def event(self, e):
         sys.stdout.flush()
@@ -155,8 +158,8 @@ class QtThreadCall(singleton.Singleton, QObject):
             self.lock.acquire()
             try:
                 self.actions.append(
-                    (self._callAndWakeUp, (semaphore, function, args, kwargs),
-                     {}))
+                    (self._callAndWakeUp, (semaphore, function, args, kwargs), {})
+                )
                 self._postEvent()
             finally:
                 self.lock.release()
@@ -228,7 +231,7 @@ class QtThreadCall(singleton.Singleton, QObject):
 
 
 class MainThreadLife(object):
-    '''This wrapper class ensures the contained object is deleted in the main
+    """This wrapper class ensures the contained object is deleted in the main
     thread, and not in the current non-GUI thread. The principle is the
     following:
 
@@ -265,7 +268,7 @@ class MainThreadLife(object):
         QtThreadCall().push(widget.ref().show)
         # ... use it ...
         del widget # OK
-    '''
+    """
 
     def __init__(self, obj_life=None, *args, **kwargs):
         super(MainThreadLife, self).__init__(*args, **kwargs)
@@ -273,17 +276,17 @@ class MainThreadLife(object):
             self._obj_life = obj_life
 
     def __del__(self):
-        if (not isinstance(threading.current_thread(), threading._MainThread)
-                and hasattr(self, '_obj_life')):
+        if not isinstance(
+            threading.current_thread(), threading._MainThread
+        ) and hasattr(self, "_obj_life"):
             lock = threading.Lock()
             lock.acquire()
-            QtThreadCall().push(MainThreadLife.delInMainThread, lock,
-                                self._obj_life)
+            QtThreadCall().push(MainThreadLife.delInMainThread, lock, self._obj_life)
             del self._obj_life
             lock.release()
 
     def ref(self):
-        '''Access the underlying object'''
+        """Access the underlying object"""
         return self._obj_life
 
     @staticmethod
@@ -297,10 +300,11 @@ class MainThreadLife(object):
 
 
 def gui_thread_call(function):
-    '''
+    """
     Decorator to make a function which executes in the GUI thread (main thread,
     actually)
-    '''
+    """
+
     def gui_thread_function2(*args, **kwargs):
         return QtThreadCall().call(function, *args, **kwargs)
 
@@ -309,11 +313,12 @@ def gui_thread_call(function):
 
 
 def gui_thread_push(function):
-    '''
+    """
     Decorator to make a function which executes in the GUI thread (main thread,
     actually), in an async way (returns immediately with no return value,
     execution may happen later)
-    '''
+    """
+
     def gui_thread_function2(*args, **kwargs):
         return QtThreadCall().push(function, *args, **kwargs)
 

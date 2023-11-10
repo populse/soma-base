@@ -1,15 +1,15 @@
-'''
+"""
 Singleton pattern.
-'''
+"""
 
 import atexit
 
-__docformat__ = 'restructuredtext en'
+__docformat__ = "restructuredtext en"
 
 
 class Singleton(object):
 
-    '''
+    """
     Implements the singleton pattern. A class deriving from ``Singleton`` can
     have only one instance. The first instantiation will create an object and
     other instantiations return the same object. Note that the :meth:`__init__`
@@ -30,37 +30,38 @@ class Singleton(object):
       o2 = MyClass()
       print(o1 is o2)
 
-    '''
+    """
 
     @classmethod
     def get_instance(cls):
         try:
-            return getattr(cls, '_singleton_instance')
+            return getattr(cls, "_singleton_instance")
         except AttributeError:
             msg = "Class %s has not been initialized" % cls.__name__
             raise ValueError(msg)
 
     def __new__(cls, *args, **kwargs):
-        if '_singleton_instance' not in cls.__dict__:
+        if "_singleton_instance" not in cls.__dict__:
             cls._singleton_instance = super(Singleton, cls).__new__(cls)
-            singleton_init = getattr(cls._singleton_instance,
-                                     '__singleton_init__', None)
+            singleton_init = getattr(
+                cls._singleton_instance, "__singleton_init__", None
+            )
             if singleton_init is not None:
                 singleton_init(*args, **kwargs)
             atexit.register(cls.delete_singleton)
         return cls._singleton_instance
 
     def __init__(self, *args, **kwargs):
-        '''
+        """
         The __init__ method of :py:class:`Singleton` derived class should do
         nothing.
         Derived classes must define :py:meth:`__singleton_init__` instead of __init__.
-        '''
+        """
 
     def __singleton_init__(self, *args, **kwargs):
         super(Singleton, self).__init__(*args, **kwargs)
 
     @classmethod
     def delete_singleton(cls):
-        if hasattr(cls, '_singleton_instance'):
+        if hasattr(cls, "_singleton_instance"):
             del cls._singleton_instance

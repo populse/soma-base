@@ -5,10 +5,10 @@ from soma.qt_gui.qt_backend import Qt
 
 
 class QVTabBar(Qt.QTabBar):
-    '''
+    """
     A vertical QTabBar, as in
     https://stackoverflow.com/questions/50578661/how-to-implement-vertical-tabs-in-qt
-    '''
+    """
 
     def __init__(self, parent=None, tab_width=None, tab_height=None):
         super(QVTabBar, self).__init__(parent)
@@ -51,7 +51,6 @@ class QVTabBar(Qt.QTabBar):
             painter.drawControl(Qt.QStyle.CE_TabBarTabLabel, opt)
             painter.restore()
 
-
         Qt.QWidget.paintEvent(self, event)
 
     def resize_optimal(self):
@@ -67,19 +66,18 @@ class QVTabBar(Qt.QTabBar):
 
             for i in range(self.count()):
                 self.initStyleOption(opt, i)
-                optRect = opt.rect;
+                optRect = opt.rect
                 optRect.setX(optRect.width() - 14)  # set X pos of close button
                 optRect.setY(optRect.y() + 8)  # calcs the Y pos of close button
                 optRect.setSize(Qt.QSize(12, 12))
                 self.tabButton(i, Qt.QTabBar.RightSide).setGeometry(optRect)
 
 
-
 class QVTabWidget(Qt.QTabWidget):
-    '''
+    """
     A vertical QTabWidget, as in
     https://stackoverflow.com/questions/50578661/how-to-implement-vertical-tabs-in-qt
-    '''
+    """
 
     def __init__(self, parent=None, width=None, height=None):
         super(QVTabWidget, self).__init__(parent)

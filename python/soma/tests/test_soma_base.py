@@ -37,7 +37,7 @@ valid_message = """
 
 
 def run_all_tests():
-    """ Execute all the unitests.
+    """Execute all the unitests.
 
     Returns
     -------

@@ -2,7 +2,8 @@ import tarfile
 import zipfile
 import os
 
-archive_extensions = {'.zip', '.gz', '.tar', '.bz2', '.tgz'}
+archive_extensions = {".zip", ".gz", ".tar", ".bz2", ".tgz"}
+
 
 def is_archive(filename):
     """
@@ -20,6 +21,7 @@ def is_archive(filename):
         return True
     return False
 
+
 def unpack(input_filename, extract_dir):
     """
     Unpacks the input_filename archive to the extract_dir directory.
@@ -29,15 +31,17 @@ def unpack(input_filename, extract_dir):
     else:
         untar(input_filename, extract_dir)
 
+
 def pack(output_filename, sources):
     """
     Packs the source_dir directory in the output_filename archive.
     """
     ext = os.path.splitext(output_filename)[1][1:]
-    if ext == 'zip':
+    if ext == "zip":
         pack_zip(output_filename, sources)
-    elif ext == 'gz' or ext == 'tgz' or ext == 'bz2' or ext == 'tar':
+    elif ext == "gz" or ext == "tgz" or ext == "bz2" or ext == "tar":
         pack_tar(output_filename, sources, ext)
+
 
 def untar(input_filename, extract_dir):
     """
@@ -50,6 +54,7 @@ def untar(input_filename, extract_dir):
     tar_ds.extractall(path=extract_dir)
     tar_ds.close()
 
+
 def unzip(input_filename, extract_dir):
     """
     Extracts the input_filename archive to the extract_dir directory.
@@ -60,31 +65,31 @@ def unzip(input_filename, extract_dir):
     zip_ds.extractall(path=extract_dir)
     zip_ds.close()
 
-def pack_tar(output_filename, sources, type='gz'):
+
+def pack_tar(output_filename, sources, type="gz"):
     """
     Creates a tar archive in output_filename from the source_dir directory.
     """
-    if type == 'tgz':
-        type = 'gz'
-    elif type == 'tar':
-        type = ''
-    tar_ds = tarfile.open(output_filename, 'w:' + type)
-    if not isinstance(sources, (list, tuple)) and \
-       isinstance(sources, str):
+    if type == "tgz":
+        type = "gz"
+    elif type == "tar":
+        type = ""
+    tar_ds = tarfile.open(output_filename, "w:" + type)
+    if not isinstance(sources, (list, tuple)) and isinstance(sources, str):
         sources = [sources]
     for source in sources:
         tar_ds.add(source, arcname=os.path.basename(source))
     tar_ds.close()
+
 
 def pack_zip(output_filename, sources):
     """
     Creates a zip archive in output_filename from the source_dir directory.
     """
     previous_dir = os.getcwd()
-    if not isinstance(sources, (list, tuple)) and \
-       isinstance(sources, str):
+    if not isinstance(sources, (list, tuple)) and isinstance(sources, str):
         sources = [sources]
-    zip_ds = zipfile.ZipFile(output_filename, 'w', zipfile.ZIP_DEFLATED)
+    zip_ds = zipfile.ZipFile(output_filename, "w", zipfile.ZIP_DEFLATED)
     for source in sources:
         os.chdir(os.path.dirname(source))
         if os.path.isdir(source):

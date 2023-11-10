@@ -1,17 +1,18 @@
 import sys
 
 
-'''
+"""
 Framework to serialize/deserialize Python objects in JSON. The main
 feature of this framework is that deserialization of a JSON value requires
 no other information than the JSON itself. It is not necessary to know the
 class of the object to deserialize. This imposes that the serialization
 contains a reference to a factory that is responsible to build the Python
 object given its JSON.
-'''
+"""
+
 
 class JSONSerializable(object):
-    '''
+    """
     Instances of classes deriving from `JSONSerializable` can be serialized
     in a JSON compatible object with :meth:`to_json` method. This JSON object
     contains a reference to a factory as well as the full state of the
@@ -23,9 +24,10 @@ class JSONSerializable(object):
     instance. This is an alternative to pickle allowing to use a standard
     representation format (JSON) and to have full control on instances
     creation.
-    '''
+    """
+
     def to_json(self):
-        '''
+        """
         Return a JSON serialization of self. The returned object can be given
         to :func:`from_json` to create another instance that is equivalent to
         self.
@@ -34,26 +36,30 @@ class JSONSerializable(object):
 
         See :func:`from_json` to have insight of what is a JSON serialization
         object.
-        '''
+        """
         raise NotImplementedError()
 
+
 def to_json(object):
-    '''
+    """
     Return a JSON serialization of an object.
     Standard types (None, bool, int, float, str, etc.) are using
     json.dumps whereas other type of object must define a to_json
     method returning the serialization.
-    '''
-    serializer = getattr(object, 'to_json', None)
+    """
+    serializer = getattr(object, "to_json", None)
     if serializer is None:
         if object is None:
             return None
-        raise ValueError('Cannot serialize in JSON object of type {0}'.format(type(object)))
+        raise ValueError(
+            "Cannot serialize in JSON object of type {0}".format(type(object))
+        )
     else:
         return serializer()
 
+
 def from_json(json_serialization):
-    '''
+    """
     Takes a JSON serialization object (typically created by a
     :meth:`JSONSerializable.to_json` method) and create and return the
     corresponding instance.
@@ -74,7 +80,7 @@ def from_json(json_serialization):
     and the callable name separated by a dot. For instance
     ``'catidb.data_models.catidb_3_4'`` would identify the *catidb_3_4*
     callable in the *catidb.data_models* module.
-    '''
+    """
     if json_serialization is None:
         return None
     elif isinstance(json_serialization, str):
@@ -96,11 +102,13 @@ def from_json(json_serialization):
         elif len(json_serialization) == 1:
             callable = find_factory(json_serialization[0])
             return callable()
-    raise ValueError('Object is not a valid JSON serialization: %s' % repr(json_serialization))
+    raise ValueError(
+        "Object is not a valid JSON serialization: %s" % repr(json_serialization)
+    )
 
 
 def find_factory(reference):
-    '''
+    """
     Finds a factory callable given its reference. The reference is simply
     a string containing a module name and the name of fatory in that module
     separated by a dot. For instance ``'my_packages.my_module.my_factory'``
@@ -110,17 +118,23 @@ def find_factory(reference):
     the factory name.
 
     :class:`exceptions.ValueError` is raised if the factory cannot be found.
-    '''
-    split = reference.rsplit('.', 1)
+    """
+    split = reference.rsplit(".", 1)
     if len(split) != 2:
-        raise ValueError('%s is not a valid reference to a factory' % reference)
+        raise ValueError("%s is not a valid reference to a factory" % reference)
     module_name, item_name = split
     try:
         __import__(module_name)
     except ImportError as e:
-        raise ValueError('{0} is not a valid reference to a factory: {1}'.format(reference, e))
+        raise ValueError(
+            "{0} is not a valid reference to a factory: {1}".format(reference, e)
+        )
     module = sys.modules[module_name]
     factory = getattr(module, item_name, None)
     if factory is None:
-        raise ValueError('{0} is not a valid reference to a factory: module {1} has no attribute {2}'.format(reference, module_name, item_name))
+        raise ValueError(
+            "{0} is not a valid reference to a factory: module {1} has no attribute {2}".format(
+                reference, module_name, item_name
+            )
+        )
     return factory

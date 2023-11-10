@@ -3,13 +3,15 @@ try:
 except ImportError:
     from pydantic import ValidationError  # to expose it in the API
 
-from .controller import (asdict,
-                         Controller,
-                         Event,
-                         from_json,
-                         OpenKeyController,
-                         OpenKeyDictController,
-                         to_json)
+from .controller import (
+    asdict,
+    Controller,
+    Event,
+    from_json,
+    OpenKeyController,
+    OpenKeyDictController,
+    to_json,
+)
 from .field import (
     field,
     Field,
@@ -29,4 +31,5 @@ from .field import (
     File,
     Directory,
     undefined,
-    type_from_str)
+    type_from_str,
+)

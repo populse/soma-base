@@ -1,4 +1,3 @@
-
 try:
     from pydantic.v1 import ValidationError
 except ImportError:
@@ -15,8 +14,7 @@ class BoolWidgetFactory(WidgetFactory):
         self.label_widget = Qt.QLabel(label, parent=self.controller_widget)
         self.label_widget.setToolTip(self.parent_interaction.get_doc())
         self.widget = Qt.QCheckBox(parent=self.controller_widget)
-        self.widget.setSizePolicy(Qt.QSizePolicy.Expanding,
-                                  Qt.QSizePolicy.Fixed)
+        self.widget.setSizePolicy(Qt.QSizePolicy.Expanding, Qt.QSizePolicy.Fixed)
 
         self.parent_interaction.on_change_add(self.update_gui)
         self.update_gui()

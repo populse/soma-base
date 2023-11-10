@@ -4,7 +4,7 @@ import sys
 
 
 def sip4_to_sip6_enums(module, recursive=True):
-    ''' Convert Sip4 style enums to sip6 style enums.
+    """Convert Sip4 style enums to sip6 style enums.
 
     Sip4 exports C++ enums as in C++, ex::
 
@@ -18,7 +18,7 @@ def sip4_to_sip6_enums(module, recursive=True):
     sip4, then we copy values inside the enum types as sip6 does.
 
     If recursive (the default), sub-modules are also scanned and modified.
-    '''
+    """
     todo = [module]
     done = set()
     while todo:
@@ -29,11 +29,10 @@ def sip4_to_sip6_enums(module, recursive=True):
         done.add(id(module))
         enums = set()
         for iname, item in module.__dict__.items():
-            if type(item).__name__ == 'enumtype' and id(item) not in done:
+            if type(item).__name__ == "enumtype" and id(item) not in done:
                 enums.add(item)
                 done.add(id(item))
-            elif inspect.isclass(item) or (recursive
-                                           and inspect.ismodule(item)):
+            elif inspect.isclass(item) or (recursive and inspect.ismodule(item)):
                 todo.append(item)
         if enums:
             for iname, item in module.__dict__.items():
@@ -42,7 +41,7 @@ def sip4_to_sip6_enums(module, recursive=True):
 
 
 def sip6_to_sip4(module, recursive=True):
-    ''' Convert Sip6 style enums to sip4 style enums.
+    """Convert Sip6 style enums to sip4 style enums.
 
     Sip4 exports C++ enums as in C++, ex::
 
@@ -56,7 +55,7 @@ def sip6_to_sip4(module, recursive=True):
     sip6, then we copy values outside the enum types as sip4 does.
 
     If recursive (the default), sub-modules are also scanned and modified.
-    '''
+    """
     todo = [module]
     done = set()
     while todo:
@@ -70,8 +69,7 @@ def sip6_to_sip4(module, recursive=True):
             if type(item) is enum.EnumMeta and id(item) not in done:
                 enums.append(item)
                 done.add(id(item))
-            elif inspect.isclass(item) or (recursive
-                                           and inspect.ismodule(item)):
+            elif inspect.isclass(item) or (recursive and inspect.ismodule(item)):
                 todo.append(item)
         for entype in enums:
             for name in entype._member_names_:
@@ -79,7 +77,7 @@ def sip6_to_sip4(module, recursive=True):
 
 
 def sip_export_enums(module, recursive=True):
-    ''' Convert Sip6 style enums to sip4 style enums, or the contrary.
+    """Convert Sip6 style enums to sip4 style enums, or the contrary.
 
     Sip4 exports C++ enums as in C++, ex::
 
@@ -94,8 +92,8 @@ def sip_export_enums(module, recursive=True):
     sip4, then we copy values inside the enum types as sip6 does.
 
     If recursive (the default), sub-modules are also scanned and modified.
-    '''
-    sip = sys.modules['sip']
+    """
+    sip = sys.modules["sip"]
     if sip.SIP_VERSION >= 0x060000:
         sip6_to_sip4(module, recursive=recursive)
     else:

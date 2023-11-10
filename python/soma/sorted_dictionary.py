@@ -1,4 +1,4 @@
-'''
+"""
 Sorted dictionary behave like a dictionary but keep the item insertion
 order.
 
@@ -9,7 +9,7 @@ order.
 In addition OrderedDict is provided here, either as the standard
 collections.OrderedDict class if python version >= 2.7, or based on
 SortedDictionary if python version < 2.7.
-'''
+"""
 __docformat__ = "restructuredtext en"
 
 from collections import OrderedDict
@@ -18,10 +18,9 @@ import inspect
 from soma.undefined import Undefined
 
 
-
 class SortedDictionary(dict):
 
-    '''
+    """
     Sorted dictionary behave like a dictionary but keep the item insertion
     order. In addition to python 2.7 OrderedDict, SortedDictionary also has
     an :py:meth:`insert` method allowing insersion at a specified index
@@ -36,18 +35,19 @@ class SortedDictionary(dict):
         sd['third'] = 3
         sd.insert(0, 'zero', 0)
         sd.items() == [('zero', 0), ('fisrt', 1), ('second', 2), ('third', 3)]
-    '''
+    """
 
     def __init__(self, *args):
-        '''
+        """
         Initialize the dictionary with a list of (key, value) pairs.
-        '''
+        """
         super(SortedDictionary, self).__init__()
         self.sortedKeys = []
         if len(args) == 1 and (
-                isinstance(args[0], list)
-                or inspect.isgenerator(args[0])
-                or (isinstance(args[0], ItemsView))):
+            isinstance(args[0], list)
+            or inspect.isgenerator(args[0])
+            or (isinstance(args[0], ItemsView))
+        ):
             elements = args[0]  # dict / OrderedDict compatibility
         else:
             elements = args
@@ -55,35 +55,35 @@ class SortedDictionary(dict):
             self[key] = value
 
     def keys(self):
-        '''
+        """
         Returns
         -------
         list
             sorted list of keys
-        '''
+        """
         return self.sortedKeys
 
     def items(self):
-        '''
+        """
         Returns
         -------
         list
             sorted list of (key, value) pairs
-        '''
+        """
         return self.iteritems()
 
     def values(self):
-        '''
+        """
         Returns
         -------
         values: list
             sorted list of values
-        '''
+        """
         return self.itervalues()
 
     def __setitem__(self, key, value):
         if key not in self:
-            if 'sortedKeys' not in self.__dict__:
+            if "sortedKeys" not in self.__dict__:
                 # this happens during pickle.load() with python3
                 self.sortedKeys = []
             self.sortedKeys.append(key)
@@ -100,33 +100,33 @@ class SortedDictionary(dict):
         SortedDictionary.__init__(self, *state)
 
     def __iter__(self):
-        '''
+        """
         returns an iterator over the sorted keys
-        '''
+        """
         return iter(self.sortedKeys)
 
     def iterkeys(self):
-        '''
+        """
         returns an iterator over the sorted keys
-        '''
+        """
         return iter(self.sortedKeys)
 
     def itervalues(self):
-        '''
+        """
         returns an iterator over the sorted values
-        '''
+        """
         for k in self:
             yield self[k]
 
     def iteritems(self):
-        '''
+        """
         returns an iterator over the sorted (key, value) pairs
-        '''
+        """
         for k in self:
             yield (k, self[k])
 
     def insert(self, index, key, value):
-        '''
+        """
         insert a (key, value) pair in sorted dictionary before position
         ``index``. If ``key`` is already in the dictionary, a KeyError is
         raised.
@@ -137,7 +137,7 @@ class SortedDictionary(dict):
             index of key in the sorted keys
         key: key to insert
             value associated to key
-        '''
+        """
         if key in self:
             raise KeyError(key)
         self.sortedKeys.insert(index, key)
@@ -155,9 +155,9 @@ class SortedDictionary(dict):
         return i
 
     def clear(self):
-        '''
+        """
         Remove all items from dictionary
-        '''
+        """
         del self.sortedKeys[:]
         super(SortedDictionary, self).clear()
 
@@ -212,8 +212,9 @@ class SortedDictionary(dict):
         return result
 
     def __repr__(self):
-        return '{' + ', '.join(repr(k) + ': ' + repr(v)
-                               for k, v in self.iteritems()) + '}'
+        return (
+            "{" + ", ".join(repr(k) + ": " + repr(v) for k, v in self.iteritems()) + "}"
+        )
 
     def update(self, dict_obj):
         for k, v in dict_obj.items():

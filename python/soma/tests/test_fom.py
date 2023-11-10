@@ -11,28 +11,27 @@ import sys
 
 
 class TestFOM(unittest.TestCase):
-
     def setUp(self):
-        self.work_dir = tempfile.mkdtemp(prefix='soma_test_fom')
+        self.work_dir = tempfile.mkdtemp(prefix="soma_test_fom")
 
     def tearDown(self):
         try:
             shutil.rmtree(self.work_dir)
-            #pass
+            # pass
         except OSError:
             pass
 
     def test_fom(self):
-        app = application.Application('testapp', plugin_modules=['soma.fom'])
-        if 'soma.fom' not in app.loaded_plugin_modules:
+        app = application.Application("testapp", plugin_modules=["soma.fom"])
+        if "soma.fom" not in app.loaded_plugin_modules:
             app.initialize()
-        app.fom_path = [os.path.join(self.work_dir, 'foms')]
-        app.fom_manager.paths = app.fom_path # BUG: should be automatic
+        app.fom_path = [os.path.join(self.work_dir, "foms")]
+        app.fom_manager.paths = app.fom_path  # BUG: should be automatic
         os.mkdir(app.fom_path[0])
-        #print('fom_path:', app.fom_path, file=sys.stderr)
-        fom_filename = 'test_fom'
-        open(os.path.join(app.fom_path[0], fom_filename + '.json'), 'w').write(
-            '''{
+        # print('fom_path:', app.fom_path, file=sys.stderr)
+        fom_filename = "test_fom"
+        open(os.path.join(app.fom_path[0], fom_filename + ".json"), "w").write(
+            """{
     "fom_name": "test_fom",
 
     "formats": {
@@ -64,7 +63,7 @@ class TestFOM(unittest.TestCase):
         }
     }
 }
-'''
+"""
         )
         foms = app.fom_manager.load_foms(fom_filename)
         atp = fom.AttributesToPaths(foms)

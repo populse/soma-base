@@ -30,14 +30,14 @@
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL-B license and that you accept its terms.
 
-'''
+"""
 * author: Nicolas Souedet
 * organization: NeuroSpin
 * license: `CeCILL B <http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html>`_
 
 Import subprocess32 or subprocess API depending on python version and what is
 available on the system.
-'''
+"""
 
 from __future__ import absolute_import
 import sys
@@ -48,6 +48,7 @@ if sys.version_info[:2] >= (3, 2):
     from subprocess import *
 else:
     try:
+
         def __initialize_zmq():
             # It is necessary to first import zmq from the system if it is
             # installed otherwise the one embedded with subprocess32 is loaded
@@ -70,14 +71,17 @@ else:
         def __initialize_subprocess32():
             import subprocess32
             import subprocess as _subprocess
-            if hasattr(_subprocess, '_args_from_interpreter_flags'):
+
+            if hasattr(_subprocess, "_args_from_interpreter_flags"):
                 # get this private function which is used somewhere in
                 # multiprocessing
-                subprocess32._args_from_interpreter_flags \
-                    = _subprocess._args_from_interpreter_flags
+                subprocess32._args_from_interpreter_flags = (
+                    _subprocess._args_from_interpreter_flags
+                )
             del _subprocess
             import sys
-            sys.modules['subprocess'] = sys.modules['subprocess32']
+
+            sys.modules["subprocess"] = sys.modules["subprocess32"]
 
         __initialize_subprocess32()
         del __initialize_subprocess32

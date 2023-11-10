@@ -30,7 +30,7 @@
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL-B license and that you accept its terms.
 
-'''
+"""
 This module is useful whenever you need to be sure that a function (more
 exactly anything that can be called by python) is executed in a particular
 thread.
@@ -52,8 +52,9 @@ until the call is done and the result available).
 * author: Yann Cointepas
 * organization: NeuroSpin
 * license: `CeCILL B <http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html>`_
-'''
+"""
 from __future__ import absolute_import
+
 __docformat__ = "restructuredtext en"
 
 import threading
@@ -62,7 +63,7 @@ import time
 
 class SingleThreadCalls(object):
 
-    '''
+    """
     Allows the registration of functions that are going to be called from a
     single thread. This single thread must continuously call
     :meth:`processFunctions`.
@@ -81,10 +82,10 @@ class SingleThreadCalls(object):
         processingThread = threading.Thread(target=stc.processingLoop)
         stc.setProcessingThread(processingThread)
         processingThread.start()
-    '''
+    """
 
     def __init__(self, thread=None):
-        '''
+        """
         The thread passed in parameter is the processing thread of this
         SingleThreadCalls. When started (which is not been done by
         :class:`SingleThreadCall`) it must continuously call
@@ -96,7 +97,7 @@ class SingleThreadCalls(object):
         thread: :class:`threading.Thread` instance or *None*
             Processing thread. If *None*, :func:`threading.current_thread`
             is used.
-        '''
+        """
         self._queue = []
         if thread is None:
             thread = threading.current_thread()
@@ -104,7 +105,7 @@ class SingleThreadCalls(object):
         self._condition = threading.Condition()
 
     def setProcessingThread(self, thread):
-        '''
+        """
         Defines the thread that processes the functions. The behaviour of
         :meth:`call` and :meth:`push` is different if called from the
         processing thread or from another one.
@@ -113,7 +114,7 @@ class SingleThreadCalls(object):
         ----------
         thread: :class:`threading.Thread`
             Processing thread
-        '''
+        """
         self._condition.acquire()
         try:
             self._thread = thread
@@ -121,7 +122,7 @@ class SingleThreadCalls(object):
             self._condition.release()
 
     def call(self, function, *args, **kwargs):
-        '''
+        """
         Registers a function call and waits for the processing thread to call
         it.
 
@@ -146,7 +147,7 @@ class SingleThreadCalls(object):
         -------
         any type
             the result of the function call
-        '''
+        """
         if threading.current_thread() is self._thread:
             result = function(*args, **kwargs)
         else:
@@ -156,7 +157,8 @@ class SingleThreadCalls(object):
             self._condition.acquire()
             try:
                 self._queue.append(
-                    (self._executeAndNotify, (semaphore, function, args, kwargs), {}))
+                    (self._executeAndNotify, (semaphore, function, args, kwargs), {})
+                )
                 self._condition.notify()
             finally:
                 self._condition.release()
@@ -177,10 +179,11 @@ class SingleThreadCalls(object):
         except Exception as e:
             semaphore._exception = e
             semaphore.release()
+
     _executeAndNotify = staticmethod(_executeAndNotify)
 
     def push(self, function, *args, **kwargs):
-        '''
+        """
         Same as the :meth:`call` method but always puts the function on the
         queue and returns immediately. If :meth:`push` is called from the
         processing thread, the function is called immediately (*i.e.*
@@ -199,7 +202,7 @@ class SingleThreadCalls(object):
         -------
         None:
             push() does not return anything.
-        '''
+        """
         if threading.current_thread() is self._thread:
             function(*args, **kwargs)
         else:
@@ -211,13 +214,13 @@ class SingleThreadCalls(object):
                 self._condition.release()
 
     def stop(self):
-        '''
+        """
         Tells the processing thread to finish the processing of functions in the
         queue and then stop all processing. This call pushes a special value on
         the function list. All functions that are on the list before this value
         will be processed but functions registered after the special value will be
         ignored.
-        '''
+        """
         self._condition.acquire()
         try:
             self._queue.append(None)
@@ -226,7 +229,7 @@ class SingleThreadCalls(object):
             self._condition.release()
 
     def processFunctions(self, blocking=False):
-        '''
+        """
         This method extracts all functions (along with their parameters) from
         the queue and execute them. It returns the number of function executed
         *None* if :meth:`self.stop() <stop>` has been called (in that case the
@@ -252,7 +255,7 @@ class SingleThreadCalls(object):
               function list is available, and returns the number of function
               called
             * If :meth:`stop` has been called, *None* is returned
-        '''
+        """
         if self._condition.acquire(blocking):
             try:
                 actions = self._queue
@@ -270,11 +273,11 @@ class SingleThreadCalls(object):
         return 0
 
     def processingLoop(self):
-        '''
+        """
         Continuously executes :meth:`processFunctions` until it returns *None*
 
         .. seealso:: :meth:`processFunctions`
-        '''
+        """
         actionCount = 0
         self._condition.acquire()
         self.processFunctions()

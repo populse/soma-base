@@ -1,4 +1,4 @@
-'''
+"""
 This module contains all the framework necessary to customize, read and
 write minf files. A minf file is composed of structured data saved in
 XML or Python format. The minf framework provides tools to read and write
@@ -10,7 +10,7 @@ can be imported from :py:mod:`soma.minf.api`:
 - for reading minf files: :func:`iterateMinf`, :func:`readMinf`
 - for writing minf files: :func:`createMinfWriter`, :func:`writeMinf`
 - for customizing minf files: :func:`createReducerAndExpander`, :func:`registerClass`, :func:`registerClassAs`
-'''
+"""
 __docformat__ = "restructuredtext en"
 
 import gzip
@@ -20,17 +20,25 @@ from soma.minf.error import MinfError
 from soma.bufferandfile import BufferAndFile
 from soma.minf.reader import MinfReader
 from soma.minf.writer import MinfWriter
-from soma.minf.tree import createReducerAndExpander, registerClass, \
-    registerClassAs, createMinfExpander, \
-    EndStructure, MinfReducer, MinfExpander, \
-    listStructure, dictStructure
+from soma.minf.tree import (
+    createReducerAndExpander,
+    registerClass,
+    registerClassAs,
+    createMinfExpander,
+    EndStructure,
+    MinfReducer,
+    MinfExpander,
+    listStructure,
+    dictStructure,
+)
 from soma.undefined import Undefined
+
 defaultReducer = MinfReducer.defaultReducer
 
 
-#------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 def minfFormat(source):
-    '''
+    """
     Return a pair (format, reduction) identifying the minf format. If
     source is not a minf file, (None, None) is returned. Otherwise,
     format is a string representing the format of the minf file: 'XML' or
@@ -66,11 +74,11 @@ def minfFormat(source):
     source: string
       Input file name or file object. If it is a file name, it is
       opened with open(source).
-    '''
+    """
     opened_source_file = None
     try:
-        if not hasattr(source, 'readline'):
-            opened_source_file = open(source, encoding='UTF-8')
+        if not hasattr(source, "readline"):
+            opened_source_file = open(source, encoding="UTF-8")
             source = BufferAndFile(opened_source_file)
         elif not isinstance(source, BufferAndFile):
             source.seek(0)
@@ -78,10 +86,10 @@ def minfFormat(source):
 
         # Check first non white character to see if the minf file is XML or not
         start = source.read(5)
-        if start == 'attri':
+        if start == "attri":
             source.unread(start)
-            return ('python', None)
-        elif start != '<?xml':
+            return ("python", None)
+        elif start != "<?xml":
             # Try gzip compressed file
             gzipSource = source.clone()
             gzipSource.unread(start)
@@ -89,29 +97,32 @@ def minfFormat(source):
             try:
                 start = gunzipSource.read(5)
             except IOError:
-                start = ''
-            if start != '<?xml':
-                raise MinfError(_('Invalid minf file: %s') % (source.name, ))
+                start = ""
+            if start != "<?xml":
+                raise MinfError(_("Invalid minf file: %s") % (source.name,))
             source.change_file(gunzipSource)
             source.unread(start)
         else:
             source.unread(start)
 
-        r = MinfReader.createReader('XML')
+        r = MinfReader.createReader("XML")
         reduction, buffer = r.reduction(source)
         source.unread(buffer)
-        return('XML', reduction)
+        return ("XML", reduction)
     finally:
         if opened_source_file is not None:
             opened_source_file.close()
 
-#------------------------------------------------------------------------------
+
+# ------------------------------------------------------------------------------
 def _setTarget(target, source):
     try:
         from soma.signature.api import HasSignature
     except ImportError:
+
         class HasSignature(object):
             pass
+
     if isinstance(source, dict):
         if isinstance(target, dict):
             target.update(source)
@@ -128,9 +139,9 @@ def _setTarget(target, source):
     return False
 
 
-#------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 def iterateMinf(source, targets=None, stop_on_error=True, exceptions=[]):
-    '''
+    """
     Returns an iterator over all objects stored in a minf file.
 
     Example:
@@ -147,25 +158,25 @@ def iterateMinf(source, targets=None, stop_on_error=True, exceptions=[]):
     source: string
       Input file name or file object. If it is a file name, it is
       opened with C{open( source )}.
-    '''
+    """
     if targets is not None:
         targets = iter(targets)
 
     initial_source = source
 
-    if not hasattr(initial_source, 'readline'):
+    if not hasattr(initial_source, "readline"):
         # in python3 the encoding of a file should be specified when opening
         # it: it cannot be changed afterwards. So in python3 we cannot read
         # the encoding within the file (for instance in a XML file).
         # This is completely silly, but here it is...
         # So we just have to try several encodings...
-        try_encodings = ['UTF-8', 'latin1']
+        try_encodings = ["UTF-8", "latin1"]
     else:
         try_encodings = [None]
 
     for encoding in try_encodings:
         opened_source_file = None
-        if not hasattr(initial_source, 'readline'):
+        if not hasattr(initial_source, "readline"):
             opened_source_file = open(initial_source, encoding=encoding)
             source = BufferAndFile(opened_source_file)
         elif not isinstance(source, BufferAndFile):
@@ -177,23 +188,24 @@ def iterateMinf(source, targets=None, stop_on_error=True, exceptions=[]):
             start = source.read(5)
             source.unread(start)
 
-            if start == 'attri':
+            if start == "attri":
                 try:
                     import numpy
-                    d = {'nan': numpy.nan}
+
+                    d = {"nan": numpy.nan}
                 except Exception:
-                    d = {'nan': None}
+                    d = {"nan": None}
                 try:
                     exec(source.read().replace("\r\n", "\n"), d)
                 except Exception as e:
                     x = source
-                    if hasattr(source, '_BufferAndFile__file'):
+                    if hasattr(source, "_BufferAndFile__file"):
                         x = source._BufferAndFile__file
-                    x = 'Error in iterateMinf while reading ' + str(x) + ': '
+                    x = "Error in iterateMinf while reading " + str(x) + ": "
                     # e.args = ( x + e.args[0], ) + e.args[1:]
                     print(x)
                     raise
-                minf = d['attributes']
+                minf = d["attributes"]
                 if targets is not None:
                     result = next(targets)
                     _setTarget(result, minf)
@@ -201,19 +213,18 @@ def iterateMinf(source, targets=None, stop_on_error=True, exceptions=[]):
                 else:
                     yield minf
                 return
-            elif start != '<?xml':
+            elif start != "<?xml":
                 # Try gzip compressed file
                 gzSource = gzip.GzipFile(source.name)
-                if gzSource.read(5) != '<?xml':
-                    raise MinfError(_('Invalid minf file: %s')
-                                    % (source.name, ))
+                if gzSource.read(5) != "<?xml":
+                    raise MinfError(_("Invalid minf file: %s") % (source.name,))
                 source = BufferAndFile(gzSource)
-                source.unread('<?xml')
+                source.unread("<?xml")
 
-            r = MinfReader.createReader('XML')
+            r = MinfReader.createReader("XML")
             iterator = r.nodeIterator(source)
             minfNode = next(iterator)
-            expander = createMinfExpander(minfNode.attributes['reduction'])
+            expander = createMinfExpander(minfNode.attributes["reduction"])
             count = 0
             for nodeItem in iterator:
                 count += 1
@@ -225,9 +236,13 @@ def iterateMinf(source, targets=None, stop_on_error=True, exceptions=[]):
                         target = next(targets)
                     except StopIteration:
                         targets = None
-                yield expander.expand(iterator, nodeItem, target=target,
-                                      stop_on_error=stop_on_error,
-                                      exceptions=exceptions)
+                yield expander.expand(
+                    iterator,
+                    nodeItem,
+                    target=target,
+                    stop_on_error=stop_on_error,
+                    exceptions=exceptions,
+                )
         except UnicodeDecodeError as e:
             if encoding == try_encodings[-1]:
                 raise
@@ -235,26 +250,29 @@ def iterateMinf(source, targets=None, stop_on_error=True, exceptions=[]):
         finally:
             if opened_source_file is not None:
                 opened_source_file.close()
-        break # no error, don't process next encoding
+        break  # no error, don't process next encoding
 
-#------------------------------------------------------------------------------
+
+# ------------------------------------------------------------------------------
 
 
 def readMinf(source, targets=None, stop_on_error=True, exceptions=[]):
-    '''
+    """
     Entirerly reads a minf file and returns its content in a tuple.
     Equivalent to tuple(iterateMinf(source)).
 
     see: :func`iterateMinf`
-    '''
-    return tuple(iterateMinf(source, targets=targets,
-                             stop_on_error=stop_on_error,
-                             exceptions=exceptions))
+    """
+    return tuple(
+        iterateMinf(
+            source, targets=targets, stop_on_error=stop_on_error, exceptions=exceptions
+        )
+    )
 
 
-#------------------------------------------------------------------------------
-def createMinfWriter(destFile, format='XML', reducer='minf_2.0'):
-    '''
+# ------------------------------------------------------------------------------
+def createMinfWriter(destFile, format="XML", reducer="minf_2.0"):
+    """
     Create a writer for storing objects in destFile.
     Example:
 
@@ -273,13 +291,13 @@ def createMinfWriter(destFile, format='XML', reducer='minf_2.0'):
     reducer: string
       name of the reducer to use (see L{soma.minf.tree} for
       more information about reducers).
-    '''
+    """
     return MinfWriter.createWriter(destFile, format, reducer)
 
 
-#------------------------------------------------------------------------------
-def writeMinf(destFile, args, format='XML', reducer=None):
-    '''
+# ------------------------------------------------------------------------------
+def writeMinf(destFile, args, format="XML", reducer=None):
+    """
     Creates a minf writer with :func:`createMinfWriter` and write the content
     of args in it.
 
@@ -293,7 +311,7 @@ def writeMinf(destFile, args, format='XML', reducer=None):
       see :func:`createMinfWriter`
     reducer:
       see :func:`createMinfWriter`
-    '''
+    """
     it = iter(args)
     try:
         firstItem = next(it)
@@ -303,7 +321,7 @@ def writeMinf(destFile, args, format='XML', reducer=None):
         if firstItem is not Undefined:
             reducer = MinfReducer.defaultReducer(firstItem)
             if reducer is None:
-                reducer = 'minf_2.0'
+                reducer = "minf_2.0"
 
     writer = createMinfWriter(destFile, format, reducer)
     if firstItem is not Undefined:
@@ -313,18 +331,18 @@ def writeMinf(destFile, args, format='XML', reducer=None):
     writer.close()
 
 
-#------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 # xml_reader and xml_writer are not used directly but importing
 # them register the XML minf format
 import soma.minf.xml_reader
 import soma.minf.xml_writer
 
 
-#------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 from soma.minf.xhtml import XHTML
 from soma.uuid import Uuid
 
-minf_2_0_reducer = MinfReducer('minf_2.0')
+minf_2_0_reducer = MinfReducer("minf_2.0")
 minf_2_0_reducer.registerAtomType(None.__class__)
 minf_2_0_reducer.registerAtomType(bool)
 minf_2_0_reducer.registerAtomType(int)
@@ -335,15 +353,13 @@ minf_2_0_reducer.registerClass(list, minf_2_0_reducer.sequenceReducer)
 minf_2_0_reducer.registerClass(tuple, minf_2_0_reducer.sequenceReducer)
 minf_2_0_reducer.registerClass(dict, minf_2_0_reducer.dictReducer)
 
-minf_2_0_expander = MinfExpander('minf_2.0')
-minf_2_0_expander.registerStructure(
-    listStructure, minf_2_0_expander.sequenceExpander)
-minf_2_0_expander.registerStructure(
-    dictStructure, minf_2_0_expander.dictExpander)
+minf_2_0_expander = MinfExpander("minf_2.0")
+minf_2_0_expander.registerStructure(listStructure, minf_2_0_expander.sequenceExpander)
+minf_2_0_expander.registerStructure(dictStructure, minf_2_0_expander.dictExpander)
 
-registerClass('minf_2.0', Uuid, 'Uuid')
+registerClass("minf_2.0", Uuid, "Uuid")
 
 
-#------------------------------------------------------------------------------
-minf_1_0_reducer = MinfReducer('minf_1.0', ('minf_2.0', ))
-minf_1_0_expander = MinfExpander('minf_1.0', ('minf_2.0', ))
+# ------------------------------------------------------------------------------
+minf_1_0_reducer = MinfReducer("minf_1.0", ("minf_2.0",))
+minf_1_0_expander = MinfExpander("minf_1.0", ("minf_2.0",))
