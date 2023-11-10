@@ -1,4 +1,3 @@
-from __future__ import absolute_import
 import re
 from inspect import isfunction, isclass, ismethod
 from weakref import WeakKeyDictionary

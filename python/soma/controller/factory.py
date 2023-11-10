@@ -11,8 +11,6 @@ factories (i.e. a function that create something for an object) taking into
 account classes hierarchy but without storing anything in the objects classes.
 """
 
-from __future__ import absolute_import
-
 from weakref import WeakKeyDictionary
 
 

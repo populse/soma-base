@@ -39,7 +39,6 @@ Import subprocess32 or subprocess API depending on python version and what is
 available on the system.
 """
 
-from __future__ import absolute_import
 import sys
 
 if sys.version_info[:2] >= (3, 2):
