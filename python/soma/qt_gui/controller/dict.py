@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 from soma.qt_gui.qt_backend import Qt
 from . import WidgetFactory
 from ..collapsible import CollapsibleWidget
