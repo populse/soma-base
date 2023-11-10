@@ -57,8 +57,8 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'Soma-base'
-copyright = u'2011, IFR49.org'
+project = 'Soma-base'
+copyright = '2011, IFR49.org'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -198,8 +198,8 @@ htmlhelp_basename = 'somabase'
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'somabase.tex', u'Soma-base Documentation',
-   u'someone', 'manual'),
+  ('index', 'somabase.tex', 'Soma-base Documentation',
+   'someone', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
