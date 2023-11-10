@@ -3,7 +3,6 @@
 We build such a proxy by setting a :func:`weakref.ref` object in the proxy (actually in the object itself).
 """
 
-from __future__ import absolute_import
 import weakref
 
 

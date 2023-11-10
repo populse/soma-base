@@ -37,8 +37,6 @@ This module contains functions and classes related to sqlite databases.
 * organization: NeuroSpin
 * license: `CeCILL B <http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html>`_
 """
-from __future__ import absolute_import
-from __future__ import print_function
 
 __docformat__ = "restructuredtext en"
 
