@@ -397,7 +397,6 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
                 self.__class__._order += 1
                 kwargs["order"] = self.__class__._order
             new_field = field(type_=type_, default=default, metadata=metadata, **kwargs)
-            print("!add_field.new_field!", new_field.name, type_, new_field)
             namespace = {
                 "__annotations__": {
                     name: new_field,
