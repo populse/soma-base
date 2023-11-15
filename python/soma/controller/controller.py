@@ -397,6 +397,7 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
                 self.__class__._order += 1
                 kwargs["order"] = self.__class__._order
             new_field = field(type_=type_, default=default, metadata=metadata, **kwargs)
+            print("!add_field.new_field!", new_field.name, type_, new_field)
             namespace = {
                 "__annotations__": {
                     name: new_field,
@@ -633,8 +634,12 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
         """Returns an iterator over registered fields (both class fields and
         instance fields)
         """
+        dyn_fields = super().__getattribute__("_dyn_fields")
         if class_fields:
-            yield from (i.metadata["_field_class"](i) for i in dataclasses.fields(self))
+            for i in dataclasses.fields(self):
+                f = i.metadata["_field_class"](i)
+                if f.name not in dyn_fields:
+                    yield f
         if instance_fields:
             for i in super().__getattribute__("_dyn_fields").values():
                 if isinstance(i, FieldProxy):
@@ -644,13 +649,13 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
                     yield f.metadata["_field_class"](f)
 
     def _field(self, name):
-        field = self.__dataclass_fields__.get(name)
+        field = super().__getattribute__("_dyn_fields").get(name)
+        if field is not None:
+            if isinstance(field, FieldProxy):
+                return field
+            field = dataclasses.fields(field)[0]
         if field is None:
-            field = super().__getattribute__("_dyn_fields").get(name)
-            if field is not None:
-                if isinstance(field, FieldProxy):
-                    return field
-                field = dataclasses.fields(field)[0]
+            field = self.__dataclass_fields__.get(name)
         return field
 
     def has_field(self, name):

@@ -320,7 +320,9 @@ class Field:
         return value
 
     def __setattr__(self, name, value):
-        raise AttributeError(f"can't set attribute {name} of a class field")
+        raise AttributeError(
+            f"can't set attribute {name} of a class field ({self.name})"
+        )
 
     def __delattr__(self, name):
         del self._dataclass_field.metadata["_metadata"][name]
@@ -569,7 +571,7 @@ class FieldProxy:
         delattr(self.target_field, name)
 
 
-class ListProxy(Field):
+class ListProxy(WritableField):
     """
     This class is used internally to represent a field that has a list value
     but whose type and metadata are linked to another field of another
