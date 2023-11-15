@@ -12,7 +12,7 @@ except ImportError:
     import pydantic
 
 from soma.undefined import undefined
-from .field import FieldProxy, ListProxy, field, Field, Path
+from .field import FieldProxy, ListProxy, field, Field, WritableField, Path
 import sys
 from soma.utils.weak_proxy import proxy_method
 
@@ -364,8 +364,9 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
 
         # avoid duplicate fields
         if self.field(name) is not None:
-            if override and name in super().__getattribute__("_dyn_fields"):
-                del super().__getattribute__("_dyn_fields")[name]
+            if override:
+                if name in super().__getattribute__("_dyn_fields"):
+                    del super().__getattribute__("_dyn_fields")[name]
             else:
                 raise ValueError(f"a field named {name} already exists")
 
@@ -750,6 +751,21 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
             return self.field(field_or_name)
         else:
             return field_or_name
+
+    def writable_field(self, field_or_name):
+        """Return an instance field that can be modified. If it is a
+        class field, it is copied to instance."""
+        f = self.ensure_field(field_or_name)
+        if f and f.class_field:
+            self.add_field(
+                f.name,
+                type_=f,
+                override=True,
+                class_field=False,
+                field_class=WritableField,
+            )
+            f = self.field(f.name)
+        return f
 
     def json(self):
         """Return a JSON dict for the current Controller"""
