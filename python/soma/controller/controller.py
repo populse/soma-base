@@ -12,7 +12,7 @@ except ImportError:
     import pydantic
 
 from soma.undefined import undefined
-from .field import FieldProxy, ListProxy, field, Field, Path
+from .field import FieldProxy, ListProxy, field, Field, WritableField, Path
 import sys
 from soma.utils.weak_proxy import proxy_method
 
@@ -364,8 +364,9 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
 
         # avoid duplicate fields
         if self.field(name) is not None:
-            if override and name in super().__getattribute__("_dyn_fields"):
-                del super().__getattribute__("_dyn_fields")[name]
+            if override:
+                if name in super().__getattribute__("_dyn_fields"):
+                    del super().__getattribute__("_dyn_fields")[name]
             else:
                 raise ValueError(f"a field named {name} already exists")
 
@@ -632,8 +633,12 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
         """Returns an iterator over registered fields (both class fields and
         instance fields)
         """
+        dyn_fields = super().__getattribute__("_dyn_fields")
         if class_fields:
-            yield from (i.metadata["_field_class"](i) for i in dataclasses.fields(self))
+            for i in dataclasses.fields(self):
+                f = i.metadata["_field_class"](i)
+                if f.name not in dyn_fields:
+                    yield f
         if instance_fields:
             for i in super().__getattribute__("_dyn_fields").values():
                 if isinstance(i, FieldProxy):
@@ -643,13 +648,13 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
                     yield f.metadata["_field_class"](f)
 
     def _field(self, name):
-        field = self.__dataclass_fields__.get(name)
+        field = super().__getattribute__("_dyn_fields").get(name)
+        if field is not None:
+            if isinstance(field, FieldProxy):
+                return field
+            field = dataclasses.fields(field)[0]
         if field is None:
-            field = super().__getattribute__("_dyn_fields").get(name)
-            if field is not None:
-                if isinstance(field, FieldProxy):
-                    return field
-                field = dataclasses.fields(field)[0]
+            field = self.__dataclass_fields__.get(name)
         return field
 
     def has_field(self, name):
@@ -750,6 +755,21 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
             return self.field(field_or_name)
         else:
             return field_or_name
+
+    def writable_field(self, field_or_name):
+        """Return an instance field that can be modified. If it is a
+        class field, it is copied to instance."""
+        f = self.ensure_field(field_or_name)
+        if f and f.class_field:
+            self.add_field(
+                f.name,
+                type_=f,
+                override=True,
+                class_field=False,
+                field_class=WritableField,
+            )
+            f = self.field(f.name)
+        return f
 
     def json(self):
         """Return a JSON dict for the current Controller"""

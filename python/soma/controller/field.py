@@ -320,7 +320,9 @@ class Field:
         return value
 
     def __setattr__(self, name, value):
-        self._dataclass_field.metadata["_metadata"][name] = value
+        raise AttributeError(
+            f"can't set attribute {name} of a class field ({self.name})"
+        )
 
     def __delattr__(self, name):
         del self._dataclass_field.metadata["_metadata"][name]
@@ -408,34 +410,34 @@ class Field:
             optional = self.has_default()
         return optional
 
-    @optional.setter
-    def optional(self, optional):
-        self._dataclass_field.metadata["_metadata"]["optional"] = optional
-
-    @optional.deleter
-    def optional(self):
-        del self._dataclass_field.metadata["_metadata"]["optional"]
-
     @property
     def doc(self):
         """Field documentation string"""
         return self.__getattr__("doc")
 
-    @doc.setter
+    def parse_type_str(self):
+        return parse_type_str(self.type_str())
+
+
+class WritableField(Field):
+    def __setattr__(self, name, value):
+        self._dataclass_field.metadata["_metadata"][name] = value
+
+    @Field.optional.setter
+    def optional(self, optional):
+        self._dataclass_field.metadata["_metadata"]["optional"] = optional
+
+    @Field.optional.deleter
+    def optional(self):
+        del self._dataclass_field.metadata["_metadata"]["optional"]
+
+    @Field.doc.setter
     def doc(self, doc):
         self.__setattr__("doc", doc)
 
-    @doc.deleter
+    @Field.doc.deleter
     def doc(self):
         self.__delattr__("doc")
-
-    # The following methods are available as functions but global
-    # functions are not available in Jinja2 context used to create Web-based
-    # GUI. Therefore, an access to the function from a field instance had
-    # been added whenever necessary.
-
-    def parse_type_str(self):
-        return parse_type_str(self.type_str())
 
 
 def field(
@@ -507,7 +509,9 @@ def field(
                     break
             if isinstance(current_type, type) and issubclass(current_type, Path):
                 path_type = current_type.__name__.lower()
-    if field_class is Field:
+    if field_class in (Field, WritableField):
+        if not metadata.get("class_field"):
+            field_class = WritableField
         metadata["path_type"] = path_type
         if path_type:
             metadata.setdefault("read", True)
@@ -567,10 +571,10 @@ class FieldProxy:
         delattr(self.target_field, name)
 
 
-class ListProxy(Field):
+class ListProxy(WritableField):
     """
     This class is used internally to represent a field that has a list value
-    but whose type and metadata are linked to anotehr field of another
+    but whose type and metadata are linked to another field of another
     controller.
     """
 

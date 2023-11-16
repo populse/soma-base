@@ -100,8 +100,6 @@ if __name__ == "__main__":
     widget2 = ControllerWidget(controller)
     widget1.show()
     widget2.show()
-    print("!widget1", widget1)
-    print("!widget2", widget2)
 
     # Start the qt loop
     app.exec_()
