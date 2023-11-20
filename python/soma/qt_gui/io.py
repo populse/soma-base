@@ -61,7 +61,7 @@ class Socket(QObject):
         port: int
             port that the socket server listens
         """
-        super(Socket, self).__init__()
+        super().__init__()
         self.dest = host
         self.port = port
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

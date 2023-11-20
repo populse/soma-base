@@ -237,7 +237,7 @@ def read_json(file_name):
 class DirectoryAsDict(object):
     def __new__(cls, directory, cache=None):
         if osp.isdir(directory):
-            return super(DirectoryAsDict, cls).__new__(cls, directory, cache)
+            return super().__new__(cls, directory, cache)
         else:
             with open(directory) as f:
                 return json.load(f)

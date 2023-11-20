@@ -42,7 +42,7 @@ class Singleton(object):
 
     def __new__(cls, *args, **kwargs):
         if "_singleton_instance" not in cls.__dict__:
-            cls._singleton_instance = super(Singleton, cls).__new__(cls)
+            cls._singleton_instance = super().__new__(cls)
             singleton_init = getattr(
                 cls._singleton_instance, "__singleton_init__", None
             )
@@ -59,7 +59,7 @@ class Singleton(object):
         """
 
     def __singleton_init__(self, *args, **kwargs):
-        super(Singleton, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     @classmethod
     def delete_singleton(cls):

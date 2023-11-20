@@ -35,7 +35,7 @@ class QPredefLineEdit(Qt.QLineEdit):
             args = (parent,) + args
         if parent_or_contents is not None:
             args = (parent_or_contents,) + args
-        super(QPredefLineEdit, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         if predefined_values is None:
             predefined_values = []
         self.predefined_values = predefined_values

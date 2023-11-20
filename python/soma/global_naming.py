@@ -9,7 +9,7 @@ class GlobalNaming(Singleton):
     """No doc ?"""
 
     def __singleton_init__(self):
-        super(GlobalNaming, self).__singleton_init__()
+        super().__singleton_init__()
         self._global_name_re = re.compile(
             r"(([A-Za-z][A-Za-z0-9_.]*)\.([A-Za-z0-9_]+))(\(\))?((\.)([A-Za-z][A-Za-z0-9_.]+))?"
         )
