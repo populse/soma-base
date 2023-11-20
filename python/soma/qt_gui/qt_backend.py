@@ -46,7 +46,7 @@ qt_backend = None
 make_compatible_qt5 = False
 
 
-class QtImporter(object):
+class QtImporter:
     def find_module(self, fullname, path=None):
         modsplit = fullname.split(".")
         modpath = ".".join(modsplit[:-1])

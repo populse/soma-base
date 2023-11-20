@@ -173,7 +173,7 @@ def parse_query_string(path):
     )
 
 
-class QueryStringParamUpdateMode(object):
+class QueryStringParamUpdateMode:
     REPLACE = 0
     APPEND = 1
     REMOVE = 2

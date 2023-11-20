@@ -48,7 +48,7 @@ import sqlite3
 # ------------------------------------------------------------------------------
 
 
-class ThreadSafeSQLiteConnection(object):
+class ThreadSafeSQLiteConnection:
 
     """
     Python wrapping of SQLite do not allow sharing of database connection between

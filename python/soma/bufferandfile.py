@@ -43,7 +43,7 @@ __docformat__ = "restructuredtext en"
 # ------------------------------------------------------------------------------
 
 
-class BufferAndFile(object):
+class BufferAndFile:
 
     """
     This class is a read only file-like object that allows to read ahead and

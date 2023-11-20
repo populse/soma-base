@@ -7,7 +7,7 @@ import atexit
 __docformat__ = "restructuredtext en"
 
 
-class Singleton(object):
+class Singleton:
 
     """
     Implements the singleton pattern. A class deriving from ``Singleton`` can

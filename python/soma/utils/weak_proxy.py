@@ -43,7 +43,7 @@ def weak_proxy(obj, callback=None):
     return wr
 
 
-class proxy_method(object):
+class proxy_method:
     """Indirect proxy for a bound method
 
     It replaces a bound method, ie ``a.method`` with a proxy callable which

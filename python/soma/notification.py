@@ -13,7 +13,7 @@ from soma.sorted_dictionary import SortedDictionary
 # -------------------------------------------------------------------------
 
 
-class Notifier(object):
+class Notifier:
 
     """
     Register a series of functions (or Notifier instances) which are all called
@@ -154,7 +154,7 @@ class Notifier(object):
 
 
 # -------------------------------------------------------------------------
-class ReorderedCall(object):
+class ReorderedCall:
 
     """
     **todo:** documentation
@@ -252,7 +252,7 @@ class VariableParametersNotifier(Notifier):
 
 
 # -------------------------------------------------------------------------
-class ObservableAttributes(object):
+class ObservableAttributes:
 
     """
     ObservableAttributes allows to track modification of attributes at

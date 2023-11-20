@@ -230,7 +230,7 @@ class QtThreadCall(singleton.Singleton, QObject):
                 raise
 
 
-class MainThreadLife(object):
+class MainThreadLife:
     """This wrapper class ensures the contained object is deleted in the main
     thread, and not in the current non-GUI thread. The principle is the
     following:

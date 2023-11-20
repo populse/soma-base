@@ -120,7 +120,7 @@ def _setTarget(target, source):
         from soma.signature.api import HasSignature
     except ImportError:
 
-        class HasSignature(object):
+        class HasSignature:
             pass
 
     if isinstance(source, dict):

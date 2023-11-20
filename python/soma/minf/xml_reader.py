@@ -129,7 +129,7 @@ class MinfXMLReader(MinfReader, ErrorHandler):
 
 
 # ------------------------------------------------------------------------------
-class XMLHandler(object):
+class XMLHandler:
     def __init__(self, parser, parent, name, attributes):
         self.parent = parent
         parser.checkNoMoreAttributes(attributes)

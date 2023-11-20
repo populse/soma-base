@@ -59,7 +59,7 @@ import threading
 import time
 
 
-class SingleThreadCalls(object):
+class SingleThreadCalls:
 
     """
     Allows the registration of functions that are going to be called from a

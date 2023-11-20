@@ -166,7 +166,7 @@ from soma.controller import List, undefined
 try:
     import yaml
 
-    class json_reader(object):
+    class json_reader:
 
         """
         This class has a single static method load that loads an
@@ -234,7 +234,7 @@ def read_json(file_name):
         )
 
 
-class DirectoryAsDict(object):
+class DirectoryAsDict:
     def __new__(cls, directory, cache=None):
         if osp.isdir(directory):
             return super().__new__(cls, directory, cache)
@@ -407,7 +407,7 @@ class DirectoryAsDict(object):
         return (directories, files, links, files_size, path_size, errors, count)
 
 
-class DirectoriesCache(object):
+class DirectoriesCache:
     def __init__(self):
         self.directories = {}
 
@@ -452,7 +452,7 @@ class DirectoriesCache(object):
         return result
 
 
-class FileOrganizationModelManager(object):
+class FileOrganizationModelManager:
 
     """
     Manage the discovery and instantiation of available FileOrganizationModel
@@ -566,7 +566,7 @@ class FileOrganizationModelManager(object):
         return result
 
 
-class FileOrganizationModels(object):
+class FileOrganizationModels:
     def __init__(self):
         self._directories_regex = re.compile(r"{([A-Za-z][A-Za-z0-9_]*)}")
         self._attributes_regex = re.compile("<([^>]+)>")
@@ -916,7 +916,7 @@ class FileOrganizationModels(object):
             pprint.pprint(getattr(self, i), out)
 
 
-class PathToAttributes(object):
+class PathToAttributes:
 
     """
     Utility class for file paths -> attributes set transformation.
@@ -1177,7 +1177,7 @@ class PathToAttributes(object):
                 yield (p, s, a)
 
 
-class AttributesToPaths(object):
+class AttributesToPaths:
 
     """
     Utility class for attributes set -> file paths transformation.

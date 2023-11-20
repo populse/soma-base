@@ -15,7 +15,7 @@ from soma.translation import translate as _
 
 
 # -------------------------------------------------------------------------
-class Empty(object):
+class Empty:
     pass
 
 
