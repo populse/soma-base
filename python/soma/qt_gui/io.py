@@ -204,7 +204,7 @@ class Socket(QObject):
             while n < msglen:
                 try:
                     n += self.socket.send(msg[n:])
-                except socket.error as e:
+                except OSError as e:
                     if e.errno == errno.EWOULDBLOCK:
                         time.sleep(0.02)
                     else:
@@ -261,7 +261,7 @@ class Socket(QObject):
                 if char == b"\0" or char == b"":
                     e = OSError(errno.EPIPE, "socket communication interrupted")
                     raise e
-            except socket.error as e:
+            except OSError as e:
                 if e.errno == errno.EWOULDBLOCK:
                     char = b""
                     time.sleep(0.02)
