@@ -2,7 +2,7 @@ from .load_pilots import load_pilots
 import soma
 import sys
 
-error_message = """
+error_message = r"""
 
 ##################################
 #           GAME OVER            #
@@ -14,10 +14,10 @@ error_message = """
              /|\  |
              / \  |
                   |
-            =========
+            =============
 """
 
-valid_message = """
+valid_message = r"""
 
 ##################################
 #        MODULE TEST PASSED      #
@@ -28,7 +28,7 @@ valid_message = """
                   |
                   | \O/
                   |  |
-                  | / \\
+                  | / \
            ==============
             """
 

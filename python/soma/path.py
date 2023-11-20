@@ -74,7 +74,7 @@ def relative_path(path, referenceDirectory):
     return os.path.join(*plist)
 
 
-query_string_re = re.compile("\?([^\?\&]+\=[^\&]*)(\&[^\?\&]+\=[^\&]*)*$")
+query_string_re = re.compile(r"\?([^\?\&]+\=[^\&]*)(\&[^\?\&]+\=[^\&]*)*$")
 
 
 def split_query_string(path):

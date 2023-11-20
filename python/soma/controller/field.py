@@ -126,7 +126,7 @@ def parse_type_str(type_str):
     'List[str]' -> ('List', ['str'])
     'union[list[str],Dict[str,controller[Test]]]' -> ('union', ['list[str]', 'Dict[str,controller[Test]]'])
     """
-    p = re.compile("(^[^\[\],]*)(?:\[(.*)\])?$")
+    p = re.compile(r"(^[^\[\],]*)(?:\[(.*)\])?$")
     m = p.match(type_str)
     if m:
         type, inner = p.match(type_str).groups()
@@ -156,7 +156,7 @@ def parse_type_str(type_str):
             return (type, [])
     else:
         # shape like conlist(int, ...)
-        p = re.compile("(^[^\[\],]*)(?:\((.*)\))?$")
+        p = re.compile(r"(^[^\[\],]*)(?:\((.*)\))?$")
         type, inner = p.match(type_str).groups()
         if inner:
             p = re.compile(r"\([^\[\]]*\)")
