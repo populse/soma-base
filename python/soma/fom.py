@@ -443,7 +443,7 @@ class DirectoriesCache(object):
             try:
                 with bz2.BZ2File(path, "r") as f:
                     result.directories = json.load(f)
-            except IOError:
+            except OSError:
                 with open(path, "r") as f:
                     result.directories = json.load(f)
         else:

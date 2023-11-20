@@ -96,7 +96,7 @@ def minfFormat(source):
             gunzipSource = gzip.GzipFile(source.name)
             try:
                 start = gunzipSource.read(5)
-            except IOError:
+            except OSError:
                 start = ""
             if start != "<?xml":
                 raise MinfError(_("Invalid minf file: %s") % (source.name,))
