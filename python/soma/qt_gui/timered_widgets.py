@@ -132,9 +132,9 @@ class TimeredQLineEdit(QPredefLineEdit):
         """
         timerInterval = kwargs.pop("timerInterval", None)
         if kwargs:
-            super(TimeredQLineEdit, self).__init__(*args, **kwargs)
+            super().__init__(*args, **kwargs)
         else:
-            super(TimeredQLineEdit, self).__init__(*args)
+            super().__init__(*args)
         self.__timer = QLineEditModificationTimer(self, timerInterval=timerInterval)
         self.__timer.userModification.connect(self.userModification)
 
@@ -152,10 +152,10 @@ class TimeredQLineEdit(QPredefLineEdit):
 
     def close(self):
         self.__timer.close()
-        super(TimeredQLineEdit, self).close()
+        super().close()
 
     def set_value(self, value):
-        super(TimeredQLineEdit, self).set_value(value)
+        super().set_value(value)
         self.userModification.emit()
 
     def focusInEvent(self, event):

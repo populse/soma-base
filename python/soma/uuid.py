@@ -10,7 +10,7 @@ import binascii
 # -------------------------------------------------------------------------
 
 
-class Uuid(object):
+class Uuid:
 
     """
     An Uuid instance is a universal unique identifier. It is a 128 bits

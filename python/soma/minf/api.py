@@ -96,7 +96,7 @@ def minfFormat(source):
             gunzipSource = gzip.GzipFile(source.name)
             try:
                 start = gunzipSource.read(5)
-            except IOError:
+            except OSError:
                 start = ""
             if start != "<?xml":
                 raise MinfError(_("Invalid minf file: %s") % (source.name,))
@@ -120,7 +120,7 @@ def _setTarget(target, source):
         from soma.signature.api import HasSignature
     except ImportError:
 
-        class HasSignature(object):
+        class HasSignature:
             pass
 
     if isinstance(source, dict):

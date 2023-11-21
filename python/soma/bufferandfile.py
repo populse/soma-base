@@ -43,7 +43,7 @@ __docformat__ = "restructuredtext en"
 # ------------------------------------------------------------------------------
 
 
-class BufferAndFile(object):
+class BufferAndFile:
 
     """
     This class is a read only file-like object that allows to read ahead and
@@ -75,7 +75,7 @@ class BufferAndFile(object):
         Create a file-like object that adds an :py:meth:`unread` method to an
         opened ``file_object``.
         """
-        super(BufferAndFile, self).__init__()
+        super().__init__()
         self.__buffer = ""
         self.__file = file_object
         self.name = getattr(file_object, "name", "<unknown>")

@@ -29,7 +29,7 @@ class Application(Singleton, Controller):
 
     def __singleton_init__(self, name=None, version=None, *args, **kwargs):
         """Replaces __init__ in Singleton."""
-        super(Application, self).__singleton_init__(*args, **kwargs)
+        super().__singleton_init__(*args, **kwargs)
         # Warning : Traits bug
         # Using the trait Directory() might instantiate a QApplication (seems to depend on the
         # traits release). If it is declared in the class, the QApplication is instantiated at

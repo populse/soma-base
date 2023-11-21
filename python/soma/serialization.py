@@ -11,7 +11,7 @@ object given its JSON.
 """
 
 
-class JSONSerializable(object):
+class JSONSerializable:
     """
     Instances of classes deriving from `JSONSerializable` can be serialized
     in a JSON compatible object with :meth:`to_json` method. This JSON object

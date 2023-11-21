@@ -66,7 +66,7 @@ class TestSomaMisc(unittest.TestCase):
     def test_singleton(self):
         class ASingleton(singleton.Singleton):
             def __singleton_init__(self):
-                super(ASingleton, self).__singleton_init__()
+                super().__singleton_init__()
                 self._shared_num = 12
 
         self.assertRaises(ValueError, ASingleton.get_instance)
@@ -117,7 +117,7 @@ class TestSomaMisc(unittest.TestCase):
         def other_func(x, y, z, t):
             return x + y + z + t
 
-        class TmpObject(object):
+        class TmpObject:
             def meth(self, x, y, z, t):
                 return x + y + z + t
 

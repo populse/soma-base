@@ -120,7 +120,7 @@ class BaseSomaTestCase(unittest.TestCase):
     _private_run_data_dir = None
 
     def __init__(self, testName):
-        super(BaseSomaTestCase, self).__init__(testName)
+        super().__init__(testName)
         if self.test_mode == run_mode and not self.base_run_data_dir:
             msg_fmt = "base_run_data_dir must be provided when using '%s' mode"
             msg = msg_fmt % run_mode
@@ -159,7 +159,7 @@ class SomaTestCaseWithoutRefFiles(BaseSomaTestCase):
     """
 
     def __init__(self, testName):
-        super(SomaTestCaseWithoutRefFiles, self).__init__(testName)
+        super().__init__(testName)
         if self.test_mode == ref_mode:
             msg_fmt = "Test %s should not be run in '%s' mode"
             msg = msg_fmt % (self.__class__.__name__, ref_mode)

@@ -18,10 +18,10 @@ try:
     from soma.signature.api import HasSignature, Sequence
 except ImportError:
 
-    class HasSignature(object):
+    class HasSignature:
         pass
 
-    class Sequence(object):
+    class Sequence:
         pass
 
 
@@ -37,7 +37,7 @@ dictStructure = "dict"
 
 
 # ------------------------------------------------------------------------------
-class StartStructure(object):
+class StartStructure:
 
     """
     When iterating over a minf tree, a L{StartStructure} indicate the beginning of
@@ -93,7 +93,7 @@ class StartStructure(object):
 
 
 # ------------------------------------------------------------------------------
-class EndStructure(object):
+class EndStructure:
 
     """
     When iterating over a minf tree, an L{EndStructure} indicate the end of
@@ -108,7 +108,7 @@ class EndStructure(object):
 
 
 # ------------------------------------------------------------------------------
-class Reference(object):
+class Reference:
 
     """
     EXPERIMENTAl: the reference system is not fully functional.
@@ -142,7 +142,7 @@ def createMinfReducer(name):
 
 
 # ------------------------------------------------------------------------------
-class MinfReducer(object):
+class MinfReducer:
 
     """
     Class to convert a Python object into a minf tree.
@@ -154,7 +154,7 @@ class MinfReducer(object):
     #: todo: documentation
     _defaultClassReducer = {}
 
-    class DefaultObjectReducer(object):
+    class DefaultObjectReducer:
         def __init__(self, structureName):
             self.structureName = structureName
 
@@ -333,7 +333,7 @@ def createMinfExpander(name):
 
 
 # ------------------------------------------------------------------------------
-class MinfExpander(object):
+class MinfExpander:
 
     """
     Class to convert a minf tree into a Python object.
@@ -341,7 +341,7 @@ class MinfExpander(object):
 
     _allExpanders = {}
 
-    class DefaultObjectExpander(object):
+    class DefaultObjectExpander:
         def __init__(self, factory):
             self.factory = factory
 

@@ -100,7 +100,7 @@ class ExtendedImporter(Singleton):
             extendedModule.applyRules()
 
 
-class ExtendedModule(object):
+class ExtendedModule:
 
     """
     Register a series of rules to apply during the import process of the
@@ -163,7 +163,7 @@ class ExtendedModule(object):
                 handler.__call__(self, referedModule)
 
 
-class GenericHandlers(object):
+class GenericHandlers:
 
     """
     Static generic handlers used as import rules.
@@ -284,7 +284,7 @@ class GenericHandlers(object):
             del locals[key]
 
 
-class ExtendedImporterHelper(object):
+class ExtendedImporterHelper:
 
     """
     Static methods declared to help extended import process.

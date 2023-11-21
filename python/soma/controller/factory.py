@@ -26,7 +26,7 @@ class MetaFactories(type):
         return type.__new__(mcs, name, bases, dictionary)
 
 
-class Factories(object):
+class Factories:
 
     """
     This is the base class for managing association between any Python object
@@ -47,7 +47,7 @@ class Factories(object):
     _global_factories = {}
 
     def __init__(self):
-        super(Factories, self).__init__()
+        super().__init__()
         self._factories = WeakKeyDictionary()
 
     @classmethod

@@ -61,7 +61,7 @@ class Socket(QObject):
         port: int
             port that the socket server listens
         """
-        super(Socket, self).__init__()
+        super().__init__()
         self.dest = host
         self.port = port
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -160,13 +160,13 @@ class Socket(QObject):
                 try:
                     msg = self._messages.get(True, timeout)
                 except queue.Empty as e:
-                    raise IOError(errno.ETIMEDOUT, "socket communication timed out")
+                    raise OSError(errno.ETIMEDOUT, "socket communication timed out")
             finally:
                 self.lock.release()
         else:
             try:
                 msg = self.readMessage(timeout)
-            except IOError as e:
+            except OSError as e:
                 if e.errno == errno.EPIPE:
                     # The socket has been closed
                     # Return to avoid infinite loop
@@ -204,7 +204,7 @@ class Socket(QObject):
             while n < msglen:
                 try:
                     n += self.socket.send(msg[n:])
-                except socket.error as e:
+                except OSError as e:
                     if e.errno == errno.EWOULDBLOCK:
                         time.sleep(0.02)
                     else:
@@ -230,7 +230,7 @@ class Socket(QObject):
                     self.lock.release()
                 if self.notifyenabled:
                     self.messageHandler()
-            except IOError as e:
+            except OSError as e:
                 if e.errno != errno.ETIMEDOUT:
                     self.close()
                     # raise
@@ -241,7 +241,7 @@ class Socket(QObject):
         """
         Reads a line of data from the socket (a string followed by ``'\\n'``).
         self.readLock must be acquired before calling this method.
-        If data cannot be read before timeout (in seconds), an IOError exception is raised.
+        If data cannot be read before timeout (in seconds), an OSError exception is raised.
 
         Returns
         -------
@@ -259,17 +259,17 @@ class Socket(QObject):
                 char = self.socket.recv(1)
                 waitedTime = 0
                 if char == b"\0" or char == b"":
-                    e = IOError(errno.EPIPE, "socket communication interrupted")
+                    e = OSError(errno.EPIPE, "socket communication interrupted")
                     raise e
-            except socket.error as e:
+            except OSError as e:
                 if e.errno == errno.EWOULDBLOCK:
                     char = b""
                     time.sleep(0.02)
                     waitedTime += 0.02
                     if waitedTime >= timeout:
-                        raise IOError(errno.ETIMEDOUT, "socket communication timed out")
+                        raise OSError(errno.ETIMEDOUT, "socket communication timed out")
                 else:
-                    raise IOError(errno.EPIPE, "socket communication interrupted")
+                    raise OSError(errno.EPIPE, "socket communication interrupted")
         return msg.decode()
 
     def readMessage(self, timeout=30):

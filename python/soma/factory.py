@@ -47,7 +47,7 @@ def find_items_in_module(module_name, check):
                 yield j
 
 
-class ClassFactory(object):
+class ClassFactory:
     """
     *ClassFactory* is the base class for creating factories that can look
     for classes in Python modules and create instances.

@@ -8,7 +8,7 @@ class QVTabBar(Qt.QTabBar):
     """
 
     def __init__(self, parent=None, tab_width=None, tab_height=None):
-        super(QVTabBar, self).__init__(parent)
+        super().__init__(parent)
         self.tab_width = tab_width
         self.tab_height = tab_height
         self._first_paint = True
@@ -77,7 +77,7 @@ class QVTabWidget(Qt.QTabWidget):
     """
 
     def __init__(self, parent=None, width=None, height=None):
-        super(QVTabWidget, self).__init__(parent)
+        super().__init__(parent)
         self.setTabBar(QVTabBar(parent, width, height))
         self.setTabPosition(Qt.QTabWidget.West)
 

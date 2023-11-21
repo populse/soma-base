@@ -74,7 +74,7 @@ class QtThreadCall(singleton.Singleton, QObject):
 
     def __singleton_init__(self):
         # QObject.__init__( self, None )
-        super(QtThreadCall, self).__singleton_init__(None)
+        super().__singleton_init__(None)
         self.lock = threading.RLock()
         self.actions = []
         # look for the main thread
@@ -230,7 +230,7 @@ class QtThreadCall(singleton.Singleton, QObject):
                 raise
 
 
-class MainThreadLife(object):
+class MainThreadLife:
     """This wrapper class ensures the contained object is deleted in the main
     thread, and not in the current non-GUI thread. The principle is the
     following:
@@ -271,7 +271,7 @@ class MainThreadLife(object):
     """
 
     def __init__(self, obj_life=None, *args, **kwargs):
-        super(MainThreadLife, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         if obj_life is not None:
             self._obj_life = obj_life
 
