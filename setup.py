@@ -9,6 +9,7 @@ with open(os.path.join(python_dir, "soma", "info.py")) as f:
     exec(code, release_info)
 
 setup(
+    python_requires=">=3.9",
     name=release_info["NAME"],
     description=release_info["DESCRIPTION"],
     long_description=release_info["LONG_DESCRIPTION"],
