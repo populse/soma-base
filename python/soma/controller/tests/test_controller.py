@@ -172,8 +172,7 @@ class TestController(unittest.TestCase):
         manhelp = my_car.field_doc("driver")
         self.assertEqual(
             manhelp,
-            "driver [Controller[%s.Driver]]: the guy who would better take a bus"
-            % __name__,
+            f"driver [Controller[{__name__}.Driver]]: the guy who would better take a bus",
         )
 
     def test_dynamic_controllers(self):

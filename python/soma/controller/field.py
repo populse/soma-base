@@ -7,8 +7,6 @@ from soma.undefined import undefined
 
 # Import allsupported types from typing
 from typing import (
-    Any,
-    Literal,
     Union,
 )
 
@@ -27,10 +25,10 @@ else:
 def _conlist_str(name, type_):
     tdef = type_str(type_.item_type)
     if type_.min_items:
-        tdef += ", min_items=%d" % type_.min_items
+        tdef += f", min_items={type_.min_items}"
     if type_.max_items:
-        tdef += ", max_items=%d" % type_.max_items
-    result = "pydantic.conlist(%s)" % tdef
+        tdef += f", max_items={type_.max_items}"
+    result = f"pydantic.conlist({tdef})"
     return result
 
 

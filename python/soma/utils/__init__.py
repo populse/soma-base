@@ -1,1 +1,1 @@
-from .loader import load_objects
+from .loader import load_objects  # noqa: F401

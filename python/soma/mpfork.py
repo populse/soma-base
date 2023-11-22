@@ -51,10 +51,10 @@ Availability: Unix
 """
 
 import multiprocessing
-import threading
 import os
-import tempfile
 import sys
+import tempfile
+import threading
 
 try:
     import cpickle as pickle

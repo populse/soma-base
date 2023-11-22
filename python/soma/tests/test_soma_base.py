@@ -1,6 +1,8 @@
-from .load_pilots import load_pilots
-import soma
 import sys
+
+import soma
+
+from .load_pilots import load_pilots
 
 error_message = r"""
 

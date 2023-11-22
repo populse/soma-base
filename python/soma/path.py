@@ -4,10 +4,10 @@ Some useful functions to manage file or directorie names.
 
 __docformat__ = "restructuredtext en"
 
-import os
 import fnmatch
 import glob
 import hashlib
+import os
 import re
 import shutil
 
@@ -313,7 +313,7 @@ def update_query_string(
         default_update_mode = params_update_mode
         params_update_mode = dict()
 
-    elif type(params_update_mode) is dict:
+    elif isinstance(params_update_mode, dict):
         default_update_mode = QueryStringParamUpdateMode.REPLACE
 
     else:

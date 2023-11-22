@@ -52,7 +52,7 @@ else:
             # It is necessary to first import zmq from the system if it is
             # installed otherwise the one embedded with subprocess32 is loaded
             # and it can lead to compatibility issue
-            import zmq
+            import zmq  # noqa: F401
 
         __initialize_zmq()
 

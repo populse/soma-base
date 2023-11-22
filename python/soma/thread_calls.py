@@ -56,7 +56,6 @@ until the call is done and the result available).
 __docformat__ = "restructuredtext en"
 
 import threading
-import time
 
 
 class SingleThreadCalls:

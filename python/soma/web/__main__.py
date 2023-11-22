@@ -1,14 +1,10 @@
 from soma.controller import (
     Controller,
-    field,
-    OpenKeyController,
-    List,
-    Literal,
-    Union,
-    Dict,
-    Set,
-    File,
     Directory,
+    File,
+    Literal,
+    OpenKeyController,
+    field,
 )
 
 
@@ -58,7 +54,9 @@ class VisibleController(SubController):
 
 
 def web_server_gui(controller):
-    import http, http.server
+    import http
+    import http.server
+
     from soma.web import SomaHTTPHandler, WebBackend
 
     class Handler(SomaHTTPHandler, web_backend=WebBackend(controller=controller)):
@@ -72,6 +70,7 @@ def web_server_gui(controller):
 
 def qt_web_gui(controller):
     import sys
+
     from soma.qt_gui.qt_backend import Qt
     from soma.web import ControllerWidget
 

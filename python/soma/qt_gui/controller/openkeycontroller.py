@@ -1,7 +1,8 @@
-from . import ControllerWidgetFactory, ControllerSubwidget
-from ..collapsible import CollapsibleWidget
 from soma.undefined import undefined
 from soma.utils.weak_proxy import proxy_method
+
+from ..collapsible import CollapsibleWidget
+from . import ControllerSubwidget, ControllerWidgetFactory
 
 
 class OpenKeyControllerWidgetFactory(ControllerWidgetFactory):

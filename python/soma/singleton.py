@@ -37,7 +37,7 @@ class Singleton:
         try:
             return getattr(cls, "_singleton_instance")
         except AttributeError:
-            msg = "Class %s has not been initialized" % cls.__name__
+            msg = f"Class {cls.__name__} has not been initialized"
             raise ValueError(msg)
 
     def __new__(cls, *args, **kwargs):

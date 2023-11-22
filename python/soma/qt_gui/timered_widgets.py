@@ -5,9 +5,10 @@ modification only after an inactivity period.
 """
 __docformat__ = "restructuredtext en"
 
-from soma.qt_gui.qt_backend import QtCore
-from soma.qt_gui.predef_lineedit import QPredefLineEdit
 import weakref
+
+from soma.qt_gui.predef_lineedit import QPredefLineEdit
+from soma.qt_gui.qt_backend import QtCore
 
 # -------------------------------------------------------------------------
 

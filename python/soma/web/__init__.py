@@ -1,6 +1,7 @@
 import functools
+import http
+import http.server
 import json
-import http, http.server
 import mimetypes
 import os
 import traceback
@@ -12,14 +13,13 @@ from soma.controller import (
     OpenKeyController,
 )
 from soma.controller.field import subtypes, type_str
-from soma.undefined import undefined
 from soma.qt_gui.qt_backend import QtWidgets
 from soma.qt_gui.qt_backend.Qt import QObject, QVariant
 from soma.qt_gui.qt_backend.QtCore import QUrl, pyqtSlot
-from soma.qt_gui.qt_backend.QtWebEngineWidgets import QWebEngineView, QWebEnginePage
-from soma.qt_gui.qt_backend.QtWebEngineCore import QWebEngineUrlRequestInterceptor
 from soma.qt_gui.qt_backend.QtWebChannel import QWebChannel
-
+from soma.qt_gui.qt_backend.QtWebEngineCore import QWebEngineUrlRequestInterceptor
+from soma.qt_gui.qt_backend.QtWebEngineWidgets import QWebEnginePage, QWebEngineView
+from soma.undefined import undefined
 
 """
 Infrastructure to make web-based GUI for applications displayed either as a

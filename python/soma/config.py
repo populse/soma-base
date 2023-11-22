@@ -11,7 +11,7 @@ BRAINVISA_SHARE
 """
 
 import os
-import sys
+
 import soma.info
 
 full_version = ".".join(

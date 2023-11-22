@@ -3,10 +3,10 @@ Provides a better version of :func:`find_library`, and allows to patch the
 :mod:`ctypes` module to use our version: see :func:`patch_ctypes_find_library`.
 """
 
-import os
-import sys
 import ctypes.util
 import glob
+import os
+import sys
 
 ctypes_find_library = ctypes.util.find_library
 

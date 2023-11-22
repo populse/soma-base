@@ -1,5 +1,5 @@
-import inspect
 import enum
+import inspect
 import sys
 
 

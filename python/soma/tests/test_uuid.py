@@ -1,9 +1,7 @@
-import unittest
-import shutil
-import os
-import tempfile
-from soma import uuid
 import pickle
+import unittest
+
+from soma import uuid
 
 
 class TestUUID(unittest.TestCase):

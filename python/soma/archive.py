@@ -1,6 +1,6 @@
+import os
 import tarfile
 import zipfile
-import os
 
 archive_extensions = {".zip", ".gz", ".tar", ".bz2", ".tgz"}
 

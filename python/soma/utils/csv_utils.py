@@ -91,12 +91,12 @@ def dict_to_table(data_dict, shape_dict):
                 keys[k] = len(hdr)
                 hdr.append(k)
     lines = []
-    for line in line_items:
-        l0 = [line.get(k) for k in hdr]
+    for line_item in line_items:
+        l0 = [line_item.get(k) for k in hdr]
         found = False
-        for l in lines:
+        for line in lines:
             eq = True
-            for e, v in zip(l, l0):
+            for e, v in zip(line, l0):
                 if e is not None and v is not None and e != v:
                     eq = False
                     break
@@ -105,7 +105,7 @@ def dict_to_table(data_dict, shape_dict):
                 found = True
                 for i, v in enumerate(l0):
                     if v is not None:
-                        l[i] = v
+                        line[i] = v
                 break
         if not found:
             lines.append(l0)

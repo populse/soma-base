@@ -41,9 +41,9 @@ This module contains functions and classes related to sqlite databases.
 __docformat__ = "restructuredtext en"
 
 
+import sqlite3
 import sys
 import threading
-import sqlite3
 
 # ------------------------------------------------------------------------------
 

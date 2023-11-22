@@ -3,9 +3,9 @@ Universal unique identifier.
 """
 __docformat__ = "epytext en"
 
-import struct
-import random
 import binascii
+import random
+import struct
 
 # -------------------------------------------------------------------------
 
