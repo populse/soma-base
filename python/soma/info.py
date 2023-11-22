@@ -8,7 +8,6 @@ version_micro
 version_extra
 """
 
-import sys
 
 version_major = 6
 version_minor = 0

@@ -1,18 +1,18 @@
 import sys
 
-from soma.qt_gui.qt_backend import Qt
-from soma.qt_gui.controller import ControllerWidget
 from soma.controller import (
     Controller,
-    field,
+    Dict,
     List,
     Literal,
-    file,
-    directory,
-    Union,
-    Dict,
     Set,
+    Union,
+    directory,
+    field,
+    file,
 )
+from soma.qt_gui.controller import ControllerWidget
+from soma.qt_gui.qt_backend import Qt
 
 
 class CustomController(Controller):

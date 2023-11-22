@@ -7,11 +7,12 @@ same thread (qt main thread).
 """
 __docformat__ = "restructuredtext en"
 
+import inspect
 import sys
 import threading
-from soma.qt_gui.qt_backend.QtCore import QObject, QEvent, QCoreApplication
+
 from soma import singleton
-import inspect
+from soma.qt_gui.qt_backend.QtCore import QCoreApplication, QEvent, QObject
 
 
 # Copied from Python 3 six.reraise

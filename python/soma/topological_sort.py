@@ -144,11 +144,9 @@ class Graph:
         the node to insert
         """
         if not isinstance(node, GraphNode):
-            raise Exception("Expect a GraphNode, got {0}".format(node))
+            raise Exception(f"Expect a GraphNode, got {node}")
         if node.name in self._nodes:
-            raise Exception(
-                "Expect a GraphNode with a unique name, " "got {0}".format(node)
-            )
+            raise Exception(f"Expect a GraphNode with a unique name, got {node}")
         self._nodes[node.name] = node
 
     def find_node(self, node_name):
@@ -175,15 +173,11 @@ class Graph:
         """
         if from_node not in self._nodes:
             raise Exception(
-                "Node {0} is not defined in the Graph." "Use add_node() method".format(
-                    from_node
-                )
+                f"Node {f} is not defined in the Graph." "Use add_node() method"
             )
         if to_node not in self._nodes:
             raise Exception(
-                "Node {0} is not defined in the Graph." "Use add_node() method".format(
-                    to_node
-                )
+                f"Node {to_node} is not defined in the Graph." "Use add_node() method"
             )
         if (from_node, to_node) not in self._links:
             self._nodes[to_node].add_link_from(self._nodes[from_node])
@@ -232,7 +226,7 @@ class Graph:
         if len(ordered_nodes) == len(self._nodes):
             return [(node.name, node.meta) for node in ordered_nodes]
         else:
-            raise Exception("There is loop in the Graph." "Please inverstigate")
+            raise Exception("There is loop in the Graph. Please inverstigate")
 
 
 if __name__ == "__main__":

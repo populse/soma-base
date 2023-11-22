@@ -1,16 +1,16 @@
 import unittest
-import os
-import sys
 
 try:
     # from soma import qimage2ndarray
     from soma import qt_gui
-    from soma.qt_gui import controller
-    from soma.qt_gui import generic_table_editor
-    from soma.qt_gui import io
-    from soma.qt_gui import qtThread
-    from soma.qt_gui import tangeSlider
-    from soma.qt_gui import timered_widgets
+    from soma.qt_gui import (
+        controller,
+        generic_table_editor,
+        io,
+        qtThread,
+        tangeSlider,
+        timered_widgets,
+    )
 
     class TestQtGui(unittest.TestCase):
         def test_qtgui(self):

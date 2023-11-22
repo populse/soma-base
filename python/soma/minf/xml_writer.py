@@ -160,8 +160,8 @@ class MinfXMLWriter(MinfWriter):
                     + ">",
                     level,
                 )
-            elif isinstance(minfNode, str):
-                if type(minfNode) is bytes:
+            elif isinstance(minfNode, (str, bytes)):
+                if isinstance(minfNode, bytes):
                     try:
                         minfNode = minfNode.decode("utf-8")
                     except UnicodeDecodeError:

@@ -1150,7 +1150,7 @@ class OpenKeyController(
             not name.startswith("_")
             and name not in self.__dict__
             and self.field(name) is None
-            and not name in self._reserved_names
+            and name not in self._reserved_names
         ):
             self.add_field(name, self._value_type)
         super().__setattr__(name, value)

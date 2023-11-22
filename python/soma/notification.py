@@ -5,10 +5,10 @@ callbacks (*i.e* Python callables) that will all be called by a single
 """
 __docformat__ = "restructuredtext en"
 
-from soma.translation import translate as _
 from soma.functiontools import checkParameterCount, numberOfParameterRange
-from soma.undefined import Undefined
 from soma.sorted_dictionary import SortedDictionary
+from soma.translation import translate as _
+from soma.undefined import Undefined
 
 # -------------------------------------------------------------------------
 
@@ -409,7 +409,7 @@ class ObservableAttributes:
         )
 
     def _delayAttributeNotification(self, ignoreDoubles=False, checkedObjects=None):
-        if not checkedObjects == None:
+        if checkedObjects is not None:
             checkedObjects.add(self)
 
         for name, notifier in self._onAttributeChange.items():
@@ -421,17 +421,17 @@ class ObservableAttributes:
             value = getattr(self, name, Undefined)
 
             if isinstance(value, ObservableAttributes):
-                if not checkedObjects is None:
+                if checkedObjects is not None:
                     # This allow to not recursively call
                     # _delayAttributeNotification
-                    if not value in checkedObjects:
+                    if value not in checkedObjects:
                         value._delayAttributeNotification(
                             ignoreDoubles=ignoreDoubles, checkedObjects=checkedObjects
                         )
                 else:
                     value._delayAttributeNotification(ignoreDoubles=ignoreDoubles)
 
-        if not checkedObjects == None:
+        if checkedObjects is not None:
             checkedObjects.pop()
 
     def restartAttributeNotification(self):
@@ -444,7 +444,7 @@ class ObservableAttributes:
         self._restartAttributeNotification(checkedObjects=set())
 
     def _restartAttributeNotification(self, checkedObjects=None):
-        if not checkedObjects == None:
+        if checkedObjects is not None:
             checkedObjects.add(self)
 
         for name, notifier in self._onAttributeChange.items():
@@ -454,15 +454,15 @@ class ObservableAttributes:
         for name in dir(self):
             value = getattr(self, name, Undefined)
             if isinstance(value, ObservableAttributes):
-                if not checkedObjects is None:
+                if checkedObjects is not None:
                     # This allow to not recursively call
                     # _delayAttributeNotification
-                    if not value in checkedObjects:
+                    if value not in checkedObjects:
                         value.restartAttributeNotification()
                 else:
                     value._delayAttributeNotification()
 
-        if not checkedObjects == None:
+        if checkedObjects:
             checkedObjects.pop()
 
 

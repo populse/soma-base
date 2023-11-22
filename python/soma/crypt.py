@@ -3,10 +3,11 @@ Functions to manage private/public keys encryption.
 This module needs Crypto module.
 """
 
-from Crypto.PublicKey import RSA
-from Crypto.Cipher import PKCS1_OAEP
 from base64 import b64decode, b64encode
+
 import Crypto
+from Crypto.Cipher import PKCS1_OAEP
+from Crypto.PublicKey import RSA
 
 if [int(x) for x in Crypto.__version__.split(".")] < [2, 1]:
     # pyrypro <= 2.0.x is not suitable since it is missing needed functions

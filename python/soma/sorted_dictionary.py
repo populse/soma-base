@@ -12,9 +12,9 @@ SortedDictionary if python version < 2.7.
 """
 __docformat__ = "restructuredtext en"
 
-from collections import OrderedDict
-from collections.abc import ItemsView
 import inspect
+from collections.abc import ItemsView
+
 from soma.undefined import Undefined
 
 

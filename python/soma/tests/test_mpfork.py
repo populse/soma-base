@@ -1,9 +1,9 @@
-import unittest
-import os
-import sys
-from soma import mpfork
-import queue
 import math
+import queue
+import sys
+import unittest
+
+from soma import mpfork
 
 
 class TestMPFork(unittest.TestCase):

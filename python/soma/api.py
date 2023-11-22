@@ -23,8 +23,8 @@ Advanced classes
 """
 
 
-from .singleton import Singleton
-from .application import Application
-from .controller import Controller
-from .undefined import undefined
-from .proxy import DictWithProxy, ListWithProxy
+from .application import Application  # noqa: F401
+from .controller import Controller  # noqa: F401
+from .proxy import DictWithProxy, ListWithProxy  # noqa: F401
+from .singleton import Singleton  # noqa: F401
+from .undefined import undefined  # noqa: F401

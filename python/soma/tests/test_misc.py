@@ -3,7 +3,6 @@
 
 import unittest
 import os
-import sys
 import tempfile
 import shutil
 from soma import singleton
@@ -129,8 +128,8 @@ class TestSomaMisc(unittest.TestCase):
         )
 
     def test_drange(self):
-        l = [x for x in functiontools.drange(2.5, 4.8, 0.6)]
-        self.assertEqual(l, [2.5, 3.1, 3.7, 4.3])
+        dranges = [x for x in functiontools.drange(2.5, 4.8, 0.6)]
+        self.assertEqual(dranges, [2.5, 3.1, 3.7, 4.3])
 
     def test_archive(self):
         d = tempfile.mkdtemp()

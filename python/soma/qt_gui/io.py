@@ -1,13 +1,12 @@
 """
 Utils for socket communication
 """
-import threading
-import socket
 import errno
-import time
-import sys
-
 import queue
+import socket
+import sys
+import threading
+import time
 
 from soma.qt_gui.qt_backend.QtCore import QObject, QSocketNotifier
 
@@ -159,7 +158,7 @@ class Socket(QObject):
             try:
                 try:
                     msg = self._messages.get(True, timeout)
-                except queue.Empty as e:
+                except queue.Empty:
                     raise OSError(errno.ETIMEDOUT, "socket communication timed out")
             finally:
                 self.lock.release()

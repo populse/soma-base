@@ -4,7 +4,6 @@ import os
 import tempfile
 from soma import application
 from soma import fom
-import sys
 
 
 class TestFOM(unittest.TestCase):
