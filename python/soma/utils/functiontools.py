@@ -12,8 +12,9 @@ import inspect
 # (in favor of inspect.getfullargspec until 3.2 and in favor of
 # inspect.signature since 3.3) => perhaps we could abandon getargspec and
 # include signature???
-getfullargspec = getattr(inspect, 'getfullargspec',
-                         getattr(inspect, 'getargspec', None))
+getfullargspec = getattr(
+    inspect, "getfullargspec", getattr(inspect, "getargspec", None)
+)
 
 # -------------------------------------------------------------------------
 from soma.translation import translate as _
