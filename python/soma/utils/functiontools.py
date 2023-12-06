@@ -8,7 +8,12 @@ from functools import partial
 import inspect
 
 # handle deprecation of getargspec in python3
-getfullargspec = getattr(inspect, "getfullargspec", inspect.getargspec)
+# inspect.getargspec() is deprecated in Python 3
+# (in favor of inspect.getfullargspec until 3.2 and in favor of
+# inspect.signature since 3.3) => perhaps we could abandon getargspec and
+# include signature???
+getfullargspec = getattr(inspect, 'getfullargspec',
+                         getattr(inspect, 'getargspec', None))
 
 # -------------------------------------------------------------------------
 from soma.translation import translate as _
