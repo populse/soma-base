@@ -175,13 +175,15 @@ class Graph:
         """
         if from_node not in self._nodes:
             raise Exception(
-                "Node {0} is not defined in the Graph."
-                "Use add_node() method".format(from_node)
+                "Node {0} is not defined in the Graph." "Use add_node() method".format(
+                    from_node
+                )
             )
         if to_node not in self._nodes:
             raise Exception(
-                "Node {0} is not defined in the Graph."
-                "Use add_node() method".format(to_node)
+                "Node {0} is not defined in the Graph." "Use add_node() method".format(
+                    to_node
+                )
             )
         if (from_node, to_node) not in self._links:
             self._nodes[to_node].add_link_from(self._nodes[from_node])

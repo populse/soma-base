@@ -29,7 +29,7 @@ class QPredefLineEdit(Qt.QLineEdit):
         allow_none=False,
         allow_undefined=False,
         *args,
-        **kwargs
+        **kwargs,
     ):
         if parent is not None:
             args = (parent,) + args

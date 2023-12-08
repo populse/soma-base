@@ -33,7 +33,7 @@ class ExtendedImporter(Singleton):
         namespacesList=[],
         handlersList=None,
         *args,
-        **kwargs
+        **kwargs,
     ):
         """
         This method is used to import a module applying rules (rename rule, delete rule, ...) .
