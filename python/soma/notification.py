@@ -1063,11 +1063,7 @@ class EditableTree(ObservableAttributes, ObservableSortedDictionary):
             if (
                 not item.isLeaf()
             ):  # if the item is a leaf and is already in the tree, nothing to do
-                for (
-                    v
-                ) in (
-                    item.values()
-                ):  # item is also a dictionary and contains several elements, add each value in the tree item
+                for v in item.values():  # item is also a dictionary and contains several elements, add each value in the tree item
                     self[key].add(v)
             # also set current name for the current object
             self[key].name = item.name
@@ -1208,7 +1204,7 @@ class EditableTree(ObservableAttributes, ObservableSortedDictionary):
             delEnabled=True,
             visible=True,
             enabled=True,
-            *args
+            *args,
         ):
             super().__init__(*args)
             self.icon = icon
@@ -1337,7 +1333,7 @@ class EditableTree(ObservableAttributes, ObservableSortedDictionary):
                 delEnabled,
                 visible,
                 enabled,
-                *dictContent
+                *dictContent,
             )
             if name is None:
                 self.name = self.defaultName
@@ -1391,14 +1387,10 @@ class EditableTree(ObservableAttributes, ObservableSortedDictionary):
             """
             key = item.id
             if key in self:
-                if not self[
-                    key
-                ].isLeaf():  # if the item is a leaf and is already in the tree, nothing to do
-                    for (
-                        v
-                    ) in (
-                        item.values()
-                    ):  # item is also a dictionary and contains several elements, add each value in the tree item
+                if (
+                    not self[key].isLeaf()
+                ):  # if the item is a leaf and is already in the tree, nothing to do
+                    for v in item.values():  # item is also a dictionary and contains several elements, add each value in the tree item
                         self[key].add(v)
 
                 # also set current name for the current object

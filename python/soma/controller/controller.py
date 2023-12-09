@@ -102,23 +102,43 @@ class AttributeValueEvent(Event):
         signature = inspect.signature(pcallback)
         if len(signature.parameters) == 0:
             return (
-                lambda new_value, old_value, attribute_name, controller, index: callback()
+                lambda new_value,
+                old_value,
+                attribute_name,
+                controller,
+                index: callback()
             )
         elif len(signature.parameters) == 1:
-            return lambda new_value, old_value, attribute_name, controller, index: callback(
-                new_value
+            return (
+                lambda new_value,
+                old_value,
+                attribute_name,
+                controller,
+                index: callback(new_value)
             )
         elif len(signature.parameters) == 2:
-            return lambda new_value, old_value, attribute_name, controller, index: callback(
-                new_value, old_value
+            return (
+                lambda new_value,
+                old_value,
+                attribute_name,
+                controller,
+                index: callback(new_value, old_value)
             )
         elif len(signature.parameters) == 3:
-            return lambda new_value, old_value, attribute_name, controller, index: callback(
-                new_value, old_value, attribute_name
+            return (
+                lambda new_value,
+                old_value,
+                attribute_name,
+                controller,
+                index: callback(new_value, old_value, attribute_name)
             )
         elif len(signature.parameters) == 4:
-            return lambda new_value, old_value, attribute_name, controller, index: callback(
-                new_value, old_value, attribute_name, controller
+            return (
+                lambda new_value,
+                old_value,
+                attribute_name,
+                controller,
+                index: callback(new_value, old_value, attribute_name, controller)
             )
         elif len(signature.parameters) == 5:
             return callback
