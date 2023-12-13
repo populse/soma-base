@@ -113,7 +113,7 @@ class GenericTableEditor(QWidget):
     def buf_table_sort(self, col=None, ascending=True):
         self.current_col_index = 0
         self.current_col_index = self.getSelectedCols()[0]
-        self.buf_table.sort(self.order)
+        self.buf_table.sort(key=self.sort_key)
         self.gui_table.setSortingEnabled(False)
         self.buf_2_gui()
 
@@ -205,14 +205,8 @@ class GenericTableEditor(QWidget):
             self.gui_table.blockSignals(False)
         self.gui_table.setSortingEnabled(sortstate)
 
-    def order(self, a, b):
-        va = a[self.current_col_index]
-        vb = b[self.current_col_index]
-        if va < vb:
-            return -1
-        if va > vb:
-            return +1
-        return 0
+    def sort_key(self, a):
+        return a[self.current_col_index]
 
     def menu_open_action(self):
         file = str(
