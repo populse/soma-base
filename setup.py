@@ -37,6 +37,7 @@ setup(
         "soma.web",
     ],
     include_package_data=True,
+    package_data={"": ["*.html", "*.css", "*.js"]},
     platforms=release_info["PLATFORMS"],
     install_requires=release_info["REQUIRES"],
     extras_require=release_info["EXTRAS_REQUIRE"],
