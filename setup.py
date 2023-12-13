@@ -34,8 +34,9 @@ setup(
         "soma.controller.tests",
         "soma.minf.tests",
         "soma.qt_gui.test",
-        "soma.web"
+        "soma.web",
     ],
+    include_package_data=True,
     platforms=release_info["PLATFORMS"],
     install_requires=release_info["REQUIRES"],
     extras_require=release_info["EXTRAS_REQUIRE"],
