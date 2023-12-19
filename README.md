@@ -4,7 +4,8 @@
 [![](https://codecov.io/github/populse/soma-base/coverage.svg?branch=master)](https://codecov.io/github/populse/soma-base)
 [![](https://img.shields.io/badge/license-CeCILL--B-blue.svg)](https://github.com/populse/soma-base/blob/master/LICENSE.en)
 [![](https://img.shields.io/pypi/v/soma-base.svg)](https://pypi.python.org/pypi/soma-base/)
-[![](https://img.shields.io/badge/python-3.6%2C%203.7%2C%203.8%2C%203.9%2C%203.10%2C%203.11-yellow.svg)](#)                                                          [![](https://img.shields.io/badge/platform-Linux%2C%20OSX%2C%20Windows-orange.svg)](#)
+[![](https://img.shields.io/badge/python-3.6%2C%203.7%2C%203.8%2C%203.9%2C%203.10%2C%203.11-yellow.svg)](#)
+[![](https://img.shields.io/badge/platform-Linux%2C%20OSX%2C%20Windows-orange.svg)](#)
 
 Miscellaneous libs for the python environment of Populse / BrainVISA
 
