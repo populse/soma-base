@@ -3,7 +3,7 @@ from soma.undefined import undefined
 from soma.controller import parse_type_str, OpenKeyController, type_default_value
 from soma.controller.field import subtypes, type_str
 from ..collapsible import CollapsibleWidget
-from soma.utils.weak_proxy import get_ref
+from soma.utils.weak_proxy import get_ref, proxy_method
 from functools import partial
 import html
 import weakref
@@ -145,8 +145,12 @@ class ScrollableWidgetsGrid(Qt.QScrollArea):
                 else:
                     print("no text in first widget")
                     field_name = None
-            label.edit_button.clicked.connect(partial(self.edit_field_name, field_name))
-            label.del_button.clicked.connect(partial(self.remove_field, field_name))
+            label.edit_button.clicked.connect(
+                partial(proxy_method(self, "edit_field_name"), field_name)
+            )
+            label.del_button.clicked.connect(
+                partial(proxy_method(self, "remove_field"), field_name)
+            )
             result = label
         else:
             label = first_widget
@@ -526,10 +530,11 @@ class BaseControllerWidget:
         if not readonly and isinstance(controller, OpenKeyController):
             self.editable = True
         self.build()
-        controller.on_inner_value_change.add(self.update_inner_gui)
-        controller.on_fields_change.add(self.update_fields)
+        controller.on_inner_value_change.add(proxy_method(self, "update_inner_gui"))
+        controller.on_fields_change.add(proxy_method(self, "update_fields"))
 
     def __del__(self):
+        print("BaseControllerWidget.__del__")
         self.disconnect()
 
     def build(self):
