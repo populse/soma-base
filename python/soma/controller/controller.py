@@ -15,6 +15,7 @@ from soma.undefined import undefined
 from .field import FieldProxy, ListProxy, field, Field, WritableField, Path
 import sys
 from soma.utils.weak_proxy import proxy_method
+from functools import partial
 
 
 class _ModelsConfig:
@@ -101,6 +102,36 @@ class AttributeValueEvent(Event):
         self.callbacks = {}
 
     @staticmethod
+    def normalized_callback0(
+        callback, new_value, old_value, attribute_name, controller, index
+    ):
+        return callback()
+
+    @staticmethod
+    def normalized_callback1(
+        callback, new_value, old_value, attribute_name, controller, index
+    ):
+        return callback(new_value)
+
+    @staticmethod
+    def normalized_callback2(
+        callback, new_value, old_value, attribute_name, controller, index
+    ):
+        return callback(new_value, old_value)
+
+    @staticmethod
+    def normalized_callback3(
+        callback, new_value, old_value, attribute_name, controller, index
+    ):
+        return callback(new_value, old_value, attribute_name)
+
+    @staticmethod
+    def normalized_callback4(
+        callback, new_value, old_value, attribute_name, controller, index
+    ):
+        return callback(new_value, old_value, attribute_name, controller)
+
+    @staticmethod
     def normalize_callback_parameters(callback):
         pcallback = callback
         if isinstance(callback, proxy_method):
@@ -109,45 +140,15 @@ class AttributeValueEvent(Event):
             pcallback = getattr(callback.proxy, callback.method)
         signature = inspect.signature(pcallback)
         if len(signature.parameters) == 0:
-            return (
-                lambda new_value,
-                old_value,
-                attribute_name,
-                controller,
-                index: callback()
-            )
+            return partial(AttributeValueEvent.normalized_callback0, callback)
         elif len(signature.parameters) == 1:
-            return (
-                lambda new_value,
-                old_value,
-                attribute_name,
-                controller,
-                index: callback(new_value)
-            )
+            return partial(AttributeValueEvent.normalized_callback1, callback)
         elif len(signature.parameters) == 2:
-            return (
-                lambda new_value,
-                old_value,
-                attribute_name,
-                controller,
-                index: callback(new_value, old_value)
-            )
+            return partial(AttributeValueEvent.normalized_callback2, callback)
         elif len(signature.parameters) == 3:
-            return (
-                lambda new_value,
-                old_value,
-                attribute_name,
-                controller,
-                index: callback(new_value, old_value, attribute_name)
-            )
+            return partial(AttributeValueEvent.normalized_callback3, callback)
         elif len(signature.parameters) == 4:
-            return (
-                lambda new_value,
-                old_value,
-                attribute_name,
-                controller,
-                index: callback(new_value, old_value, attribute_name, controller)
-            )
+            return partial(AttributeValueEvent.normalized_callback4, callback)
         elif len(signature.parameters) == 5:
             return callback
         raise ValueError("Invalid callback signature")
