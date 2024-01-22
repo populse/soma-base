@@ -382,8 +382,9 @@ class ControllerFieldInteraction:
         self.controller.on_attribute_change.remove(callback, self.field.name)
 
     def set_protected(self, protected):
-        self.field = self.controller.writable_field(self.field.name)
-        self.field.protected = protected
+        if getattr(self.field, "protected", None) != protected:
+            self.field = self.controller.writable_field(self.field.name)
+            self.field.protected = protected
 
     def is_optional(self):
         return self.field.optional
