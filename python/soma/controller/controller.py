@@ -29,6 +29,7 @@ class Event:
 
     def __init__(self):
         self.callbacks = []
+        self.blocked = False
 
     def add(
         self,
@@ -46,11 +47,17 @@ class Event:
             # The callback was not in the list
             return False
 
+    def block_signals(self, block):
+        self.blocked = block
+
     def fire(self, *args, **kwargs):
         """Activate notification: call all registered callbacks, using the
         given arguments. Thus all callbacks must follow the same calling
         conventions.
         """
+        if self.blocked:
+            return
+
         for callback in self.callbacks:
             try:
                 callback(*args, **kwargs)
@@ -89,6 +96,7 @@ class AttributeValueEvent(Event):
     """
 
     def __init__(self):
+        super().__init__()
         self.callbacks_mapping = {}
         self.callbacks = {}
 
@@ -180,10 +188,39 @@ class AttributeValueEvent(Event):
         """Fire callbacks associated with a given attribute name.
         Callbacks without an attribute name (None) are also fired.
         """
+        if self.blocked:
+            return
+
+        del_cbk = set()
         for callback in self.callbacks.get(attribute_name, []):
-            callback(new_value, old_value, attribute_name, controller, index)
+            try:
+                callback(new_value, old_value, attribute_name, controller, index)
+            except ReferenceError:
+                # print('exception in callback:', callback)
+                # print('on:', self)
+                # signature = inspect.signature(callback)
+                # print('signature:', signature)
+                del_cbk.add(callback)
+            # except Exception:
+            #     print('exception in callback:', callback)
+            #     print('on:', self)
+            #     signature = inspect.signature(callback)
+            #     print('signature:', signature)
+            #     raise
+        if del_cbk:
+            self.callbacks[attribute_name] = [
+                cbk for cbk in self.callbacks[attribute_name] if cbk not in del_cbk
+            ]
+        del_cbk = set()
         for callback in self.callbacks.get(None, []):
-            callback(new_value, old_value, attribute_name, controller, index)
+            try:
+                callback(new_value, old_value, attribute_name, controller, index)
+            except ReferenceError:
+                del_cbk.add(callback)
+        if del_cbk:
+            self.callbacks[None] = [
+                cbk for cbk in self.callbacks[None] if cbk not in del_cbk
+            ]
 
     @property
     def has_callback(self):
@@ -781,6 +818,10 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
         class field, it is copied to instance."""
         f = self.ensure_field(field_or_name)
         if f and f.class_field:
+            blocked = self.on_fields_change.blocked
+            vblocked = self.on_attribute_change.blocked
+            self.on_fields_change.block_signals(True)
+            self.on_attribute_change.block_signals(True)
             self.add_field(
                 f.name,
                 type_=f,
@@ -789,6 +830,8 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
                 field_class=WritableField,
             )
             f = self.field(f.name)
+            self.on_attribute_change.block_signals(vblocked)
+            self.on_fields_change.block_signals(blocked)
         return f
 
     def json(self):
