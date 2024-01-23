@@ -2,6 +2,7 @@ from soma.qt_gui.qt_backend import Qt
 from . import WidgetFactory
 from ..collapsible import CollapsibleWidget
 from soma.controller.field import subtypes, type_str, parse_type_str
+from soma.utils.weak_proxy import proxy_method
 
 
 class DictWidgetFactory(WidgetFactory):
@@ -31,11 +32,11 @@ class DictWidgetFactory(WidgetFactory):
             self.widget, label_index=0, field_name=self.parent_interaction.field.name
         )
 
-        self.parent_interaction.on_change_add(self.update_gui)
+        self.parent_interaction.on_change_add(proxy_method(self, "update_gui"))
         self.update_gui()
 
     def delete_widgets(self):
-        self.parent_interaction.on_change_remove(self.update_gui)
+        self.parent_interaction.on_change_remove(proxy_method(self, "update_gui"))
         layout = self.inner_widget.layout()
         for i in range(len(self.factories)):
             row = self._rowcount - 1

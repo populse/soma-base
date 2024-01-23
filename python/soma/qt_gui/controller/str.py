@@ -22,13 +22,17 @@ class StrWidgetFactory(WidgetFactory):
         self.parent_interaction.on_change_add(proxy_method(self, "update_gui"))
         self.update_gui()
 
-        self.text_widget.userModification.connect(self.update_controller)
+        self.text_widget.userModification.connect(
+            proxy_method(self, "update_controller")
+        )
 
         self.controller_widget.add_widget_row(self.label_widget, self.text_widget)
 
     def delete_widgets(self):
         self.controller_widget.remove_widget_row()
-        self.text_widget.userModification.disconnect(self.update_controller)
+        self.text_widget.userModification.disconnect(
+            proxy_method(self, "update_controller")
+        )
         self.parent_interaction.on_change_remove(proxy_method(self, "update_gui"))
         self.label_widget.deleteLater()
         self.text_widget.deleteLater()

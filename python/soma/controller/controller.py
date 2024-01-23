@@ -14,8 +14,13 @@ except ImportError:
 from soma.undefined import undefined
 from .field import FieldProxy, ListProxy, field, Field, WritableField, Path
 import sys
-from soma.utils.weak_proxy import proxy_method
+from soma.utils.weak_proxy import proxy_method, get_ref
 from functools import partial
+
+try:
+    import sip
+except ImportError:
+    sip = None
 
 
 class _ModelsConfig:
@@ -79,6 +84,31 @@ class Event:
     def has_callback(self):
         """True if any callback has been registered."""
         return bool(self.callbacks)
+
+    @staticmethod
+    def _is_dead_ref(function):
+        if isinstance(function, partial) and len(function.args) != 0:
+            function = function.args[0]
+        if (
+            isinstance(function, proxy_method)
+            and get_ref(function.proxy, False) is None
+        ):
+            return True
+        if sip is not None and hasattr(function, "__self__"):
+            obj = function.__self__
+            if isinstance(obj, sip.simplewrapper) and sip.isdeleted(obj):
+                return True
+        return False
+
+    def gc_callbacks(self):
+        """Garbage-collect callbacks which contain weak references to
+        deleted objects.
+        """
+        callbacks = []
+        for callback in self.callbacks:
+            if not self._is_dead_ref(callback):
+                callbacks.append(callback)
+        self.callbacks = callbacks
 
 
 class AttributeValueEvent(Event):
@@ -197,17 +227,7 @@ class AttributeValueEvent(Event):
             try:
                 callback(new_value, old_value, attribute_name, controller, index)
             except ReferenceError:
-                # print('exception in callback:', callback)
-                # print('on:', self)
-                # signature = inspect.signature(callback)
-                # print('signature:', signature)
                 del_cbk.add(callback)
-            # except Exception:
-            #     print('exception in callback:', callback)
-            #     print('on:', self)
-            #     signature = inspect.signature(callback)
-            #     print('signature:', signature)
-            #     raise
         if del_cbk:
             self.callbacks[attribute_name] = [
                 cbk for cbk in self.callbacks[attribute_name] if cbk not in del_cbk
@@ -226,6 +246,20 @@ class AttributeValueEvent(Event):
     @property
     def has_callback(self):
         return bool(self.callbacks)
+
+    def gc_callbacks(self):
+        """Garbage-collect callbacks which contain weak references to
+        deleted objects.
+        """
+        callbacks = {}
+        for key, callback_l in self.callbacks.items():
+            cbl = []
+            for callback in callback_l:
+                if not self._is_dead_ref(callback):
+                    cbl.append(callback)
+            if cbl:
+                callbacks[key] = cbl
+        self.callbacks = callbacks
 
 
 class ControllerMeta(type):
@@ -848,6 +882,14 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
         """Set the Controller state from a JSON dict"""
         for field_name, json_value in json.items():
             setattr(self, field_name, json_value)
+
+    def gc_callbacks(self):
+        """Garbage-collect callbacks which contain weak references to
+        deleted objects.
+        """
+        self.on_attribute_change.gc_callbacks()
+        self.on_fields_change.gc_callbacks()
+        self.on_inner_value_change.gc_callbacks()
 
 
 def asdict(obj, dict_factory=dict, exclude_empty=False, exclude_none=False):

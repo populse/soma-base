@@ -1,6 +1,7 @@
 from . import ControllerWidgetFactory, ControllerSubwidget
 from ..collapsible import CollapsibleWidget
 from soma.undefined import undefined
+from soma.utils.weak_proxy import proxy_method
 
 
 class OpenKeyControllerWidgetFactory(ControllerWidgetFactory):
@@ -29,12 +30,14 @@ class OpenKeyControllerWidgetFactory(ControllerWidgetFactory):
         )
 
         if not self.readonly:
-            self.widget.buttons[0].clicked.connect(self.inner_widget.add_item)
+            self.widget.buttons[0].clicked.connect(
+                proxy_method(self, "inner_widget.add_item")
+            )
 
         self.controller_widget.add_widget_row(
             self.widget, label_index=0, field_name=self.parent_interaction.field.name
         )
-        self.parent_interaction.on_change_add(self.update_gui)
+        self.parent_interaction.on_change_add(proxy_method(self, "update_gui"))
 
     def set_visible(self, on):
         self.widget.setVisible(on)

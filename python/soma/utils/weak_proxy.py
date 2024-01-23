@@ -6,23 +6,31 @@ We build such a proxy by setting a :func:`weakref.ref` object in the proxy (actu
 import weakref
 
 
-def get_ref(obj):
+def get_ref(obj, raise_err=True):
     """Get a regular reference to an object, whether it is already a regular
     reference, a weak reference, or a weak proxy which holds an access to the
     original reference (built using :func:`weak_proxy`).
     In case of a weak proxy not built using :func:`weak_proxy`, we try to get
     the ``self`` from a bound method of the object, namely
     ``obj.__init__.__self__``, if it exists.
+
+    If raise_err is False, in case of ReferenceError (the proxy points to a
+    deleted object), then None is returned and no error is raised.
     """
-    if isinstance(obj, weakref.ReferenceType):
-        return obj()
-    elif isinstance(obj, weakref.ProxyTypes):
-        if hasattr(obj, "_weakref"):
-            return obj._weakref()
-        elif hasattr(obj, "__init__"):
-            # try to get the 'self' of a bound method
-            return obj.__init__.__self__
-    return obj
+    try:
+        if isinstance(obj, weakref.ReferenceType):
+            return obj()
+        elif isinstance(obj, weakref.ProxyTypes):
+            if hasattr(obj, "_weakref"):
+                return obj._weakref()
+            elif hasattr(obj, "__init__"):
+                # try to get the 'self' of a bound method
+                return obj.__init__.__self__
+        return obj
+    except ReferenceError:
+        if raise_err:
+            raise
+        return None
 
 
 def weak_proxy(obj, callback=None):
@@ -82,3 +90,11 @@ class proxy_method:
 
     def __call__(self, *args, **kwargs):
         return getattr(self.proxy, self.method)(*args, **kwargs)
+
+    def __eq__(self, o):
+        return o.method == self.method and get_ref(o.proxy, False) == get_ref(
+            self.proxy, False
+        )
+
+    def __hash__(self):
+        return id(self)

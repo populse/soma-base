@@ -6,6 +6,7 @@ except ImportError:
 from soma.qt_gui.qt_backend import Qt
 from . import WidgetFactory
 from soma.undefined import undefined
+from soma.utils.weak_proxy import proxy_method
 
 
 class BoolWidgetFactory(WidgetFactory):
@@ -16,17 +17,17 @@ class BoolWidgetFactory(WidgetFactory):
         self.widget = Qt.QCheckBox(parent=self.controller_widget)
         self.widget.setSizePolicy(Qt.QSizePolicy.Expanding, Qt.QSizePolicy.Fixed)
 
-        self.parent_interaction.on_change_add(self.update_gui)
+        self.parent_interaction.on_change_add(proxy_method(self, "update_gui"))
         self.update_gui()
 
-        self.widget.stateChanged.connect(self.update_controller)
+        self.widget.stateChanged.connect(proxy_method(self, "update_controller"))
 
         self.controller_widget.add_widget_row(self.label_widget, self.widget)
 
     def delete_widgets(self):
         self.controller_widget.remove_widget_row()
-        self.widget.stateChanged.disconnect(self.update_controller)
-        self.parent_interaction.on_change_remove(self.update_gui)
+        self.widget.stateChanged.disconnect(proxy_method(self, "update_controller"))
+        self.parent_interaction.on_change_remove(proxy_method(self, "update_gui"))
         self.widget.deleteLater()
         self.label_widget.deleteLater()
 

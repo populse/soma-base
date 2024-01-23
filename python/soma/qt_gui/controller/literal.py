@@ -7,6 +7,7 @@ from soma.qt_gui.qt_backend import Qt
 from . import WidgetFactory
 from soma.undefined import undefined
 from soma.controller import literal_values
+from soma.utils.weak_proxy import proxy_method
 
 
 class LiteralWidgetFactory(WidgetFactory):
@@ -19,17 +20,19 @@ class LiteralWidgetFactory(WidgetFactory):
             self.widget.addItem(str(v))
         self.widget.setSizePolicy(Qt.QSizePolicy.Expanding, Qt.QSizePolicy.Fixed)
 
-        self.parent_interaction.on_change_add(self.update_gui)
+        self.parent_interaction.on_change_add(proxy_method(self, "update_gui"))
         self.update_gui()
 
-        self.widget.currentTextChanged.connect(self.update_controller)
+        self.widget.currentTextChanged.connect(proxy_method(self, "update_controller"))
 
         self.controller_widget.add_widget_row(self.label_widget, self.widget)
 
     def delete_widgets(self):
         self.controller_widget.remove_widget_row()
-        self.widget.currentTextChanged.disconnect(self.update_controller)
-        self.parent_interaction.on_change_remove(self.update_gui)
+        self.widget.currentTextChanged.disconnect(
+            proxy_method(self, "update_controller")
+        )
+        self.parent_interaction.on_change_remove(proxy_method(self, "update_gui"))
         self.widget.deleteLater()
         self.label_widget.deleteLater()
 

@@ -11,6 +11,7 @@ from ..collapsible import CollapsibleWidget
 from ..timered_widgets import TimeredQLineEdit
 from soma.undefined import undefined
 from ...controller import subtypes, type_default_value
+from soma.utils.weak_proxy import proxy_method
 
 
 class ListStrWidgetFactory(WidgetFactory):
@@ -40,18 +41,18 @@ class ListStrWidgetFactory(WidgetFactory):
         )
 
         self.update_gui()
-        self.parent_interaction.on_change_add(self.update_gui)
+        self.parent_interaction.on_change_add(proxy_method(self, "update_gui"))
 
-        self.widget.buttons[0].clicked.connect(self.add_item)
-        self.widget.buttons[1].clicked.connect(self.remove_item)
+        self.widget.buttons[0].clicked.connect(proxy_method(self, "add_item"))
+        self.widget.buttons[1].clicked.connect(proxy_method(self, "remove_item"))
 
         self.controller_widget.add_widget_row(self.widget)
 
     def delete_widgets(self):
         self.controller_widget.remove_widget_row()
-        self.widget.buttons[0].clicked.disconnect(self.add_item)
-        self.widget.buttons[1].clicked.disconnect(self.remove_item)
-        self.parent_interaction.on_change_remove(self.update_gui)
+        self.widget.buttons[0].clicked.disconnect(proxy_method(self, "add_item"))
+        self.widget.buttons[1].clicked.disconnect(proxy_method(self, "remove_item"))
+        self.parent_interaction.on_change_remove(proxy_method(self, "update_gui"))
         self.widget.deleteLater()
         for w in self.inner_widgets:
             w.deleteLater()
@@ -228,18 +229,18 @@ class ListAnyWidgetFactory(WidgetFactory):
         self.item_factories = []
 
         self.update_gui()
-        self.parent_interaction.on_change_add(self.update_gui)
+        self.parent_interaction.on_change_add(proxy_method(self, "update_gui"))
 
-        self.widget.buttons[0].clicked.connect(self.add_item)
-        self.widget.buttons[1].clicked.connect(self.remove_item)
+        self.widget.buttons[0].clicked.connect(proxy_method(self, "add_item"))
+        self.widget.buttons[1].clicked.connect(proxy_method(self, "remove_item"))
 
         self.controller_widget.add_widget_row(self.widget)
 
     def delete_widgets(self):
         self.controller_widget.remove_widget_row()
-        self.widget.buttons[0].clicked.disconnect(self.add_item)
-        self.widget.buttons[1].clicked.disconnect(self.remove_item)
-        self.parent_interaction.on_change_remove(self.update_gui)
+        self.widget.buttons[0].clicked.disconnect(proxy_method(self, "add_item"))
+        self.widget.buttons[1].clicked.disconnect(proxy_method(self, "remove_item"))
+        self.parent_interaction.on_change_remove(proxy_method(self, "update_gui"))
         self.widget.deleteLater()
         self.items_widget.deleteLater()
 

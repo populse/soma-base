@@ -9,6 +9,7 @@ from soma.qt_gui.qt_backend import (
 )
 from soma.qt_gui.timered_widgets import TimeredQLineEdit
 from .str import StrWidgetFactory
+from soma.utils.weak_proxy import proxy_method
 
 
 class FileWidgetFactory(StrWidgetFactory):
@@ -29,20 +30,24 @@ class FileWidgetFactory(StrWidgetFactory):
         self.layout.addWidget(self.button)
         # self.button.hide()
         # self.text_widget.focusChange.connect(self.update_selection_button)
-        self.parent_interaction.on_change_add(self.update_gui)
+        self.parent_interaction.on_change_add(proxy_method(self, "update_gui"))
         self.update_gui()
 
-        self.text_widget.userModification.connect(self.update_controller)
-        self.button.clicked.connect(self.select_path_dialog)
+        self.text_widget.userModification.connect(
+            proxy_method(self, "update_controller")
+        )
+        self.button.clicked.connect(proxy_method(self, "select_path_dialog"))
 
         self.controller_widget.add_widget_row(self.label_widget, self.widget)
 
     def delete_widgets(self):
         self.controller_widget.remove_widget_row()
-        self.button.clicked.disconnect(self.select_path_dialog)
-        self.text_widget.userModification.disconnect(self.update_controller)
+        self.button.clicked.disconnect(proxy_method(self, "select_path_dialog"))
+        self.text_widget.userModification.disconnect(
+            proxy_method(self, "update_controller")
+        )
         # self.text_widget.focusChange.disconnect(self.update_selection_button)
-        self.parent_interaction.on_change_remove(self.update_gui)
+        self.parent_interaction.on_change_remove(proxy_method(self, "update_gui"))
         self.button.deleteLater()
         self.text_widget.deleteLater()
         self.layout.deleteLater()
