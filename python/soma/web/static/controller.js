@@ -94,6 +94,8 @@ if (QtWebEngine) {
 
 class DomController {
     resolve_schema_type(type) {
+        if (type == null || type == undefined)
+            return type;
         while ('$ref' in type) {
             const ref_path = type['$ref'].substr(2).split('/');
             let ref = this.schema;
@@ -210,9 +212,12 @@ class DomController {
 
     build_elements(id, label, deletable, type, value) {
         type = this.resolve_schema_type(type);
-        const builder = this[`build_elements_${type.type}`];
-        if (builder !== undefined) {
-            return builder.bind(this)(id, label, deletable, type, value);
+        if (type != undefined && type != null)
+        {
+            const builder = this[`build_elements_${type.type}`];
+            if (builder !== undefined) {
+                return builder.bind(this)(id, label, deletable, type, value);
+            }
         }
         return []
     }
@@ -359,7 +364,7 @@ class DomController {
         }
         input.addEventListener('change', async event =>
             await this.update_controller_then_update_dom(event.target, event.target.value));
-        if (value !== undefined) {
+        if (value !== undefined && value != null) {
             input.value = value.toString();
         }
         if (label) {
@@ -600,9 +605,12 @@ class DomController {
             await this.update_controller_then_update_dom(
                 event.target,
                 event.target.value.trim().split(/\r?\n|\r|\n/g)));
-        const rows = Math.min(20, Math.max(5,value.length));
+        var vl = 0;
+        if (value != null && value != undefined)
+            vl = value.length;
+        const rows = Math.min(20, Math.max(5, vl));
         textarea.setAttribute('rows', rows);
-        if (value !== undefined) {
+        if (value !== undefined && value != null) {
             textarea.textContent = value.join('\n');
         }
         if (label) {
