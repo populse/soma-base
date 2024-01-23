@@ -63,7 +63,7 @@ class proxy_method:
 
         a = anatomist.Anatomist()
         a.onCursorNotifier.onAddFirstListener.add(
-            partial(proxy_method(a, 'enableListening'),
+            partial(proxy_method(a.enableListening),
             "LinkedCursor", a.onCursorNotifier)))
         del a
 

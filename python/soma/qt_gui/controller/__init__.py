@@ -146,10 +146,10 @@ class ScrollableWidgetsGrid(Qt.QScrollArea):
                     print("no text in first widget")
                     field_name = None
             label.edit_button.clicked.connect(
-                partial(proxy_method(self, "edit_field_name"), field_name)
+                partial(proxy_method(self.edit_field_name), field_name)
             )
             label.del_button.clicked.connect(
-                partial(proxy_method(self, "remove_field"), field_name)
+                partial(proxy_method(self.remove_field), field_name)
             )
             result = label
         else:
@@ -478,7 +478,7 @@ class DefaultWidgetFactory(WidgetFactory):
         if self.readonly:
             self.text_widget.setEnabled(False)
 
-        self.parent_interaction.on_change_add(proxy_method(self, "update_gui"))
+        self.parent_interaction.on_change_add(proxy_method(self.update_gui))
         self.update_gui()
 
         label = self.parent_interaction.get_label()
@@ -486,7 +486,7 @@ class DefaultWidgetFactory(WidgetFactory):
         self.controller_widget.add_widget_row(self.label_widget, self.text_widget)
 
     def delete_widgets(self):
-        self.parent_interaction.on_change_remove(proxy_method(self, "update_gui"))
+        self.parent_interaction.on_change_remove(proxy_method(self.update_gui))
         self.controller_widget.remove_widget_row()
         self.label_widget.deleteLater()
         self.text_widget.deleteLater()
@@ -530,8 +530,8 @@ class BaseControllerWidget:
         if not readonly and isinstance(controller, OpenKeyController):
             self.editable = True
         self.build()
-        controller.on_inner_value_change.add(proxy_method(self, "update_inner_gui"))
-        controller.on_fields_change.add(proxy_method(self, "update_fields"))
+        controller.on_inner_value_change.add(proxy_method(self.update_inner_gui))
+        controller.on_fields_change.add(proxy_method(self.update_fields))
 
     def __del__(self):
         self.disconnect()
@@ -636,9 +636,9 @@ class BaseControllerWidget:
     def disconnect(self):
         if hasattr(self, "controller"):
             self.controller.on_inner_value_change.remove(
-                proxy_method(self, "update_inner_gui")
+                proxy_method(self.update_inner_gui)
             )
-            self.controller.on_fields_change.remove(proxy_method(self, "update_fields"))
+            self.controller.on_fields_change.remove(proxy_method(self.update_fields))
             # if called from __del__(), proxy_methods are already dead refs,
             # and they cannot be identified to self any longer. So let's do a
             # full gc.
@@ -843,10 +843,10 @@ class ControllerWidgetFactory(WidgetFactory):
         self.controller_widget.add_widget_row(
             self.widget, label_index=0, field_name=field_name
         )
-        self.parent_interaction.on_change_add(proxy_method(self, "update_gui"))
+        self.parent_interaction.on_change_add(proxy_method(self.update_gui))
 
     def delete_widgets(self):
-        self.parent_interaction.on_change_remove(proxy_method(self, "update_gui"))
+        self.parent_interaction.on_change_remove(proxy_method(self.update_gui))
         self.controller_widget.remove_widget_row()
         self.inner_widget.clear()
         self.inner_widget.disconnect()
