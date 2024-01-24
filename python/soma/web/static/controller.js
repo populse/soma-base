@@ -322,12 +322,14 @@ class DomController {
             const field_name = sortable[i][0];
             const field_type = sortable[i][1];
             const field_deletable = !this.is_read_only(id) && !field_type.brainvisa.class_field;
-            const elements = this.build_elements((id ? `${id}/${field_name}` : field_name), field_name, field_deletable, field_type, value[field_name]);
-            for (const element of elements) {
-                if (label) {
-                    fieldset.appendChild(element);
-                } else {
-                    result.push(element);
+            if (value != undefined) {
+                const elements = this.build_elements((id ? `${id}/${field_name}` : field_name), field_name, field_deletable, field_type, value[field_name]);
+                for (const element of elements) {
+                    if (label) {
+                        fieldset.appendChild(element);
+                    } else {
+                        result.push(element);
+                    }
                 }
             }
         }
@@ -527,11 +529,13 @@ class DomController {
 
 
     build_elements_array(id, label, deletable, type, value) {
-        const builder = this[`build_elements_array_${type.items.type}`];
-        if (builder) {
-            const result = builder.bind(this)(id, label, deletable, type, value);
-            if (result !== undefined) {
-                return result;
+        if (type.items != undefined) {
+            const builder = this[`build_elements_array_${type.items.type}`];
+            if (builder) {
+                const result = builder.bind(this)(id, label, deletable, type, value);
+                if (result !== undefined) {
+                    return result;
+                }
             }
         }
         const fieldset = document.createElement('fieldset');

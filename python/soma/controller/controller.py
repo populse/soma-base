@@ -384,6 +384,8 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
     which are normalized.
     """
 
+    _this_class_field_names = []
+
     def __new__(cls, *args, **kwargs):
         if cls is Controller:
             return EmptyController()

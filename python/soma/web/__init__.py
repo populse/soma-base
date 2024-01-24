@@ -272,15 +272,31 @@ class JSONController:
                             None, value_type.__args__[0], undefined, defs
                         ),
                     }
-
                 else:
-                    error = True
+                    result = {
+                        "type": "array",
+                    }
             elif value_type.__name__ == "Literal":
                 result = {"type": "string", "enum": value_type.__args__}
             elif value_type.__name__ == "File":
                 result = {"type": "string", "brainvisa": {"path_type": "file"}}
             elif value_type.__name__ == "Directory":
                 result = {"type": "string", "brainvisa": {"path_type": "directory"}}
+            elif value_type.__name__ == "set":
+                result = {
+                    "type": "array",
+                    "uniqueItems": True,
+                }
+            elif value_type.__name__ == "ConstrainedListValue":
+                # type is pydantic.conlist
+                result = {
+                    "type": "array",
+                    "items": cls._build_json_schema(
+                        None, value_type.item_type, undefined, defs
+                    ),
+                    "minItems": value_type.min_items,
+                    "maxItems": value_type.max_items,
+                }
             else:
                 error = True
         else:
@@ -288,7 +304,7 @@ class JSONController:
 
         if error:
             raise TypeError(
-                f"Type not compatible with JSON schema: {type_str(value_type)}"
+                f"Type not compatible with JSON schema: {type_str(value_type)} ({value_type.__name__})"
             )
         else:
             if field:
@@ -296,7 +312,10 @@ class JSONController:
                     (k, v) for k, v in field.metadata().items() if v is not None
                 )
                 if metadata:
-                    result.setdefault("brainvisa", {}).update(metadata)
+                    brainvisa = result.setdefault("brainvisa", {})
+                    for k, v in metadata.items():
+                        if k != "field_type":
+                            brainvisa[k] = v
             return result
 
 
