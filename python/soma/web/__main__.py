@@ -65,6 +65,8 @@ def web_server_gui(controller):
         pass
 
     httpd = http.server.HTTPServer(("", 8080), Handler)
+    print("OK please connect your web browser to the following URL:")
+    print("localhost:8080/static/controller.html")
     httpd.serve_forever()
 
 
@@ -88,7 +90,11 @@ def echo(*args):
 
 
 if __name__ == "__main__":
+    import sys
+
     controller = VisibleController()
     controller.on_attribute_change.add(echo)
-    qt_web_gui(controller)
-    # web_server_gui(controller)
+    if len(sys.argv) < 2 or sys.argv[1] == "qt":
+        qt_web_gui(controller)
+    else:
+        web_server_gui(controller)
