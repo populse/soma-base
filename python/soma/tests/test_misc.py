@@ -47,7 +47,6 @@ from soma import pipeline
 from soma import plugins
 from soma import safemkdir
 from soma import sandbox
-from soma import serialization
 from soma import somatime
 from soma import sorted_dictionary
 from soma import sqlite_tools

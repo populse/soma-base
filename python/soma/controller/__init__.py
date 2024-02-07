@@ -7,10 +7,10 @@ from .controller import (
     asdict,
     Controller,
     Event,
-    from_json,
+    from_json_controller,
     OpenKeyController,
     OpenKeyDictController,
-    to_json,
+    to_json_controller,
 )
 from .field import (
     field,

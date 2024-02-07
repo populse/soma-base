@@ -871,13 +871,13 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
             self.on_fields_change.block_signals(blocked)
         return f
 
-    def json(self):
+    def json_controller(self):
         """Return a JSON dict for the current Controller"""
         result = {}
         for field in self.fields():
             value = getattr(self, field.name, undefined)
             if value is not undefined:
-                result[field.name] = to_json(value)
+                result[field.name] = to_json_controller(value)
         return result
 
     def import_json(self, json):
@@ -923,14 +923,14 @@ def asdict(obj, dict_factory=dict, exclude_empty=False, exclude_none=False):
         return copy.deepcopy(obj)
 
 
-def to_json(value):
+def to_json_controller(value):
     """Convert the value to a JSON-compatible representation"""
     if isinstance(value, Controller):
-        return value.json()
+        return value.json_controller()
     elif isinstance(value, (tuple, set, list)):
-        return [to_json(i) for i in value]
+        return [to_json_controller(i) for i in value]
     elif isinstance(value, dict):
-        return dict((i, to_json(j)) for i, j in value.items())
+        return dict((i, to_json_controller(j)) for i, j in value.items())
     elif isinstance(value, Path):
         # Subclasses of str are not supported by QWebChannel. When
         # transferred to Javascript, the received value is null
@@ -940,7 +940,7 @@ def to_json(value):
     return value
 
 
-def from_json(value, value_type):
+def from_json_controller(value, value_type):
     """
     Recursively convert a JSON value to a Python value
     and also check values.
@@ -951,7 +951,10 @@ def from_json(value, value_type):
                 f"found a value of type {type(value)} while expecting dict"
             )
         return value_type(
-            **dict((k, to_json(v, value.field(k).type)) for k, v in value.items())
+            **dict(
+                (k, to_json_controller(v, value.field(k).type))
+                for k, v in value.items()
+            )
         )
 
     if value_type.__name__ in {"list", "set", "tuple"}:
@@ -962,7 +965,7 @@ def from_json(value, value_type):
         item_type = getattr(value_type, "__args__", None)
         if item_type:
             item_type = item_type[0]
-            return value_type(from_json(i, item_type) for i in value)
+            return value_type(from_json_controller(i, item_type) for i in value)
         else:
             return value_type(*value)
 
@@ -974,7 +977,9 @@ def from_json(value, value_type):
         item_type = getattr(value_type, "__args__", None)
         if item_type:
             item_type = item_type[1]
-            return dict((k, from_json(v, item_type)) for k, v in value.items())
+            return dict(
+                (k, from_json_controller(v, item_type)) for k, v in value.items()
+            )
         else:
             return value
 

@@ -39,7 +39,7 @@ class TestProxy(unittest.TestCase):
         d["2"] = "two"
         self.assertEqual(d.no_proxy(d), with_str)
         self.assertEqual(d["l"][3]["l"][0], "one")
-        d = d.from_json(json.loads(json.dumps(d.json())))
+        d = d.from_json_controller(json.loads(json.dumps(d.json_controller())))
         self.assertEqual(d.no_proxy(d), with_str)
         d["l"][3]["1"] = 1
         d["2"] = 2

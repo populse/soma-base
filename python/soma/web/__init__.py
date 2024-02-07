@@ -5,7 +5,12 @@ import mimetypes
 import os
 import traceback
 
-from soma.controller import Controller, to_json, from_json, OpenKeyController
+from soma.controller import (
+    Controller,
+    to_json_controller,
+    from_json_controller,
+    OpenKeyController,
+)
 from soma.controller.field import subtypes, type_str
 from soma.undefined import undefined
 from soma.qt_gui.qt_backend import QtWidgets
@@ -65,15 +70,15 @@ class JSONController:
                 value = container[path_item]
         else:
             value = container
-        return to_json(value)
+        return to_json_controller(value)
 
     def set_value(self, path, value):
         container, path_item, container_type = self._parse_path(path)
         if isinstance(container, Controller):
-            value = from_json(value, container.field(path_item).type)
+            value = from_json_controller(value, container.field(path_item).type)
             setattr(container, path_item, value)
         elif isinstance(container, list):
-            value = from_json([value], container_type)[0]
+            value = from_json_controller([value], container_type)[0]
             container[int(path_item)] = value
         else:
             container[int(path_item)] = value

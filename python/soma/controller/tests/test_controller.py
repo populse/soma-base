@@ -1028,7 +1028,7 @@ class TestController(unittest.TestCase):
             set_str={"a", "b", "c"},
             set={1, "two", None},
         )
-        j = json.dumps(c1.json())
+        j = json.dumps(c1.json_controller())
         c2 = SerializableController()
         c2.import_json(json.loads(j))
         self.assertEqual(c1.asdict(), c2.asdict())

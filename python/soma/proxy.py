@@ -112,10 +112,10 @@ class ContainerWithProxy:
         else:
             return value
 
-    def json(self):
+    def json_controller(self):
         """
         Return a structure that can be converted in JSON and converted back to
-        a ContainerWithProxy using from_json() method.
+        a ContainerWithProxy using from_json_controller() method.
         """
         return {
             "proxy_values": self.proxy_values,
@@ -123,9 +123,9 @@ class ContainerWithProxy:
         }
 
     @staticmethod
-    def from_json(json):
+    def from_json_controller(json):
         """
-        Recreate the appropriate container previously converted with json()
+        Recreate the appropriate container previously converted with json_controller()
         method.
         """
         proxy_values = json["proxy_values"]
