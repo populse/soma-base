@@ -77,6 +77,7 @@ class JSONController:
         if isinstance(container, Controller):
             value = from_json_controller(value, container.field(path_item).type)
             setattr(container, path_item, value)
+            container.protect_parameter(path_item, True)
         elif isinstance(container, list):
             value = from_json_controller([value], container_type)[0]
             container[int(path_item)] = value
@@ -91,6 +92,7 @@ class JSONController:
             if list_value is None:
                 list_value = []
                 setattr(container, path_item, list_value)
+                container.protect_parameter(path_item, True)
         elif isinstance(container, list):
             list_type = subtypes(container_type)[0]
             list_value = container[int(path_item)]
@@ -137,6 +139,7 @@ class JSONController:
         item_type = container._value_type
         new_value = item_type()
         setattr(container, key, new_value)
+        container.protect_parameter(key, True)
         self._schema = None
         return key
 
@@ -679,7 +682,14 @@ class SomaBrowserWidget(QWebEngineView):
 
 class ControllerWidget(SomaBrowserWidget):
     def __init__(
-        self, controller, read_only=False, starting_url=None, window_title=None
+        self,
+        controller,
+        read_only=False,
+        starting_url=None,
+        window_title=None,
+        parent=None,
+        user_level=0,
+        output=None,
     ):
         super().__init__(
             web_backend=WebBackend(controller=controller),
@@ -687,3 +697,14 @@ class ControllerWidget(SomaBrowserWidget):
             window_title=window_title,
             read_only=read_only,
         )
+        self.controller = controller
+        if parent is not None:
+            self.setParent(parent)
+        self.user_level = user_level
+        self.output = output
+
+    def set_visible(self, fields, state):
+        pass  # TODO
+
+    def update_fields(self):
+        self.reload()
