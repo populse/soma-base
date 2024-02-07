@@ -38,14 +38,13 @@ appropriate Qt backend, so that the use of the backend selection is more
 transparent.
 '''
 
-from __future__ import absolute_import
 import logging
 import sys
 import os
-import imp
 import importlib
 import inspect
-import six
+import types
+
 
 getfullargspec = getattr(inspect, 'getfullargspec',
                          getattr(inspect, 'getargspec', None))
@@ -81,14 +80,20 @@ class QtImporter(object):
         if qt_backend in ('PySide', 'PyQt6') and module_name == 'Qt':
             module_name = 'QtGui'
         try:
-            found = imp.find_module(module_name, qt_module.__path__)
+            found = importlib.util.find_spec(f'.{module_name}',
+                                             qt_module.__name__)
         except ImportError:
+            found = None
+        if found is None:
             if module_name == 'sip':
                 # importing qt_backend.sip and sip is not installed in
                 # PyQt<x>: use the regular 'sip'
                 try:
-                    found = imp.find_module(module_name)
-                    return self
+                    found = importlib.util.find_spec(module_name)
+                    if found is not None:
+                        return self
+                    else:
+                        return None
                 except ImportError:
                     return None
         return self
@@ -424,10 +429,11 @@ def patch_main_modules(modules):
     if '%s.Qt' % qt_backend in sys.modules:
         Qt = sys.modules['%s.Qt' % qt_backend]
     else:
-        Qt = imp.new_module('%s.Qt' % qt_backend)
+        #Qt = imp.new_module('%s.Qt' % qt_backend)
+        Qt = types.ModuleType(f'{qt_backend}.Qt')
         sys.modules['%s.Qt' % qt_backend] = Qt
     for mod in modules:
-        for key, item in six.iteritems(mod.__dict__):
+        for key, item in mod.__dict__.items():
             if not key.startswith('__') and key not in Qt.__dict__:
                 setattr(Qt, key, item)
 
@@ -571,10 +577,13 @@ def loadUi(ui_file, *args, **kwargs):
                 from soma.functiontools import partial
 
             def _iconset(self, prop):
-                return QtGui.QIcon(os.path.join(self._basedirectory, prop.text).replace("\\", "\\\\"))
+                return QtGui.QIcon(os.path.join(
+                    self._basedirectory, prop.text).replace("\\", "\\\\"))
 
             def _pixmap(self, prop):
-                return QtGui.QPixmap(os.path.join(self._basedirectory, prop.text).replace("\\", "\\\\"))
+                return QtGui.QPixmap(
+                    os.path.join(self._basedirectory, prop.text).replace(
+                        "\\", "\\\\"))
             uiLoader = loader.DynamicUILoader()
             uiLoader.wprops._basedirectory = os.path.dirname(
                 os.path.abspath(ui_file))
@@ -612,7 +621,7 @@ def getOpenFileName(parent=None, caption='', directory='', filter='',
     '''PyQt4 / PySide compatible call to QFileDialog.getOpenFileName'''
     set_qt_backend(compatible_qt5=True)
     from . import QtGui
-    if get_qt_backend() in('PyQt4', 'PyQt5', 'PyQt6'):
+    if get_qt_backend() in ('PyQt4', 'PyQt5', 'PyQt6'):
         kwargs = {}
         # kwargs are used because passing None or '' as selectedFilter
         # does not work, at least in PyQt 4.10
@@ -627,7 +636,7 @@ def getOpenFileName(parent=None, caption='', directory='', filter='',
         if get_qt_backend() == 'PyQt4':
             return filename
         else:
-            return filename[0] # PyQt5 returns (filaname, filter)
+            return filename[0]  # PyQt5 returns (filaname, filter)
     else:
         return get_qt_module().QtGui.QFileDialog.getOpenFileName(
             parent, caption, directory, filter, selectedFilter,
@@ -654,7 +663,7 @@ def getSaveFileName(parent=None, caption='', directory='', filter='',
         if get_qt_backend() == 'PyQt4':
             return filename
         else:
-            return filename[0] # PyQt5 returns (filaname, filter)
+            return filename[0]  # PyQt5 returns (filaname, filter)
     else:
         return get_qt_module().QtGui.QFileDialog.getSaveFileName(
             parent, caption, directory, filter, selectedFilter, options)[0]
@@ -712,17 +721,11 @@ def init_matplotlib_backend(force=True):
         guiBackend = 'Qt4Agg'
         mpl_backend_mod = 'matplotlib.backends.backend_qt4agg'
     if 'matplotlib.backends' not in sys.modules or force:
-        if six.PY3:
-            argspec =inspect.getfullargspec(matplotlib.use)
-            if 'force' in argspec.args or 'force' in argspec.kwonlyargs:
-                matplotlib.use(guiBackend, force=force)
-            else:
-                matplotlib.use(guiBackend)
+        argspec = inspect.getfullargspec(matplotlib.use)
+        if 'force' in argspec.args or 'force' in argspec.kwonlyargs:
+            matplotlib.use(guiBackend, force=force)
         else:
-            if 'force' in getfullargspec(matplotlib.use).args:
-                matplotlib.use(guiBackend, force=force)
-            else:
-                matplotlib.use(guiBackend)
+            matplotlib.use(guiBackend)
     elif matplotlib.get_backend() != guiBackend:
         raise RuntimeError(
             'Mismatch between Qt version and matplotlib backend: '
