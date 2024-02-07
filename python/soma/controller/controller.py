@@ -893,6 +893,52 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
         self.on_fields_change.gc_callbacks()
         self.on_inner_value_change.gc_callbacks()
 
+    # implementation as in capsul2 (additional field, will be saved)
+    # def set_parameter_protected(self, param, state=True):
+    # """ Protect /unprotect the named parameter.
+
+    # Protecting is not a real lock, it just marks the parameter a list of
+    # "protected" parameters. This is typically used to mark values that have
+    # been set manually by the user (using the ControllerWidget for instance)
+    # and that should not be later modified by automatic parameters tweaking
+    # (such as completion systems).
+
+    # Protected parameters are listed in an additional field,
+    # "protected_parameters".
+
+    # If the "state" parameter is False, then we will unprotect it
+    # (calling unprotect_parameter())
+    # """
+    # if not self.field('protected_parameters'):
+    ## add a 'protected_parameters' field
+    # self.add_field('protected_parameters', type_=list[str],
+    # default_factory=list, hidden=True)
+    # protected = set(self.protected_parameters)
+    # if state:
+    # protected.add(param)
+    # else:
+    # protected.remove(param)
+    # self.protected_parameters = sorted(protected)
+
+    # def is_parameter_protected(self, param):
+    # """ Tells whether the given parameter is protected or not
+    # """
+    # print('is_parameter_protected', param)
+    # protected = getattr(self, 'protected_parameters', None)
+    # print('protected:', protected)
+    # if protected is None:
+    # print('None')
+    # return False
+    # print('res:', param in protected)
+    # return param in protected
+
+    # implementation as in capsul3/Node, field metadata: not saved
+    def is_parameter_protected(self, plug_name):
+        return self.field(plug_name).metadata("protected", False)
+
+    def protect_parameter(self, plug_name, state=True):
+        self.writable_field(plug_name).protected = state
+
 
 def asdict(obj, dict_factory=dict, exclude_empty=False, exclude_none=False):
     if isinstance(obj, Controller):
