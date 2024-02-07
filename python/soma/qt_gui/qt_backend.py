@@ -31,9 +31,11 @@ transparent.
 
 import sys
 import os
-import imp
+import importlib
 import inspect
+import types
 import logging
+
 
 # make qt_backend a fake module package, with Qt modules as sub-modules
 __package__ = __name__
@@ -63,7 +65,22 @@ class QtImporter:
                 module_name = "QtWebKit"
         if qt_backend in ("PySide", "PyQt6") and module_name == "Qt":
             module_name = "QtGui"
-        found = imp.find_module(module_name, qt_module.__path__)
+        try:
+            found = importlib.util.find_spec(f".{module_name}", qt_module.__name__)
+        except ImportError:
+            found = None
+        if found is None:
+            if module_name == "sip":
+                # importing qt_backend.sip and sip is not installed in
+                # PyQt<x>: use the regular 'sip'
+                try:
+                    found = importlib.util.find_spec(module_name)
+                    if found is not None:
+                        return self
+                    else:
+                        return None
+                except ImportError:
+                    return None
         return self
 
     def load_module(self, name):
@@ -76,16 +93,20 @@ class QtImporter:
             elif module_name == "QtWebKitWidgets":
                 imp_module_name = "QtWebKit"
 
-        if qt_backend in ("PyQt4", "PyQt5", "PyQt6"):
+        if qt_backend in ("PyQt4", "PyQt5", "PyQt6") or module_name == "sip":
             # import the right sip module
             try:
                 __import__("%s.sip" % qt_backend)
-                sip = sys.modules["%s.sip" % qt_backend]
-                sys.modules["sip"] = sip
-            except:
+                sip = sys.modules.get("%s.sip" % qt_backend)
+                if sip is not None:
+                    sys.modules["sip"] = sip
+                else:
+                    sip = sys.modules.get("sip")
+            except ImportError:
                 import sip
 
-        if name == "sip":
+        if module_name == "sip":
+            sys.modules[name] = sip
             return sip
 
         if imp_module_name == "Qt" and (
@@ -371,7 +392,8 @@ def patch_main_modules(modules):
     if "%s.Qt" % qt_backend in sys.modules:
         Qt = sys.modules["%s.Qt" % qt_backend]
     else:
-        Qt = imp.new_module("%s.Qt" % qt_backend)
+        # Qt = imp.new_module('%s.Qt' % qt_backend)
+        Qt = types.ModuleType(f"{qt_backend}.Qt")
         sys.modules["%s.Qt" % qt_backend] = Qt
     for mod in modules:
         for key, item in mod.__dict__.items():
