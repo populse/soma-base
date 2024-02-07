@@ -859,6 +859,9 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
             vblocked = self.on_attribute_change.blocked
             self.on_fields_change.block_signals(True)
             self.on_attribute_change.block_signals(True)
+            value = getattr(self, f.name, undefined)
+            if value is not undefined:
+                delattr(self, f.name)
             self.add_field(
                 f.name,
                 type_=f,
@@ -866,6 +869,8 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
                 class_field=False,
                 field_class=WritableField,
             )
+            if value is not undefined:
+                setattr(self.name, value)
             f = self.field(f.name)
             self.on_attribute_change.block_signals(vblocked)
             self.on_fields_change.block_signals(blocked)
