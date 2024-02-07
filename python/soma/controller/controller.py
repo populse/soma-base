@@ -870,7 +870,7 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
                 field_class=WritableField,
             )
             if value is not undefined:
-                setattr(self.name, value)
+                setattr(self, f.name, value)
             f = self.field(f.name)
             self.on_attribute_change.block_signals(vblocked)
             self.on_fields_change.block_signals(blocked)
