@@ -214,12 +214,6 @@ SubModule: ``safemkdir``
 .. automodule:: soma.safemkdir
     :members:
 
-SubModule: ``serialization``
-============================
-
-.. automodule:: soma.serialization
-    :members:
-
 
 SubModule: ``singleton``
 ========================
