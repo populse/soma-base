@@ -39,17 +39,14 @@ Utility classes and functions for Python import and sip namespace renaming.
 * organization: NeuroSpin
 * license: `CeCILL B <http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html>`_
 '''
-from __future__ import absolute_import
-__docformat__ = "restructuredtext en"
 
 import sys
-import imp
-import types
-import six
 import importlib
-
 from soma.functiontools import partial
 from soma.singleton import Singleton
+
+
+__docformat__ = "restructuredtext en"
 
 
 # list of namespace objects that should not be patched to avoid a side effect
@@ -251,7 +248,7 @@ class GenericHandlers(object):
             # Changes child objects module, recursively and avoiding loops
             stack = []
             done = []
-            for (childName, childObject) in six.iteritems(locals):
+            for (childName, childObject) in locals.items():
                 if not childName.startswith("__"):
                     try:
                         mod = object.__getattribute__(childObject,
@@ -366,9 +363,9 @@ class ExtendedImporterHelper(object):
 
 def execfile(filename, globals=None, locals=None):
     ''' Replacement for python2 execfile()
-    six.exec_() needs an open file, hence this wrapper for convenience.
-    Files are open with UTF-8 encoding on python3.
+    Files are open with UTF-8 encoding.
     '''
-    fopts = {} if six.PY2 else {'encoding': 'utf-8'}
+    fopts = {'encoding': 'utf-8'}
     with open(filename, **fopts) as f:
-        six.exec_(f, globals, locals)
+        code = f.read()
+    exec(code, globals, locals)
