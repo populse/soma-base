@@ -216,7 +216,28 @@ class DomController {
         {
             const builder = this[`build_elements_${type.type}`];
             if (builder !== undefined) {
-                return builder.bind(this)(id, label, deletable, type, value);
+                let result = builder.bind(this)(id, label, deletable, type, value);
+                if (result.length == 2) {
+                    const splitter = document.createElement('div');
+                    splitter.classList.add('grid-splitter');
+                    function start_splitter(event) {
+                        splitter.reference_client_x = event.clientX;
+                        splitter.reference_width = splitter.previousElementSibling.getBoundingClientRect().width;
+                        document.addEventListener('mousemove', change_splitter);
+                        document.addEventListener('mouseup', stop_splitter);
+                    }
+                    function stop_splitter(event) {
+                        document.removeEventListener('mousemove', change_splitter);
+                        document.removeEventListener('mouseup', stop_splitter);
+                    }
+                    function change_splitter(event) {
+                        const width = splitter.reference_width + event.clientX - splitter.reference_client_x;
+                        splitter.parentElement.style['grid-template-columns'] = `${width}px 0.3em 1fr`;
+                    }
+                    splitter.addEventListener('mousedown', start_splitter);
+                    result.splice(1, 0, splitter);
+                }
+                return result;
             }
         }
         return []
