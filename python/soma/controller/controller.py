@@ -1,21 +1,23 @@
-from collections import OrderedDict
 import copy
 import dataclasses
 import inspect
+from collections import OrderedDict
 from typing import Union
 
 try:
-    from pydantic.v1.dataclasses import dataclass
     from pydantic import v1 as pydantic
+    from pydantic.v1.dataclasses import dataclass
 except ImportError:
-    from pydantic.dataclasses import dataclass
     import pydantic
+    from pydantic.dataclasses import dataclass
+
+import sys
+from functools import partial
 
 from soma.undefined import undefined
-from .field import FieldProxy, ListProxy, field, Field, WritableField, Path
-import sys
-from soma.utils.weak_proxy import proxy_method, get_ref
-from functools import partial
+from soma.utils.weak_proxy import get_ref, proxy_method
+
+from .field import Field, FieldProxy, ListProxy, Path, WritableField, field
 
 try:
     import sip

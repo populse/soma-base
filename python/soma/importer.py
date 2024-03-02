@@ -3,12 +3,11 @@ Utility classes and functions for Python import and sip namespace renaming.
 """
 __docformat__ = "restructuredtext en"
 
-import sys
 import importlib
+import sys
 
 from soma.functiontools import partial
 from soma.singleton import Singleton
-
 
 # list of namespace objects that should not be patched to avoid a side effect
 # in sip imported namespaces: we must not access their attributes during

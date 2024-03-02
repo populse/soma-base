@@ -12,11 +12,12 @@ except ImportError:
     # python3
     from io import StringIO
 
-from soma.translation import translate as _
-from soma.minf.api import readMinf
-from soma.minf.xml_tags import minfTag, expanderAttribute, xhtmlTag
-from soma.html import lesserHtmlEscape
 from xml.sax.saxutils import quoteattr as xml_quoteattr
+
+from soma.html import lesserHtmlEscape
+from soma.minf.api import readMinf
+from soma.minf.xml_tags import expanderAttribute, minfTag, xhtmlTag
+from soma.translation import translate as _
 
 # ------------------------------------------------------------------------------
 

@@ -57,7 +57,8 @@ The QRangeSlider class implements a horizontal range slider widget.
 # IMPORTS
 # ------------------------------------------------------------------------
 import sys
-from soma.qt_gui.qt_backend import QtCore, Qt
+
+from soma.qt_gui.qt_backend import Qt, QtCore
 
 try:
     _fromUtf8 = QtCore.QString.fromUtf8

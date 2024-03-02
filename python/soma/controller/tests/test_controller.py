@@ -8,17 +8,16 @@ except ImportError:
 
 from soma.controller import (
     Controller,
-    field,
-    OpenKeyController,
+    Dict,
+    Directory,
+    File,
     List,
     Literal,
-    Union,
-    Dict,
+    OpenKeyController,
     Set,
-    File,
-    Directory,
+    Union,
+    field,
 )
-
 from soma.singleton import Singleton
 from soma.undefined import undefined
 

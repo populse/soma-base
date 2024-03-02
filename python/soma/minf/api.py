@@ -15,22 +15,22 @@ __docformat__ = "restructuredtext en"
 
 import gzip
 
-from soma.translation import translate as _
-from soma.minf.error import MinfError
 from soma.bufferandfile import BufferAndFile
+from soma.minf.error import MinfError
 from soma.minf.reader import MinfReader
-from soma.minf.writer import MinfWriter
 from soma.minf.tree import (
+    EndStructure,
+    MinfExpander,
+    MinfReducer,
+    createMinfExpander,
     createReducerAndExpander,
+    dictStructure,
+    listStructure,
     registerClass,
     registerClassAs,
-    createMinfExpander,
-    EndStructure,
-    MinfReducer,
-    MinfExpander,
-    listStructure,
-    dictStructure,
 )
+from soma.minf.writer import MinfWriter
+from soma.translation import translate as _
 from soma.undefined import Undefined
 
 defaultReducer = MinfReducer.defaultReducer
@@ -336,7 +336,6 @@ def writeMinf(destFile, args, format="XML", reducer=None):
 # them register the XML minf format
 import soma.minf.xml_reader
 import soma.minf.xml_writer
-
 
 # ------------------------------------------------------------------------------
 from soma.minf.xhtml import XHTML
