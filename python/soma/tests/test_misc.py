@@ -87,8 +87,7 @@ class TestSomaMisc(unittest.TestCase):
                 open(privfile, "wb").write(private_key)
 
                 msg = (
-                    "I write a super secret message that nobody should "
-                    "see, never.".encode("utf-8")
+                    b"I write a super secret message that nobody should see, never."
                 )
                 crypt_msg = crypt.encrypt_RSA(pubfile, msg)
                 self.assertTrue(crypt_msg != msg)
