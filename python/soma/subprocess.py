@@ -68,8 +68,9 @@ else:
         from subprocess32 import *
 
         def __initialize_subprocess32():
-            import subprocess32
             import subprocess as _subprocess
+
+            import subprocess32
 
             if hasattr(_subprocess, "_args_from_interpreter_flags"):
                 # get this private function which is used somewhere in

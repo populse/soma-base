@@ -31,11 +31,10 @@ transparent.
 
 import importlib
 import inspect
-import types
 import logging
 import os
 import sys
-
+import types
 
 # make qt_backend a fake module package, with Qt modules as sub-modules
 __package__ = __name__

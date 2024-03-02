@@ -1,7 +1,8 @@
-import unittest
-import shutil
 import os
+import shutil
 import tempfile
+import unittest
+
 import soma.minf.api as minf
 
 

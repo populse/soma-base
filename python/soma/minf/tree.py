@@ -10,9 +10,10 @@ A minf tree is always accessed via an iterator on its content. This content is c
 __docformat__ = "restructuredtext en"
 
 import sys
+
+from soma.minf.error import MinfError
 from soma.translation import translate as _
 from soma.undefined import Undefined
-from soma.minf.error import MinfError
 
 try:
     from soma.signature.api import HasSignature, Sequence

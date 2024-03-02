@@ -3,18 +3,18 @@ import re
 import sys
 import typing
 
-from soma.undefined import undefined
-
 # Import allsupported types from typing
 from typing import (
     Union,
 )
 
+from soma.undefined import undefined
+
 if sys.version_info < (3, 9):
     from typing import (
-        Tuple,
         Dict,
         Set,
+        Tuple,
     )
 else:
     Tuple = tuple

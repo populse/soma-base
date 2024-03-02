@@ -6,9 +6,9 @@ except ImportError:
     from pydantic import ValidationError
 
 from soma.undefined import undefined
+from soma.utils.weak_proxy import proxy_method
 
 from ...controller import subtypes, type_default_value
-from soma.utils.weak_proxy import proxy_method
 
 
 class ListStrWidgetFactory(WidgetFactory):

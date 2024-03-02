@@ -8,9 +8,9 @@ import traceback
 
 from soma.controller import (
     Controller,
-    to_json_controller,
-    from_json_controller,
     OpenKeyController,
+    from_json_controller,
+    to_json_controller,
 )
 from soma.controller.field import subtypes, type_str
 from soma.qt_gui.qt_backend import QtWidgets

@@ -8,9 +8,9 @@ from soma.qt_gui.qt_backend import (
     getSaveFileName,
 )
 from soma.qt_gui.timered_widgets import TimeredQLineEdit
+from soma.utils.weak_proxy import proxy_method
 
 from .str import StrWidgetFactory
-from soma.utils.weak_proxy import proxy_method
 
 
 class FileWidgetFactory(StrWidgetFactory):

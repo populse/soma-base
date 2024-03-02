@@ -1,6 +1,7 @@
-from soma.qt_gui.qt_backend.Qt import *
-import re
 import os
+import re
+
+from soma.qt_gui.qt_backend.Qt import *
 
 
 class GenericTableEditor(QWidget):

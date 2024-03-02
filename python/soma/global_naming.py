@@ -1,5 +1,5 @@
 import re
-from inspect import isfunction, isclass, ismethod
+from inspect import isclass, isfunction, ismethod
 from weakref import WeakKeyDictionary
 
 from soma.singleton import Singleton

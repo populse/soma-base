@@ -5,14 +5,15 @@ try:
 except ImportError:
     from pydantic import ValidationError
 
+from soma.controller import field_type, field_type_str
+from soma.undefined import undefined
+
+from ..collapsible import CollapsibleWidget
 from . import (
-    WidgetFactory,
-    WidgetsGrid,
+    ControllerFieldInteraction,
     DefaultWidgetFactory,
     GroupWidget,
-    ControllerFieldInteraction,
     ScrollableWidgetsGrid,
+    WidgetFactory,
+    WidgetsGrid,
 )
-from ..collapsible import CollapsibleWidget
-from soma.undefined import undefined
-from soma.controller import field_type, field_type_str

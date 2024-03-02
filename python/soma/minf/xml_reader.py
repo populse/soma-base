@@ -3,30 +3,28 @@ Reading of XML minf format.
 """
 __docformat__ = "restructuredtext en"
 
-from xml.sax.saxutils import quoteattr as xml_quoteattr
-from xml.sax.saxutils import escape as xml_escape
 from xml.sax import make_parser
-from xml.sax.handler import ContentHandler
-from xml.sax.handler import ErrorHandler
+from xml.sax.handler import ContentHandler, ErrorHandler
+from xml.sax.saxutils import escape as xml_escape
+from xml.sax.saxutils import quoteattr as xml_quoteattr
 
-from soma.translation import translate as _
-from soma.undefined import Undefined
 from soma.minf.error import MinfError
-
 from soma.minf.reader import MinfReader
 from soma.minf.tree import (
-    minfStructure,
-    listStructure,
-    dictStructure,
-    StartStructure,
     EndStructure,
     Reference,
+    StartStructure,
+    dictStructure,
+    listStructure,
+    minfStructure,
 )
 from soma.minf.xhtml import XHTML
 
 # This module only contains a definition of XML tags and attributes.
 # It is designed to allow "import *".
 from soma.minf.xml_tags import *
+from soma.translation import translate as _
+from soma.undefined import Undefined
 
 # ------------------------------------------------------------------------------
 
