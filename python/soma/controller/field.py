@@ -5,6 +5,8 @@ import typing
 
 # Import allsupported types from typing
 from typing import (
+    Any,
+    Literal,
     Union,
 )
 
