@@ -102,7 +102,9 @@ class TestController(unittest.TestCase):
         c1.yes_or_no = "no"
         c1.yes_or_no = undefined
         del c1.yes_or_no
-        self.assertRaises(pydantic.ValidationError, setattr, c1, "yes_or_no", "bad value")
+        self.assertRaises(
+            pydantic.ValidationError, setattr, c1, "yes_or_no", "bad value"
+        )
 
     def test_controller4(self):
         class Driver(Controller):
