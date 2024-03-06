@@ -618,7 +618,7 @@ def getOpenFileName(
         if get_qt_backend() == "PyQt4":
             return filename
         else:
-            return filename[0]  # PyQt5 returns (filaname, filter)
+            return filename[0]  # PyQt5 returns (filename, filter)
     else:
         return get_qt_module().QtGui.QFileDialog.getOpenFileName(
             parent,
@@ -653,7 +653,7 @@ def getSaveFileName(
         if get_qt_backend() == "PyQt4":
             return filename
         else:
-            return filename[0]  # PyQt5 returns (filaname, filter)
+            return filename[0]  # PyQt5 returns (filename, filter)
     else:
         return get_qt_module().QtGui.QFileDialog.getSaveFileName(
             parent, caption, directory, filter, selectedFilter, options
