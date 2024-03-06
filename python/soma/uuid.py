@@ -63,8 +63,8 @@ class Uuid:
             import warnings
 
             warnings.warn(
-                "soma.uuid.Uuid: self.__uuid is not of type bytes, "
-                "but {0}. This is not supposed to happen.".format(type(self.__uuid)),
+                f"soma.uuid.Uuid: self.__uuid is not of type bytes, but {type(self.__uuid)}."
+                " This is not supposed to happen.",
                 stacklevel=2,
             )
             self.__uuid = bytes(self.__uuid, encoding="utf-8")

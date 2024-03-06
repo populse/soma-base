@@ -166,9 +166,7 @@ class MinfReducer:
                 )
                 if not getinitargs:
                     raise TypeError(
-                        "Object of type {0} cannot be serialized by MinfReducer".format(
-                            type(object)
-                        )
+                        f"Object of type {type(object)} cannot be serialized by MinfReducer"
                     )
                 args = getinitargs()
                 kwargs = {}
