@@ -103,7 +103,7 @@ class TestController(unittest.TestCase):
         c1.yes_or_no = "no"
         c1.yes_or_no = undefined
         del c1.yes_or_no
-        self.assertRaises(Exception, setattr, c1, "yes_or_no", "bad value")
+        self.assertRaises(pydantic.ValidationError, setattr, c1, "yes_or_no", "bad value")
 
     def test_controller4(self):
         class Driver(Controller):
@@ -206,7 +206,7 @@ class TestController(unittest.TestCase):
             )
         )
         self.assertRaises(
-            Exception,
+            ValueError,
             o.on_attribute_change.add,
             lambda one, two, three, four, five, six: calls.append(
                 [one, two, three, four, five, six]
@@ -217,7 +217,7 @@ class TestController(unittest.TestCase):
         o.static_int = 42
         o.static_int = 42
         o.anything = "x"
-        self.assertRaises(Exception, setattr, o, "dynamic_int", "toto")
+        self.assertRaises(pydantic.ValidationError, setattr, o, "dynamic_int", "toto")
         o.dynamic_str = "x"
 
         self.maxDiff = 1000
@@ -1084,7 +1084,7 @@ class TestController(unittest.TestCase):
 
         self.assertEqual(ic.field("list_changing").type, list[int])
         self.assertEqual(ic.field("list_changing").path_type, None)
-        with self.assertRaises(Exception):
+        with self.assertRaises(pydantic.ValidationError):
             ic.list_changing = ["/a", "/b", "/c"]
         ic.list_changing = [1, 2, 3]
 
