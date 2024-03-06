@@ -47,7 +47,6 @@ from soma import (
     sorted_dictionary,
     sqlite_tools,
     stringtools,
-    subprocess,
     test_utils,
     thread_calls,
     topological_sort,

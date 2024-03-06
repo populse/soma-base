@@ -1,9 +1,8 @@
 import os
 import re
+import subprocess
 import sys
 import tempfile
-
-import soma.subprocess
 
 try:
     import nbformat
@@ -86,7 +85,7 @@ def notebook_run(path, timeout=60):
         try:
             # call _notebook_run as an external process because it will
             # sys.exit()
-            _ = soma.subprocess.call(args)
+            _ = subprocess.call(args)
 
             nb = nbformat.read(fout[1], nbformat.current_nbformat)
         except Exception as e:
