@@ -356,7 +356,7 @@ def set_qt_backend(backend=None, pyqt_api=1, compatible_qt5=None):
             __import__("%s.sip" % qt_backend)
             sip = sys.modules["%s.sip" % qt_backend]
             sys.modules["sip"] = sip
-        except:
+        except Exception:
             import sip
 
     if make_compatible_qt5 and qt5_compat_changed:
