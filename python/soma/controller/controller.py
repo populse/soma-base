@@ -633,7 +633,7 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
                     result = getattr(field, name)
                     return result
         raise AttributeError(
-            "{} object has no attribute {}".format(repr(self.__class__), repr(name))
+            f"{self.__class__!r} object has no attribute {name!r}"
         )
 
     def getattr(self, name, default=undefined):
@@ -828,7 +828,7 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
             field = field_or_name
         if not field:
             raise ValueError(f"No such field: {field_or_name}")
-        result = ["{} [{}]".format(field.name, field.type_str())]
+        result = [f"{field.name} [{field.type_str()}]"]
         optional = field.optional
         if optional is None:
             optional = (
@@ -839,7 +839,7 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
             result.append(" mandatory")
         default = field.default
         if default not in (undefined, dataclasses.MISSING):
-            result.append(" ({})".format(repr(default)))
+            result.append(f" ({default!r})")
         doc = field.metadata("doc")
         if doc:
             result.append(": " + doc)
@@ -1105,7 +1105,7 @@ class OpenKeyControllerMeta(ControllerMeta):
         result = cls._cache.get(value_type)
         if result is None:
             result = type(
-                "OpenKeyController[{}]".format(value_type.__name__),
+                f"OpenKeyController[{value_type.__name__}]",
                 (OpenKeyController,),
                 {"_value_type": value_type},
                 ignore_metaclass=False,
@@ -1177,7 +1177,7 @@ class OpenKeyDictControllerMeta(OpenKeyControllerMeta):
         result = cls._cache.get(value_type)
         if result is None:
             result = type(
-                "OpenKeyDictController[{}]".format(value_type.__name__),
+                f"OpenKeyDictController[{value_type.__name__}]",
                 (OpenKeyDictController,),
                 {"_value_type": value_type},
                 ignore_metaclass=False,
