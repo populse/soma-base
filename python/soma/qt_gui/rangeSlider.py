@@ -137,7 +137,7 @@ class Ui_Form(object):
 
 class Element(Qt.QGroupBox):
     def __init__(self, parent, main):
-        super(Element, self).__init__(parent)
+        super().__init__(parent)
         self.main = main
 
     def setStyleSheet(self, style):
@@ -170,7 +170,7 @@ class Head(Element):
     """area before the handle"""
 
     def __init__(self, parent, main):
-        super(Head, self).__init__(parent, main)
+        super().__init__(parent, main)
 
     def drawText(self, event, qp):
         qp.setPen(self.textColor())
@@ -182,7 +182,7 @@ class Tail(Element):
     """area after the handle"""
 
     def __init__(self, parent, main):
-        super(Tail, self).__init__(parent, main)
+        super().__init__(parent, main)
 
     def drawText(self, event, qp):
         qp.setPen(self.textColor())
@@ -194,7 +194,7 @@ class Handle(Element):
     """handle area"""
 
     def __init__(self, parent, main):
-        super(Handle, self).__init__(parent, main)
+        super().__init__(parent, main)
 
     def drawText(self, event, qp):
         qp.setPen(self.textColor())
