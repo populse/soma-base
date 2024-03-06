@@ -518,7 +518,8 @@ class BaseControllerWidget:
         """
         try:
             # we cannot know if another inheritance will need args or not...
-            super().__init__(depth=depth, *args, **kwargs)
+            kwargs['depth'] = depth
+            super().__init__(*args, **kwargs)
         except TypeError:
             super().__init__()
         self.allow_update_gui = True
