@@ -51,7 +51,7 @@ class ClassFactory:
     for classes in Python modules and create instances.
     """
 
-    def __init__(self, class_types={}):
+    def __init__(self, class_types=()):
         # List of Python modules where classes are looked for
         self.module_path = []
         # Instance-level association between a class_type (which is a string)

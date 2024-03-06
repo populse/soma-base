@@ -978,7 +978,7 @@ class EditableTree(ObservableAttributes, ObservableSortedDictionary):
         name=None,
         id=None,
         modifiable=True,
-        content=[],
+        content=(),
         visible=True,
         enabled=True,
     ):
@@ -1305,7 +1305,7 @@ class EditableTree(ObservableAttributes, ObservableSortedDictionary):
             copyEnabled=True,
             modifiable=True,
             delEnabled=True,
-            content=[],
+            content=(),
             visible=True,
             enabled=True,
         ):

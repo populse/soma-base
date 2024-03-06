@@ -416,7 +416,7 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
         """
         yield from (cls.class_field(i) for i in cls._this_class_field_names)
 
-    def __init__(self, _set_attrs={}, **kwargs):
+    def __init__(self, _set_attrs=(), **kwargs):
         object.__setattr__(self, "_dyn_fields", {})
         # self.__dict__ content is replaced somewhere in the initialization
         # process. Therefore, it is saved here and restored just after
