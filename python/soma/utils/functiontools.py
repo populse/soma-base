@@ -76,7 +76,7 @@ def getArgumentsSpecification(callable):
             d.update(callable.keywords)
 
         if len(d):
-            defaults = tuple((d[i] for i in args[-len(d) :]))
+            defaults = tuple(d[i] for i in args[-len(d) :])
         else:
             defaults = d
 
