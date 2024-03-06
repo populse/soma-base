@@ -70,7 +70,7 @@ def string_to_list(s):
 
 def list_to_string(s_list):
     """ """
-    return " ".join((quote_string(s) for s in s_list))
+    return " ".join(quote_string(s) for s in s_list)
 
 
 def quote_string(unquoted):
