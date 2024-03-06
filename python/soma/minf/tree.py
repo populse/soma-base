@@ -347,7 +347,7 @@ class MinfExpander:
             target,
             targetType,
             stop_on_error=True,
-            exceptions=[],
+            exceptions=None,
         ):
             structureName = minfNode.type
             args = []
@@ -383,7 +383,10 @@ class MinfExpander:
                         if stop_on_error:
                             raise e
                         else:
-                            exceptions.append(sys.exc_info())
+                            if exceptions is None:
+                                exceptions = [sys.exc_info()]
+                            else:
+                                exceptions.append(sys.exc_info())
             return self.factory(*args, **kwargs)
 
     def __init__(self, name, bases=()):
@@ -417,7 +420,7 @@ class MinfExpander:
         target=None,
         targetType=Undefined,
         stop_on_error=True,
-        exceptions=[],
+        exceptions=None,
     ):
         if minfNode is Undefined:
             minfNode = next(minfNodeIterator)
@@ -459,7 +462,7 @@ class MinfExpander:
         target,
         targetType,
         stop_on_error=True,
-        exceptions=[],
+        exceptions=None,
     ):
         if target is None:
             result = []
@@ -529,7 +532,7 @@ class MinfExpander:
         target,
         targetType,
         stop_on_error=True,
-        exceptions=[],
+        exceptions=None,
     ):
         if target is None:
             result = {}

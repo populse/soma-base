@@ -29,7 +29,7 @@ class ExtendedImporter(Singleton):
         globals,
         locals,
         importedModuleName,
-        namespacesList=[],
+        namespacesList=(),
         handlersList=None,
         *args,
         **kwargs,
@@ -79,15 +79,15 @@ class ExtendedImporter(Singleton):
         else:
             extendedModule = self.extendedModules[moduleName]
 
-        if len(namespacesList) == 0:
-            extendedModule.addHandlerRules(
-                importedModule, handlersList, importedModuleName, *args, **kwargs
-            )
-        else:
+        if namespacesList:
             for namespace in namespacesList:
                 extendedModule.addHandlerRules(
                     importedModule, handlersList, namespace, *args, **kwargs
                 )
+        else:
+            extendedModule.addHandlerRules(
+                importedModule, handlersList, importedModuleName, *args, **kwargs
+            )
 
         self.applyRules()
 
@@ -116,7 +116,7 @@ class ExtendedModule:
         self.globals = globals
         self.locals = locals
 
-    def addHandlerRules(self, module, handlersList=[], *args, **kwargs):
+    def addHandlerRules(self, module, handlersList=(), *args, **kwargs):
         """
         This method is used to add handler rules (renaming rule, deleting rule, ...) .
 
@@ -130,7 +130,7 @@ class ExtendedModule:
         for handler in handlersList:
             self.addPartialRules(module, [partial(handler, *args, **kwargs)])
 
-    def addPartialRules(self, module, partialsList=[]):
+    def addPartialRules(self, module, partialsList=()):
         """
         This method is used to add handler rules (renaming rule, deleting rule, ...) .
 

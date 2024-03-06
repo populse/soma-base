@@ -1173,11 +1173,11 @@ class AttributesToPaths:
     """
 
     def __init__(
-        self, foms, selection=None, directories={}, preferred_formats=set(), debug=None
+        self, foms, selection=None, directories=None, preferred_formats=None, debug=None
     ):
         self.foms = foms
         self.selection = selection or {}
-        self.directories = directories
+        self.directories = directories or {}
         self._db = sqlite3.connect(":memory:", check_same_thread=False)
         self._db.execute("PRAGMA journal_mode = OFF;")
         self._db.execute("PRAGMA synchronous = OFF;")
@@ -1194,6 +1194,7 @@ class AttributesToPaths:
             for i in self.all_attributes
             if not self.foms.attribute_definitions[i].get("discriminant", True)
         )
+        preferred_formats = preferred_formats or set()
         fom_format_index = self.all_attributes.index("fom_format")
         sql = (
             "CREATE TABLE rules ( %s, _fom_first, _fom_preferred_format, _fom_rule )"
@@ -1259,7 +1260,8 @@ class AttributesToPaths:
                 self._db.execute(sql_insert, values)
         self._db.commit()
 
-    def find_paths(self, attributes={}, debug=None):
+    def find_paths(self, attributes=None, debug=None):
+        attributes = attributes or {}
         if debug:
             debug.debug("!find_path! %r", attributes)
         d = self.selection.copy()

@@ -14,7 +14,7 @@ class CollapsibleWidget(Qt.QWidget):
         inner_widget: Qt.QWidget,
         label: str,
         expanded=False,
-        buttons_label=[],
+        buttons_label=(),
         *args,
         **kwargs,
     ):
