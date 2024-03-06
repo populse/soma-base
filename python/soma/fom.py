@@ -168,7 +168,6 @@ try:
     import yaml
 
     class json_reader:
-
         """
         This class has a single static method load that loads an
         JSON file with two features not provided by all JSON readers:
@@ -457,7 +456,6 @@ class DirectoriesCache:
 
 
 class FileOrganizationModelManager:
-
     """
     Manage the discovery and instantiation of available FileOrganizationModel
     (FOM). A FOM can be represented as a YAML/JSON file (or a series of
@@ -917,7 +915,6 @@ class FileOrganizationModels:
 
 
 class PathToAttributes:
-
     """
     Utility class for file paths -> attributes set transformation.
     Part of the FOM engine.
@@ -1170,7 +1167,6 @@ class PathToAttributes:
 
 
 class AttributesToPaths:
-
     """
     Utility class for attributes set -> file paths transformation.
     Part of the FOM engine.

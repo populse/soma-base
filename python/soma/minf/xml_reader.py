@@ -1,6 +1,7 @@
 """
 Reading of XML minf format.
 """
+
 __docformat__ = "restructuredtext en"
 
 from xml.sax import make_parser
@@ -30,7 +31,6 @@ from soma.undefined import Undefined
 
 
 class MinfXMLReader(MinfReader, ErrorHandler):
-
     """
     Specialization of L{MinfReader} class for reading XML minf format.
     """

@@ -38,13 +38,13 @@ during minf file reading or writing.
 * organization: `NeuroSpin <http://www.neurospin.org>`_
 * license: `CeCILL B <http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html>`_
 """
+
 __docformat__ = "restructuredtext en"
 
 # ------------------------------------------------------------------------------
 
 
 class MinfError(RuntimeError):
-
     """
     A MinfError is raised when a problem is encountered during minf file reading
     or writing.

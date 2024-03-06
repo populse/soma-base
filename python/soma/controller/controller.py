@@ -1119,7 +1119,6 @@ class OpenKeyControllerMeta(ControllerMeta):
 class OpenKeyController(
     Controller, metaclass=OpenKeyControllerMeta, ignore_metaclass=True
 ):
-
     """A dictionary-like controller, with "open keys": items may be added
     on the fly, fields are created upon assignation.
 

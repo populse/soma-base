@@ -2,6 +2,7 @@
 This module contains the L{XHTML} class that contains an XHTML tree that
 can be saved in minf files.
 """
+
 __docformat__ = "restructuredtext en"
 
 import types
@@ -23,7 +24,6 @@ from soma.translation import translate as _
 
 
 class XHTML:
-
     """
     Instances of L{XHTML} contains the structure of an XHTML tree and can be used
     to produce an XML string or an HTML string.

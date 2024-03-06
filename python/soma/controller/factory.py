@@ -15,7 +15,6 @@ from weakref import WeakKeyDictionary
 
 
 class MetaFactories(type):
-
     """This is the metaclass of Factories.
     It intercepts Factories class creation to make sure that they have
     a _global_factories attribute."""
@@ -27,7 +26,6 @@ class MetaFactories(type):
 
 
 class Factories:
-
     """
     This is the base class for managing association between any Python object
     and a factory. For instance, WidgetFactories is derived from Factories and

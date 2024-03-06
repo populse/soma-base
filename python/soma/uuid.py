@@ -1,6 +1,7 @@
 """
 Universal unique identifier.
 """
+
 __docformat__ = "epytext en"
 
 import binascii
@@ -11,7 +12,6 @@ import struct
 
 
 class Uuid:
-
     """
     An Uuid instance is a universal unique identifier. It is a 128 bits
     random value.

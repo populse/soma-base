@@ -97,7 +97,6 @@ userLevel = 99
 
 
 class Ui_Form:
-
     """default range slider form"""
 
     def setupUi(self, Form):
@@ -164,7 +163,6 @@ class Element(Qt.QGroupBox):
 
 
 class Head(Element):
-
     """area before the handle"""
 
     def __init__(self, parent, main):
@@ -176,7 +174,6 @@ class Head(Element):
 
 
 class Tail(Element):
-
     """area after the handle"""
 
     def __init__(self, parent, main):
@@ -188,7 +185,6 @@ class Tail(Element):
 
 
 class Handle(Element):
-
     """handle area"""
 
     def __init__(self, parent, main):
@@ -228,7 +224,6 @@ class Handle(Element):
 
 
 class QRangeSlider(Qt.QWidget, Ui_Form):
-
     """
     The QRangeSlider class implements a horizontal range slider widget.
 

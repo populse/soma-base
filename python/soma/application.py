@@ -14,7 +14,6 @@ from soma.singleton import Singleton
 
 
 class Application(Singleton, Controller):
-
     """Any program using soma should create an Application instance to manage
     its configuration and to store any kind of value that have to be global to
     the program."""

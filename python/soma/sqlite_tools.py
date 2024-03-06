@@ -49,7 +49,6 @@ import threading
 
 
 class ThreadSafeSQLiteConnection:
-
     """
     Python wrapping of SQLite do not allow sharing of database connection between
     threads. This class allows to automatically create a connection for each

@@ -1,6 +1,7 @@
 """
 Writing of XML minf format.
 """
+
 __docformat__ = "restructuredtext en"
 
 import codecs
@@ -34,7 +35,6 @@ del xml_replacement["\x0d"]
 
 # ------------------------------------------------------------------------------
 class MinfXMLWriter(MinfWriter):
-
     """
     Specialization of L{MinfWriter} class for writing XML minf format.
     """
