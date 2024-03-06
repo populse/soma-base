@@ -96,7 +96,7 @@ QRangeSlider > QSplitter::handle:pressed {
 userLevel = 99
 
 
-class Ui_Form(object):
+class Ui_Form:
 
     """default range slider form"""
 
