@@ -52,7 +52,7 @@ class Uuid:
                     uuid[0:8] + uuid[9:13] + uuid[14:18] + uuid[19:23] + uuid[24:36]
                 )
             except Exception as e:
-                raise ValueError("Invalid uuid string %s" % (repr(uuid),)) from e
+                raise ValueError(f"Invalid uuid string {uuid!r}") from e
 
     def __getnewargs__(self):
         return (str(self),)

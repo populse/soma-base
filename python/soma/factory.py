@@ -41,7 +41,7 @@ def find_items_in_module(module_name, check):
     if path:
         for importer, submodule_name, ispkg in iter_modules(path):
             yield from find_items_in_module(
-                "%s.%s" % (module.__name__, submodule_name), check
+                f"{module.__name__}.{submodule_name}", check
             )
 
 
@@ -123,7 +123,6 @@ class ClassFactory:
                 self.instances[(class_type, factory_id)] = instance
             else:
                 raise ValueError(
-                    'Cannot find a class for class type "%s" '
-                    'and factory id "%s"' % (class_type, factory_id)
+                    'Cannot find a class for class type "{class_type}" and factory id "{factory_id}"'
                 )
         return instance
