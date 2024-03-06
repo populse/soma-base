@@ -29,7 +29,6 @@ ignore = [
   "B007",
   "B017",  # Issue #67
   "B026",  # Issue #68
-  "B028",
   # https://docs.astral.sh/ruff/rules/redundant-open-modes/
   # we prefer explicit to implicit open modes
   "UP015",
