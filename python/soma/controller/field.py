@@ -426,7 +426,7 @@ class WritableField(Field):
         self._dataclass_field.metadata["_metadata"]["optional"] = optional
 
     @Field.optional.deleter
-    def optional(self):
+    def optional(self):  # noqa: F811
         del self._dataclass_field.metadata["_metadata"]["optional"]
 
     @Field.doc.setter
@@ -434,7 +434,7 @@ class WritableField(Field):
         self.__setattr__("doc", doc)
 
     @Field.doc.deleter
-    def doc(self):
+    def doc(self):  # noqa: F811
         self.__delattr__("doc")
 
 
