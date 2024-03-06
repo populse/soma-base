@@ -201,8 +201,8 @@ def type_default_value(type):
     try:
         # try default type constructor
         return type()
-    except Exception:
-        raise TypeError(f"Cannot get default value for type {full_type}")
+    except Exception as e:
+        raise TypeError(f"Cannot get default value for type {full_type}") from e
 
 
 class Field:

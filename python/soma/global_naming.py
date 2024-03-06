@@ -30,7 +30,7 @@ class GlobalNaming(Singleton):
         try:
             value = getattr(module, name)
         except AttributeError as e:
-            raise ImportError(str(e))
+            raise ImportError(str(e)) from e
         if args is not None:
             value = value(*args)
         if attributes:

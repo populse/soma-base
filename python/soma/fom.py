@@ -230,7 +230,7 @@ def read_json(file_name):
             extra_msg = ""
         raise ValueError(
             f"{file_name}: {e}. This may be due to yaml module not installed.{extra_msg}"
-        )
+        ) from e
 
 
 class DirectoryAsDict:
