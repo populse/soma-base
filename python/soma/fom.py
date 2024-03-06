@@ -1044,12 +1044,10 @@ class PathToAttributes:
             for path, hierarchical_patterns, pattern_attributes in parsing_list:
                 if log:
                     log.debug(
-                        "?? "
-                        + name
-                        + " "
-                        + repr(pattern_attributes)
-                        + " "
-                        + repr(list(hierarchical_patterns.keys()))
+                        "?? %s %r %r",
+                        name,
+                        pattern_attributes,
+                        list(hierarchical_patterns.keys()),
                     )
                 branch_matched = False
                 for pattern, rules_subpattern in hierarchical_patterns.items():
@@ -1062,7 +1060,7 @@ class PathToAttributes:
                             log.debug("try %r for %r", pattern, name_no_ext)
                         if match:
                             if log:
-                                log.debug("match " + pattern)
+                                log.debug("match %s", pattern)
                             new_attributes = match.groupdict()
                             new_attributes.update(pattern_attributes)
 
@@ -1104,10 +1102,8 @@ class PathToAttributes:
                                     )
                                     if log:
                                         log.debug(
-                                            "-> "
-                                            + "/".join(path + [name])
-                                            + " "
-                                            + repr(yield_attributes)
+                                            "-> %s %r",
+                                            "/".join(path + [name], yield_attributes),
                                         )
                                     sent = True
                                     yield path + [name], st, yield_attributes
@@ -1132,7 +1128,7 @@ class PathToAttributes:
                     yield i
             if not matched and all_unknown:
                 if log:
-                    log.debug("-> " + "/".join(path + [name]) + " None")
+                    log.debug("-> %s None", "/".join(path + [name]))
                 sent = True
                 yield path + [name], st, None
                 if content:
@@ -1140,14 +1136,14 @@ class PathToAttributes:
                         yield i
             if not sent and all_unknown:
                 if log:
-                    log.debug("-> " + "/".join(path + [name]) + " None")
+                    log.debug("-> %s None", "/".join(path + [name]))
                 yield path + [name], st, None
 
     def _parse_unknown_directory(self, dirdict, path, log):
         for name, content in dirdict.items():
             st, content = content
             if log:
-                log.debug("?-> " + "/".join(path + [name]) + " None")
+                log.debug("?-> %s None", "/".join(path + [name]))
             yield path + [name], st, None
             if content is not None:
                 yield from self._parse_unknown_directory(content, path + [name], log)
