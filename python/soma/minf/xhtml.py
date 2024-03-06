@@ -22,7 +22,7 @@ from soma.translation import translate as _
 # ------------------------------------------------------------------------------
 
 
-class XHTML(object):
+class XHTML:
 
     """
     Instances of L{XHTML} contains the structure of an XHTML tree and can be used
