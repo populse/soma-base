@@ -299,7 +299,7 @@ class DirectoryAsDict:
             for name in listdir:
                 if debug and count % 100 == 0:
                     debug.info(
-                        f"%s files=%d, directories=%d, size=%d",
+                        "%s files=%d, directories=%d, size=%d",
                         time.asctime(),
                         files + links,
                         directories,
