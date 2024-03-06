@@ -227,8 +227,7 @@ class MinfReducer:
     def reduce(self, *args):
         for o in args:
             typeReducer = self.getTypeReducer(o.__class__)
-            for minfNode in typeReducer(self, o):
-                yield minfNode
+            yield from typeReducer(self, o)
 
     def atomReducer(reducer, atom):
         return (atom,)
@@ -240,8 +239,7 @@ class MinfReducer:
             yield StartStructure(listStructure, length=len(sequence))
         except TypeError:
             yield StartStructure(listStructure)
-        for minfNode in reducer.reduce(*sequence):
-            yield minfNode
+        yield from reducer.reduce(*sequence)
         yield EndStructure(listStructure)
 
     sequenceReducer = staticmethod(sequenceReducer)
@@ -287,8 +285,7 @@ class MinfReducer:
     hasSignatureToDict = staticmethod(hasSignatureToDict)
 
     def hasSignatureReducer(reducer, o):
-        for minfNode in reducer.reduce(MinfReducer.hasSignatureToDict(o)):
-            yield minfNode
+        yield from reducer.reduce(MinfReducer.hasSignatureToDict(o))
 
     hasSignatureReducer = staticmethod(hasSignatureReducer)
 
