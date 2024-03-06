@@ -18,12 +18,7 @@ _version_micro = version_micro
 _version_extra = version_extra
 
 # Format expected by setup.py and doc/source/conf.py: string of form "X.Y.Z"
-__version__ = "%s.%s.%s%s" % (
-    version_major,
-    version_minor,
-    version_micro,
-    version_extra,
-)
+__version__ = f"{version_major}.{version_minor}.{version_micro}{version_extra}"
 CLASSIFIERS = [
     "Development Status :: 5 - Production/Stable",
     "Environment :: Console",

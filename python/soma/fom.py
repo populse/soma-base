@@ -649,9 +649,8 @@ class FileOrganizationModels:
                     ):
                         raise ValueError(
                             "Incompatible default value redefinition of "
-                            "attribute %s, older default: %s, new default: "
-                            "%s in file: %s"
-                            % (
+                            "attribute {}, older default: {}, new default: "
+                            "{} in file: {}".format(
                                 attribute,
                                 existing_definition.get("default_value"),
                                 definition.get("default_value"),
@@ -744,9 +743,7 @@ class FileOrganizationModels:
             format = selection.get("format")
             for rule_pattern, rule_attributes in self.rules:
                 if debug:
-                    debug.debug(
-                        "selected_rules: %r, %r" % (rule_pattern, rule_attributes)
-                    )
+                    debug.debug("selected_rules: %r, %r", rule_pattern, rule_attributes)
                 rule_formats = rule_attributes.get("fom_formats", [])
                 if format:
                     if format in ("fom_first", "fom_preferred"):
@@ -757,8 +754,9 @@ class FileOrganizationModels:
                     elif format not in rule_formats:
                         if debug:
                             debug.debug(
-                                "selected_rules: -- format %r not in %r"
-                                % (format, rule_formats)
+                                "selected_rules: -- format %r not in %r",
+                                format,
+                                rule_formats,
                             )
                         continue
                 keep = True
@@ -769,8 +767,9 @@ class FileOrganizationModels:
                     if rule_value is None or rule_value != selection_value:
                         if debug:
                             debug.debug(
-                                "selected_rules: -- selection value %r != rule value %r"
-                                % (selection_value, rule_value)
+                                "selected_rules: -- selection value %r != rule value %r",
+                                selection_value,
+                                rule_value,
                             )
                         keep = False
                         break
@@ -951,16 +950,13 @@ class PathToAttributes:
                         values = attribute_type.get("values")
                         if values and not attribute_type.get("fom_open_value", True):
                             regex.append(
-                                "(?P<%s>%s)"
-                                % (
+                                "(?P<{}>{})".format(
                                     attribute,
-                                    "|".join(
-                                        "(?:" + re.escape(i) + ")" for i in values
-                                    ),
+                                    "|".join(f"(?:{re.escape(i)})" for i in values),
                                 )
                             )
                         else:
-                            regex.append("(?P<%s>%s)" % (attribute, attribute_re))
+                            regex.append(f"(?P<{attribute}>{attribute_re})")
                         attributes_found.add(attribute)
                     last_end = match.end()
                 last = pattern[last_end:]
@@ -1315,7 +1311,7 @@ class AttributesToPaths:
                     values.append(value)
                     selection_attributes[attribute] = value
         columns = ["_fom_rule", "_fom_format"] + ["_" + i[0] for i in default_values]
-        sql = "SELECT %s FROM rules WHERE %s" % (
+        sql = "SELECT {} FROM rules WHERE {}".format(
             ",".join(columns),
             " AND ".join(select),
         )
@@ -1353,7 +1349,7 @@ class AttributesToPaths:
                 except KeyError:
                     continue
                 if debug:
-                    debug.debug("!single format! %s: %s" % (format, path))
+                    debug.debug("!single format! %s: %s", format, path)
                 r = self._join_directory(path, rule_attributes, selection_attributes)
                 if r:
                     if debug:

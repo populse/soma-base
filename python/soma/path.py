@@ -353,10 +353,10 @@ def update_query_string(
 
         else:
             raise RuntimeError(
-                "params_update_mode is not specified correctly. %s is "
-                "not a valid value for parameter %s. Valid values are "
-                "either QueryStringParamUpdateMode.APPEND, either"
-                "QueryStringParamUpdateMode.REPLACE." % (v, p)
+                f"params_update_mode is not specified correctly. {v} is "
+                f"not a valid value for parameter {p}. Valid values are "
+                "either QueryStringParamUpdateMode.APPEND or"
+                "QueryStringParamUpdateMode.REPLACE."
             )
 
     url_new = list(url_parsed)
