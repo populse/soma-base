@@ -40,7 +40,11 @@ class ContainerWithProxy:
         super().__init__()
         self.proxy_values = proxy_values
         self.content = content
-        self.all_proxies = {} if all_proxies else None
+        if all_proxies == True:
+            all_proxies = {}
+        elif all_proxies == False:
+            all_proxies = None
+        self.all_proxies = all_proxies
 
     def proxy(self, value):
         """
