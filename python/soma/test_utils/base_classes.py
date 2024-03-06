@@ -162,7 +162,7 @@ class SomaTestCaseWithoutRefFiles(BaseSomaTestCase):
             msg = (
                 f"Test {self.__class__.__name__} should not be run in '{ref_mode}' mode"
             )
-            raise EnvironmentError(msg)
+            raise OSError(msg)
 
 
 # Should we skip all tests in ref mode (all computation in setUp_ref_mode?)
@@ -194,7 +194,7 @@ class SomaTestCase(BaseSomaTestCase):
     def setUpClass(cls):
         if not cls.base_ref_data_dir:
             msg = f"base_ref_data_dir must be provided for test {cls.__name__}"
-            raise EnvironmentError(msg)
+            raise OSError(msg)
         if cls.test_mode == ref_mode:
             try:
                 os.makedirs(cls.private_ref_data_dir())
