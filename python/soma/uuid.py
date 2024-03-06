@@ -51,8 +51,8 @@ class Uuid:
                 self.__uuid = binascii.unhexlify(
                     uuid[0:8] + uuid[9:13] + uuid[14:18] + uuid[19:23] + uuid[24:36]
                 )
-            except Exception:
-                raise ValueError("Invalid uuid string %s" % (repr(uuid),))
+            except Exception as e:
+                raise ValueError("Invalid uuid string %s" % (repr(uuid),)) from e
 
     def __getnewargs__(self):
         return (str(self),)

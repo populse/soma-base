@@ -158,8 +158,8 @@ class Socket(QObject):
             try:
                 try:
                     msg = self._messages.get(True, timeout)
-                except queue.Empty:
-                    raise OSError(errno.ETIMEDOUT, "socket communication timed out")
+                except queue.Empty as e:
+                    raise OSError(errno.ETIMEDOUT, "socket communication timed out") from e
             finally:
                 self.lock.release()
         else:
@@ -266,9 +266,9 @@ class Socket(QObject):
                     time.sleep(0.02)
                     waitedTime += 0.02
                     if waitedTime >= timeout:
-                        raise OSError(errno.ETIMEDOUT, "socket communication timed out")
+                        raise OSError(errno.ETIMEDOUT, "socket communication timed out") from e
                 else:
-                    raise OSError(errno.EPIPE, "socket communication interrupted")
+                    raise OSError(errno.EPIPE, "socket communication interrupted") from e
         return msg.decode()
 
     def readMessage(self, timeout=30):

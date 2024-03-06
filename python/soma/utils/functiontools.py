@@ -84,8 +84,8 @@ def getArgumentsSpecification(callable):
     else:
         try:
             call = callable.__call__
-        except AttributeError:
-            raise TypeError(_("%r is not callable") % callable)
+        except AttributeError as e:
+            raise TypeError(_("%r is not callable") % callable) from e
         return getArgumentsSpecification(call)
 
 

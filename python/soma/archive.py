@@ -49,8 +49,8 @@ def untar(input_filename, extract_dir):
     """
     try:
         tar_ds = tarfile.open(input_filename)
-    except (tarfile.TarError, EOFError):
-        raise OSError("%s is not a tar file" % (input_filename))
+    except (tarfile.TarError, EOFError) as e:
+        raise OSError("%s is not a tar file" % (input_filename)) from e
     tar_ds.extractall(path=extract_dir)
     tar_ds.close()
 
