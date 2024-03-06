@@ -147,9 +147,9 @@ class Element(Qt.QGroupBox):
 
     def setTextColor(self, color):
         """set the text paint color"""
-        if type(color) == tuple and len(color) == 3:
+        if isinstance(color, tuple) and len(color) == 3:
             color = Qt.QColor(color[0], color[1], color[2])
-        elif type(color) == int:
+        elif isinstance(color, int):
             color = Qt.QColor(color, color, color)
         setattr(self, "__textColor", color)
 
@@ -361,13 +361,13 @@ class QRangeSlider(Qt.QWidget, Ui_Form):
 
     def setMin(self, value):
         """sets minimum value"""
-        assert type(value) is int
+        assert isinstance(value, int)
         setattr(self, "__min", value)
         self.minValueChanged.emit(value)
 
     def setMax(self, value):
         """sets maximum value"""
-        assert type(value) is int
+        assert isinstance(value, int)
         setattr(self, "__max", value)
         self.maxValueChanged.emit(value)
 
@@ -386,7 +386,7 @@ class QRangeSlider(Qt.QWidget, Ui_Form):
 
     def setStart(self, value):
         """sets the range slider start value"""
-        assert type(value) is int
+        assert isinstance(value, int)
         v = self._valueToPos(value)
         self._splitter.moveSplitter(v, self._SPLIT_START)
         self._setStart(value)
@@ -398,7 +398,7 @@ class QRangeSlider(Qt.QWidget, Ui_Form):
 
     def setEnd(self, value):
         """set the range slider end value"""
-        assert type(value) is int
+        assert isinstance(value, int)
         v = self._valueToPos(value)
         self._splitter.moveSplitter(v, self._SPLIT_END)
         self._setEnd(value)
@@ -409,7 +409,7 @@ class QRangeSlider(Qt.QWidget, Ui_Form):
 
     def setDrawValues(self, draw):
         """sets draw values boolean to draw slider values"""
-        assert type(draw) is bool
+        assert isinstance(draw, bool)
         setattr(self, "__drawValues", draw)
 
     def getRange(self):
