@@ -11,6 +11,7 @@ can be imported from :py:mod:`soma.minf.api`:
 - for writing minf files: :func:`createMinfWriter`, :func:`writeMinf`
 - for customizing minf files: :func:`createReducerAndExpander`, :func:`registerClass`, :func:`registerClassAs`
 """
+
 __docformat__ = "restructuredtext en"
 
 import gzip

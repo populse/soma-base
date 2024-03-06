@@ -7,6 +7,7 @@ A minf tree is always accessed via an iterator on its content. This content is c
 * organization: `NeuroSpin <http://www.neurospin.org>`_
 * license: `CeCILL B <http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html>`_
 """
+
 __docformat__ = "restructuredtext en"
 
 import sys
@@ -39,7 +40,6 @@ dictStructure = "dict"
 
 # ------------------------------------------------------------------------------
 class StartStructure:
-
     """
     When iterating over a minf tree, a L{StartStructure} indicate the beginning of
     a subtree. Subtrees are identified by their type which is a string
@@ -95,7 +95,6 @@ class StartStructure:
 
 # ------------------------------------------------------------------------------
 class EndStructure:
-
     """
     When iterating over a minf tree, an L{EndStructure} indicate the end of
     a subtree.
@@ -110,7 +109,6 @@ class EndStructure:
 
 # ------------------------------------------------------------------------------
 class Reference:
-
     """
     EXPERIMENTAl: the reference system is not fully functional.
     When iterating over a minf tree, an L{Reference} correspond to a structure
@@ -144,7 +142,6 @@ def createMinfReducer(name):
 
 # ------------------------------------------------------------------------------
 class MinfReducer:
-
     """
     Class to convert a Python object into a minf tree.
     """
@@ -332,7 +329,6 @@ def createMinfExpander(name):
 
 # ------------------------------------------------------------------------------
 class MinfExpander:
-
     """
     Class to convert a minf tree into a Python object.
     """

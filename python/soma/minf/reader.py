@@ -1,6 +1,7 @@
 """
 Base classes for reading various minf formats (XML, HDF5, Python's pickle, etc.)
 """
+
 __docformat__ = "restructuredtext en"
 
 
@@ -10,7 +11,6 @@ from soma.translation import translate as _
 
 
 class RegisterMinfReaderClass(type):
-
     """
     RegisterMinfReaderClass is used as metaclass of L{MinfReader} to automatically
     register all classes derived from L{MinfReader}.
@@ -26,7 +26,6 @@ class RegisterMinfReaderClass(type):
 
 # ------------------------------------------------------------------------------
 class MinfReader(metaclass=RegisterMinfReaderClass):
-
     """
     Class derived from MinfReader are responsible of reading a specific format of
     minf file. This version only support XML format but other formats may be added

@@ -22,7 +22,6 @@ Advanced classes
   Singleton can have only one instance.
 """
 
-
 from .application import Application  # noqa: F401
 from .controller import Controller  # noqa: F401
 from .proxy import DictWithProxy, ListWithProxy  # noqa: F401

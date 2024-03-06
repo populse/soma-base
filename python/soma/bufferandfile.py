@@ -38,13 +38,13 @@ instance for identification) and "put back" the data on the file.
 - organization: NeuroSpin
 - license: `CeCILL B <http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html>`_
 """
+
 __docformat__ = "restructuredtext en"
 
 # ------------------------------------------------------------------------------
 
 
 class BufferAndFile:
-
     """
     This class is a read only file-like object that allows to read ahead and
     push data back into the stream. All pushed back data are stored in a buffer

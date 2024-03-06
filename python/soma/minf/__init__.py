@@ -37,4 +37,5 @@ See :py:mod:`minf.api <soma.minf.api>` module for documentation.
 * organization: `NeuroSpin <http://www.neurospin.org>`_
 * license: `CeCILL B <http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html>`_
 """
+
 __docformat__ = "restructuredtext en"

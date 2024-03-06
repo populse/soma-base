@@ -5,6 +5,7 @@ It is useful when you want to call qt functions from another thread.
 It enables to do thread safe calls because all tasks sent are executed in the
 same thread (qt main thread).
 """
+
 __docformat__ = "restructuredtext en"
 
 import inspect
@@ -29,7 +30,6 @@ def reraise(tp, value, tb=None):
 
 
 class FakeQtThreadCall(QObject):
-
     """
     Fake QtThreadCall that behave as if always used from main thread.
     """
@@ -57,7 +57,6 @@ class FakeQtThreadCall(QObject):
 
 
 class QtThreadCall(singleton.Singleton, QObject):
-
     """
     This object enables to send tasks to be executed by qt thread (main
     thread).

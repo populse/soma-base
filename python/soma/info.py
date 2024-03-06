@@ -1,4 +1,4 @@
-""" Information module, containing version variables, plus some
+"""Information module, containing version variables, plus some
 setuptools-related variables
 Attributes
 ----------
@@ -7,7 +7,6 @@ version_minor
 version_micro
 version_extra
 """
-
 
 version_major = 6
 version_minor = 0

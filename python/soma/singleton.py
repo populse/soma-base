@@ -8,7 +8,6 @@ __docformat__ = "restructuredtext en"
 
 
 class Singleton:
-
     """
     Implements the singleton pattern. A class deriving from ``Singleton`` can
     have only one instance. The first instantiation will create an object and

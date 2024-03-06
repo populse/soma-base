@@ -1,6 +1,7 @@
 """
 Utility functions for HTML format.
 """
+
 __docformat__ = "restructuredtext en"
 
 from html.entities import codepoint2name

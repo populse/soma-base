@@ -1,6 +1,7 @@
 """
 Utility classes and functions for Python import and sip namespace renaming.
 """
+
 __docformat__ = "restructuredtext en"
 
 import importlib
@@ -16,7 +17,6 @@ __namespaces__ = ["soma", "aims", "carto", "anatomist"]
 
 
 class ExtendedImporter(Singleton):
-
     """
     ExtendedImporter is used to import external modules in a module managing rules that allow ro rename and delete or do anything else on the imported package. As imported packages could modify each others, all the registered rules are applied after each import using this ExtendedImporter.
     """
@@ -100,7 +100,6 @@ class ExtendedImporter(Singleton):
 
 
 class ExtendedModule:
-
     """
     Register a series of rules to apply during the import process of the
     extended module. An extended module is able to refer to other modules and
@@ -163,7 +162,6 @@ class ExtendedModule:
 
 
 class GenericHandlers:
-
     """
     Static generic handlers used as import rules.
     """
@@ -284,7 +282,6 @@ class GenericHandlers:
 
 
 class ExtendedImporterHelper:
-
     """
     Static methods declared to help extended import process.
     """
