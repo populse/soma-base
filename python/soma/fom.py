@@ -255,8 +255,7 @@ class DirectoryAsDict:
         st_content = self.cache.get_directory(self.directory)
         if st_content is not None:
             st, content = st_content
-            for i in content.items():
-                yield i
+            yield from content.items()
         else:
             try:
                 listdir = os.listdir(self.directory)
@@ -782,8 +781,7 @@ class FileOrganizationModels:
                         debug.debug("selected_rules: ++")
                     yield (rule_pattern, rule_attributes)
         else:
-            for rule in self.rules:
-                yield rule
+            yield from self.rules
 
     def _expand_json_patterns(self, json_patterns, parent, parent_attributes):
         attributes = parent_attributes.copy()
@@ -1159,8 +1157,7 @@ class PathToAttributes:
                 log.debug("?-> " + "/".join(path + [name]) + " None")
             yield path + [name], st, None
             if content is not None:
-                for i in self._parse_unknown_directory(content, path + [name], log):
-                    yield i
+                yield from self._parse_unknown_directory(content, path + [name], log)
 
     def parse_path(self, path, single_match=False, log=None):
         dirdict = DirectoryAsDict.paths_to_dict(path)
