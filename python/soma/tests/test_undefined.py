@@ -1,7 +1,5 @@
-import unittest
-import os
 import sys
-
+import unittest
 from importlib import reload as reload_module
 
 

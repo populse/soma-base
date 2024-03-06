@@ -3,18 +3,18 @@ This module provides a notification system that can be used to register
 callbacks (*i.e* Python callables) that will all be called by a single
 :meth:`Notifier.notify` call.
 """
+
 __docformat__ = "restructuredtext en"
 
-from soma.translation import translate as _
 from soma.functiontools import checkParameterCount, numberOfParameterRange
-from soma.undefined import Undefined
 from soma.sorted_dictionary import SortedDictionary
+from soma.translation import translate as _
+from soma.undefined import Undefined
 
 # -------------------------------------------------------------------------
 
 
 class Notifier:
-
     """
     Register a series of functions (or Notifier instances) which are all called
     with the :meth:`notify` method. The calling order is the registering
@@ -155,7 +155,6 @@ class Notifier:
 
 # -------------------------------------------------------------------------
 class ReorderedCall:
-
     """
     **todo:** documentation
     """
@@ -170,7 +169,6 @@ class ReorderedCall:
 
 # -------------------------------------------------------------------------
 class VariableParametersNotifier(Notifier):
-
     """
     This class is a notifier that can register functions with various arguments
     count.
@@ -253,7 +251,6 @@ class VariableParametersNotifier(Notifier):
 
 # -------------------------------------------------------------------------
 class ObservableAttributes:
-
     """
     ObservableAttributes allows to track modification of attributes at
     runtime. By registering callbacks, it is possible to be warn of the
@@ -409,7 +406,7 @@ class ObservableAttributes:
         )
 
     def _delayAttributeNotification(self, ignoreDoubles=False, checkedObjects=None):
-        if not checkedObjects == None:
+        if checkedObjects is not None:
             checkedObjects.add(self)
 
         for name, notifier in self._onAttributeChange.items():
@@ -421,17 +418,17 @@ class ObservableAttributes:
             value = getattr(self, name, Undefined)
 
             if isinstance(value, ObservableAttributes):
-                if not checkedObjects is None:
+                if checkedObjects is not None:
                     # This allow to not recursively call
                     # _delayAttributeNotification
-                    if not value in checkedObjects:
+                    if value not in checkedObjects:
                         value._delayAttributeNotification(
                             ignoreDoubles=ignoreDoubles, checkedObjects=checkedObjects
                         )
                 else:
                     value._delayAttributeNotification(ignoreDoubles=ignoreDoubles)
 
-        if not checkedObjects == None:
+        if checkedObjects is not None:
             checkedObjects.pop()
 
     def restartAttributeNotification(self):
@@ -444,7 +441,7 @@ class ObservableAttributes:
         self._restartAttributeNotification(checkedObjects=set())
 
     def _restartAttributeNotification(self, checkedObjects=None):
-        if not checkedObjects == None:
+        if checkedObjects is not None:
             checkedObjects.add(self)
 
         for name, notifier in self._onAttributeChange.items():
@@ -454,15 +451,15 @@ class ObservableAttributes:
         for name in dir(self):
             value = getattr(self, name, Undefined)
             if isinstance(value, ObservableAttributes):
-                if not checkedObjects is None:
+                if checkedObjects is not None:
                     # This allow to not recursively call
                     # _delayAttributeNotification
-                    if not value in checkedObjects:
+                    if value not in checkedObjects:
                         value.restartAttributeNotification()
                 else:
                     value._delayAttributeNotification()
 
-        if not checkedObjects == None:
+        if checkedObjects:
             checkedObjects.pop()
 
 
@@ -470,7 +467,6 @@ class ObservableAttributes:
 
 
 class ObservableList(list):
-
     """
     A list that notifies its changes to registered listeners.
     Inherits from python list and contains an instance of :class:`Notifier`
@@ -792,7 +788,6 @@ class ObservableList(list):
 
 
 class ObservableSortedDictionary(SortedDictionary):
-
     """
     A sorted dictionary that notifies its changes.
     Inherits from python list and contains an instance of
@@ -922,7 +917,6 @@ class ObservableSortedDictionary(SortedDictionary):
 
 # ----------------------------------------------------------------------------
 class EditableTree(ObservableAttributes, ObservableSortedDictionary):
-
     """The base class to model a tree of items.
     This class can be derived to change implementation.
 
@@ -1163,7 +1157,6 @@ class EditableTree(ObservableAttributes, ObservableSortedDictionary):
 
     # -------------------------------------------------------------------------
     class Item(ObservableAttributes):
-
         """Base element of an :class:`EditableTree`
 
         *Item* inherits from :class:`ObservableAttributes`, so it can notify
@@ -1294,7 +1287,6 @@ class EditableTree(ObservableAttributes, ObservableSortedDictionary):
 
     # -------------------------------------------------------------------------
     class Branch(Item, ObservableSortedDictionary):
-
         """A Branch is an :class:`Item <EditableTree.Item>` that can contain
         other items.
 
@@ -1469,7 +1461,6 @@ class EditableTree(ObservableAttributes, ObservableSortedDictionary):
 
     # -------------------------------------------------------------------------
     class Leaf(Item):
-
         """A tree item that cannot have children items"""
 
         def __init__(
@@ -1503,7 +1494,6 @@ class EditableTree(ObservableAttributes, ObservableSortedDictionary):
 
 
 class ObservableNotifier(Notifier):
-
     """
     This notifier can notify when the first listener is added and when the last
     listener is removed.

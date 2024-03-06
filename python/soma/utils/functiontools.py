@@ -4,8 +4,10 @@ Utility classes and functions for Python callable.
 
 __docformat__ = "restructuredtext en"
 
-from functools import partial
 import inspect
+from functools import partial
+
+from soma.translation import translate as _
 
 # handle deprecation of getargspec in python3
 # inspect.getargspec() is deprecated in Python 3
@@ -15,9 +17,6 @@ import inspect
 getfullargspec = getattr(
     inspect, "getfullargspec", getattr(inspect, "getargspec", None)
 )
-
-# -------------------------------------------------------------------------
-from soma.translation import translate as _
 
 
 # -------------------------------------------------------------------------
@@ -77,7 +76,7 @@ def getArgumentsSpecification(callable):
             d.update(callable.keywords)
 
         if len(d):
-            defaults = tuple((d[i] for i in args[-len(d) :]))
+            defaults = tuple(d[i] for i in args[-len(d) :])
         else:
             defaults = d
 
@@ -85,8 +84,8 @@ def getArgumentsSpecification(callable):
     else:
         try:
             call = callable.__call__
-        except AttributeError:
-            raise TypeError(_("%s is not callable") % repr(callable))
+        except AttributeError as e:
+            raise TypeError(_("%r is not callable") % callable) from e
         return getArgumentsSpecification(call)
 
 

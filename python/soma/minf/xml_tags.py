@@ -38,6 +38,7 @@ and the attributes used in XML minf format.
 * organization: `NeuroSpin <http://www.neurospin.org>`_
 * license: `CeCILL B <http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html>`_
 """
+
 __docformat__ = "restructuredtext en"
 
 

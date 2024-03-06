@@ -4,10 +4,11 @@ except ImportError:
     from pydantic import ValidationError
 
 from soma.qt_gui.qt_backend import Qt
-from . import WidgetFactory
 from soma.qt_gui.timered_widgets import TimeredQLineEdit
 from soma.undefined import undefined
 from soma.utils.weak_proxy import proxy_method
+
+from . import WidgetFactory
 
 
 class StrWidgetFactory(WidgetFactory):

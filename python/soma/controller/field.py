@@ -3,20 +3,18 @@ import re
 import sys
 import typing
 
-from soma.undefined import undefined
-
 # Import allsupported types from typing
 from typing import (
-    Any,
-    Literal,
     Union,
 )
 
+from soma.undefined import undefined
+
 if sys.version_info < (3, 9):
     from typing import (
-        Tuple,
         Dict,
         Set,
+        Tuple,
     )
 else:
     Tuple = tuple
@@ -27,10 +25,10 @@ else:
 def _conlist_str(name, type_):
     tdef = type_str(type_.item_type)
     if type_.min_items:
-        tdef += ", min_items=%d" % type_.min_items
+        tdef += f", min_items={type_.min_items}"
     if type_.max_items:
-        tdef += ", max_items=%d" % type_.max_items
-    result = "pydantic.conlist(%s)" % tdef
+        tdef += f", max_items={type_.max_items}"
+    result = f"pydantic.conlist({tdef})"
     return result
 
 
@@ -203,8 +201,8 @@ def type_default_value(type):
     try:
         # try default type constructor
         return type()
-    except Exception:
-        raise TypeError(f"Cannot get default value for type {full_type}")
+    except Exception as e:
+        raise TypeError(f"Cannot get default value for type {full_type}") from e
 
 
 class Field:

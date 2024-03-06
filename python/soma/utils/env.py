@@ -92,10 +92,10 @@ def parse_env_lines(text, asdict=False):
                 else:
                     push(char, groups, depth, tags)
 
-        except IndexError:
-            raise ValueError("Parentheses mismatch", depth, groups)
+        except IndexError as e:
+            raise ValueError("Parentheses mismatch", depth, groups) from e
         if depth > 0:
-            raise ValueError("Parentheses mismatch 2", depth, groups)
+            raise ValueError("Parentheses mismatch 2", depth, groups) from e
         else:
             return groups
 

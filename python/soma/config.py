@@ -1,4 +1,4 @@
-""" Config module that sets up version variable and finds the
+"""Config module that sets up version variable and finds the
 `BrainVISA <http://brainvisa.info>`_ `brainvisa-share` data directory.
 
 Attributes
@@ -11,7 +11,7 @@ BRAINVISA_SHARE
 """
 
 import os
-import sys
+
 import soma.info
 
 full_version = ".".join(

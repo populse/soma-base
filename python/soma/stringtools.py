@@ -37,6 +37,7 @@ This module contains text related functions.
 * organization: NeuroSpin
 * license: `CeCILL B <http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html>`_
 """
+
 __docformat__ = "restructuredtext en"
 
 
@@ -60,17 +61,17 @@ def string_to_list(s):
             yield s[1 : i + j]
             s = s[i + j + 2 :].strip(" ")
         else:
-            l = s.split(" ", 1)
-            yield l[0]
-            if len(l) > 1:
-                s = l[1].strip(" ")
+            s_list = s.split(" ", 1)
+            yield s_list[0]
+            if len(s_list) > 1:
+                s = s_list[1].strip(" ")
             else:
                 s = ""
 
 
-def list_to_string(l):
+def list_to_string(s_list):
     """ """
-    return " ".join((quote_string(i) for i in l))
+    return " ".join(quote_string(s) for s in s_list)
 
 
 def quote_string(unquoted):

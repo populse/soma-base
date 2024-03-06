@@ -1,12 +1,14 @@
-from soma.qt_gui.qt_backend import Qt, QtCore
-from soma.undefined import undefined
-from soma.controller import parse_type_str, OpenKeyController, type_default_value
-from soma.controller.field import subtypes, type_str
-from ..collapsible import CollapsibleWidget
-from soma.utils.weak_proxy import get_ref, proxy_method
-from functools import partial
 import html
 import weakref
+from functools import partial
+
+from soma.controller import OpenKeyController, parse_type_str, type_default_value
+from soma.controller.field import subtypes, type_str
+from soma.qt_gui.qt_backend import Qt, QtCore
+from soma.undefined import undefined
+from soma.utils.weak_proxy import get_ref, proxy_method
+
+from ..collapsible import CollapsibleWidget
 
 
 class EditableLabel(Qt.QWidget):
@@ -878,25 +880,25 @@ class ControllerWidgetFactory(WidgetFactory):
         self.widget.setVisible(on)
 
 
-from .str import StrWidgetFactory
 from .bool import BoolWidgetFactory
-from .literal import LiteralWidgetFactory
 from .list import (
-    ListStrWidgetFactory,
-    ListIntWidgetFactory,
     ListFloatWidgetFactory,
+    ListIntWidgetFactory,
+    ListStrWidgetFactory,
     find_generic_list_factory,
 )
-from .set import (
-    SetStrWidgetFactory,
-    SetIntWidgetFactory,
-    SetFloatWidgetFactory,
-    find_generic_set_factory,
-)
+from .literal import LiteralWidgetFactory
+from .openkeycontroller import OpenKeyControllerWidgetFactory
 
 # from .dict import DictWidgetFactory
-from .path import FileWidgetFactory, DirectoryWidgetFactory
-from .openkeycontroller import OpenKeyControllerWidgetFactory
+from .path import DirectoryWidgetFactory, FileWidgetFactory
+from .set import (
+    SetFloatWidgetFactory,
+    SetIntWidgetFactory,
+    SetStrWidgetFactory,
+    find_generic_set_factory,
+)
+from .str import StrWidgetFactory
 
 # Above imports also import the module. This hides
 # the corresponding builtins => remove them

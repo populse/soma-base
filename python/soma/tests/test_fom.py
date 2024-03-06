@@ -1,10 +1,9 @@
-import unittest
-import shutil
 import os
+import shutil
 import tempfile
-from soma import application
-from soma import fom
-import sys
+import unittest
+
+from soma import application, fom
 
 
 class TestFOM(unittest.TestCase):

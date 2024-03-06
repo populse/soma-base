@@ -10,16 +10,16 @@ In addition OrderedDict is provided here, either as the standard
 collections.OrderedDict class if python version >= 2.7, or based on
 SortedDictionary if python version < 2.7.
 """
+
 __docformat__ = "restructuredtext en"
 
-from collections import OrderedDict
-from collections.abc import ItemsView
 import inspect
+from collections.abc import ItemsView
+
 from soma.undefined import Undefined
 
 
 class SortedDictionary(dict):
-
     """
     Sorted dictionary behave like a dictionary but keep the item insertion
     order. In addition to python 2.7 OrderedDict, SortedDictionary also has

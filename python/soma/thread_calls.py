@@ -53,14 +53,13 @@ until the call is done and the result available).
 * organization: NeuroSpin
 * license: `CeCILL B <http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html>`_
 """
+
 __docformat__ = "restructuredtext en"
 
 import threading
-import time
 
 
 class SingleThreadCalls:
-
     """
     Allows the registration of functions that are going to be called from a
     single thread. This single thread must continuously call

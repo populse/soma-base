@@ -29,13 +29,12 @@ appropriate Qt backend, so that the use of the backend selection is more
 transparent.
 """
 
-import sys
-import os
 import importlib
 import inspect
-import types
 import logging
-
+import os
+import sys
+import types
 
 # make qt_backend a fake module package, with Qt modules as sub-modules
 __package__ = __name__
@@ -152,7 +151,9 @@ class QtImporter:
 
             def _safe_load_plugin(plugin, plugin_globals, plugin_locals):
                 def _safe_getFilter():
-                    import sys, DLFCN
+                    import sys
+
+                    import DLFCN
 
                     res = plugin_locals["getFilter_orig"]()
                     sys.setdlopenflags(DLFCN.RTLD_NOW)
@@ -355,7 +356,7 @@ def set_qt_backend(backend=None, pyqt_api=1, compatible_qt5=None):
             __import__("%s.sip" % qt_backend)
             sip = sys.modules["%s.sip" % qt_backend]
             sys.modules["sip"] = sip
-        except:
+        except Exception:
             import sip
 
     if make_compatible_qt5 and qt5_compat_changed:
@@ -419,8 +420,6 @@ def ensure_compatible_qt5():
         if "%s.QtWebKitWidgets" % qt_backend in sys.modules:
             qtwebkitwidgets = sys.modules["%s.QtWebKitWidgets" % qt_backend]
         if qtgui and qtwidgets is None:
-            from . import QtWidgets
-
             qtwidgets = sys.modules["%s.QtWidgets" % qt_backend]
         elif qtwidgets and qtgui is None:
             from . import QtGui
@@ -431,16 +430,14 @@ def ensure_compatible_qt5():
 
             patch_qt5_modules(QtCore, qtgui, qtwidgets)
         if qtwebkit and qtwebkitwidgets is None:
-            from . import QtWebKitWidgets
-
             qtwebkitwidgets = sys.modules["%s.QtWebKitWidgets" % qt_backend]
         elif qtwebkitwidgets and qtwebkit is None:
-            from . import QtWebKit
+            pass
         elif qtwebkit and qtwebkitwidgets:
             patch_qt5_webkit_modules(qtwebkit, qtwebkitwidgets)
     else:
         if "%s.QtGui" % qt_backend in sys.modules:
-            from . import QtWidgets
+            pass
         from . import QtCore, QtGui
 
         patch_qt4_modules(QtCore, QtGui)
@@ -706,7 +703,6 @@ def init_matplotlib_backend(force=True):
         # if matplotlib cannot be found, don't do anything.
         return
 
-    mpl_ver = [int(x) for x in matplotlib.__version__.split(".")[:2]]
     qt_backend = get_qt_backend()
     if qt_backend == "PyQt6":
         guiBackend = "Qt5Agg"  # apparently not Qt6Agg
@@ -759,6 +755,7 @@ def qimage_to_np(qimage):
     for matplotlib imshow() for instance.
     """
     import numpy as np
+
     from . import Qt
 
     w, h = qimage.width(), qimage.height()
@@ -781,8 +778,9 @@ def imshow_widget(widget, figure=None, show=False):
     pylab.imshow(). This is useful to use the sphinx_gallery module for
     documentation.
     """
-    from . import Qt
     from matplotlib import pyplot
+
+    from . import Qt
 
     Qt.QApplication.instance().processEvents()
     if Qt.QT_VERSION >= 0x050000:

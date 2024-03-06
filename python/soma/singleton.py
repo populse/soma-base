@@ -8,7 +8,6 @@ __docformat__ = "restructuredtext en"
 
 
 class Singleton:
-
     """
     Implements the singleton pattern. A class deriving from ``Singleton`` can
     have only one instance. The first instantiation will create an object and
@@ -35,10 +34,10 @@ class Singleton:
     @classmethod
     def get_instance(cls):
         try:
-            return getattr(cls, "_singleton_instance")
-        except AttributeError:
-            msg = "Class %s has not been initialized" % cls.__name__
-            raise ValueError(msg)
+            return cls._singleton_instance
+        except AttributeError as e:
+            msg = f"Class {cls.__name__} has not been initialized"
+            raise ValueError(msg) from e
 
     def __new__(cls, *args, **kwargs):
         if "_singleton_instance" not in cls.__dict__:

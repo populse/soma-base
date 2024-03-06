@@ -1,5 +1,6 @@
-import os, sys
 import logging
+import os
+import sys
 
 
 def load_pilots(root, path):

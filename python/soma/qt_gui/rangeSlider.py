@@ -31,8 +31,6 @@
 #   http://rsgalloway.github.com/qrangeslider
 # ------------------------------------------------------------------------
 
-from __future__ import absolute_import
-
 __author__ = "Ryan Galloway <ryan@rsgalloway.com>"
 __version__ = "0.1"
 
@@ -56,9 +54,9 @@ The QRangeSlider class implements a horizontal range slider widget.
 # ---------------------------------------------------------------------------------------------
 # IMPORTS
 # ------------------------------------------------------------------------
-import os
 import sys
-from soma.qt_gui.qt_backend import QtCore, Qt
+
+from soma.qt_gui.qt_backend import Qt, QtCore
 
 try:
     _fromUtf8 = QtCore.QString.fromUtf8
@@ -98,8 +96,7 @@ QRangeSlider > QSplitter::handle:pressed {
 userLevel = 99
 
 
-class Ui_Form(object):
-
+class Ui_Form:
     """default range slider form"""
 
     def setupUi(self, Form):
@@ -137,7 +134,7 @@ class Ui_Form(object):
 
 class Element(Qt.QGroupBox):
     def __init__(self, parent, main):
-        super(Element, self).__init__(parent)
+        super().__init__(parent)
         self.main = main
 
     def setStyleSheet(self, style):
@@ -166,11 +163,10 @@ class Element(Qt.QGroupBox):
 
 
 class Head(Element):
-
     """area before the handle"""
 
     def __init__(self, parent, main):
-        super(Head, self).__init__(parent, main)
+        super().__init__(parent, main)
 
     def drawText(self, event, qp):
         qp.setPen(self.textColor())
@@ -178,11 +174,10 @@ class Head(Element):
 
 
 class Tail(Element):
-
     """area after the handle"""
 
     def __init__(self, parent, main):
-        super(Tail, self).__init__(parent, main)
+        super().__init__(parent, main)
 
     def drawText(self, event, qp):
         qp.setPen(self.textColor())
@@ -190,11 +185,10 @@ class Tail(Element):
 
 
 class Handle(Element):
-
     """handle area"""
 
     def __init__(self, parent, main):
-        super(Handle, self).__init__(parent, main)
+        super().__init__(parent, main)
 
     def drawText(self, event, qp):
         qp.setPen(self.textColor())
@@ -230,7 +224,6 @@ class Handle(Element):
 
 
 class QRangeSlider(Qt.QWidget, Ui_Form):
-
     """
     The QRangeSlider class implements a horizontal range slider widget.
 

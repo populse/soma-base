@@ -14,9 +14,8 @@ is done by modifying attributes at the class level (so that setUpClass can
 know in which mode it is).
 """
 
-import os
 import argparse
-
+import os
 import unittest
 
 ref_mode = "ref"
@@ -122,8 +121,7 @@ class BaseSomaTestCase(unittest.TestCase):
     def __init__(self, testName):
         super().__init__(testName)
         if self.test_mode == run_mode and not self.base_run_data_dir:
-            msg_fmt = "base_run_data_dir must be provided when using '%s' mode"
-            msg = msg_fmt % run_mode
+            msg = f"base_run_data_dir must be provided when using '{run_mode}' mode"
             raise ValueError(msg)
 
     @classmethod
@@ -161,9 +159,10 @@ class SomaTestCaseWithoutRefFiles(BaseSomaTestCase):
     def __init__(self, testName):
         super().__init__(testName)
         if self.test_mode == ref_mode:
-            msg_fmt = "Test %s should not be run in '%s' mode"
-            msg = msg_fmt % (self.__class__.__name__, ref_mode)
-            raise EnvironmentError(msg)
+            msg = (
+                f"Test {self.__class__.__name__} should not be run in '{ref_mode}' mode"
+            )
+            raise OSError(msg)
 
 
 # Should we skip all tests in ref mode (all computation in setUp_ref_mode?)
@@ -194,9 +193,8 @@ class SomaTestCase(BaseSomaTestCase):
     @classmethod
     def setUpClass(cls):
         if not cls.base_ref_data_dir:
-            msg_fmt = "base_ref_data_dir must be provided for test %s"
-            msg = msg_fmt % cls.__name__
-            raise EnvironmentError(msg)
+            msg = f"base_ref_data_dir must be provided for test {cls.__name__}"
+            raise OSError(msg)
         if cls.test_mode == ref_mode:
             try:
                 os.makedirs(cls.private_ref_data_dir())

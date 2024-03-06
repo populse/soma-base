@@ -1,22 +1,28 @@
 """
 Writing of XML minf format.
 """
+
 __docformat__ = "restructuredtext en"
 
 import codecs
-from xml.sax.saxutils import quoteattr as xml_quoteattr
 from xml.sax.saxutils import escape as xml_escape
-from soma.translation import translate as _
-from soma.minf.tree import createMinfReducer
-from soma.minf.writer import MinfWriter
-from soma.minf.tree import listStructure, dictStructure, StartStructure, EndStructure
-from soma.minf.error import MinfError
-from soma.undefined import Undefined
+from xml.sax.saxutils import quoteattr as xml_quoteattr
 
+from soma.minf.error import MinfError
+from soma.minf.tree import (
+    EndStructure,
+    StartStructure,
+    createMinfReducer,
+    dictStructure,
+    listStructure,
+)
+from soma.minf.writer import MinfWriter
 
 # This module only contains a definition of XML tags and attributes.
 # It is designed to allow "import *".
 from soma.minf.xml_tags import *
+from soma.translation import translate as _
+from soma.undefined import Undefined
 
 #: Replacement table for characters that are not allowed in XML
 xml_replacement = dict(
@@ -29,7 +35,6 @@ del xml_replacement["\x0d"]
 
 # ------------------------------------------------------------------------------
 class MinfXMLWriter(MinfWriter):
-
     """
     Specialization of L{MinfWriter} class for writing XML minf format.
     """
@@ -160,8 +165,8 @@ class MinfXMLWriter(MinfWriter):
                     + ">",
                     level,
                 )
-            elif isinstance(minfNode, str):
-                if type(minfNode) is bytes:
+            elif isinstance(minfNode, (str, bytes)):
+                if isinstance(minfNode, bytes):
                     try:
                         minfNode = minfNode.decode("utf-8")
                     except UnicodeDecodeError:

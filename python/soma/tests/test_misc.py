@@ -1,22 +1,23 @@
 # obsolete modules which seem never to be used:
 #
 
-import unittest
 import os
-import sys
-import tempfile
 import shutil
-from soma import singleton
+import tempfile
+import unittest
 
 # import modules even when they are not tested, just to mark them as
 # not tested in coverage tests
-from soma import api
-from soma import activate_virtualenv
-from soma import application
-from soma import archive
-from soma import bufferandfile
-from soma import config
-from soma import controller
+from soma import (
+    activate_virtualenv,
+    api,
+    application,
+    archive,
+    bufferandfile,
+    config,
+    controller,
+    singleton,
+)
 
 try:
     from soma import crypt
@@ -25,40 +26,35 @@ try:
 except ImportError:
     # Crypto (pycrypto package) missing or outdated
     have_crypt = False
-from soma import debug
-from soma import factory
-from soma import fom
-from soma import functiontools
-from soma import global_naming
-from soma import html
+from soma import debug, factory, fom, functiontools, global_naming, html
 
 try:
-    from soma import qimage2ndarray
-    from soma import qt_gui
+    from soma import qimage2ndarray, qt_gui
 except ImportError:
     pass  # PyQt not installed
-from soma import importer
-from soma import info
-from soma import logging
-from soma import minf
-from soma import notification
-from soma import path
-from soma import pipeline
-from soma import plugins
-from soma import safemkdir
-from soma import sandbox
-from soma import somatime
-from soma import sorted_dictionary
-from soma import sqlite_tools
-from soma import stringtools
-from soma import subprocess
-from soma import test_utils
-from soma import thread_calls
-from soma import topological_sort
-from soma import translation
-from soma import undefined
-from soma import utils
-from soma import uuid
+from soma import (
+    importer,
+    info,
+    logging,
+    minf,
+    notification,
+    path,
+    pipeline,
+    plugins,
+    safemkdir,
+    sandbox,
+    somatime,
+    sorted_dictionary,
+    sqlite_tools,
+    stringtools,
+    test_utils,
+    thread_calls,
+    topological_sort,
+    translation,
+    undefined,
+    utils,
+    uuid,
+)
 
 
 class TestSomaMisc(unittest.TestCase):
@@ -87,10 +83,7 @@ class TestSomaMisc(unittest.TestCase):
                 open(pubfile, "wb").write(public_key)
                 open(privfile, "wb").write(private_key)
 
-                msg = (
-                    "I write a super secret message that nobody should "
-                    "see, never.".encode("utf-8")
-                )
+                msg = b"I write a super secret message that nobody should see, never."
                 crypt_msg = crypt.encrypt_RSA(pubfile, msg)
                 self.assertTrue(crypt_msg != msg)
                 uncrypt_msg = crypt.decrypt_RSA(privfile, crypt_msg)
@@ -129,8 +122,8 @@ class TestSomaMisc(unittest.TestCase):
         )
 
     def test_drange(self):
-        l = [x for x in functiontools.drange(2.5, 4.8, 0.6)]
-        self.assertEqual(l, [2.5, 3.1, 3.7, 4.3])
+        dranges = [x for x in functiontools.drange(2.5, 4.8, 0.6)]
+        self.assertEqual(dranges, [2.5, 3.1, 3.7, 4.3])
 
     def test_archive(self):
         d = tempfile.mkdtemp()

@@ -1,13 +1,14 @@
-from .list import (
-    ListStrWidgetFactory,
-    ListIntWidgetFactory,
-    ListFloatWidgetFactory,
-    ListAnyWidgetFactory,
-)
-from . import WidgetFactory
 from functools import partial
 
 from soma.undefined import undefined
+
+from . import WidgetFactory
+from .list import (
+    ListAnyWidgetFactory,
+    ListFloatWidgetFactory,
+    ListIntWidgetFactory,
+    ListStrWidgetFactory,
+)
 
 
 class SetStrWidgetFactory(ListStrWidgetFactory):

@@ -1,6 +1,7 @@
 """
 Base classes for writing various minf formats (XML, HDF5, Python's pickle, etc.)
 """
+
 __docformat__ = "restructuredtext en"
 
 from soma.translation import translate as _
@@ -8,7 +9,6 @@ from soma.translation import translate as _
 
 # ------------------------------------------------------------------------------
 class RegisterMinfWriterClass(type):
-
     """
     RegisterMinfWriterClass is used as metaclass of L{MinfWriter} to automatically
     register all classes derived from L{MinfWriter}.
@@ -24,7 +24,6 @@ class RegisterMinfWriterClass(type):
 
 # ------------------------------------------------------------------------------
 class MinfWriter(metaclass=RegisterMinfWriterClass):
-
     """
     Class derived from MinfWriter are responsible of writing a specific format of
     minf file. This version only support XML format but other formats may

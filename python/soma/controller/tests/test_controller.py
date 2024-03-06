@@ -8,17 +8,16 @@ except ImportError:
 
 from soma.controller import (
     Controller,
-    field,
-    OpenKeyController,
+    Dict,
+    Directory,
+    File,
     List,
     Literal,
-    Union,
-    Dict,
+    OpenKeyController,
     Set,
-    File,
-    Directory,
+    Union,
+    field,
 )
-
 from soma.singleton import Singleton
 from soma.undefined import undefined
 
@@ -103,7 +102,9 @@ class TestController(unittest.TestCase):
         c1.yes_or_no = "no"
         c1.yes_or_no = undefined
         del c1.yes_or_no
-        self.assertRaises(pydantic.ValidationError, setattr, c1, "yes_or_no", "bad value")
+        self.assertRaises(
+            pydantic.ValidationError, setattr, c1, "yes_or_no", "bad value"
+        )
 
     def test_controller4(self):
         class Driver(Controller):
@@ -172,8 +173,7 @@ class TestController(unittest.TestCase):
         manhelp = my_car.field_doc("driver")
         self.assertEqual(
             manhelp,
-            "driver [Controller[%s.Driver]]: the guy who would better take a bus"
-            % __name__,
+            f"driver [Controller[{__name__}.Driver]]: the guy who would better take a bus",
         )
 
     def test_dynamic_controllers(self):

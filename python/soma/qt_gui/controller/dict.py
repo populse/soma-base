@@ -1,8 +1,8 @@
+from soma.controller.field import parse_type_str, subtypes, type_str
 from soma.qt_gui.qt_backend import Qt
-from . import WidgetFactory
-from ..collapsible import CollapsibleWidget
-from soma.controller.field import subtypes, type_str, parse_type_str
 from soma.utils.weak_proxy import proxy_method
+
+from ..collapsible import CollapsibleWidget
 
 
 class DictWidgetFactory(WidgetFactory):

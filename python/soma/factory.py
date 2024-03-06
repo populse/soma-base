@@ -20,8 +20,7 @@ def find_subclasses_in_module(module_name, parent_class):
             and item.__module__ == module_name
             and issubclass(item, parent_class)
         )
-    for i in find_items_in_module(module_name, check):
-        yield i
+    yield from find_items_in_module(module_name, check)
 
 
 def find_items_in_module(module_name, check):
@@ -41,10 +40,9 @@ def find_items_in_module(module_name, check):
     path = getattr(module, "__path__", None)
     if path:
         for importer, submodule_name, ispkg in iter_modules(path):
-            for j in find_items_in_module(
+            yield from find_items_in_module(
                 "%s.%s" % (module.__name__, submodule_name), check
-            ):
-                yield j
+            )
 
 
 class ClassFactory:

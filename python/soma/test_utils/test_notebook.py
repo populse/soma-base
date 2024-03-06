@@ -1,8 +1,8 @@
 import os
-import tempfile
 import re
+import subprocess
 import sys
-import soma.subprocess
+import tempfile
 
 try:
     import nbformat
@@ -36,8 +36,8 @@ def _notebook_run(path, output_nb, timeout=60):
         "--to",
         "notebook",
         "--execute",
-        "--ExecutePreprocessor.timeout=%d" % timeout,
-        "--ExecutePreprocessor.kernel_name=python%d" % sys.version_info[0],
+        f"--ExecutePreprocessor.timeout={timeout}",
+        f"--ExecutePreprocessor.kernel_name=python{sys.version_info[0]}",
         "--output",
         output_nb,
         path,
@@ -85,7 +85,7 @@ def notebook_run(path, timeout=60):
         try:
             # call _notebook_run as an external process because it will
             # sys.exit()
-            ret_code = soma.subprocess.call(args)
+            _ = subprocess.call(args)
 
             nb = nbformat.read(fout[1], nbformat.current_nbformat)
         except Exception as e:

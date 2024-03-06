@@ -24,7 +24,8 @@ TODO:
 """
 
 import numpy
-from soma.qt_gui.qt_backend.QtGui import QImage, QColor
+
+from soma.qt_gui.qt_backend.QtGui import QColor, QImage
 
 bgra_dtype = numpy.dtype(
     {

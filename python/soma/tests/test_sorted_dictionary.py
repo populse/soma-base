@@ -1,9 +1,7 @@
-import unittest
-import shutil
-import os
-import tempfile
-from soma.sorted_dictionary import SortedDictionary
 import pickle
+import unittest
+
+from soma.sorted_dictionary import SortedDictionary
 
 
 class TestSortedDictionary(unittest.TestCase):

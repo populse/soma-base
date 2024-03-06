@@ -145,15 +145,15 @@ At lower level, they are used through several classes:
 
 """
 
-import sys
+import json
 import os
 import os.path as osp
-import stat
-import time
-import re
 import pprint
+import re
 import sqlite3
-import json
+import stat
+import sys
+import time
 
 try:
     import bz2
@@ -161,13 +161,13 @@ except ImportError:
     bz2 = None
 
 from collections import OrderedDict
+
 from soma.controller import List, undefined
 
 try:
     import yaml
 
     class json_reader:
-
         """
         This class has a single static method load that loads an
         JSON file with two features not provided by all JSON readers:
@@ -204,14 +204,13 @@ def deep_update(update, original):
     Subdict's won't be overwritten but also updated.
     """
     for key, value in original.items():
-        if not key in update:
+        if key not in update:
             update[key] = value
         elif isinstance(value, dict):
             deep_update(update[key], value)
         elif value != update[key]:
             raise ValueError(
-                "In deep_update, for key %s, cannot merge %s and %s"
-                % (repr(key), repr(update[key]), repr(value))
+                f"In deep_update, for key {key!r}, cannot merge {update[key]!r} and {value!r}"
             )
 
 
@@ -229,9 +228,8 @@ def read_json(file_name):
         else:
             extra_msg = ""
         raise ValueError(
-            "%s: %s. This may be due to yaml module not installed.%s"
-            % (file_name, str(e), extra_msg)
-        )
+            f"{file_name}: {e}. This may be due to yaml module not installed.{extra_msg}"
+        ) from e
 
 
 class DirectoryAsDict:
@@ -250,14 +248,13 @@ class DirectoryAsDict:
             self.cache = cache
 
     def __repr__(self):
-        return "<DirectoryAsDict( %s )>" % repr(self.directory)
+        return f"<DirectoryAsDict( {self.directory!r} )>"
 
     def iteritems(self):
         st_content = self.cache.get_directory(self.directory)
         if st_content is not None:
             st, content = st_content
-            for i in content.items():
-                yield i
+            yield from content.items()
         else:
             try:
                 listdir = os.listdir(self.directory)
@@ -302,8 +299,11 @@ class DirectoryAsDict:
             for name in listdir:
                 if debug and count % 100 == 0:
                     debug.info(
-                        "%s files=%d, directories=%d, size=%d"
-                        % (time.asctime(), files + links, directories, files_size)
+                        f"%s files=%d, directories=%d, size=%d",
+                        time.asctime(),
+                        files + links,
+                        directories,
+                        files_size,
                     )
                 path_size += len(name)
                 count += 1
@@ -364,8 +364,11 @@ class DirectoryAsDict:
     ):
         if debug and count % 100 == 0:
             debug.info(
-                "%s files=%d, directories=%d, size=%d"
-                % (time.asctime(), files + links, directories, files_size)
+                "%s files=%d, directories=%d, size=%d",
+                time.asctime(),
+                files + links,
+                directories,
+                files_size,
             )
         count += 1
         for name, content in dirdict.items():
@@ -453,7 +456,6 @@ class DirectoriesCache:
 
 
 class FileOrganizationModelManager:
-
     """
     Manage the discovery and instantiation of available FileOrganizationModel
     (FOM). A FOM can be represented as a YAML/JSON file (or a series of
@@ -497,7 +499,7 @@ class FileOrganizationModelManager:
                                 name = d.get("fom_name")
                                 if not name:
                                     raise ValueError(
-                                        "file %s does not contain fom_name" % main_file
+                                        f"file {main_file} does not contain fom_name"
                                     )
                                 self._cache[name] = full_path
                     elif i.endswith(".json") or i.endswith(".yaml"):
@@ -506,7 +508,7 @@ class FileOrganizationModelManager:
                             name = d.get("fom_name")
                             if not name:
                                 raise ValueError(
-                                    "file %s does not contain fom_name" % full_path
+                                    f"file {full_path} does not contain fom_name"
                                 )
                             self._cache[name] = full_path
         # print('    find_foms done: %f s' % (time.time() - t0))
@@ -713,11 +715,9 @@ class FileOrganizationModels:
                         else:
                             try:
                                 pattern, formats, rule_attributes = rule
-                            except Exception as e:
+                            except Exception:
                                 print(
-                                    "error in FOM: %s, process: %s, param: "
-                                    "%s, rule:" % (fom_name, process, parameter),
-                                    rule,
+                                    f"error in FOM: {fom_name}, process: {process}, param: {parameter}, rule: {rule}"
                                 )
                                 raise
                         rule_attributes["fom_process"] = process
@@ -745,8 +745,7 @@ class FileOrganizationModels:
             for rule_pattern, rule_attributes in self.rules:
                 if debug:
                     debug.debug(
-                        "selected_rules: %s, %s"
-                        % (repr(rule_pattern), repr(rule_attributes))
+                        "selected_rules: %r, %r" % (rule_pattern, rule_attributes)
                     )
                 rule_formats = rule_attributes.get("fom_formats", [])
                 if format:
@@ -758,8 +757,8 @@ class FileOrganizationModels:
                     elif format not in rule_formats:
                         if debug:
                             debug.debug(
-                                "selected_rules: -- format %s not in %s"
-                                % (repr(format), repr(rule_formats))
+                                "selected_rules: -- format %r not in %r"
+                                % (format, rule_formats)
                             )
                         continue
                 keep = True
@@ -770,8 +769,8 @@ class FileOrganizationModels:
                     if rule_value is None or rule_value != selection_value:
                         if debug:
                             debug.debug(
-                                "selected_rules: -- selection value %s != rule value %s"
-                                % (repr(selection_value), repr(rule_value))
+                                "selected_rules: -- selection value %r != rule value %r"
+                                % (selection_value, rule_value)
                             )
                         keep = False
                         break
@@ -780,8 +779,7 @@ class FileOrganizationModels:
                         debug.debug("selected_rules: ++")
                     yield (rule_pattern, rule_attributes)
         else:
-            for rule in self.rules:
-                yield rule
+            yield from self.rules
 
     def _expand_json_patterns(self, json_patterns, parent, parent_attributes):
         attributes = parent_attributes.copy()
@@ -917,7 +915,6 @@ class FileOrganizationModels:
 
 
 class PathToAttributes:
-
     """
     Utility class for file paths -> attributes set transformation.
     Part of the FOM engine.
@@ -974,8 +971,7 @@ class PathToAttributes:
                         for format in rule_formats:
                             if format not in foms.formats:
                                 print(
-                                    'format "%s" not if FOM "%s"'
-                                    % (format, foms.fom_names)
+                                    f'format "{format}" not if FOM "{foms.fom_names}"'
                                 )
                             extension = foms.formats[format]
                             d = rule_attributes.copy()
@@ -1067,9 +1063,7 @@ class PathToAttributes:
                         pattern = pattern % pattern_attributes
                         match = re.match(pattern, name_no_ext)
                         if log:
-                            log.debug(
-                                "try %s for %s" % (repr(pattern), repr(name_no_ext))
-                            )
+                            log.debug("try %r for %r", pattern, name_no_ext)
                         if match:
                             if log:
                                 log.debug("match " + pattern)
@@ -1088,28 +1082,24 @@ class PathToAttributes:
                                 full_path = path + [name]
                                 if log:
                                     log.debug(
-                                        "directory matched: %s %s"
-                                        % (
-                                            repr(full_path),
-                                            (
-                                                repr([i[0] for i in content.items()])
-                                                if content
-                                                else None
-                                            ),
-                                        )
+                                        "directory matched: %r %r",
+                                        full_path,
+                                        (
+                                            [i[0] for i in content.items()]
+                                            if content
+                                            else None
+                                        ),
                                     )
                                 matched_directories.append(
                                     (full_path, subpattern, new_attributes)
                                 )
                             else:
                                 if log:
-                                    log.debug(
-                                        "no directory matched for %s" % repr(name)
-                                    )
+                                    log.debug("no directory matched for %r", name)
                             if rules is not None and ext:
                                 matched = branch_matched = True
                                 if log:
-                                    log.debug("extension matched: " + repr(ext))
+                                    log.debug("extension matched: %r", ext)
                                 for rule_attributes in rules:
                                     yield_attributes = new_attributes.copy()
                                     yield_attributes.update(rule_attributes)
@@ -1128,7 +1118,7 @@ class PathToAttributes:
                                 break
                             else:
                                 if log:
-                                    log.debug("no extension matched: " + repr(ext))
+                                    log.debug("no extension matched: %r", ext)
                         if stop_parsing:
                             break
                     if stop_parsing:
@@ -1164,8 +1154,7 @@ class PathToAttributes:
                 log.debug("?-> " + "/".join(path + [name]) + " None")
             yield path + [name], st, None
             if content is not None:
-                for i in self._parse_unknown_directory(content, path + [name], log):
-                    yield i
+                yield from self._parse_unknown_directory(content, path + [name], log)
 
     def parse_path(self, path, single_match=False, log=None):
         dirdict = DirectoryAsDict.paths_to_dict(path)
@@ -1178,7 +1167,6 @@ class PathToAttributes:
 
 
 class AttributesToPaths:
-
     """
     Utility class for attributes set -> file paths transformation.
     Part of the FOM engine.
@@ -1215,13 +1203,12 @@ class AttributesToPaths:
             debug.debug(sql)
         self._db.execute(sql)
         columns = [
-            "_%s" % i
-            for i in self.all_attributes + ("fom_first", "fom_preferred_format")
+            f"_{i}" for i in self.all_attributes + ("fom_first", "fom_preferred_format")
         ]
         sql = "CREATE INDEX rules_index ON rules (%s)" % ",".join(columns)
         self._db.execute(sql)
         for i in columns:
-            sql = "CREATE INDEX rules%s_index ON rules (%s)" % (i, i)
+            sql = f"CREATE INDEX rules{i}_index ON rules ({i})"
             self._db.execute(sql)
         sql_insert = "INSERT INTO rules VALUES ( %s )" % ",".join(
             "?" for i in range(len(self.all_attributes) + 3)
@@ -1274,7 +1261,7 @@ class AttributesToPaths:
 
     def find_paths(self, attributes={}, debug=None):
         if debug:
-            debug.debug("!find_path! %s" % repr(attributes))
+            debug.debug("!find_path! %r", attributes)
         d = self.selection.copy()
         d.update(attributes)
         attributes = d
@@ -1292,17 +1279,12 @@ class AttributesToPaths:
                     default_values.append((attribute, default_value))
                     if attribute not in self.non_discriminant_attributes:
                         select.append(
-                            "(_"
-                            + attribute
-                            + " IN ('','%s') OR _" % default_value
-                            + attribute
-                            + " IS NULL )"
+                            f"(_{attribute} IN ('','{default_value}') OR "
+                            f"_{attribute} IS NULL )"
                         )
                 else:
                     if attribute not in self.non_discriminant_attributes:
-                        select.append(
-                            "(_" + attribute + " != '' OR _" + attribute + " IS NULL )"
-                        )
+                        select.append(f"(_{attribute} != '' OR _{attribute} IS NULL )")
             elif attribute == "fom_format":
                 selected_format = attributes.get("fom_format")
                 if selected_format == "fom_first":
@@ -1337,7 +1319,7 @@ class AttributesToPaths:
         )
         if debug:
             debug.debug(
-                "!sql! %s" % (sql.replace("?", "%s") % tuple(repr(i) for i in values))
+                "!sql! %s", sql.replace("?", "%s") % tuple(repr(i) for i in values)
             )
         for row in self._db.execute(sql, values):
             rule_index, format = row[:2]
@@ -1357,9 +1339,7 @@ class AttributesToPaths:
             # bool_output=True
 
             if debug:
-                debug.debug(
-                    "!rule matching! %s" % repr((rule, fom_formats, rule_attributes))
-                )
+                debug.debug("!rule matching! %r", (rule, fom_formats, rule_attributes))
             if format:
                 ext = self.foms.formats[format]
                 if ext != "":
@@ -1390,13 +1370,13 @@ class AttributesToPaths:
                         except KeyError:
                             continue
                         if debug:
-                            debug.debug("!format from fom_formats! %s: %s" % (f, path))
+                            debug.debug("!format from fom_formats! %s: %s", f, path)
                         r = self._join_directory(
                             path, rule_attributes, selection_attributes
                         )
                         if r:
                             if debug:
-                                debug.debug("!-->! %s" % repr(r))
+                                debug.debug("!-->! %r", r)
                             yield r
                 else:
                     default_attributes.update(attributes)
@@ -1405,20 +1385,20 @@ class AttributesToPaths:
                     except KeyError:
                         continue
                     if debug:
-                        debug.debug("!no format! %s" % path)
+                        debug.debug("!no format! %s", path)
                     r = self._join_directory(
                         path, rule_attributes, selection_attributes
                     )
                     if r:
                         if debug:
-                            debug.debug("!-->! %s" % repr(r))
+                            debug.debug("!-->! %r", r)
                         yield r
 
     def find_discriminant_attributes(self, **selection):
         result = []
         if self.rules:
             for attribute in self.all_attributes:
-                sql = 'SELECT DISTINCT "%s" FROM rules' % ("_" + attribute)
+                sql = f'SELECT DISTINCT "_{attribute}" FROM rules'
                 if selection:
                     sql += " WHERE " + " AND ".join("_" + i + " = ?" for i in selection)
                     values = list(self._db.execute(sql, list(selection.values())))
@@ -1432,7 +1412,7 @@ class AttributesToPaths:
         result = {}
         if self.rules:
             for attribute in self.all_attributes:
-                sql = 'SELECT DISTINCT "%s" FROM rules' % ("_" + attribute)
+                sql = f'SELECT DISTINCT "_{attribute}" FROM rules'
                 if selection:
                     sql += " WHERE " + " AND ".join("_" + i + " = ?" for i in selection)
                     values = list(self._db.execute(sql, list(selection.values())))
@@ -1486,7 +1466,7 @@ class AttributesToPaths:
             formats = self.allowed_formats_for_parameter(process_name, param)
         else:
             raise KeyError(
-                "Either formats or (process_name and param) should " "be passed"
+                "Either formats or (process_name and param) should be passed"
             )
         exts = set()
         while formats:

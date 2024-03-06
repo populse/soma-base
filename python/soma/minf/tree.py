@@ -7,12 +7,14 @@ A minf tree is always accessed via an iterator on its content. This content is c
 * organization: `NeuroSpin <http://www.neurospin.org>`_
 * license: `CeCILL B <http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html>`_
 """
+
 __docformat__ = "restructuredtext en"
 
 import sys
+
+from soma.minf.error import MinfError
 from soma.translation import translate as _
 from soma.undefined import Undefined
-from soma.minf.error import MinfError
 
 try:
     from soma.signature.api import HasSignature, Sequence
@@ -38,7 +40,6 @@ dictStructure = "dict"
 
 # ------------------------------------------------------------------------------
 class StartStructure:
-
     """
     When iterating over a minf tree, a L{StartStructure} indicate the beginning of
     a subtree. Subtrees are identified by their type which is a string
@@ -94,7 +95,6 @@ class StartStructure:
 
 # ------------------------------------------------------------------------------
 class EndStructure:
-
     """
     When iterating over a minf tree, an L{EndStructure} indicate the end of
     a subtree.
@@ -109,7 +109,6 @@ class EndStructure:
 
 # ------------------------------------------------------------------------------
 class Reference:
-
     """
     EXPERIMENTAl: the reference system is not fully functional.
     When iterating over a minf tree, an L{Reference} correspond to a structure
@@ -143,7 +142,6 @@ def createMinfReducer(name):
 
 # ------------------------------------------------------------------------------
 class MinfReducer:
-
     """
     Class to convert a Python object into a minf tree.
     """
@@ -226,8 +224,7 @@ class MinfReducer:
     def reduce(self, *args):
         for o in args:
             typeReducer = self.getTypeReducer(o.__class__)
-            for minfNode in typeReducer(self, o):
-                yield minfNode
+            yield from typeReducer(self, o)
 
     def atomReducer(reducer, atom):
         return (atom,)
@@ -239,8 +236,7 @@ class MinfReducer:
             yield StartStructure(listStructure, length=len(sequence))
         except TypeError:
             yield StartStructure(listStructure)
-        for minfNode in reducer.reduce(*sequence):
-            yield minfNode
+        yield from reducer.reduce(*sequence)
         yield EndStructure(listStructure)
 
     sequenceReducer = staticmethod(sequenceReducer)
@@ -286,8 +282,7 @@ class MinfReducer:
     hasSignatureToDict = staticmethod(hasSignatureToDict)
 
     def hasSignatureReducer(reducer, o):
-        for minfNode in reducer.reduce(MinfReducer.hasSignatureToDict(o)):
-            yield minfNode
+        yield from reducer.reduce(MinfReducer.hasSignatureToDict(o))
 
     hasSignatureReducer = staticmethod(hasSignatureReducer)
 
@@ -334,7 +329,6 @@ def createMinfExpander(name):
 
 # ------------------------------------------------------------------------------
 class MinfExpander:
-
     """
     Class to convert a minf tree into a Python object.
     """

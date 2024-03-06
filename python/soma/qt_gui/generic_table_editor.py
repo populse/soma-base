@@ -1,6 +1,7 @@
-from soma.qt_gui.qt_backend.Qt import *
-import re
 import os
+import re
+
+from soma.qt_gui.qt_backend.Qt import *
 
 
 class GenericTableEditor(QWidget):
@@ -345,7 +346,7 @@ class GenericTableEditor(QWidget):
             for row in range(s.topRow(), s.bottomRow() + 1):
                 for col in range(s.leftColumn(), s.rightColumn() + 1):
                     cell = [row, col]
-                    if not cell in selectedCells:
+                    if cell not in selectedCells:
                         selectedCells.append(cell)
                         selectedCellsContent.append(
                             str(self.gui_table.item(row, col).text())

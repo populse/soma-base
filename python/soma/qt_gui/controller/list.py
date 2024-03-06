@@ -5,13 +5,10 @@ try:
 except ImportError:
     from pydantic import ValidationError
 
-from ..qt_backend import Qt
-from . import WidgetFactory, ListItemInteraction, WidgetsGrid, DefaultWidgetFactory
-from ..collapsible import CollapsibleWidget
-from ..timered_widgets import TimeredQLineEdit
 from soma.undefined import undefined
-from ...controller import subtypes, type_default_value
 from soma.utils.weak_proxy import proxy_method
+
+from ...controller import subtypes, type_default_value
 
 
 class ListStrWidgetFactory(WidgetFactory):

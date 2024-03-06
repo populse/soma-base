@@ -3,17 +3,18 @@ QLineEditModificationTimer and TimeredQLineEdit classes associate a
 QtCore.QTimer to a QtGui.QLineEdit in order to signal user
 modification only after an inactivity period.
 """
+
 __docformat__ = "restructuredtext en"
 
-from soma.qt_gui.qt_backend import QtCore
-from soma.qt_gui.predef_lineedit import QPredefLineEdit
 import weakref
+
+from soma.qt_gui.predef_lineedit import QPredefLineEdit
+from soma.qt_gui.qt_backend import QtCore
 
 # -------------------------------------------------------------------------
 
 
 class QLineEditModificationTimer(QtCore.QObject):
-
     """
     A QLineEditModificationTimer instance is associated to a
     QtGui.QLineEdit instance, it listens all user modification (Qt
@@ -110,7 +111,6 @@ class QLineEditModificationTimer(QtCore.QObject):
 
 # -------------------------------------------------------------------------
 class TimeredQLineEdit(QPredefLineEdit):
-
     """
     Create a QLineEdit instance that has an private attribute
     containing a QLineEditModificationTimer associated to self. Whenever

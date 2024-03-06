@@ -3,9 +3,6 @@ try:
 except ImportError:
     from pydantic import ValidationError
 
-from soma.qt_gui.qt_backend import Qt
-from . import WidgetFactory
-from soma.undefined import undefined
 from soma.controller import literal_values
 from soma.utils.weak_proxy import proxy_method
 

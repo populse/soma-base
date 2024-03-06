@@ -1,19 +1,18 @@
 """
 Utils for socket communication
 """
-import threading
-import socket
-import errno
-import time
-import sys
 
+import errno
 import queue
+import socket
+import sys
+import threading
+import time
 
 from soma.qt_gui.qt_backend.QtCore import QObject, QSocketNotifier
 
 
 class Socket(QObject):
-
     """
     Opens a connection to a socket server and provides methods to read from and write to socket streams.
     To handle specific message format, redefine readMessage method. By default it reads a line on the socket.
@@ -160,7 +159,9 @@ class Socket(QObject):
                 try:
                     msg = self._messages.get(True, timeout)
                 except queue.Empty as e:
-                    raise OSError(errno.ETIMEDOUT, "socket communication timed out")
+                    raise OSError(
+                        errno.ETIMEDOUT, "socket communication timed out"
+                    ) from e
             finally:
                 self.lock.release()
         else:
@@ -267,9 +268,13 @@ class Socket(QObject):
                     time.sleep(0.02)
                     waitedTime += 0.02
                     if waitedTime >= timeout:
-                        raise OSError(errno.ETIMEDOUT, "socket communication timed out")
+                        raise OSError(
+                            errno.ETIMEDOUT, "socket communication timed out"
+                        ) from e
                 else:
-                    raise OSError(errno.EPIPE, "socket communication interrupted")
+                    raise OSError(
+                        errno.EPIPE, "socket communication interrupted"
+                    ) from e
         return msg.decode()
 
     def readMessage(self, timeout=30):
