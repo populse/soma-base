@@ -8,7 +8,7 @@ except ImportError:
 from soma.undefined import undefined
 from soma.utils.weak_proxy import proxy_method
 
-from ...controller import subtypes, type_default_value
+from ...controller import WidgetFactory, subtypes, type_default_value
 
 
 class ListStrWidgetFactory(WidgetFactory):
