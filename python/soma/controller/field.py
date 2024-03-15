@@ -3,7 +3,7 @@ import re
 import sys
 import typing
 
-# Import allsupported types from typing
+# Import all supported types from typing
 from typing import (
     Any,
     Literal,
@@ -12,16 +12,10 @@ from typing import (
 
 from soma.undefined import undefined
 
-if sys.version_info < (3, 9):
-    from typing import (
-        Dict,
-        Set,
-        Tuple,
-    )
-else:
-    Tuple = tuple
-    Dict = dict
-    Set = set
+# More supported types, in Python < 3.9 style
+Tuple = tuple
+Dict = dict
+Set = set
 
 
 def _conlist_str(name, type_):
