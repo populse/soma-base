@@ -11,6 +11,7 @@ BRAINVISA_SHARE
 """
 
 import os
+from pathlib import Path
 
 import soma.info
 
@@ -75,7 +76,12 @@ def find_soma_root_dir():
         if not soma_root_dir:
             soma_root_dir = os.environ.get("CONDA_PREFIX")
             if not soma_root_dir:
-                raise EnvironmentError("cannot find soma root directory")
+                soma_root_dir = Path(__file__).parent
+                for i in range(3):
+                    soma_root_dir = soma_root_dir.parent
+                    if soma_root_dir.name in ("lib", "src"):
+                        soma_root_dir = soma_root_dir.parent
+                        return str(soma_root_dir)
     return soma_root_dir
 
 
