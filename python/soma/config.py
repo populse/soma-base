@@ -11,6 +11,7 @@ BRAINVISA_SHARE
 """
 
 import os
+from pathlib import Path
 
 import soma.info
 
@@ -63,4 +64,26 @@ def _init_default_brainvisa_share():
     return share
 
 
+def find_soma_root_dir():
+    """Return the path of the base directory where software is installed. In a
+    developpement environment this corresponds to the build directory. In
+    user environments this corresponds to the install directory (which is
+    $CONDA_PREFIX in the case of a Conda, Mamba or Pixi environment)
+    """
+    soma_root_dir = os.environ.get("SOMA_ROOT")
+    if not soma_root_dir:
+        soma_root_dir = os.environ.get("CASA_BUILD")
+        if not soma_root_dir:
+            soma_root_dir = os.environ.get("CONDA_PREFIX")
+            if not soma_root_dir:
+                soma_root_dir = Path(__file__).parent
+                for i in range(3):
+                    soma_root_dir = soma_root_dir.parent
+                    if soma_root_dir.name in ("lib", "src"):
+                        soma_root_dir = soma_root_dir.parent
+                        return str(soma_root_dir)
+    return soma_root_dir
+
+
 BRAINVISA_SHARE = _init_default_brainvisa_share()
+soma_root_dir = find_soma_root_dir()
