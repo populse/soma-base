@@ -520,7 +520,7 @@ class BaseControllerWidget:
         """
         try:
             # we cannot know if another inheritance will need args or not...
-            kwargs['depth'] = depth
+            kwargs["depth"] = depth
             super().__init__(*args, **kwargs)
         except TypeError:
             super().__init__()

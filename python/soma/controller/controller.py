@@ -632,9 +632,7 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
                 if field:
                     result = getattr(field, name)
                     return result
-        raise AttributeError(
-            f"{self.__class__!r} object has no attribute {name!r}"
-        )
+        raise AttributeError(f"{self.__class__!r} object has no attribute {name!r}")
 
     def getattr(self, name, default=undefined):
         """

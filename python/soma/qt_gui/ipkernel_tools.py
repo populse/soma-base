@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-'''
+"""
 This module contains tools to replace a Qt application which will propose to
 open a Qtconsole jupyter shell from within the application (like the anatomist
 or brainvisa commands). Recent versions of jupyter/ipython/qtconsole cannot be
@@ -54,24 +54,25 @@ In the main script of your GUI application, do::
 
 As said before, the last function, :func:`start_ipkernel_qt_engine`, will never
 return. So you have to setup an exit mechanism by your own.
-'''
+"""
 
 import sys
 import os
+
 try:
     from ipykernel import eventloops
 
-    if hasattr(eventloops, 'loop_qt4'):
+    if hasattr(eventloops, "loop_qt4"):
         # ipykernel v7 needs a patch for qt6
         # v8 is OK
 
         def _loop_qt(app):
-            if not getattr(app, '_in_event_loop', False):
+            if not getattr(app, "_in_event_loop", False):
                 app._in_event_loop = True
                 app.exec()
                 app._in_event_loop = False
 
-        @eventloops.register_integration('qt', 'qt5')
+        @eventloops.register_integration("qt", "qt5")
         def loop_qt5(kernel):
             return eventloops.loop_qt4(kernel)
 
@@ -94,8 +95,7 @@ def restore_stdout():
 
 
 def before_start_ipkernel():
-    ''' To be called before instantiating a QApplication
-    '''
+    """To be called before instantiating a QApplication"""
 
     from soma.qt_gui.qt_backend import QtWidgets, QtCore
 
@@ -107,20 +107,20 @@ def before_start_ipkernel():
         # NOTE in recent ipykernels, Qt doesn't call callbacks after
         # QApplication.quit() so this doesn't work any longer.
         QtWidgets.QApplication.instance().aboutToQuit.connect(
-            sys.exit, QtCore.Qt.QueuedConnection)
+            sys.exit, QtCore.Qt.QueuedConnection
+        )
 
 
 def start_ipkernel_qt_engine():
-    ''' Starts the IPython engine and Qt event loop. Never returns.
-    '''
+    """Starts the IPython engine and Qt event loop. Never returns."""
 
     from soma.qt_gui import qt_backend
     from soma.qt_gui.qt_backend import QtCore, QtWidgets
 
     if app is not None:
         # init Qt GUI in ipython
-        os.environ['QT_API'] = qt_backend.get_qt_backend().lower()
-        sys.argv.insert(1, '--gui=qt')
+        os.environ["QT_API"] = qt_backend.get_qt_backend().lower()
+        sys.argv.insert(1, "--gui=qt")
         # purge argv for args meant for anatomist
         while len(sys.argv) > 2:
             del sys.argv[-1]
@@ -134,7 +134,7 @@ def start_ipkernel_qt_engine():
 
         # will never return, exit is done via the callback above
         app.launch_new_instance()
-        print('EXIT')
+        print("EXIT")
     else:
         # without ipython, just run the Qt loop
         result = QtWidgets.QApplication.instance().exec()
