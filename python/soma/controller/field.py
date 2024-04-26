@@ -533,8 +533,7 @@ def field(
     )
     if name is not None:
         result.name = name
-    if type_ is not None:
-        result.type = Union[type_, type(undefined)]
+    result.type = Union[type_, type(undefined)]
     return field_class(result)
 
 
