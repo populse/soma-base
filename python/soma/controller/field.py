@@ -479,7 +479,7 @@ def field(
         else:
             metadata = metadata.copy()
         if force_field_type is None:
-            type_ = type_.type
+            type_ = getattr(type_, "type", None)
         else:
             type_ = force_field_type
     elif metadata is None:

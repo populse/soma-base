@@ -708,21 +708,22 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
             super().__setattr__(name, getattr(dyn_field, name))
         else:
             field = self.__dataclass_fields__[name]
-            type_ = field.type.__args__[0]
-            if (
-                not isinstance(value, Controller)
-                and isinstance(value, dict)
-                and isinstance(type_, type)
-                and issubclass(type_, Controller)
-            ):
-                controller = getattr(self, name, undefined)
-                if controller is undefined:
-                    controller = type_()
-                    controller.import_dict(value)
-                    value = controller
-                else:
-                    controller.import_dict(value, clear=True)
-                    return
+            if field.type is not None:
+                type_ = field.type.__args__[0]
+                if (
+                    not isinstance(value, Controller)
+                    and isinstance(value, dict)
+                    and isinstance(type_, type)
+                    and issubclass(type_, Controller)
+                ):
+                    controller = getattr(self, name, undefined)
+                    if controller is undefined:
+                        controller = type_()
+                        controller.import_dict(value)
+                        value = controller
+                    else:
+                        controller.import_dict(value, clear=True)
+                        return
             super().__setattr__(name, value)
 
     def fields(self, instance_fields=True, class_fields=True):
