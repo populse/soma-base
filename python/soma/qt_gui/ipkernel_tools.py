@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 
 """
 This module contains tools to replace a Qt application which will propose to
@@ -56,8 +55,8 @@ As said before, the last function, :func:`start_ipkernel_qt_engine`, will never
 return. So you have to setup an exit mechanism by your own.
 """
 
-import sys
 import os
+import sys
 
 try:
     from ipykernel import eventloops
@@ -97,7 +96,7 @@ def restore_stdout():
 def before_start_ipkernel():
     """To be called before instantiating a QApplication"""
 
-    from soma.qt_gui.qt_backend import QtWidgets, QtCore
+    from soma.qt_gui.qt_backend import QtCore, QtWidgets
 
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_ShareOpenGLContexts)
     qapp = QtWidgets.QApplication([])
