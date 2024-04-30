@@ -47,10 +47,11 @@ qt_backend = None
 make_compatible_qt5 = False
 
 
-class QtImporter:
-    def find_module(self, fullname, path=None):
-        modsplit = fullname.split(".")
-        modpath = ".".join(modsplit[:-1])
+class QtImporter(object):
+
+    def find_spec(self, fullname, path=None, target=None):
+        modsplit = fullname.split('.')
+        modpath = '.'.join(modsplit[:-1])
         module_name = modsplit[-1]
         if modpath != __name__ or fullname == "sip":
             return None
@@ -75,14 +76,23 @@ class QtImporter:
                 try:
                     found = importlib.util.find_spec(module_name)
                     if found is not None:
-                        return self
+                        found.loader = self
+                        return found
                     else:
                         return None
                 except ImportError:
                     return None
-        return self
+        found.loader = self
+        return found
 
-    def load_module(self, name):
+    def exec_module(self, module):
+        # this method can be used to execute the module in the module
+        # namespace, which can include adding variables, functions, etc.
+        pass
+
+    def create_module(self, spec=None, name=None):
+        if name is None:
+            name = spec.name
         qt_backend = get_qt_backend()
         module_name = name.split(".")[-1]
         imp_module_name = module_name
@@ -133,7 +143,7 @@ class QtImporter:
                 mods.remove("Qt")
             for mod in mods:
                 try:
-                    psmods.append(self.load_module(".".join(base + [mod])))
+                    psmods.append(self.create_module(name='.'.join(base + [mod])))
                 except ImportError:
                     pass
             patch_main_modules(psmods)
