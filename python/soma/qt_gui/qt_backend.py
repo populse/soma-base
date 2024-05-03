@@ -467,28 +467,38 @@ def ensure_compatible_qt5():
         if '%s.QtWebKitWidgets' % qt_backend in sys.modules:
             qtwebkitwidgets = sys.modules['%s.QtWebKitWidgets' % qt_backend]
         if qtgui and qtwidgets is None:
-            from . import QtWidgets
+            importlib.import_module(f'{qt_backend}.QtWidgets')
+            QtWidgets = sys.modules[f'{qt_backend}.QtWidgets']
             qtwidgets = sys.modules['%s.QtWidgets' % qt_backend]
         elif qtwidgets and qtgui is None:
-            from . import QtGui
+            importlib.import_module(f'{qt_backend}.QtGui')
+            QtGui = sys.modules[f'{qt_backend}.QtGui']
             qtgui = sys.modules['%s.QtGui' % qt_backend]
         elif qtgui and qtwidgets:
-            from . import QtCore
+            importlib.import_module(f'{qt_backend}.QtCore')
+            QtCore = sys.modules[f'{qt_backend}.QtCore']
             patch_qt5_modules(QtCore, qtgui, qtwidgets)
         if qtwebkit and qtwebkitwidgets is None:
-            from . import QtWebKitWidgets
+            importlib.import_module(f'{qt_backend}.QtWebKitWidgets')
+            qtwebkitwidgets = sys.modules[f'{qt_backend}.QtWebKitWidgets']
             qtwebkitwidgets = sys.modules['%s.QtWebKitWidgets' % qt_backend]
         elif qtwebkitwidgets and qtwebkit is None:
-            from . import QtWebKit
+            importlib.import_module(f'{qt_backend}.QtWebKit')
+            qtwebkit = sys.modules[f'{qt_backend}.QtWebKit']
         elif qtwebkit and qtwebkitwidgets:
             patch_qt5_webkit_modules(qtwebkit, qtwebkitwidgets)
     else:
         if '%s.QtGui' % qt_backend in sys.modules:
-            from . import QtWidgets
-        from . import QtCore, QtGui
+            importlib.import_module(f'{qt_backend}.QtWidgets')
+            QtWidgets = sys.modules[f'{qt_backend}.QtWidgets']
+        importlib.import_module(f'{qt_backend}.QtCore')
+        QtCore = sys.modules[f'{qt_backend}.QtCore']
+        importlib.import_module(f'{qt_backend}.QtGui')
+        QtGui = sys.modules[f'{qt_backend}.QtGui']
         patch_qt4_modules(QtCore, QtGui)
-    if qt_backend in('PyQt4', 'PyQt5', 'PyQt6'):
-        from . import QtCore
+    if qt_backend in ('PyQt4', 'PyQt5', 'PyQt6'):
+        importlib.import_module(f'{qt_backend}.QtCore')
+        QtCore = sys.modules[f'{qt_backend}.QtCore']
         QtCore.Signal = QtCore.pyqtSignal
         QtCore.Slot = QtCore.pyqtSlot
 
