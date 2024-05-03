@@ -97,6 +97,8 @@ class QtImporter(object):
                         return None
                 except ImportError:
                     return None
+        if found is None:
+            return None
         found.loader = self
         return found
 
