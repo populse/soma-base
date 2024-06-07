@@ -82,6 +82,8 @@ class QtImporter(object):
         try:
             found = importlib.util.find_spec(f'.{module_name}',
                                              qt_module.__name__)
+            if found:
+                found.name = f'{qt_backend}.{modsplit[-1]}'
         except ImportError:
             found = None
         if found is None:
@@ -144,10 +146,6 @@ class QtImporter(object):
             mods = set([x.split('.')[0]
                         for x in os.listdir(os.path.dirname(qt_mod.__file__))
                         if not x.startswith('_')])
-            #for mod in ('QtCore', 'QtGui', 'phonon', 'QtNetwork', 'QtSvg',
-                        #'QtOpenGL', 'QtTest', 'QtDeclarative', 'QtScript',
-                        #'QtUiTools', 'QtScriptTools', 'QtWebKit', 'QtHelp',
-                        #'QtSql', 'QtXml'):
             if 'Qt' in mods:
                 # PyQt5 + sip6 brings a Qt module, but which is empty. We thus
                 # need to re-populate it as in PyQt6, but here the module
@@ -155,7 +153,8 @@ class QtImporter(object):
                 mods.remove('Qt')
             for mod in mods:
                 try:
-                    psmods.append(self.create_module(name='.'.join(base + [mod])))
+                    psmods.append(self.create_module(
+                        name='.'.join(base + [mod])))
                 except ImportError:
                     pass
             patch_main_modules(psmods)
