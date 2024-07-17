@@ -47,7 +47,7 @@ def getArgumentsSpecification(callable):
     Returns
     -------
     tuple:
-        As :func:`inspect.getargspec`, returns
+        As :func:`inspect.getfullargspec`, returns
         *(args, varargs, varkw, defaults)* where *args* is a list of the
         argument names (it may contain nested lists). *varargs* and *varkw* are
         the names of the ``*`` and ``**`` arguments or *None*. *defaults* is a

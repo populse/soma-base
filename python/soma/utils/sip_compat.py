@@ -53,6 +53,10 @@ def sip6_to_sip4(module, recursive=True):
 
     In order to maintain code compatible, we duplicate these values. If using
     sip6, then we copy values outside the enum types as sip4 does.
+    Moreover Qt5 uses dedicated types for enum combinations:
+    ``Qt.KeyboardModifier | Qt.KeyboardModofier -> Qt.KeyboardMofifiers``
+    Qt6 uses the same type ``Qt.KeyboardModifier`` for combinations. We also
+    try to duplicate the enum types as ``<enum_type>s``.
 
     If recursive (the default), sub-modules are also scanned and modified.
     """
@@ -64,16 +68,18 @@ def sip6_to_sip4(module, recursive=True):
             continue
 
         done.add(id(module))
-        enums = []
+        enums = {}
         for iname, item in module.__dict__.items():
             if type(item) is enum.EnumMeta and id(item) not in done:
-                enums.append(item)
+                enums[iname] = item
                 done.add(id(item))
             elif inspect.isclass(item) or (recursive and inspect.ismodule(item)):
                 todo.append(item)
-        for entype in enums:
+        for iname, entype in enums.items():
             for name in entype._member_names_:
                 setattr(module, name, getattr(entype, name))
+            if iname + 's' not in module.__dict__:
+                setattr(module, iname + 's', entype)
 
 
 def sip_export_enums(module, recursive=True):

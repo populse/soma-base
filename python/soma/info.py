@@ -50,12 +50,12 @@ MAINTAINER = "CEA"
 MAINTAINER_EMAIL = ""
 DESCRIPTION = description
 LONG_DESCRIPTION = long_description
-URL = ""
-DOWNLOAD_URL = ""
+URL = "https://github.com/populse/soma-base"
+DOWNLOAD_URL = "https://github.com/populse/soma-base"
 LICENSE = "CeCILL-B"
 CLASSIFIERS = CLASSIFIERS
-AUTHOR = "CEA"
-AUTHOR_EMAIL = ""
+AUTHOR = "Populse team"
+AUTHOR_EMAIL = "support@brainvisa.info"
 PLATFORMS = "OS Independent"
 ISRELEASE = version_extra == ""
 VERSION = __version__
