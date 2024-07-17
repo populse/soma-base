@@ -7,9 +7,13 @@ from typing import Union
 try:
     from pydantic import v1 as pydantic
     from pydantic.v1.dataclasses import dataclass
+    import pydantic as p
+    pydantic_version = p.__version__
+    del p
 except ImportError:
     import pydantic
     from pydantic.dataclasses import dataclass
+    pydantic_version = pydantic.__version__
 
 import sys
 from functools import partial
@@ -645,7 +649,7 @@ class Controller(metaclass=ControllerMeta, ignore_metaclass=True):
         return value
 
     def __setattr__(self, name, value):
-        if pydantic.__version__[0] >= "2":
+        if pydantic_version[0] >= "2":
             pyd_fields = self.__pydantic_fields__
         else:
             pyd_fields = self.__pydantic_model__.__fields__
