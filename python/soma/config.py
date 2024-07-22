@@ -12,9 +12,7 @@ short_version
 BRAINVISA_SHARE
 """
 
-from __future__ import absolute_import
 import os
-import sys
 import soma.info
 
 full_version = ".".join([str(soma.info.version_major),
@@ -61,3 +59,7 @@ def _init_default_brainvisa_share():
     return share
 
 BRAINVISA_SHARE = _init_default_brainvisa_share()
+""" share directory used for all BrainVisa tools """
+
+INSTALL_ROOT = os.path.dirname(BRAINVISA_SHARE)
+""" Install root directory of BrainVisa """
