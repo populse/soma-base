@@ -25,6 +25,15 @@ fullVersion = full_version
 shortVersion = short_version
 
 
+def path_up(path, n=1):
+    ''' Move up n directories
+    (in other words, apply dirname the given number of times)
+    '''
+    for i in range(n + 1):
+        path = os.path.dirname(path)
+    return path
+
+
 def _init_default_brainvisa_share():
     try:
         import brainvisa_share.config
@@ -47,15 +56,18 @@ def _init_default_brainvisa_share():
             share = os.path.join(
                 os.environ['CONDA_PREFIX'],
                 'share', bv_share_dir)
-        elif has_config:
+            if not os.path.exists(share):
+                # build dir config, we are in
+                # <root>/lib/pythonx.x/site_packages/soma/config.py
+                share = os.path.join(path_up(__file__, 5), 'share',
+                                     bv_share_dir)
+        if (not share or not os.path.exists(share)) and has_config:
             share = os.path.join(os.path.dirname(os.path.dirname(
                 os.path.dirname(
                     brainvisa_share.config.__file__))), 'share',
                     brainvisa_share.config.share)
-        else:
-            share = os.path.join(
-                os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
-                'share', bv_share_dir)
+        if not share or not os.path.exists(share):
+            share = os.path.join(path_up(__file__, 3), 'share', bv_share_dir)
     return share
 
 BRAINVISA_SHARE = _init_default_brainvisa_share()
