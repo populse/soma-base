@@ -29,7 +29,7 @@ def path_up(path, n=1):
     ''' Move up n directories
     (in other words, apply dirname the given number of times)
     '''
-    for i in range(n + 1):
+    for i in range(n):
         path = os.path.dirname(path)
     return path
 
