@@ -73,5 +73,5 @@ def _init_default_brainvisa_share():
 BRAINVISA_SHARE = _init_default_brainvisa_share()
 """ share directory used for all BrainVisa tools """
 
-INSTALL_ROOT = os.path.dirname(BRAINVISA_SHARE)
+INSTALL_ROOT = path_up(BRAINVISA_SHARE, 2)
 """ Install root directory of BrainVisa """
