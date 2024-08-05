@@ -18,6 +18,7 @@ setup(
     author=release_info["AUTHOR"],
     author_email=release_info["AUTHOR_EMAIL"],
     version=release_info["VERSION"],
+    url=release_info["URL"],
     package_dir={"": "python"},
     packages=[
         "soma",
