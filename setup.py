@@ -21,6 +21,7 @@ setup(
     author=release_info["AUTHOR"],
     author_email=release_info["AUTHOR_EMAIL"],
     version=release_info["VERSION"],
+    url=release_info["URL"],
     package_dir = {'': python_dir},
     packages=find_packages(python_dir),
     platforms=release_info["PLATFORMS"],
