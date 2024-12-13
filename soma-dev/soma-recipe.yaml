@@ -1,0 +1,33 @@
+package:
+  name: soma-python
+
+soma-dev:
+  components:
+    soma-workflow: ["https://github.com/populse/soma-workflow.git", "master"]
+
+  internal-dependencies:
+    - populse-db
+
+  type: interpreted
+
+requirements:
+  run:
+    - python >=3.9
+    - pydantic <2
+    - pyqt
+    - pyqtwebengine
+    - numpy
+    - ipykernel
+    - six
+    - pycryptodome
+    - pandas
+
+tests:
+  - script: "python -m soma.tests"
+    requirements:
+      run:
+        - pytest
+  - script: "python -m soma_workflow.test"
+    requirements:
+      run:
+        - pytest
