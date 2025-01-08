@@ -3,7 +3,7 @@ package:
 
 soma-env:
   components:
-    soma-workflow: ["https://github.com/populse/soma-workflow.git", "master"]
+    soma-workflow: ["https://github.com/populse/soma-workflow.git", "soma-env-6.0"]
 
   internal-dependencies:
     - populse-db
