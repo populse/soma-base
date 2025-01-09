@@ -39,7 +39,7 @@ Some useful functions to manage file or directorie names.
 * organization: NeuroSpin
 * license: `CeCILL B <http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html>`_
 '''
-from __future__ import absolute_import
+
 __docformat__ = "restructuredtext en"
 
 import os
@@ -115,7 +115,8 @@ def relative_path(path, referenceDirectory):
     return os.path.join(*plist)
 
 
-query_string_re = re.compile('\?([^\?\&]+\=[^\&]*)(\&[^\?\&]+\=[^\&]*)*$')
+query_string_re = re.compile(
+    '\\?([^\\?\\&]+\\=[^\\&]*)(\\&[^\\?\\&]+\\=[^\\&]*)*$')
 
 
 def split_query_string(path):
