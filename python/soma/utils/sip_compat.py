@@ -80,7 +80,7 @@ def sip6_to_sip4(module, recursive=True):
                                            and inspect.ismodule(item)):
                 todo.append(item)
         for iname, entype in enums.items():
-            for name in entype._member_names_:
+            for name in entype._member_map_:
                 setattr(module, name, getattr(entype, name))
             if iname + 's' not in module.__dict__:
                 setattr(module, iname + 's', entype)
