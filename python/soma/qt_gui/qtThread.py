@@ -74,7 +74,7 @@ class FakeQtThreadCall(QObject):
     call = staticmethod(call)
 
 
-class QtThreadCall(QObject, singleton.Singleton):
+class QtThreadCall(singleton.Singleton, QObject):
 
     """
     This object enables to send tasks to be executed by qt thread (main thread).
