@@ -74,11 +74,15 @@ class FakeQtThreadCall(QObject):
     call = staticmethod(call)
 
 
-class QtThreadCall(singleton.Singleton, QObject):
+class QtThreadCall(QObject, singleton.Singleton):
 
     """
-    This object enables to send tasks to be executed by qt thread (main thread).
-    This object must be initialized in qt thread.
+    This object enables to send tasks to be executed by qt thread (main
+    thread).
+
+    This object must be initialized in the qt thread (normally the main
+    thread).
+
     It starts a QTimer and periodically execute tasks in its actions list.
 
     Attributes
@@ -93,9 +97,15 @@ class QtThreadCall(singleton.Singleton, QObject):
         timer to wake this object periodically
     """
 
+    def __new__(cls, *args, **kwargs):
+        # we muse re-do what is done in Singleton.__new__
+        if '_singleton_instance' not in cls.__dict__:
+            cls._singleton_instance = QObject.__new__(cls)
+            cls._post_new_(cls, *args, **kwargs)
+        return cls._singleton_instance
+
     def __singleton_init__(self):
-        # QObject.__init__( self, None )
-        super(QtThreadCall, self).__singleton_init__(None)
+        super().__singleton_init__()
         self.lock = threading.RLock()
         self.actions = []
         # look for the main thread
