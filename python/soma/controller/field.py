@@ -12,17 +12,6 @@ from typing import (
 
 from soma.undefined import undefined
 
-if sys.version_info < (3, 9):
-    from typing import (
-        Dict,
-        Set,
-        Tuple,
-    )
-else:
-    Tuple = tuple
-    Dict = dict
-    Set = set
-
 
 def _conlist_str(name, type_):
     tdef = type_str(type_.item_type)
@@ -52,12 +41,12 @@ def type_str(type_):
     ignore_args = False
     if not name:
         name = getattr(type_, "_name", None)
-        if name == "Dict":
+        if name == "dict":
             args = getattr(type_, "__args__", None)
-            ignore_args = args == getattr(Dict, "__args__", None)
-        elif name == "Set":
+            ignore_args = args == getattr(dict, "__args__", None)
+        elif name == "set":
             args = getattr(type_, "__args__", None)
-            ignore_args = args == getattr(Set, "__args__", None)
+            ignore_args = args == getattr(set, "__args__", None)
     if name:
         name = name
     if not name and getattr(type_, "__origin__", None) is Union:
@@ -124,7 +113,7 @@ def parse_type_str(type_str):
     Examples:
     'str' -> ('str', [])
     'List[str]' -> ('List', ['str'])
-    'union[list[str],Dict[str,controller[Test]]]' -> ('union', ['list[str]', 'Dict[str,controller[Test]]'])
+    'union[list[str],dict[str,controller[Test]]]' -> ('union', ['list[str]', 'dict[str,controller[Test]]'])
     """
     p = re.compile(r"(^[^\[\],]*)(?:\[(.*)\])?$")
     m = p.match(type_str)
