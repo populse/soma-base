@@ -8,9 +8,7 @@ try:
     import nbformat
     from jupyter_core.command import main as main_jupyter
 except ImportError:
-    print(
-        "cannot import nbformat and/or jupyter_core.command: cannot test " "notebooks"
-    )
+    print("cannot import nbformat and/or jupyter_core.command: cannot test notebooks")
     main_jupyter = None
 
 
@@ -124,8 +122,7 @@ def test_notebook(notebook_filename, timeout=60):
     """
     if main_jupyter is None:
         raise Warning(
-            "cannot import nbformat and/or jupyter_core.command: "
-            "cannot test notebooks"
+            "cannot import nbformat and/or jupyter_core.command: cannot test notebooks"
         )
 
     print("running notebook test for", notebook_filename)

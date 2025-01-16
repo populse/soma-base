@@ -42,6 +42,7 @@ def pack(output_filename, sources):
     elif ext == "gz" or ext == "tgz" or ext == "bz2" or ext == "tar":
         pack_tar(output_filename, sources, ext)
 
+
 def untar(input_filename, extract_dir):
     """
     Extracts the input_filename archive to the extract_dir directory.
@@ -49,7 +50,7 @@ def untar(input_filename, extract_dir):
     try:
         tar_ds = tarfile.open(input_filename)
     except (tarfile.TarError, EOFError) as e:
-        raise OSError("%s is not a tar file" % (input_filename)) from e
+        raise OSError(f"{input_filename} is not a tar file") from e
     tar_ds.extractall(path=extract_dir)
     tar_ds.close()
 
@@ -59,7 +60,7 @@ def unzip(input_filename, extract_dir):
     Extracts the input_filename archive to the extract_dir directory.
     """
     if not zipfile.is_zipfile(input_filename):
-        raise OSError("%s is not a zip file" % (input_filename))
+        raise OSError(f"{input_filename} is not a zip file")
     zip_ds = zipfile.ZipFile(input_filename)
     zip_ds.extractall(path=extract_dir)
     zip_ds.close()

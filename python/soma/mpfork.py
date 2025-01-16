@@ -82,7 +82,7 @@ def run_job(f, *args, **kwargs):
             raise OSError("child did not output anything")
         if status != 0:
             os.unlink(out_file[1])
-            raise RuntimeError("subprocess error: %d" % status)
+            raise RuntimeError(f"subprocess error: {status}")
         result = pickle.load(open(out_file[1], "rb"))
         os.unlink(out_file[1])
         # traceback objects cannot be pickled...

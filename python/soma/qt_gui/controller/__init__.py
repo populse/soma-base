@@ -399,10 +399,10 @@ class ControllerFieldInteraction:
         self.controller.on_inner_value_change.fire([self.field] + indices)
 
     def get_doc(self):
-        doc = "<b>type:</b> %s" % str(self.type_str)
+        doc = f"<b>type:</b> {str(self.type_str)}"
         field_doc = getattr(self.field, "doc", None)
         if field_doc:
-            doc += "<br/>%s" % html.escape(field_doc)
+            doc += f"<br/>{html.escape(field_doc)}"
         return doc
 
 
@@ -465,7 +465,7 @@ class ListItemInteraction:
         self.parent_interaction.inner_value_changed([self.index] + indices)
 
     def get_doc(self):
-        doc = "<b>item type:</b> %s" % str(self.type_str)
+        doc = f"<b>item type:</b> {str(self.type_str)}"
         return doc
 
 

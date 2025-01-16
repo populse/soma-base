@@ -35,7 +35,7 @@ def _init_default_brainvisa_share():
         bv_share_dir = brainvisa_share.config.share
         has_config = True
     except ImportError:
-        bv_share_dir = "brainvisa-share-%s" % short_version
+        bv_share_dir = f"brainvisa-share-{short_version}"
         has_config = False
 
     if bv_share_dir and os.path.exists(bv_share_dir):
@@ -47,22 +47,28 @@ def _init_default_brainvisa_share():
         # directory in it.
         share = os.path.join(share, bv_share_dir)
     if not share or not os.path.exists(share):
-        if 'CONDA_PREFIX' in os.environ:
-            share = os.path.join(
-                os.environ['CONDA_PREFIX'],
-                'share', bv_share_dir)
+        if "CONDA_PREFIX" in os.environ:
+            share = os.path.join(os.environ["CONDA_PREFIX"], "share", bv_share_dir)
         elif has_config:
-            share = os.path.join(os.path.dirname(os.path.dirname(
+            share = os.path.join(
                 os.path.dirname(
-                    os.path.dirname(os.path.dirname(brainvisa_share.config.__file__))
-                ))),
+                    os.path.dirname(
+                        os.path.dirname(
+                            os.path.dirname(
+                                os.path.dirname(brainvisa_share.config.__file__)
+                            )
+                        )
+                    )
+                ),
                 "share",
                 brainvisa_share.config.share,
             )
         else:
             share = os.path.join(
                 os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
-                'share', bv_share_dir)
+                "share",
+                bv_share_dir,
+            )
     return share
 
 

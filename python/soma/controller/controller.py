@@ -5,14 +5,16 @@ from collections import OrderedDict
 from typing import Union
 
 try:
+    import pydantic as p
     from pydantic import v1 as pydantic
     from pydantic.v1.dataclasses import dataclass
-    import pydantic as p
+
     pydantic_version = p.__version__
     del p
 except ImportError:
     import pydantic
     from pydantic.dataclasses import dataclass
+
     pydantic_version = pydantic.__version__
 
 import sys

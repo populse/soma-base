@@ -39,9 +39,7 @@ class SomaTestLoader(unittest.TestLoader):
     def default_parser(description):
         parser = argparse.ArgumentParser(
             description=description,
-            epilog=(
-                "Note that the options are usually passed by make via " "bv_maker."
-            ),
+            epilog=("Note that the options are usually passed by make via bv_maker."),
         )
         parser.add_argument(
             "--test_mode",

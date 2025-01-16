@@ -63,9 +63,7 @@ def print_stack(out=sys.stdout, frame=None):
             frame = sys._getframe(1)
         for info in stack_calls_info(frame):
             print(
-                'File "%(filename)s", line %(lineno)d' % info
-                + " in "
-                + info["function"],
+                'File "{filename}", line {lineno} in {function}'.format(**info),
                 file=out,
             )
             for name, value in info["arguments"]:
