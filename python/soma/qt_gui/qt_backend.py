@@ -95,8 +95,8 @@ class QtImporter:
         if qt_backend in ("PyQt4", "PyQt5", "PyQt6") or module_name == "sip":
             # import the right sip module
             try:
-                __import__("%s.sip" % qt_backend)
-                sip = sys.modules.get("%s.sip" % qt_backend)
+                __import__(f"{qt_backend}.sip")
+                sip = sys.modules.get(f"{qt_backend}.sip")
                 if sip is not None:
                     sys.modules["sip"] = sip
                 else:
@@ -353,8 +353,8 @@ def set_qt_backend(backend=None, pyqt_api=1, compatible_qt5=None):
     if qt_backend in ("PyQt4", "PyQt5", "PyQt6"):
         # import the right sip module
         try:
-            __import__("%s.sip" % qt_backend)
-            sip = sys.modules["%s.sip" % qt_backend]
+            __import__(f"{qt_backend}.sip")
+            sip = sys.modules[f"{qt_backend}.sip"]
             sys.modules["sip"] = sip
         except Exception:
             import sip
@@ -390,12 +390,12 @@ def patch_qt4_modules(QtCore, QtGui):
 
 
 def patch_main_modules(modules):
-    if "%s.Qt" % qt_backend in sys.modules:
-        Qt = sys.modules["%s.Qt" % qt_backend]
+    if f"{qt_backend}.Qt" in sys.modules:
+        Qt = sys.modules[f"{qt_backend}.Qt"]
     else:
         # Qt = imp.new_module('%s.Qt' % qt_backend)
         Qt = types.ModuleType(f"{qt_backend}.Qt")
-        sys.modules["%s.Qt" % qt_backend] = Qt
+        sys.modules[f"{qt_backend}.Qt"] = Qt
     for mod in modules:
         for key, item in mod.__dict__.items():
             if not key.startswith("__") and key not in Qt.__dict__:
@@ -411,32 +411,32 @@ def ensure_compatible_qt5():
         qtwidgets = None
         qtwebkit = None
         qtwebkitwidgets = None
-        if "%s.QtGui" % qt_backend in sys.modules:
-            qtgui = sys.modules["%s.QtGui" % qt_backend]
-        if "%s.QtWidgets" % qt_backend in sys.modules:
-            qtwidgets = sys.modules["%s.QtWidgets" % qt_backend]
-        if "%s.QtWebKit" % qt_backend in sys.modules:
-            qtwebkit = sys.modules["%s.QtWebKit" % qt_backend]
-        if "%s.QtWebKitWidgets" % qt_backend in sys.modules:
-            qtwebkitwidgets = sys.modules["%s.QtWebKitWidgets" % qt_backend]
+        if f"{qt_backend}.QtGui" in sys.modules:
+            qtgui = sys.modules[f"{qt_backend}.QtGui"]
+        if f"{qt_backend}.QtWidgets" in sys.modules:
+            qtwidgets = sys.modules[f"{qt_backend}.QtWidgets"]
+        if f"{qt_backend}.QtWebKit" in sys.modules:
+            qtwebkit = sys.modules[f"{qt_backend}.QtWebKit"]
+        if f"{qt_backend}.QtWebKitWidgets" in sys.modules:
+            qtwebkitwidgets = sys.modules[f"{qt_backend}.QtWebKitWidgets"]
         if qtgui and qtwidgets is None:
-            qtwidgets = sys.modules["%s.QtWidgets" % qt_backend]
+            qtwidgets = sys.modules[f"{qt_backend}.QtWidgets"]
         elif qtwidgets and qtgui is None:
             from . import QtGui
 
-            qtgui = sys.modules["%s.QtGui" % qt_backend]
+            qtgui = sys.modules[f"{qt_backend}.QtGui"]
         elif qtgui and qtwidgets:
             from . import QtCore
 
             patch_qt5_modules(QtCore, qtgui, qtwidgets)
         if qtwebkit and qtwebkitwidgets is None:
-            qtwebkitwidgets = sys.modules["%s.QtWebKitWidgets" % qt_backend]
+            qtwebkitwidgets = sys.modules[f"{qt_backend}.QtWebKitWidgets"]
         elif qtwebkitwidgets and qtwebkit is None:
             pass
         elif qtwebkit and qtwebkitwidgets:
             patch_qt5_webkit_modules(qtwebkit, qtwebkitwidgets)
     else:
-        if "%s.QtGui" % qt_backend in sys.modules:
+        if f"{qt_backend}.QtGui" in sys.modules:
             pass
         from . import QtCore, QtGui
 

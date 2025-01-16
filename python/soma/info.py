@@ -65,7 +65,7 @@ REQUIRES = [
 ]
 PYTHON_REQUIRES = ">=3.9"
 EXTRAS_REQUIRE = {
-    "doc": ["sphinx >=%s" % SPHINX_MIN_VERSION],
+    "doc": [f"sphinx >={SPHINX_MIN_VERSION}"],
     "crypto": ["pycryptodome"],
     "test_utils": ["argparse"],
 }

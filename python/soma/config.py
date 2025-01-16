@@ -35,7 +35,7 @@ def _init_default_brainvisa_share():
         bv_share_dir = brainvisa_share.config.share
         has_config = True
     except ImportError:
-        bv_share_dir = "brainvisa-share-%s" % short_version
+        bv_share_dir = f"brainvisa-share-{short_version}"
         has_config = False
 
     if bv_share_dir and os.path.exists(bv_share_dir):

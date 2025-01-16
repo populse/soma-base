@@ -95,7 +95,7 @@ class ClassFactory:
                 cls = class_types.get(class_type)
                 if cls is not None:
                     return cls
-        raise ValueError("Unknown class type: %s" % class_type)
+        raise ValueError(f"Unknown class type: {class_type}")
 
     def get(self, class_type, factory_id):
         """

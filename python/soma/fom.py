@@ -1189,8 +1189,7 @@ class AttributesToPaths:
         preferred_formats = preferred_formats or set()
         fom_format_index = self.all_attributes.index("fom_format")
         sql = (
-            "CREATE TABLE rules ( %s, _fom_first, _fom_preferred_format, _fom_rule )"
-            % ",".join(repr("_" + str(i)) for i in self.all_attributes)
+            "CREATE TABLE rules ( {}, _fom_first, _fom_preferred_format, _fom_rule )".format(",".join(repr("_" + str(i)) for i in self.all_attributes))
         )
         if debug:
             debug.debug(sql)
@@ -1198,14 +1197,14 @@ class AttributesToPaths:
         columns = [
             f"_{i}" for i in self.all_attributes + ("fom_first", "fom_preferred_format")
         ]
-        sql = "CREATE INDEX rules_index ON rules (%s)" % ",".join(columns)
+        sql = "CREATE INDEX rules_index ON rules ({})".format(",".join(columns))
         self._db.execute(sql)
         for i in columns:
             sql = f"CREATE INDEX rules{i}_index ON rules ({i})"
             self._db.execute(sql)
-        sql_insert = "INSERT INTO rules VALUES ( %s )" % ",".join(
+        sql_insert = "INSERT INTO rules VALUES ( {} )".format(",".join(
             "?" for i in range(len(self.all_attributes) + 3)
-        )
+        ))
         self.rules = []
         for pattern, rule_attributes in foms.selected_rules(
             self.selection, debug=debug
@@ -1287,7 +1286,7 @@ class AttributesToPaths:
                     select.append("_fom_preferred_format = 1")
                 elif isinstance(value, list):
                     select.append(
-                        "_" + attribute + " IN (%s)" % ",".join("?" for i in value)
+                        "_" + attribute + " IN ({})".format(",".join("?" for i in value))
                     )
                     values.extend(value)
                 else:
@@ -1298,7 +1297,7 @@ class AttributesToPaths:
                     select.append(
                         "_"
                         + attribute
-                        + " IN ( %s, '' )" % ",".join("?" for i in value)
+                        + " IN ( {}, '' )".format(",".join("?" for i in value))
                     )
                     values.extend(value)
             else:
@@ -1349,7 +1348,7 @@ class AttributesToPaths:
                 r = self._join_directory(path, rule_attributes, selection_attributes)
                 if r:
                     if debug:
-                        debug.debug("!-->! %s" % repr(r))
+                        debug.debug(f"!-->! {repr(r)}")
                     yield r
             else:
                 if fom_formats:

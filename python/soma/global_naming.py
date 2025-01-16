@@ -57,7 +57,7 @@ class GlobalNaming(Singleton):
                 )
         elif isinstance(obj, object):
             return obj.__class__.__module__ + "." + obj.__class__.__name__ + "()"
-        raise ValueError("Cannot find global name for %s" % repr(obj))
+        raise ValueError(f"Cannot find global name for {repr(obj)}")
 
 
 def get_object(global_name):
