@@ -192,7 +192,7 @@ type_default_value_functions = {
 }
 
 
-def type_default_value(type):
+def type_default_value(type):  # noqa: F811
     global type_default_value
 
     full_type = type_str(type)
