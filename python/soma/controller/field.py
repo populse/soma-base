@@ -664,7 +664,7 @@ class ListMeta(type):
         if isinstance(type, Field):
             result = field(type_=List[type.type], metadata=type.metadata())
         else:
-            result = typing.List[type]
+            result = list[type]
         return result
 
 
