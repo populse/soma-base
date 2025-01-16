@@ -1188,8 +1188,8 @@ class AttributesToPaths:
         )
         preferred_formats = preferred_formats or set()
         fom_format_index = self.all_attributes.index("fom_format")
-        sql = (
-            "CREATE TABLE rules ( {}, _fom_first, _fom_preferred_format, _fom_rule )".format(",".join(repr("_" + str(i)) for i in self.all_attributes))
+        sql = "CREATE TABLE rules ( {}, _fom_first, _fom_preferred_format, _fom_rule )".format(
+            ",".join(repr("_" + str(i)) for i in self.all_attributes)
         )
         if debug:
             debug.debug(sql)
@@ -1202,9 +1202,9 @@ class AttributesToPaths:
         for i in columns:
             sql = f"CREATE INDEX rules{i}_index ON rules ({i})"
             self._db.execute(sql)
-        sql_insert = "INSERT INTO rules VALUES ( {} )".format(",".join(
-            "?" for i in range(len(self.all_attributes) + 3)
-        ))
+        sql_insert = "INSERT INTO rules VALUES ( {} )".format(
+            ",".join("?" for i in range(len(self.all_attributes) + 3))
+        )
         self.rules = []
         for pattern, rule_attributes in foms.selected_rules(
             self.selection, debug=debug
@@ -1286,7 +1286,9 @@ class AttributesToPaths:
                     select.append("_fom_preferred_format = 1")
                 elif isinstance(value, list):
                     select.append(
-                        "_" + attribute + " IN ({})".format(",".join("?" for i in value))
+                        "_"
+                        + attribute
+                        + " IN ({})".format(",".join("?" for i in value))
                     )
                     values.extend(value)
                 else:

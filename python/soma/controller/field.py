@@ -73,7 +73,7 @@ def type_str(type_):
         return postproc_fn(name, type_)
     args = getattr(type_, "__args__", ())
     if not ignore_args and args:
-        result = f'{name}[{",".join(type_str(i) for i in args)}]'
+        result = f"{name}[{','.join(type_str(i) for i in args)}]"
     else:
         if controller:
             result = f"Controller[{name}]"

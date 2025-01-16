@@ -42,6 +42,7 @@ def pack(output_filename, sources):
     elif ext == "gz" or ext == "tgz" or ext == "bz2" or ext == "tar":
         pack_tar(output_filename, sources, ext)
 
+
 def untar(input_filename, extract_dir):
     """
     Extracts the input_filename archive to the extract_dir directory.

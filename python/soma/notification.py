@@ -226,7 +226,7 @@ class VariableParametersNotifier(Notifier):
             paramOrder = self.__parameters.get(paramCount)
             if paramOrder is None:
                 raise RuntimeError(
-                    _("%(f)s has an invalid parameter count " "(%(c)d)")
+                    _("%(f)s has an invalid parameter count (%(c)d)")
                     % {"f": str(listener), "c": paramCount}
                 )
             realListener = ReorderedCall(listener, paramOrder)
@@ -1057,11 +1057,7 @@ class EditableTree(ObservableAttributes, ObservableSortedDictionary):
             if (
                 not item.isLeaf()
             ):  # if the item is a leaf and is already in the tree, nothing to do
-                for (
-                    v
-                ) in (
-                    item.values()
-                ):  # item is also a dictionary and contains several elements, add each value in the tree item
+                for v in item.values():  # item is also a dictionary and contains several elements, add each value in the tree item
                     self[key].add(v)
             # also set current name for the current object
             self[key].name = item.name
@@ -1383,14 +1379,10 @@ class EditableTree(ObservableAttributes, ObservableSortedDictionary):
             """
             key = item.id
             if key in self:
-                if not self[
-                    key
-                ].isLeaf():  # if the item is a leaf and is already in the tree, nothing to do
-                    for (
-                        v
-                    ) in (
-                        item.values()
-                    ):  # item is also a dictionary and contains several elements, add each value in the tree item
+                if (
+                    not self[key].isLeaf()
+                ):  # if the item is a leaf and is already in the tree, nothing to do
+                    for v in item.values():  # item is also a dictionary and contains several elements, add each value in the tree item
                         self[key].add(v)
 
                 # also set current name for the current object
