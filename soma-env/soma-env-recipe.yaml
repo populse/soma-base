@@ -2,6 +2,7 @@ package:
   name: soma-python
 
 soma-env:
+  publication: neuro-forge
   components:
     soma-workflow: ["https://github.com/populse/soma-workflow.git", "master"]
 
