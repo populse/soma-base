@@ -22,6 +22,8 @@ requirements:
     - six
     - pycryptodome
     - pandas
+    - libgl
+    - libopengl
 
 tests:
   - script: "python -m soma.tests"
