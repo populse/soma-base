@@ -59,9 +59,11 @@ _sip_api_set = False
 
 qt_backend = None
 make_compatible_qt5 = False
+headless = False
 
 
 class QtImporter(object):
+    debug_done = False
 
     def find_spec(self, fullname, path=None, target=None):
         modsplit = fullname.split('.')
@@ -115,6 +117,11 @@ class QtImporter(object):
         qt_backend = get_qt_backend()
         module_name = name.split('.')[-1]
         imp_module_name = module_name
+
+        if headless and module_name not in ('sip', 'QtCore', 'QtGui'):
+            from .headless import setup_headless
+            setup_headless()
+
         if make_compatible_qt5:
             if module_name == 'QtWidgets':
                 imp_module_name = 'QtGui'
@@ -385,6 +392,15 @@ def set_qt_backend(backend=None, pyqt_api=1, compatible_qt5=None):
         if backend in ('PyQt4', 'PyQt5', 'PyQt6'):
             qt_module.QtCore.Signal = qt_module.QtCore.pyqtSignal
             qt_module.QtCore.Slot = qt_module.QtCore.pyqtSlot
+
+
+def set_headless(headless_mode=True):
+    ''' Configure to use the headless mode.
+
+    see :mod:`headless`
+    '''
+    global headless
+    headless = headless_mode
 
 
 def load_sip_module(backend=None):
