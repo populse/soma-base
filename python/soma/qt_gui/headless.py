@@ -635,7 +635,7 @@ def setup_headless(allow_virtualgl=True, force_virtualgl=force_virtualgl):
     result.virtual_display_proc = virtual_display_proc
     result.original_display = original_display
     headless_initialized = result
-    print('HEADLESS INIT:', headless_initialized, test_opengl())
+    # print('HEADLESS INIT:', headless_initialized, test_opengl())
 
     qtapp = test_qapp()
     # print('qtapp:', qtapp)
