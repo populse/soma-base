@@ -133,7 +133,6 @@ class MinfWriter(six.with_metaclass(RegisterMinfWriterClass, object)):
                                         for i in
                                         MinfWriter._allWriterClasses])})
         if not hasattr(destFile, 'write'):
-            with open(destFile, 'w') as destFile:
-                return writer(destFile, reducer, )
+            destFile = open(destFile, 'w')
         return writer(destFile, reducer, )
     createWriter = staticmethod(createWriter)
