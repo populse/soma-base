@@ -4,7 +4,8 @@ package:
 soma-env:
   publication: neuro-forge
   components:
-    soma-workflow: ["https://github.com/populse/soma-workflow.git", "master"]
+    - soma-base
+    - soma-workflow
 
   internal-dependencies:
     - populse-db
