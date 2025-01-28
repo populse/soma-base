@@ -52,6 +52,8 @@ getfullargspec = getattr(inspect, 'getfullargspec',
 
 # make qt_backend a fake module package, with Qt modules as sub-modules
 __package__ = __name__
+__spec__ = type(__spec__)(name=f'{__name__}.__init__', loader=__spec__.loader,
+                          origin=f'{__spec__.origin[:-3]}/__init__.py')
 __path__ = [os.path.dirname(__file__)]
 
 # internal variable to avoid warning several times
@@ -119,7 +121,9 @@ class QtImporter(object):
         imp_module_name = module_name
 
         if headless and module_name not in ('sip', 'QtCore', 'QtGui'):
-            from .headless import setup_headless
+            # we use ..headless instead of .headless because we have
+            # modified __package__
+            from ..headless import setup_headless
             setup_headless()
 
         if make_compatible_qt5:
