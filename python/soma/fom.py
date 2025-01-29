@@ -147,9 +147,6 @@ At lower level, they are used through several classes:
 
 '''
 
-from __future__ import absolute_import
-from __future__ import print_function
-
 import sys
 import os
 import os.path as osp
@@ -1365,14 +1362,11 @@ class AttributesToPaths(object):
 
 
 def call_before_application_initialization(application):
-    try:
-        from traits.api import ListStr
-    except ImportError:
-        from enthought.traits.api import ListStr
+    from traits.api import List
 
     application.add_trait(
         'fom_path',
-        ListStr(descr='Path for finding file organization models'))
+        List(str)(descr='Path for finding file organization models'))
     if application.install_directory:
         application.fom_path = [osp.join(application.install_directory,
                                          'share', 'foms')]

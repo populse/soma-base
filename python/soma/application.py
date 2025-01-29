@@ -9,10 +9,7 @@ import traceback
 from os.path import dirname
 
 os.environ['ETS_TOOLKIT'] = 'qt4'
-try:
-    from enthought.traits.api import ReadOnly, Directory, ListStr, Instance
-except ImportError:
-    from traits.api import ReadOnly, Directory, ListStr, Instance
+from traits.api import ReadOnly, Directory, List, Instance
 
 from soma.singleton import Singleton
 from soma.controller import Controller
@@ -28,7 +25,7 @@ class Application(Singleton, Controller):
     name = ReadOnly(desc='Name of the application')
     version = ReadOnly()
 
-    plugin_modules = ListStr(
+    plugin_modules = List(str)(
         desc='List of Python module to load after application configuration')
 
     def __singleton_init__(self, name=None, version=None, *args, **kwargs):
