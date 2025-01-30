@@ -25,7 +25,7 @@ requirements:
     - pandas
     - libgl
     - libopengl
-    - traits
+    - traits<7
 
 tests:
   - script: "python -m soma.tests"
