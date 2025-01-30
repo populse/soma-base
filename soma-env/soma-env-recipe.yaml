@@ -4,7 +4,8 @@ package:
 soma-env:
   publication: neuro-forge
   components:
-    soma-workflow: ["https://github.com/populse/soma-workflow.git", "soma-env-6.0"]
+    - soma-base
+    - soma-workflow
 
   internal-dependencies:
     - populse-db
@@ -22,6 +23,9 @@ requirements:
     - six
     - pycryptodome
     - pandas
+    - libgl
+    - libopengl
+    - traits
 
 tests:
   - script: "python -m soma.tests"

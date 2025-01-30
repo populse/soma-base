@@ -55,6 +55,7 @@ from soma.minf.tree import minfStructure, listStructure, dictStructure, \
 from soma.minf.error import MinfError
 from soma.undefined import Undefined
 import sys
+import gc
 
 
 # This module only contains a definition of XML tags and attributes.
@@ -98,6 +99,10 @@ class MinfXMLWriter(MinfWriter):
         if self.__file is not None:
             self.__file.flush()
             self._encodeAndWriteLine('</' + minfTag + '>')
+            if len(gc.get_referrers(self.__file)) == 1:
+                # this is not a very clean way of closing files with ref
+                # counting, but we don't have an easy alternative
+                self.__file.close()
             self.__file = None
 
     def write(self, value):
