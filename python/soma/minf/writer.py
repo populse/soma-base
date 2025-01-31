@@ -40,11 +40,12 @@ Base classes for writing various minf formats (XML, HDF5, Python's pickle, etc.)
 * organization: `NeuroSpin <http://www.neurospin.org>`_
 * license: `CeCILL B <http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html>`_
 '''
-from __future__ import absolute_import
-__docformat__ = "restructuredtext en"
 
 import six
 from soma.translation import translate as _
+
+
+__docformat__ = "restructuredtext en"
 
 
 #------------------------------------------------------------------------------
@@ -83,7 +84,7 @@ class MinfWriter(six.with_metaclass(RegisterMinfWriterClass, object)):
     #: class derived from L{MinfWriter} must set a format name in this attribute.
     name = None
 
-    def __init__(self, file, reducer):
+    def __init__(self, file, reducer, close_file=False):
         '''
         Constructor of classes derived from L{MinfWriter} must be callable with two
         parameters.
@@ -93,6 +94,10 @@ class MinfWriter(six.with_metaclass(RegisterMinfWriterClass, object)):
         @param reducer: name of the reducer to use (see L{soma.minf.tree} for
           more information about reducers).
         @type  reducer: string
+        plus optionally:
+        @type close_file: bool
+        @param close_file: if the given file should be closed after the
+        writing operation
         '''
 
     def write(self, value):
@@ -132,7 +137,9 @@ class MinfWriter(six.with_metaclass(RegisterMinfWriterClass, object)):
                  'possible': ', '.join(['"' + i + '"'
                                         for i in
                                         MinfWriter._allWriterClasses])})
+        close_file = False
         if not hasattr(destFile, 'write'):
             destFile = open(destFile, 'w')
-        return writer(destFile, reducer, )
+            close_file = True
+        return writer(destFile, reducer, close_file=close_file)
     createWriter = staticmethod(createWriter)

@@ -82,12 +82,14 @@ class MinfXMLWriter(MinfWriter):
     def __init__(self, file, reducer,
                  encoding='utf-8',
                  level=0,
-                 append=False):
+                 append=False,
+                 close_file=False):
         self.__file = file
         self.reducer = createMinfReducer(reducer)
         self.encoder = codecs.getencoder(encoding)
         self.level = level
         self.indentString = '  '
+        self.__close_file = close_file
         if not append:
             self._writeLine('<?xml version="1.0" encoding=' +
                             xml_quoteattr(encoding) + ' ?>')
@@ -99,9 +101,7 @@ class MinfXMLWriter(MinfWriter):
         if self.__file is not None:
             self.__file.flush()
             self._encodeAndWriteLine('</' + minfTag + '>')
-            if len(gc.get_referrers(self.__file)) == 1:
-                # this is not a very clean way of closing files with ref
-                # counting, but we don't have an easy alternative
+            if self.__close_file:
                 self.__file.close()
             self.__file = None
 
