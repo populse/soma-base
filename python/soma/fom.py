@@ -1362,14 +1362,11 @@ class AttributesToPaths(object):
 
 
 def call_before_application_initialization(application):
-    try:
-        from traits.api import ListStr
-    except ImportError:
-        from enthought.traits.api import ListStr
+    from traits.api import List
 
     application.add_trait(
         'fom_path',
-        ListStr(descr='Path for finding file organization models'))
+        List(str, descr='Path for finding file organization models'))
     # find initial paths: look for a build path, an install path
     d = osp.dirname(osp.dirname(__file__))
     if osp.basename(d) in ('site-packages', 'dist-packages'):
