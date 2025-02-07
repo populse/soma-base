@@ -119,12 +119,13 @@ class QtImporter(object):
         qt_backend = get_qt_backend()
         module_name = name.split('.')[-1]
         imp_module_name = module_name
+        headless_res = None
 
         if headless and module_name not in ('sip', 'QtCore', 'QtGui'):
             # we use ..headless instead of .headless because we have
             # modified __package__
             from ..headless import setup_headless
-            setup_headless()
+            headless_res = setup_headless()
 
         if make_compatible_qt5:
             if module_name == 'QtWidgets':
@@ -171,6 +172,12 @@ class QtImporter(object):
             patch_main_modules(psmods)
             mod = sys.modules['.'.join([qt_backend, 'Qt'])]
             sys.modules['soma.qt_gui.qt_backend.Qt'] = mod
+            if headless_res is not None and headless_res.qapp is None:
+                headless_res.qapp = mod.QApplication([sys.argv[0], '-platform',
+                                                      'offscreen'])
+                # sip.transferto(headless_res.qapp, None)
+                # to prevent deletion just after now
+
             return mod
 
         __import__('.'.join([qt_backend, imp_module_name]))
@@ -231,7 +238,10 @@ class QtImporter(object):
                     sys.modules['.'.join([qt_backend, 'QtWidgets'])] = module
                     patch_qt4_modules(QtCore, module)
                 elif qt_backend in ('PyQt5', 'PyQt6'):
-                    __import__('.'.join([qt_backend, 'QtWidgets']))
+                    qtwname = '.'.join([qt_backend, 'QtWidgets'])
+                    if qtwname in sys.modules:
+                        del sys.modules[qtwname]
+                    __import__(qtwname)
                     qtwidgets = sys.modules['.'.join([qt_backend,
                                                       'QtWidgets'])]
                     patch_qt5_modules(QtCore, module, qtwidgets)
@@ -250,6 +260,15 @@ class QtImporter(object):
                         module = qtwebkitwidgets
             ensure_compatible_qt5()
 
+        if headless_res is not None and headless_res.qapp is None:
+            qtwname = '.'.join([qt_backend, 'QtWidgets'])
+            __import__(qtwname)
+            mod = sys.modules['.'.join([qt_backend, 'QtWidgets'])]
+            if mod.QApplication.instance() is None:
+                headless_res.qapp = mod.QApplication([sys.argv[0], '-platform',
+                                                      'offscreen'])
+                # sip.transferto(headless_res.qapp, None)
+                # to prevent deletion just after now
         return module
 
 

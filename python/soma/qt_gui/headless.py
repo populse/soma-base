@@ -663,17 +663,23 @@ def setup_headless(allow_virtualgl=True, force_virtualgl=force_virtualgl):
         return result
 
     print('starting QApplication offscreen.')
-    from soma.qt_gui.qt_backend import Qt
-    print('former app:', Qt.QApplication.instance())
-    Qt.QCoreApplication.setAttribute(
-        Qt.Qt.ApplicationAttribute.AA_ShareOpenGLContexts)
-    app = Qt.QApplication([sys.argv[0], '-platform', 'offscreen'])
-    # sip.transferto(app, None)  # to prevent deletion just after now
+    # import QtWidgets in non-headless mode (to avoid recursion)
+    from soma.qt_gui import qt_backend
+    qt_backend.headless = False
+    from soma.qt_gui.qt_backend import QtWidgets, QtCore
+    qt_backend.headless = True
+    # print('former app:', QtCore.QCoreApplication.instance())
+    QtCore.QCoreApplication.setAttribute(
+        QtCore.Qt.ApplicationAttribute.AA_ShareOpenGLContexts)
+    if hasattr(QtWidgets, 'QApplication'):
+        app = QtWidgets.QApplication([sys.argv[0], '-platform', 'offscreen'])
+        # sip.transferto(app, None)  # to prevent deletion just after now
+        # we need to keep a reference to the qapp, otherwise it gets
+        # replaced with a QCoreApplication instance for an unknown reason.
+        result.qapp = app
+    # else we are inside qt_backend import of Qt: it will finish it on his side
 
     result.qt_offscreen = True
     result.headless = True
 
-    # we need to keep a reference to the qapp, otherwise it gets
-    # replaced with a QCoreApplication instance for an unknown reason.
-    result.qapp = app
     return result
