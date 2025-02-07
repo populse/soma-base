@@ -386,7 +386,8 @@ sys.exit(res)
     return res
 
 
-def setup_headless_xvfb(allow_virtualgl=True, force_virtualgl=force_virtualgl):
+def setup_headless_xvfb(need_opengl=True, allow_virtualgl=True,
+                        force_virtualgl=force_virtualgl):
     ''' Sets up a headless virtual X server and tunes the current process
     libraries to use it appropriately.
 
@@ -404,6 +405,9 @@ def setup_headless_xvfb(allow_virtualgl=True, force_virtualgl=force_virtualgl):
 
     Parameters
     ----------
+    need_opengl: bool (optional)
+        if True, OpenGL is required, thus we will try to force GLX extension
+        and perhaps VirtualGL in the X seerver.
     allow_virtualgl: bool (optional)
         If False, VirtualGL will not be attempted. Default is True.
         Use it if you experience crashes in your programs: it probably means
@@ -486,115 +490,119 @@ def setup_headless_xvfb(allow_virtualgl=True, force_virtualgl=force_virtualgl):
         result.virtual_display_proc = virtual_display_proc
         result.headless = True
 
-        glx = test_glx(glxinfo_cmd=glxinfo_cmd, xdpyinfo_cmd=xdpyinfo_cmd)
-        result.glx = glx
+        if need_opengl:
+            glx = test_glx(glxinfo_cmd=glxinfo_cmd, xdpyinfo_cmd=xdpyinfo_cmd)
+            result.glx = glx
 
-        gl_libs = set()
-        if not glx:
-            gl_libs = test_opengl(verbose=True)
-            if len(gl_libs) != 0:
-                print('OpenGL lib already loaded. Using Xvfb or xpra will not '
-                      'be possible.')
-                result.virtual_display_proc = None
+            gl_libs = set()
+            if not glx:
+                gl_libs = test_opengl(verbose=True)
+                if len(gl_libs) != 0:
+                    print('OpenGL lib already loaded. Using Xvfb or xpra will '
+                          'not be possible.')
+                    result.virtual_display_proc = None
 
-        # WARNING: the test was initially glx < 2, but then it would not
-        # enable virtualGL if glx is detected through glxinfo. I don't remember
-        # why this was done this way, we perhaps experienced some crashes.
+            # WARNING: the test was initially glx < 2, but then it would not
+            # enable virtualGL if glx is detected through glxinfo. I don't
+            # remember why this was done this way, we perhaps experienced some
+            # crashes.
 
-        if (glx < 2 or force_virtualgl) and not gl_libs and allow_virtualgl \
-                and qtapp is None:
-            # try VirtualGL
-            vgl = shutil.which('vglrun')
-            if vgl:
-                print('VirtualGL found.')
-                vglglxinfo_cmd = None
-                vglxdpyinfo_cmd = None
-                disp = original_display
-                if disp is None:
-                    disp = ""  # will fail but the command will run
-                if glxinfo_cmd:
-                    vglglxinfo_cmd = [vgl, '-d', disp, glxinfo_cmd]
-                if xdpyinfo_cmd:
-                    vglxdpyinfo_cmd = [vgl, '-d', disp, xdpyinfo_cmd]
-                if test_glx(glxinfo_cmd=vglglxinfo_cmd,
-                            xdpyinfo_cmd=vglxdpyinfo_cmd, timeout=0):
-                    print('VirtualGL should work.')
+            if (glx < 2 or force_virtualgl) and not gl_libs \
+                    and allow_virtualgl and qtapp is None:
+                # try VirtualGL
+                vgl = shutil.which('vglrun')
+                if vgl:
+                    print('VirtualGL found.')
+                    vglglxinfo_cmd = None
+                    vglxdpyinfo_cmd = None
+                    disp = original_display
+                    if disp is None:
+                        disp = ""  # will fail but the command will run
+                    if glxinfo_cmd:
+                        vglglxinfo_cmd = [vgl, '-d', disp, glxinfo_cmd]
+                    if xdpyinfo_cmd:
+                        vglxdpyinfo_cmd = [vgl, '-d', disp, xdpyinfo_cmd]
+                    if test_glx(glxinfo_cmd=vglglxinfo_cmd,
+                                xdpyinfo_cmd=vglxdpyinfo_cmd, timeout=0):
+                        print('VirtualGL should work.')
 
-                    glx = setup_virtualGL()
-                    result.virtualgl = glx
+                        glx = setup_virtualGL()
+                        result.virtualgl = glx
 
+                        if glx:
+                            print('Running through VirtualGL + %s: '
+                                  'this is optimal.' % virtual_display)
+                        else:
+                            print('But VirtualGL could not be loaded...')
+
+                        # test_opengl(verbose=True)
+            else:
+                print('Too dangerous to use VirtualGL: QCoreApplication is '
+                      'instantiated, or GLX is not completely OK, or OpenGL '
+                      'libs are loaded.')
+
+            if not glx and not gl_libs:
+                # try Mesa, if found
+                mesa = find_mesa()
+                if mesa:
+                    print('MESA found:', mesa)
+                    preload = mesa
+                    try:
+                        mesa_lib = ctypes.CDLL(mesa, ctypes.RTLD_GLOBAL)
+                    except OSError:
+                        glapi = os.path.join(os.path.dirname(mesa),
+                                             'libglapi.so.0')
+                        ctypes.CDLL(glapi, ctypes.RTLD_GLOBAL)
+                        mesa_lib = ctypes.CDLL(mesa, ctypes.RTLD_GLOBAL)
+                        preload = f'{glapi}:{mesa}'
+                    os.environ['LD_PRELOAD'] = preload
+                    os.environ['LD_LIBRARY_PATH'] \
+                        = os.path.dirname(mesa) + ':' \
+                        + os.getenv('LD_LIBRARY_PATH')
+                    # re-run Xvfb using new path
+                    virtual_display_proc.terminate()
+                    virtual_display_proc.wait()
+                    virtual_display_proc = start_virtual_display(
+                        display=display)
+                    result.virtual_display_proc = virtual_display_proc
+                    #self.mesa_lib = mesa_lib
+                    glx = test_glx(glxinfo_cmd, xdpyinfo_cmd)
+                    result.glx = glx
+                    result.mesa = True
                     if glx:
-                        print('Running through VirtualGL + %s: '
-                              'this is optimal.' % virtual_display)
-                    else:
-                        print('But VirtualGL could not be loaded...')
+                        print('Running using Mesa software OpenGL: '
+                              'performance '
+                              'will be slow. To get faster results, and if X '
+                              'server connection can be obtained, consider '
+                              'installing VirtualGL (http://virtualgl.org) '
+                              'and running again before loading QtGui.')
+                else:
+                    print('Mesa not found.')
 
-                    # test_opengl(verbose=True)
-        else:
-            print('Too dangerous to use VirtualGL: QCoreApplication is '
-                  'instantiated, or GLX is not completely OK, or OpenGL libs '
-                  'are loaded.')
-
-        if not glx and not gl_libs:
-            # try Mesa, if found
-            mesa = find_mesa()
-            if mesa:
-                print('MESA found:', mesa)
-                preload = mesa
-                try:
-                    mesa_lib = ctypes.CDLL(mesa, ctypes.RTLD_GLOBAL)
-                except OSError:
-                    glapi = os.path.join(os.path.dirname(mesa),
-                                         'libglapi.so.0')
-                    ctypes.CDLL(glapi, ctypes.RTLD_GLOBAL)
-                    mesa_lib = ctypes.CDLL(mesa, ctypes.RTLD_GLOBAL)
-                    preload = f'{glapi}:{mesa}'
-                os.environ['LD_PRELOAD'] = preload
-                os.environ['LD_LIBRARY_PATH'] \
-                    = os.path.dirname(mesa) + ':' \
-                    + os.getenv('LD_LIBRARY_PATH')
-                # re-run Xvfb using new path
+            if not glx:
+                print('The current virtual display does not have a GLX '
+                      'extension. Aborting it.')
                 virtual_display_proc.terminate()
                 virtual_display_proc.wait()
-                virtual_display_proc = start_virtual_display(display=display)
-                result.virtual_display_proc = virtual_display_proc
-                #self.mesa_lib = mesa_lib
-                glx = test_glx(glxinfo_cmd, xdpyinfo_cmd)
+                virtual_display_proc = None
+                result.virtual_display_proc = None
+                if original_display is not None:
+                    os.environ['DISPLAY'] = original_display
+                    result.display = original_display
+                else:
+                    del os.environ['DISPLAY']
+                    result.display = None
+                use_xvfb = False
+                #raise RuntimeError('GLX extension missing')
+
+        if not use_xvfb:
+            if xdpyinfo_cmd:
+                glx = test_glx(glxinfo_cmd, xdpyinfo_cmd, 0)
                 result.glx = glx
-                result.mesa = True
-                if glx:
-                    print('Running using Mesa software OpenGL: performance '
-                          'will be slow. To get faster results, and if X '
-                          'server connection can be obtained, consider '
-                          'installing VirtualGL (http://virtualgl.org) '
-                          'and running again before loading QtGui.')
-            else:
-                print('Mesa not found.')
-
-        if not glx:
-            print('The current virtual display does not have a GLX extension. '
-                  'Aborting it.')
-            virtual_display_proc.terminate()
-            virtual_display_proc.wait()
-            virtual_display_proc = None
-            result.virtual_display_proc = None
-            if original_display is not None:
-                os.environ['DISPLAY'] = original_display
-                result.display = original_display
-            else:
-                del os.environ['DISPLAY']
-                result.display = None
-            use_xvfb = False
-            #raise RuntimeError('GLX extension missing')
-
-    if not use_xvfb:
-        if xdpyinfo_cmd:
-            glx = test_glx(glxinfo_cmd, xdpyinfo_cmd, 0)
-            result.glx = glx
-            if not glx:
-                raise RuntimeError('GLX extension missing')
-        print('Qt running in normal (non-headless) mode')
-        result.headless = False
+                if not glx:
+                    raise RuntimeError('GLX extension missing')
+            print('Qt running in normal (non-headless) mode')
+            result.headless = False
 
     # this is not needed any longer for Xvfb, since on_parent_exit() is passed
     # to Popen, but xpra needs to stop the corresponding server
@@ -613,7 +621,8 @@ def setup_headless_xvfb(allow_virtualgl=True, force_virtualgl=force_virtualgl):
     return result
 
 
-def setup_headless(allow_virtualgl=True, force_virtualgl=force_virtualgl):
+def setup_headless(need_opengl=True, allow_virtualgl=True,
+                   force_virtualgl=force_virtualgl):
 
     class Result(object):
         def __init__(self):
@@ -640,7 +649,7 @@ def setup_headless(allow_virtualgl=True, force_virtualgl=force_virtualgl):
     qtapp = test_qapp()
     # print('qtapp:', qtapp)
     result.qtapp = qtapp
-    if not test_qt_offscreen():
+    if need_opengl and not test_qt_offscreen():
         # a context cannot be created: happens if a X server connection cannot
         # be obtained. The offscreen mode of Qt doesn't show widgets,
         # but for OpenGL, it requires a X11 connection (on linux systems)
@@ -648,6 +657,7 @@ def setup_headless(allow_virtualgl=True, force_virtualgl=force_virtualgl):
         if qtapp != 'QApp':
             # only if no QtApp has been built, try the xvfb method
             headless_initialized = setup_headless_xvfb(
+                need_opengl=need_opengl,
                 allow_virtualgl=allow_virtualgl,
                 force_virtualgl=force_virtualgl)
             return headless_initialized

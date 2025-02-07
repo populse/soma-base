@@ -62,6 +62,7 @@ _sip_api_set = False
 qt_backend = None
 make_compatible_qt5 = False
 headless = False
+need_opengl = True
 
 
 class QtImporter(object):
@@ -125,7 +126,7 @@ class QtImporter(object):
             # we use ..headless instead of .headless because we have
             # modified __package__
             from ..headless import setup_headless
-            headless_res = setup_headless()
+            headless_res = setup_headless(need_opengl=need_opengl)
 
         if make_compatible_qt5:
             if module_name == 'QtWidgets':
@@ -417,13 +418,14 @@ def set_qt_backend(backend=None, pyqt_api=1, compatible_qt5=None):
             qt_module.QtCore.Slot = qt_module.QtCore.pyqtSlot
 
 
-def set_headless(headless_mode=True):
+def set_headless(headless_mode=True, needs_opengl=True):
     ''' Configure to use the headless mode.
 
     see :mod:`headless`
     '''
-    global headless
+    global headless, need_opengl
     headless = headless_mode
+    need_opengl = needs_opengl
 
 
 def load_sip_module(backend=None):
