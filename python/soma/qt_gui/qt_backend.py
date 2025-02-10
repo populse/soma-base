@@ -418,14 +418,17 @@ def set_qt_backend(backend=None, pyqt_api=1, compatible_qt5=None):
             qt_module.QtCore.Slot = qt_module.QtCore.pyqtSlot
 
 
-def set_headless(headless_mode=True, needs_opengl=True):
+def set_headless(headless_mode=True, needs_opengl=None):
     ''' Configure to use the headless mode.
 
     see :mod:`headless`
+
+    if needs_opengl is None (default), don't change the currently set value'
     '''
     global headless, need_opengl
     headless = headless_mode
-    need_opengl = needs_opengl
+    if need_opengl is not None:
+        need_opengl = needs_opengl
 
 
 def load_sip_module(backend=None):
