@@ -433,6 +433,7 @@ def setup_headless_xvfb(need_opengl=True, allow_virtualgl=True,
             self.headless = None
             self.mesa = False
             self.qtapp = None
+            self.qapp = None
 
     result = Result()
     result.virtual_display_proc = virtual_display_proc
@@ -635,6 +636,7 @@ def setup_headless(need_opengl=True, allow_virtualgl=True,
             self.mesa = False
             self.qtapp = None
             self.qt_offscreen = None
+            self.qapp = None
 
     global headless_initialized
     if headless_initialized is not None:
