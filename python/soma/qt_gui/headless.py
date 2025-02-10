@@ -693,5 +693,8 @@ def setup_headless(need_opengl=True, allow_virtualgl=True,
 
     result.qt_offscreen = True
     result.headless = True
+    if need_opengl:
+        # here test_qt_offscreen() should be OK, mark it as working
+        result.glx = 2
 
     return result
