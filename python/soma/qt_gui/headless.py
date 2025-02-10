@@ -613,6 +613,17 @@ def setup_headless_xvfb(need_opengl=True, allow_virtualgl=True,
     # for an obscure unknown reason, we now need to use the offscreen mode of
     # Qt, even,t through xvfb, otherwise it cannot build an OpenGL conext.
     from soma.qt_gui.qt_backend import Qt
+    Qt.QCoreApplication.setAttribute(
+        Qt.Qt.ApplicationAttribute.AA_ShareOpenGLContexts)
+    # QtWebEngine has very strict and difficult requiremnts. We have to
+    # load it now.
+    from soma.qt_gui.qt_backend import sip
+    if Qt.QCoreApplication.instance() is not None:
+        sip.delete(Qt.QCoreApplication.instance())
+    try:
+        from soma.qt_gui.qt_backend import QtWebEngineWidgets
+    except ImportError:
+        pass  # maybe not installed
 
     app = Qt.QApplication([sys.argv[0], '-platform', 'offscreen'])
     # we need to keep a reference to the qapp, otherwise it gets
@@ -684,6 +695,16 @@ def setup_headless(need_opengl=True, allow_virtualgl=True,
     QtCore.QCoreApplication.setAttribute(
         QtCore.Qt.ApplicationAttribute.AA_ShareOpenGLContexts)
     if hasattr(QtWidgets, 'QApplication'):
+        # QtWebEngine has very strict and difficult requiremnts. We have to
+        # load it now.
+        from soma.qt_gui.qt_backend import sip
+        if QtCore.QCoreApplication.instance() is not None:
+            sip.delete(QtCore.QCoreApplication.instance())
+        try:
+            from soma.qt_gui.qt_backend import QtWebEngineWidgets
+        except ImportError:
+            pass  # maybe not installed
+
         app = QtWidgets.QApplication([sys.argv[0], '-platform', 'offscreen'])
         # sip.transferto(app, None)  # to prevent deletion just after now
         # we need to keep a reference to the qapp, otherwise it gets
