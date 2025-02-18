@@ -6,10 +6,10 @@ Qt with OpenGL enabled, and some helper functions. The normal way to use it is v
     from soma.qt_gui import qt_backend
     qt_backend.set_headless()
     # then use Qt:
-    from soma.qt_gui.qt_backend impoet QtWidgets
+    from soma.qt_gui.qt_backend import QtWidgets
     import sys
 
-    app = QtWidgets.QApplication(sys.argv)
+    app = QtWidgets.QApplication.instance() or QtWidgets.QApplication(sys.argv)
 
 Otherwise, at lower_level, you may use::
 
@@ -18,7 +18,29 @@ Otherwise, at lower_level, you may use::
 
 Note that this headless mode has to be activated prior to any OpenGL libraries being loaded in the current process and the display initialized, otherwise it will not be possible to set it up.
 
+For OpenGL settings, it is more complex than that: the program must specify whether it will use OpenGL or not later, because the way we setup the headless mode depends on it. If we will not use OpenGL, then a "lighter" solution may work (using Qt "offscreen platform") in a wider range of situations. If Qt offscreen cannot be used, then we have to switch to a virtual X server (Xfvb), which starts a server in a separate process, and has to be shut down.
+
 '''
+
+# There is a pile of problems in this headless setup:
+#
+# - Qt "offscreen platform" mode sometimes works, but not always: we have to
+#   test it in a separate test process.
+# - if OpenGL has to be used, Qt "offscreen" mode only works if a X display is
+#   actually available.
+# - Xvfb with a GLX server may use VirtualGL for hardware rendering,
+# - but it doesn't always work: we have to test it in a separate test process.
+# - sometimes GLW won't work using the default current OpenGL implementation.
+#   Then we have to switch to a software Mesa OpenGL libraty, if it is
+#   available and found. Our casa-distro containers and pixi environments do
+#   provide one.
+# - But changing OpenGL library implies that it is not already loaded. So it
+#   must be initialized before QtWidgets is imported.
+# - some Qt modules (QtWebEngine) need to be imported before a QApplication is
+#   built
+# - Some QApplication static flags have to be set before QApplication is built
+#
+# so we have to control the order of import and initialization of everything...
 
 from soma import subprocess
 import os
