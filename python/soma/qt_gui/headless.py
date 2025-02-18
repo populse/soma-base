@@ -701,7 +701,9 @@ def setup_headless(need_opengl=True, allow_virtualgl=True,
         if QtCore.QCoreApplication.instance() is not None:
             sip.delete(QtCore.QCoreApplication.instance())
         try:
+            qt_backend.headless = False
             from soma.qt_gui.qt_backend import QtWebEngineWidgets
+            qt_backend.headless = True
         except ImportError:
             pass  # maybe not installed
 
