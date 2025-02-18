@@ -176,7 +176,7 @@ class QtImporter(object):
             if headless_res is not None and headless_res.qapp is None:
                 headless_res.qapp = mod.QApplication([sys.argv[0], '-platform',
                                                       'offscreen'])
-                # sip.transferto(headless_res.qapp, None)
+                sip.transferto(headless_res.qapp, None)
                 # to prevent deletion just after now
 
             return mod
@@ -268,7 +268,7 @@ class QtImporter(object):
             if mod.QApplication.instance() is None:
                 headless_res.qapp = mod.QApplication([sys.argv[0], '-platform',
                                                       'offscreen'])
-                # sip.transferto(headless_res.qapp, None)
+                sip.transferto(headless_res.qapp, None)
                 # to prevent deletion just after now
         return module
 

@@ -59,6 +59,38 @@ force_virtualgl = True
 headless_initialized = None
 
 
+def terminate_virtual_display():
+    global virtual_display
+    global virtual_display_proc
+    global original_display
+    global display
+
+    if virtual_display_proc is None:
+        return
+
+    virtual_display_proc.terminate()
+    virtual_display_proc.wait()
+    virtual_display_proc = None
+
+    if original_display:
+        os.environ['DISPLAY'] = original_display
+    else:
+        del os.environ['DISPLAY']
+
+    if virtual_display == 'xpra':
+        subprocess.call(['xpra', 'stop', str(display)])
+
+
+# this is not needed any longer for Xvfb, since on_parent_exit() is passed
+# to Popen, but xpra needs to stop the corresponding server
+#
+# anyway we need to set it up at startup, begore Qt is initialized
+# to have the correct call order for atexit funtions.
+# see https://github.com/The-Compiler/pytest-xvfb/issues/11
+if virtual_display_proc is not None:
+    atexit.register(terminate_virtual_display)
+
+
 def setup_virtualGL():
     ''' Load VirtualGL libraries and LD_PRELOAD env variable to run the current
     process via VirtualGL.
@@ -320,28 +352,6 @@ def start_virtual_display(display=None):
     if virtual_display == 'xpra':
         virtual_display_proc = start_xpra(display)
     return virtual_display_proc
-
-
-def terminate_virtual_display():
-    global virtual_display
-    global virtual_display_proc
-    global original_display
-    global display
-
-    if virtual_display_proc is None:
-        return
-
-    virtual_display_proc.terminate()
-    virtual_display_proc.wait()
-    virtual_display_proc = None
-
-    if original_display:
-        os.environ['DISPLAY'] = original_display
-    else:
-        del os.environ['DISPLAY']
-
-    if virtual_display == 'xpra':
-        subprocess.call(['xpra', 'stop', str(display)])
 
 
 class PrCtlError(Exception):
@@ -627,11 +637,6 @@ def setup_headless_xvfb(need_opengl=True, allow_virtualgl=True,
             print('Qt running in normal (non-headless) mode')
             result.headless = False
 
-    # this is not needed any longer for Xvfb, since on_parent_exit() is passed
-    # to Popen, but xpra needs to stop the corresponding server
-    if virtual_display_proc is not None:
-        atexit.register(terminate_virtual_display)
-
     # for an obscure unknown reason, we now need to use the offscreen mode of
     # Qt, even,t through xvfb, otherwise it cannot build an OpenGL conext.
     from soma.qt_gui.qt_backend import Qt
@@ -648,6 +653,7 @@ def setup_headless_xvfb(need_opengl=True, allow_virtualgl=True,
         pass  # maybe not installed
 
     app = Qt.QApplication([sys.argv[0], '-platform', 'offscreen'])
+    sip.transferto(app, None)  # to prevent deletion just after now
     # we need to keep a reference to the qapp, otherwise it gets
     # replaced with a QCoreApplication instance for an unknown reason.
     result.qapp = app
@@ -730,7 +736,7 @@ def setup_headless(need_opengl=True, allow_virtualgl=True,
             pass  # maybe not installed
 
         app = QtWidgets.QApplication([sys.argv[0], '-platform', 'offscreen'])
-        # sip.transferto(app, None)  # to prevent deletion just after now
+        sip.transferto(app, None)  # to prevent deletion just after now
         # we need to keep a reference to the qapp, otherwise it gets
         # replaced with a QCoreApplication instance for an unknown reason.
         result.qapp = app
