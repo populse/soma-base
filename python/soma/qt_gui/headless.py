@@ -226,12 +226,13 @@ def test_opengl(pid=None, verbose=False):
     if pid is None:
         pid = os.getpid()
     gl_libs = set()
-    for line in open('/proc/%d/maps' % pid).readlines():
-        lib = line.split()[-1]
-        if lib not in gl_libs and lib.find('libGL.so.') != -1:
-            gl_libs.add(lib)
-            if verbose:
-                print(lib)
+    with open('/proc/%d/maps' % pid) as f:
+        for line in f.readlines():
+            lib = line.split()[-1]
+            if lib not in gl_libs and lib.find('libGL.so.') != -1:
+                gl_libs.add(lib)
+                if verbose:
+                    print(lib)
     return gl_libs
 
 
