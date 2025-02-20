@@ -6,7 +6,7 @@ __docformat__ = "restructuredtext en"
 
 import codecs
 from xml.sax.saxutils import escape as xml_escape
-from xml.sax.saxutils import xml_quoteattr
+from xml.sax.saxutils import quoteattr as xml_quoteattr
 from soma.translation import translate as _
 from soma.minf.tree import createMinfReducer
 from soma.minf.writer import MinfWriter

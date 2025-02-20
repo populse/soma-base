@@ -1,3 +1,12 @@
+# -*- coding: utf-8 -*-
+#
+# Soma-base - Copyright (C) CEA, 2013
+# Distributed under the terms of the CeCILL-B license, as published by
+# the CEA-CNRS-INRIA. Refer to the LICENSE file or to
+# http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html
+# for details.
+#
+
 """Compatibility module for PyQt and PySide. Currently supports PyQt4,
 PySide, and PyQt5.
 This modules handles differences between PyQt and PySide APIs and behaviours,
@@ -29,17 +38,26 @@ appropriate Qt backend, so that the use of the backend selection is more
 transparent.
 """
 
+import logging
+import sys
+import os
 import importlib
 import inspect
-import logging
-import os
-import sys
 import types
+
+
+getfullargspec = getattr(
+    inspect, "getfullargspec", getattr(inspect, "getargspec", None)
+)
+
 
 # make qt_backend a fake module package, with Qt modules as sub-modules
 __package__ = __name__
-__spec__ = type(__spec__)(name=f'{__name__}.__init__', loader=__spec__.loader,
-                          origin=f'{__spec__.origin[:-3]}/__init__.py')
+__spec__ = type(__spec__)(
+    name=f"{__name__}.__init__",
+    loader=__spec__.loader,
+    origin=f"{__spec__.origin[:-3]}/__init__.py",
+)
 __path__ = [os.path.dirname(__file__)]
 
 # internal variable to avoid warning several times
@@ -51,19 +69,12 @@ headless = False
 need_opengl = True
 
 
-<<<<<<< HEAD
-class QtImporter:
-    def find_module(self, fullname, path=None):
-        modsplit = fullname.split(".")
-        modpath = ".".join(modsplit[:-1])
-=======
 class QtImporter(object):
     debug_done = False
 
     def find_spec(self, fullname, path=None, target=None):
-        modsplit = fullname.split('.')
-        modpath = '.'.join(modsplit[:-1])
->>>>>>> origin/master
+        modsplit = fullname.split(".")
+        modpath = ".".join(modsplit[:-1])
         module_name = modsplit[-1]
         if modpath != __name__ or fullname == "sip":
             return None
@@ -79,6 +90,8 @@ class QtImporter(object):
             module_name = "QtGui"
         try:
             found = importlib.util.find_spec(f".{module_name}", qt_module.__name__)
+            if found:
+                found.name = f"{qt_backend}.{modsplit[-1]}"
         except ImportError:
             found = None
         if found is None:
@@ -88,23 +101,35 @@ class QtImporter(object):
                 try:
                     found = importlib.util.find_spec(module_name)
                     if found is not None:
-                        return self
+                        found.loader = self
+                        return found
                     else:
                         return None
                 except ImportError:
                     return None
-        return self
+        if found is None:
+            return None
+        found.loader = self
+        return found
 
-    def load_module(self, name):
+    def exec_module(self, module):
+        # this method can be used to execute the module in the module
+        # namespace, which can include adding variables, functions, etc.
+        pass
+
+    def create_module(self, spec=None, name=None):
+        if name is None:
+            name = spec.name
         qt_backend = get_qt_backend()
         module_name = name.split(".")[-1]
         imp_module_name = module_name
         headless_res = None
 
-        if headless and module_name not in ('sip', 'QtCore', 'QtGui'):
+        if headless and module_name not in ("sip", "QtCore", "QtGui"):
             # we use ..headless instead of .headless because we have
             # modified __package__
             from ..headless import setup_headless
+
             headless_res = setup_headless(need_opengl=need_opengl)
 
         if make_compatible_qt5:
@@ -116,8 +141,8 @@ class QtImporter(object):
         if qt_backend in ("PyQt4", "PyQt5", "PyQt6") or module_name == "sip":
             # import the right sip module
             try:
-                __import__(f"{qt_backend}.sip")
-                sip = sys.modules.get(f"{qt_backend}.sip")
+                __import__("%s.sip" % qt_backend)
+                sip = sys.modules.get("%s.sip" % qt_backend)
                 if sip is not None:
                     sys.modules["sip"] = sip
                 else:
@@ -143,10 +168,6 @@ class QtImporter(object):
                     if not x.startswith("_")
                 ]
             )
-            # for mod in ('QtCore', 'QtGui', 'phonon', 'QtNetwork', 'QtSvg',
-            #'QtOpenGL', 'QtTest', 'QtDeclarative', 'QtScript',
-            #'QtUiTools', 'QtScriptTools', 'QtWebKit', 'QtHelp',
-            #'QtSql', 'QtXml'):
             if "Qt" in mods:
                 # PyQt5 + sip6 brings a Qt module, but which is empty. We thus
                 # need to re-populate it as in PyQt6, but here the module
@@ -154,23 +175,19 @@ class QtImporter(object):
                 mods.remove("Qt")
             for mod in mods:
                 try:
-                    psmods.append(self.load_module(".".join(base + [mod])))
+                    psmods.append(self.create_module(name=".".join(base + [mod])))
                 except ImportError:
                     pass
             patch_main_modules(psmods)
-<<<<<<< HEAD
             mod = sys.modules[".".join([qt_backend, "Qt"])]
             sys.modules["soma.qt_gui.qt_backend.Qt"] = mod
-=======
-            mod = sys.modules['.'.join([qt_backend, 'Qt'])]
-            sys.modules['soma.qt_gui.qt_backend.Qt'] = mod
             if headless_res is not None and headless_res.qapp is None:
-                headless_res.qapp = mod.QApplication([sys.argv[0], '-platform',
-                                                      'offscreen'])
+                headless_res.qapp = mod.QApplication(
+                    [sys.argv[0], "-platform", "offscreen"]
+                )
                 sip.transferto(headless_res.qapp, None)
                 # to prevent deletion just after now
 
->>>>>>> origin/master
             return mod
 
         __import__(".".join([qt_backend, imp_module_name]))
@@ -184,7 +201,6 @@ class QtImporter(object):
             def _safe_load_plugin(plugin, plugin_globals, plugin_locals):
                 def _safe_getFilter():
                     import sys
-
                     import DLFCN
 
                     res = plugin_locals["getFilter_orig"]()
@@ -233,19 +249,12 @@ class QtImporter(object):
                 if qt_backend in ("PyQt4", "PySide"):
                     sys.modules[".".join([qt_backend, "QtWidgets"])] = module
                     patch_qt4_modules(QtCore, module)
-<<<<<<< HEAD
                 elif qt_backend in ("PyQt5", "PyQt6"):
-                    __import__(".".join([qt_backend, "QtWidgets"]))
-                    qtwidgets = sys.modules[".".join([qt_backend, "QtWidgets"])]
-=======
-                elif qt_backend in ('PyQt5', 'PyQt6'):
-                    qtwname = '.'.join([qt_backend, 'QtWidgets'])
+                    qtwname = ".".join([qt_backend, "QtWidgets"])
                     if qtwname in sys.modules:
                         del sys.modules[qtwname]
                     __import__(qtwname)
-                    qtwidgets = sys.modules['.'.join([qt_backend,
-                                                      'QtWidgets'])]
->>>>>>> origin/master
+                    qtwidgets = sys.modules[".".join([qt_backend, "QtWidgets"])]
                     patch_qt5_modules(QtCore, module, qtwidgets)
                     if module_name == "QtWidgets":
                         module = qtwidgets
@@ -260,14 +269,16 @@ class QtImporter(object):
                     patch_qt5_webkit_modules(module, qtwebkitwidgets)
                     if module_name == "QtWebKitWidgets":
                         module = qtwebkitwidgets
+            ensure_compatible_qt5()
 
         if headless_res is not None and headless_res.qapp is None:
-            qtwname = '.'.join([qt_backend, 'QtWidgets'])
+            qtwname = ".".join([qt_backend, "QtWidgets"])
             __import__(qtwname)
-            mod = sys.modules['.'.join([qt_backend, 'QtWidgets'])]
+            mod = sys.modules[".".join([qt_backend, "QtWidgets"])]
             if mod.QApplication.instance() is None:
-                headless_res.qapp = mod.QApplication([sys.argv[0], '-platform',
-                                                      'offscreen'])
+                headless_res.qapp = mod.QApplication(
+                    [sys.argv[0], "-platform", "offscreen"]
+                )
                 sip.transferto(headless_res.qapp, None)
                 # to prevent deletion just after now
         return module
@@ -370,14 +381,15 @@ def set_qt_backend(backend=None, pyqt_api=1, compatible_qt5=None):
         else:
             backend = qt_backend
     if qt_backend is not None and qt_backend != backend:
-        print(
-            f"WARNING: set_qt_backend: a different backend, {qt_backend}, has already "
-            f"be set, and {backend} is now requested",
-            sys.stderr,
+        logging.warn(
+            "set_qt_backend: a different backend, %s, has already "
+            "be set, and %s is now requested" % (qt_backend, backend)
         )
     if backend == "PyQt4":  # and sys.modules.get('PyQt4') is None:
-        import sip
-
+        sip = load_sip_module(backend)
+        if qt_backend is not None:
+            backend = qt_backend
+    if backend == "PyQt4":
         if pyqt_api == 2:
             sip_classes = [
                 "QString",
@@ -396,19 +408,27 @@ def set_qt_backend(backend=None, pyqt_api=1, compatible_qt5=None):
                     if not _sip_api_set:
                         logging.warning(e.message)
             _sip_api_set = True
-    qt_module = __import__(backend)
-    __import__(backend + ".QtCore")
-    # __import__(backend + '.QtGui')
-    qt_backend = backend
-
-    if qt_backend in ("PyQt4", "PyQt5", "PyQt6"):
-        # import the right sip module
+    if qt_backend is None:
+        backends = ["PyQt5", "PyQt6", "PyQt4", "PySide2", "PySide"]
+        backends.remove(backend)
+        backends.insert(0, backend)
+    else:
+        backends = [backend]
+    for test_backend in backends:
         try:
-            __import__(f"{qt_backend}.sip")
-            sip = sys.modules[f"{qt_backend}.sip"]
-            sys.modules["sip"] = sip
-        except Exception:
-            import sip
+            qt_module = __import__(test_backend)
+            __import__(test_backend + ".QtCore")
+            # __import__(backend + '.QtGui')
+            qt_backend = test_backend
+            break
+        except ImportError:
+            pass
+        if qt_backend is None:
+            # all fail: re-raise the exception
+            qt_module = __import__(backend)
+            __import__(test_backend + ".QtCore")
+
+    sip = load_sip_module(qt_backend)
 
     if make_compatible_qt5 and qt5_compat_changed:
         ensure_compatible_qt5()
@@ -418,15 +438,13 @@ def set_qt_backend(backend=None, pyqt_api=1, compatible_qt5=None):
             qt_module.QtCore.Slot = qt_module.QtCore.pyqtSlot
 
 
-<<<<<<< HEAD
-=======
 def set_headless(headless_mode=True, needs_opengl=None):
-    ''' Configure to use the headless mode.
+    """Configure to use the headless mode.
 
     see :mod:`headless`
 
     if needs_opengl is None (default), don't change the currently set value'
-    '''
+    """
     global headless, need_opengl
     headless = headless_mode
     if need_opengl is not None:
@@ -434,7 +452,7 @@ def set_headless(headless_mode=True, needs_opengl=None):
 
 
 def load_sip_module(backend=None):
-    sip = sys.modules.get('sip')
+    sip = sys.modules.get("sip")
     if sip is not None:
         return sip
 
@@ -442,15 +460,15 @@ def load_sip_module(backend=None):
     if backend is None:
         backend = qt_backend
     if qt_backend is None:
-        backends = [backend, 'PyQt5', 'PyQt6', 'PyQt4']
+        backends = [backend, "PyQt5", "PyQt6", "PyQt4"]
     else:
         backends = [backend]
     for test_backend in backends:
         # import the right sip module
         try:
-            __import__('%s.sip' % test_backend)
-            sip = sys.modules['%s.sip' % test_backend]
-            sys.modules['sip'] = sip
+            __import__("%s.sip" % test_backend)
+            sip = sys.modules["%s.sip" % test_backend]
+            sys.modules["sip"] = sip
             qt_backend = test_backend
         except ImportError:
             pass
@@ -459,7 +477,6 @@ def load_sip_module(backend=None):
     return sip
 
 
->>>>>>> origin/master
 def patch_qt5_modules(QtCore, QtGui, QtWidgets):
     # copy QtWidgets contents into QtGui
     for key in QtWidgets.__dict__:
@@ -483,12 +500,12 @@ def patch_qt4_modules(QtCore, QtGui):
 
 
 def patch_main_modules(modules):
-    if f"{qt_backend}.Qt" in sys.modules:
-        Qt = sys.modules[f"{qt_backend}.Qt"]
+    if "%s.Qt" % qt_backend in sys.modules:
+        Qt = sys.modules["%s.Qt" % qt_backend]
     else:
         # Qt = imp.new_module('%s.Qt' % qt_backend)
         Qt = types.ModuleType(f"{qt_backend}.Qt")
-        sys.modules[f"{qt_backend}.Qt"] = Qt
+        sys.modules["%s.Qt" % qt_backend] = Qt
     for mod in modules:
         for key, item in mod.__dict__.items():
             if not key.startswith("__") and key not in Qt.__dict__:
@@ -504,39 +521,47 @@ def ensure_compatible_qt5():
         qtwidgets = None
         qtwebkit = None
         qtwebkitwidgets = None
-        if f"{qt_backend}.QtGui" in sys.modules:
-            qtgui = sys.modules[f"{qt_backend}.QtGui"]
-        if f"{qt_backend}.QtWidgets" in sys.modules:
-            qtwidgets = sys.modules[f"{qt_backend}.QtWidgets"]
-        if f"{qt_backend}.QtWebKit" in sys.modules:
-            qtwebkit = sys.modules[f"{qt_backend}.QtWebKit"]
-        if f"{qt_backend}.QtWebKitWidgets" in sys.modules:
-            qtwebkitwidgets = sys.modules[f"{qt_backend}.QtWebKitWidgets"]
+        if "%s.QtGui" % qt_backend in sys.modules:
+            qtgui = sys.modules["%s.QtGui" % qt_backend]
+        if "%s.QtWidgets" % qt_backend in sys.modules:
+            qtwidgets = sys.modules["%s.QtWidgets" % qt_backend]
+        if "%s.QtWebKit" % qt_backend in sys.modules:
+            qtwebkit = sys.modules["%s.QtWebKit" % qt_backend]
+        if "%s.QtWebKitWidgets" % qt_backend in sys.modules:
+            qtwebkitwidgets = sys.modules["%s.QtWebKitWidgets" % qt_backend]
         if qtgui and qtwidgets is None:
-            qtwidgets = sys.modules[f"{qt_backend}.QtWidgets"]
+            importlib.import_module(f"{qt_backend}.QtWidgets")
+            QtWidgets = sys.modules[f"{qt_backend}.QtWidgets"]
+            qtwidgets = sys.modules["%s.QtWidgets" % qt_backend]
         elif qtwidgets and qtgui is None:
-            from . import QtGui
-
-            qtgui = sys.modules[f"{qt_backend}.QtGui"]
+            importlib.import_module(f"{qt_backend}.QtGui")
+            QtGui = sys.modules[f"{qt_backend}.QtGui"]
+            qtgui = sys.modules["%s.QtGui" % qt_backend]
         elif qtgui and qtwidgets:
-            from . import QtCore
-
+            importlib.import_module(f"{qt_backend}.QtCore")
+            QtCore = sys.modules[f"{qt_backend}.QtCore"]
             patch_qt5_modules(QtCore, qtgui, qtwidgets)
         if qtwebkit and qtwebkitwidgets is None:
+            importlib.import_module(f"{qt_backend}.QtWebKitWidgets")
             qtwebkitwidgets = sys.modules[f"{qt_backend}.QtWebKitWidgets"]
+            qtwebkitwidgets = sys.modules["%s.QtWebKitWidgets" % qt_backend]
         elif qtwebkitwidgets and qtwebkit is None:
-            pass
+            importlib.import_module(f"{qt_backend}.QtWebKit")
+            qtwebkit = sys.modules[f"{qt_backend}.QtWebKit"]
         elif qtwebkit and qtwebkitwidgets:
             patch_qt5_webkit_modules(qtwebkit, qtwebkitwidgets)
     else:
-        if f"{qt_backend}.QtGui" in sys.modules:
-            pass
-        from . import QtCore, QtGui
-
+        if "%s.QtGui" % qt_backend in sys.modules:
+            importlib.import_module(f"{qt_backend}.QtWidgets")
+            QtWidgets = sys.modules[f"{qt_backend}.QtWidgets"]
+        importlib.import_module(f"{qt_backend}.QtCore")
+        QtCore = sys.modules[f"{qt_backend}.QtCore"]
+        importlib.import_module(f"{qt_backend}.QtGui")
+        QtGui = sys.modules[f"{qt_backend}.QtGui"]
         patch_qt4_modules(QtCore, QtGui)
     if qt_backend in ("PyQt4", "PyQt5", "PyQt6"):
-        from . import QtCore
-
+        importlib.import_module(f"{qt_backend}.QtCore")
+        QtCore = sys.modules[f"{qt_backend}.QtCore"]
         QtCore.Signal = QtCore.pyqtSignal
         QtCore.Slot = QtCore.pyqtSlot
 
@@ -711,7 +736,7 @@ def getOpenFileName(
         if get_qt_backend() == "PyQt4":
             return filename
         else:
-            return filename[0]  # PyQt5 returns (filename, filter)
+            return filename[0]  # PyQt5 returns (filaname, filter)
     else:
         return get_qt_module().QtGui.QFileDialog.getOpenFileName(
             parent,
@@ -746,7 +771,7 @@ def getSaveFileName(
         if get_qt_backend() == "PyQt4":
             return filename
         else:
-            return filename[0]  # PyQt5 returns (filename, filter)
+            return filename[0]  # PyQt5 returns (filaname, filter)
     else:
         return get_qt_module().QtGui.QFileDialog.getSaveFileName(
             parent, caption, directory, filter, selectedFilter, options
@@ -796,6 +821,7 @@ def init_matplotlib_backend(force=True):
         # if matplotlib cannot be found, don't do anything.
         return
 
+    mpl_ver = [int(x) for x in matplotlib.__version__.split(".")[:2]]
     qt_backend = get_qt_backend()
     if qt_backend == "PyQt6":
         guiBackend = "Qt5Agg"  # apparently not Qt6Agg
@@ -842,13 +868,125 @@ def init_matplotlib_backend(force=True):
     return mpl_backend_mod
 
 
+traits_ui_handler_initialized = False
+
+
+def init_traitsui_handler():
+    """Setup handler for traits notification in Qt GUI.
+    This function needs to be called before using traits notification which
+    trigger GUI modification from non-principal threads.
+
+    **WARNING**: depending on the Qt bindings (PyQt or PySide), this function
+    may instantiate a QApplication. It seems that when using PyQt4,
+    QApplication is not instantiated, whereas when using PySide, it is.
+    This means that after this function has been called, one must check if
+    the application has been created before recreating it:
+
+    ::
+
+        app = QtGui.QApplication.instance()
+        if not app:
+            app = QtGui.QApplication(sys.argv)
+
+    This behaviour is triggered somewhere in the traitsui.qt4.toolkit module,
+    we cannot change it easily.
+    """
+    global traits_ui_handler_initialized
+    from . import QtCore, QtGui
+
+    if traits_ui_handler_initialized:
+        return  # already done
+
+    try:
+        if get_qt_backend() in ("PyQt4", "PySide"):
+            from traitsui.qt4 import toolkit
+        else:
+            # if using Qt5 we must not import traitsui.qt4, which would cause
+            # a crash. Then use the code taken from traitsui.qt4.toolkit
+            # in a qt-independent manner
+            raise ImportError("traitsui doesn't provide a PyQt5 backend")
+    except Exception:
+        # copy of the code from traitsui.qt4.toolkit
+
+        from traits.trait_notifiers import set_ui_handler
+
+        # -------------------------------------------------------------------------------
+        #  Handles UI notification handler requests that occur on a thread other than
+        #  the UI thread:
+        # -------------------------------------------------------------------------------
+        _QT_TRAITS_EVENT = QtCore.QEvent.Type(QtCore.QEvent.registerEventType())
+
+        class _CallAfter(QtCore.QObject):
+            """This class dispatches a handler so that it executes in the main GUI
+            thread (similar to the wx function).
+            """
+
+            # The list of pending calls.
+            _calls = []
+
+            # The mutex around the list of pending calls.
+            _calls_mutex = QtCore.QMutex()
+
+            def __init__(self, handler, *args, **kwds):
+                """Initialise the call."""
+                QtCore.QObject.__init__(self)
+
+                # Save the details of the call.
+                self._handler = handler
+                self._args = args
+                self._kwds = kwds
+
+                # Add this to the list.
+                self._calls_mutex.lock()
+                self._calls.append(self)
+                self._calls_mutex.unlock()
+
+                # Move to the main GUI thread.
+                self.moveToThread(QtGui.QApplication.instance().thread())
+
+                # Post an event to be dispatched on the main GUI thread. Note that
+                # we do not call QTimer.singleShot, which would be simpler, because
+                # that only works on QThreads. We want regular Python threads to work.
+                event = QtCore.QEvent(_QT_TRAITS_EVENT)
+                QtGui.QApplication.instance().postEvent(self, event)
+
+            def event(self, event):
+                """QObject event handler."""
+                if event.type() == _QT_TRAITS_EVENT:
+                    # Invoke the handler
+                    self._handler(*self._args, **self._kwds)
+
+                    # We cannot remove from self._calls here. QObjects don't like being
+                    # garbage collected during event handlers (there are tracebacks,
+                    # plus maybe a memory leak, I think).
+                    QtCore.QTimer.singleShot(0, self._finished)
+
+                    return True
+                else:
+                    return QtCore.QObject.event(self, event)
+
+            def _finished(self):
+                """Remove the call from the list, so it can be garbage collected."""
+                self._calls_mutex.lock()
+                del self._calls[self._calls.index(self)]
+                self._calls_mutex.unlock()
+
+        def ui_handler(handler, *args, **kwds):
+            """Handles UI notification handler requests that occur on a thread other
+            than the UI thread.
+            """
+            _CallAfter(handler, *args, **kwds)
+
+        # Tell the traits notification handlers to use this UI handler
+        set_ui_handler(ui_handler)
+
+
 def qimage_to_np(qimage):
     """
     Utility function to transform a Qt QImage into a numpy array suitable
     for matplotlib imshow() for instance.
     """
     import numpy as np
-
     from . import Qt
 
     w, h = qimage.width(), qimage.height()
@@ -871,9 +1009,8 @@ def imshow_widget(widget, figure=None, show=False):
     pylab.imshow(). This is useful to use the sphinx_gallery module for
     documentation.
     """
-    from matplotlib import pyplot
-
     from . import Qt
+    from matplotlib import pyplot
 
     Qt.QApplication.instance().processEvents()
     if Qt.QT_VERSION >= 0x050000:
