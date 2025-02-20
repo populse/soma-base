@@ -6,7 +6,16 @@ __docformat__ = "restructuredtext en"
 
 import codecs
 from xml.sax.saxutils import escape as xml_escape
-from xml.sax.saxutils import quoteattr as xml_quoteattr
+from xml.sax.saxutils import xml_quoteattr
+from soma.translation import translate as _
+from soma.minf.tree import createMinfReducer
+from soma.minf.writer import MinfWriter
+from soma.minf.tree import minfStructure, listStructure, dictStructure, \
+    StartStructure, EndStructure
+from soma.minf.error import MinfError
+from soma.undefined import Undefined
+import sys
+import gc
 
 from soma.minf.error import MinfError
 from soma.minf.tree import (
@@ -41,12 +50,17 @@ class MinfXMLWriter(MinfWriter):
 
     name = "XML"
 
-    def __init__(self, file, reducer, encoding="utf-8", level=0, append=False):
+    def __init__(self, file, reducer,
+                 encoding='utf-8',
+                 level=0,
+                 append=False,
+                 close_file=False):
         self.__file = file
         self.reducer = createMinfReducer(reducer)
         self.encoder = codecs.getencoder(encoding)
         self.level = level
-        self.indentString = "  "
+        self.indentString = '  '
+        self.__close_file = close_file
         if not append:
             self._writeLine(
                 '<?xml version="1.0" encoding=' + xml_quoteattr(encoding) + " ?>"
@@ -65,7 +79,9 @@ class MinfXMLWriter(MinfWriter):
         """Close the Minf syntax tree. The underlying file is NOT closed."""
         if self.__file is not None:
             self.__file.flush()
-            self._encodeAndWriteLine("</" + minfTag + ">")
+            self._encodeAndWriteLine('</' + minfTag + '>')
+            if self.__close_file:
+                self.__file.close()
             self.__file = None
 
     def write(self, value):

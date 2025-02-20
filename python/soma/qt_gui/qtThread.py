@@ -56,11 +56,24 @@ class FakeQtThreadCall(QObject):
     call = staticmethod(call)
 
 
+<<<<<<< HEAD
 class QtThreadCall(singleton.Singleton, QObject):
     """
     This object enables to send tasks to be executed by qt thread (main
     thread).
     This object must be initialized in qt thread.
+=======
+class QtThreadCall(QObject, singleton.Singleton):
+
+    """
+    This object enables to send tasks to be executed by qt thread (main
+    thread).
+
+    This object must be initialized in the qt thread (normally the main
+    thread).
+
+    It starts a QTimer and periodically execute tasks in its actions list.
+>>>>>>> origin/master
 
     Attributes
     ----------
@@ -72,9 +85,20 @@ class QtThreadCall(singleton.Singleton, QObject):
         current thread at object initialisation
     """
 
+    def __new__(cls, *args, **kwargs):
+        # we muse re-do what is done in Singleton.__new__
+        if '_singleton_instance' not in cls.__dict__:
+            cls._singleton_instance = QObject.__new__(cls)
+            cls._post_new_(cls, *args, **kwargs)
+        return cls._singleton_instance
+
     def __singleton_init__(self):
+<<<<<<< HEAD
         # QObject.__init__( self, None )
         super().__singleton_init__(None)
+=======
+        super().__singleton_init__()
+>>>>>>> origin/master
         self.lock = threading.RLock()
         self.actions = []
         # look for the main thread
@@ -87,6 +111,15 @@ class QtThreadCall(singleton.Singleton, QObject):
         if not mainthreadfound:
             print("Warning: main thread not found")
             self.mainThread = threading.current_thread()
+
+    def __getattr__(self, attr):
+        # this seems useless and adds an overhead,
+        # however in PyQt6, not defining this __getattr__ method leads to a
+        # recursive loop and a segfault after the object is initialized
+        # (it keeps looking for a __pyqtSignature__ attribute)
+        # Doing this, we prevent the crash. We do not have a clear understanding
+        # of the mechanism, however, we must admit.
+        return super().__getattr__(attr)
 
     def _postEvent(self):
         class QtThreadCallEvent(QEvent):

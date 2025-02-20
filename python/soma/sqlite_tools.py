@@ -119,7 +119,7 @@ class ThreadSafeSQLiteConnection:
         if threading.current_thread is None:
             # exiting, threading attributes have become None
             return
-        currentThread = threading.current_thread().getName()
+        currentThread = threading.current_thread().name
         self._instanceLock.acquire()
         try:
             connection, connectionClosed = self.connections.pop(
@@ -152,7 +152,6 @@ class ThreadSafeSQLiteConnection:
                 # exiting, threading attributes have become None
                 return
             self.currentThreadCleanup()
-            currentThread = threading.current_thread().getName()
             self._instanceLock.acquire()
             try:
                 for thread in self.connections.keys():

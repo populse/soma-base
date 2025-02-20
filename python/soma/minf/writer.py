@@ -7,7 +7,10 @@ __docformat__ = "restructuredtext en"
 from soma.translation import translate as _
 
 
-# ------------------------------------------------------------------------------
+__docformat__ = "restructuredtext en"
+
+
+#------------------------------------------------------------------------------
 class RegisterMinfWriterClass(type):
     """
     RegisterMinfWriterClass is used as metaclass of L{MinfWriter} to automatically
@@ -42,8 +45,8 @@ class MinfWriter(metaclass=RegisterMinfWriterClass):
     #: class derived from L{MinfWriter} must set a format name in this attribute.
     name = None
 
-    def __init__(self, file, reducer):
-        """
+    def __init__(self, file, reducer, close_file=False):
+        '''
         Constructor of classes derived from L{MinfWriter} must be callable with two
         parameters.
         @param file: file object (opened for writing) where the minf file is
@@ -52,7 +55,11 @@ class MinfWriter(metaclass=RegisterMinfWriterClass):
         @param reducer: name of the reducer to use (see L{soma.minf.tree} for
           more information about reducers).
         @type  reducer: string
-        """
+        plus optionally:
+        @type close_file: bool
+        @param close_file: if the given file should be closed after the
+        writing operation
+        '''
 
     def write(self, value):
         """
@@ -85,21 +92,15 @@ class MinfWriter(metaclass=RegisterMinfWriterClass):
         writer = MinfWriter._allWriterClasses.get(format)
         if writer is None:
             raise ValueError(
-                _(
-                    'No minf writer for format "%(format)s", possible formats are: %(possible)s'
-                )
-                % {
-                    "format": format,
-                    "possible": ", ".join(
-                        ['"' + i + '"' for i in MinfWriter._allWriterClasses]
-                    ),
-                }
-            )
-        if not hasattr(destFile, "write"):
-            destFile = open(destFile, "w")
-        return writer(
-            destFile,
-            reducer,
-        )
-
+                _('No minf writer for format "%(format)s", possible formats are: %(possible)s')
+                %
+                {'format': format,
+                 'possible': ', '.join(['"' + i + '"'
+                                        for i in
+                                        MinfWriter._allWriterClasses])})
+        close_file = False
+        if not hasattr(destFile, 'write'):
+            destFile = open(destFile, 'w')
+            close_file = True
+        return writer(destFile, reducer, close_file=close_file)
     createWriter = staticmethod(createWriter)

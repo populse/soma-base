@@ -38,6 +38,8 @@ import types
 
 # make qt_backend a fake module package, with Qt modules as sub-modules
 __package__ = __name__
+__spec__ = type(__spec__)(name=f'{__name__}.__init__', loader=__spec__.loader,
+                          origin=f'{__spec__.origin[:-3]}/__init__.py')
 __path__ = [os.path.dirname(__file__)]
 
 # internal variable to avoid warning several times
@@ -45,12 +47,23 @@ _sip_api_set = False
 
 qt_backend = None
 make_compatible_qt5 = False
+headless = False
+need_opengl = True
 
 
+<<<<<<< HEAD
 class QtImporter:
     def find_module(self, fullname, path=None):
         modsplit = fullname.split(".")
         modpath = ".".join(modsplit[:-1])
+=======
+class QtImporter(object):
+    debug_done = False
+
+    def find_spec(self, fullname, path=None, target=None):
+        modsplit = fullname.split('.')
+        modpath = '.'.join(modsplit[:-1])
+>>>>>>> origin/master
         module_name = modsplit[-1]
         if modpath != __name__ or fullname == "sip":
             return None
@@ -86,6 +99,14 @@ class QtImporter:
         qt_backend = get_qt_backend()
         module_name = name.split(".")[-1]
         imp_module_name = module_name
+        headless_res = None
+
+        if headless and module_name not in ('sip', 'QtCore', 'QtGui'):
+            # we use ..headless instead of .headless because we have
+            # modified __package__
+            from ..headless import setup_headless
+            headless_res = setup_headless(need_opengl=need_opengl)
+
         if make_compatible_qt5:
             if module_name == "QtWidgets":
                 imp_module_name = "QtGui"
@@ -137,8 +158,19 @@ class QtImporter:
                 except ImportError:
                     pass
             patch_main_modules(psmods)
+<<<<<<< HEAD
             mod = sys.modules[".".join([qt_backend, "Qt"])]
             sys.modules["soma.qt_gui.qt_backend.Qt"] = mod
+=======
+            mod = sys.modules['.'.join([qt_backend, 'Qt'])]
+            sys.modules['soma.qt_gui.qt_backend.Qt'] = mod
+            if headless_res is not None and headless_res.qapp is None:
+                headless_res.qapp = mod.QApplication([sys.argv[0], '-platform',
+                                                      'offscreen'])
+                sip.transferto(headless_res.qapp, None)
+                # to prevent deletion just after now
+
+>>>>>>> origin/master
             return mod
 
         __import__(".".join([qt_backend, imp_module_name]))
@@ -201,9 +233,19 @@ class QtImporter:
                 if qt_backend in ("PyQt4", "PySide"):
                     sys.modules[".".join([qt_backend, "QtWidgets"])] = module
                     patch_qt4_modules(QtCore, module)
+<<<<<<< HEAD
                 elif qt_backend in ("PyQt5", "PyQt6"):
                     __import__(".".join([qt_backend, "QtWidgets"]))
                     qtwidgets = sys.modules[".".join([qt_backend, "QtWidgets"])]
+=======
+                elif qt_backend in ('PyQt5', 'PyQt6'):
+                    qtwname = '.'.join([qt_backend, 'QtWidgets'])
+                    if qtwname in sys.modules:
+                        del sys.modules[qtwname]
+                    __import__(qtwname)
+                    qtwidgets = sys.modules['.'.join([qt_backend,
+                                                      'QtWidgets'])]
+>>>>>>> origin/master
                     patch_qt5_modules(QtCore, module, qtwidgets)
                     if module_name == "QtWidgets":
                         module = qtwidgets
@@ -219,6 +261,15 @@ class QtImporter:
                     if module_name == "QtWebKitWidgets":
                         module = qtwebkitwidgets
 
+        if headless_res is not None and headless_res.qapp is None:
+            qtwname = '.'.join([qt_backend, 'QtWidgets'])
+            __import__(qtwname)
+            mod = sys.modules['.'.join([qt_backend, 'QtWidgets'])]
+            if mod.QApplication.instance() is None:
+                headless_res.qapp = mod.QApplication([sys.argv[0], '-platform',
+                                                      'offscreen'])
+                sip.transferto(headless_res.qapp, None)
+                # to prevent deletion just after now
         return module
 
 
@@ -367,6 +418,48 @@ def set_qt_backend(backend=None, pyqt_api=1, compatible_qt5=None):
             qt_module.QtCore.Slot = qt_module.QtCore.pyqtSlot
 
 
+<<<<<<< HEAD
+=======
+def set_headless(headless_mode=True, needs_opengl=None):
+    ''' Configure to use the headless mode.
+
+    see :mod:`headless`
+
+    if needs_opengl is None (default), don't change the currently set value'
+    '''
+    global headless, need_opengl
+    headless = headless_mode
+    if need_opengl is not None:
+        need_opengl = needs_opengl
+
+
+def load_sip_module(backend=None):
+    sip = sys.modules.get('sip')
+    if sip is not None:
+        return sip
+
+    global qt_backend
+    if backend is None:
+        backend = qt_backend
+    if qt_backend is None:
+        backends = [backend, 'PyQt5', 'PyQt6', 'PyQt4']
+    else:
+        backends = [backend]
+    for test_backend in backends:
+        # import the right sip module
+        try:
+            __import__('%s.sip' % test_backend)
+            sip = sys.modules['%s.sip' % test_backend]
+            sys.modules['sip'] = sip
+            qt_backend = test_backend
+        except ImportError:
+            pass
+    if sip is None:
+        import sip
+    return sip
+
+
+>>>>>>> origin/master
 def patch_qt5_modules(QtCore, QtGui, QtWidgets):
     # copy QtWidgets contents into QtGui
     for key in QtWidgets.__dict__:

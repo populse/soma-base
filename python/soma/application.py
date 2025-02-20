@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 __docformat__ = "restructuredtext en"
 
 
@@ -7,7 +8,7 @@ import sys
 import traceback
 from os.path import dirname
 
-from soma.controller import Controller, Directory, List, field
+from soma.controller import Controller, Directory, field
 from soma.singleton import Singleton
 
 # -------------------------------------------------------------------------
@@ -23,7 +24,7 @@ class Application(Singleton, Controller):
     # version = ReadOnly()
 
     # TODO: make it possible to add metaattributes such as "desc"
-    plugin_modules: field(type_=List[str], default_factory=lambda: [])
+    plugin_modules: field(type_=list[str], default_factory=lambda: [])
     "List of Python module to load after application configuration"
 
     def __singleton_init__(self, name=None, version=None, *args, **kwargs):
