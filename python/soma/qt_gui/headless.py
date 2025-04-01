@@ -591,9 +591,13 @@ def setup_headless_xvfb(need_opengl=True, allow_virtualgl=True,
                         mesa_lib = ctypes.CDLL(mesa, ctypes.RTLD_GLOBAL)
                         preload = f'{glapi}:{mesa}'
                     os.environ['LD_PRELOAD'] = preload
+                    old_ldp = os.getenv('LD_LIBRARY_PATH')
+                    ldp = os.path.dirname(mesa)
                     os.environ['LD_LIBRARY_PATH'] \
-                        = os.path.dirname(mesa) + ':' \
-                        + os.getenv('LD_LIBRARY_PATH')
+                        = os.path.dirname(mesa)
+                    if old_ldp is not None:
+                        ldp += ':' + old_ldp
+                    os.environ['LD_LIBRARY_PATH'] = ldp
                     # re-run Xvfb using new path
                     virtual_display_proc.terminate()
                     virtual_display_proc.wait()
