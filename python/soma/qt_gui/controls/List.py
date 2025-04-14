@@ -76,7 +76,7 @@ class ListControlWidget(object):
             True if the control values are valid,
             False otherwise
         """
-        # Initilaized the output
+        # Initialized the output
         valid = True
 
         # If the trait is optional, the control is valid

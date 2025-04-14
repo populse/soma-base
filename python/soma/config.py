@@ -77,7 +77,7 @@ def _init_default_brainvisa_share():
 
 def find_soma_root_dir():
     """Return the path of the base directory where software is installed. In a
-    developpement environment this corresponds to the build directory. In
+    development environment this corresponds to the build directory. In
     user environments this corresponds to the install directory (which is
     $CONDA_PREFIX in the case of a Conda, Mamba or Pixi environment)
     """
