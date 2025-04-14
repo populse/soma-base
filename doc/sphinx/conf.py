@@ -228,7 +228,7 @@ latex_documents = [
 autoclass_content = "both"
 
 extlinks = {
-    "bv": ("http://brainvisa.info/%s", "brainvisa "),
+    "bv": ("https://brainvisa.info/%s", "brainvisa "),
     "bvweb": ("../../../../communication/web/trunk/gas/%s", "bvweb "),
     "axon": ("../build-stable-release/share/doc/axon-" + version + "/%s", "axon "),
     "anatomist": (
@@ -256,7 +256,7 @@ extlinks = {
         "graphdox ",
     ),
     "pyqt": ("https://pyside.github.io/docs/pyside/PySide/%s", "pyqt"),
-    "traits": ("http://docs.enthought.com/traits/%s", "traits"),
+    "traits": ("https://docs.enthought.com/traits/%s", "traits"),
 }
 
 import soma

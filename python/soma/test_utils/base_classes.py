@@ -27,7 +27,7 @@ default_mode = run_mode
 class SomaTestLoader(unittest.TestLoader):
     """Base class for test loader that allows to pass keyword arguments to the
     test case class and use the environment to set the location of reference
-    files. Inspired from http://stackoverflow.com/questions/11380413/ (but
+    files. Inspired from https://stackoverflow.com/questions/11380413/ (but
     here we modify the test case classes themselves).
     The ArgumentParser is defined in the __init__ method. While it could be
     a class atrtibute, this makes easier to modify it in subclasses.

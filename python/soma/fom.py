@@ -134,7 +134,7 @@ A FOM file is a JSON file (actually a JSON/YAML extended file, to allow comments
 How to use FOMS
 ---------------
 
-At higher level, they are used for instance in `CAPSUL <http://brainvisa.info/capsul/>`_.
+At higher level, they are used for instance in `CAPSUL <https://brainvisa.info/capsul/>`_.
 
 At lower level, they are used through several classes:
 

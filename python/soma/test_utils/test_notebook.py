@@ -16,7 +16,7 @@ def _notebook_run(path, output_nb, timeout=60):
     """Execute a notebook via nbconvert and collect output.
     :returns (parsed nb object, execution errors)
 
-    from: http://blog.thedataincubator.com/2016/06/testing-jupyter-notebooks/
+    from: https://www.christianmoscardi.com/blog/2016/01/20/jupyter-testing.html
     """
     if main_jupyter is None:
         print("cannot test notebook", path)
@@ -57,7 +57,7 @@ def notebook_run(path, timeout=60):
     """Execute a notebook via nbconvert and collect output.
     :returns (parsed nb object, execution errors)
 
-    from: http://blog.thedataincubator.com/2016/06/testing-jupyter-notebooks/
+    from: https://www.christianmoscardi.com/blog/2016/01/20/jupyter-testing.html
     """
     if main_jupyter is None:
         print("cannot test notebook", path)
