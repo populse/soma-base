@@ -259,7 +259,7 @@ def iterateMinf(source, targets=None, stop_on_error=True, exceptions=None):
 
 def readMinf(source, targets=None, stop_on_error=True, exceptions=None):
     """
-    Entirerly reads a minf file and returns its content in a tuple.
+    Entirely reads a minf file and returns its content in a tuple.
     Equivalent to tuple(iterateMinf(source)).
 
     see: :func`iterateMinf`

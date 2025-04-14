@@ -31,7 +31,7 @@ For OpenGL settings, it is more complex than that: the program must specify whet
 # - Xvfb with a GLX server may use VirtualGL for hardware rendering,
 # - but it doesn't always work: we have to test it in a separate test process.
 # - sometimes GLW won't work using the default current OpenGL implementation.
-#   Then we have to switch to a software Mesa OpenGL libraty, if it is
+#   Then we have to switch to a software Mesa OpenGL library, if it is
 #   available and found. Our casa-distro containers and pixi environments do
 #   provide one.
 # - But changing OpenGL library implies that it is not already loaded. So it
@@ -85,7 +85,7 @@ def terminate_virtual_display():
 # to Popen, but xpra needs to stop the corresponding server
 #
 # anyway we need to set it up at startup, begore Qt is initialized
-# to have the correct call order for atexit funtions.
+# to have the correct call order for atexit functions.
 # see https://github.com/The-Compiler/pytest-xvfb/issues/11
 if virtual_display_proc is not None:
     atexit.register(terminate_virtual_display)
@@ -151,7 +151,7 @@ def test_glx(glxinfo_cmd=None, xdpyinfo_cmd=None, timeout=5.):
 
     Returns
     -------
-    2 if GLX is recognized trough glxinfo (trustable), 1 if GLX is recognized
+    2 if GLX is recognized through glxinfo (trustable), 1 if GLX is recognized
     through xdpyinfo (not always trustable), 0 otherwise.
     '''
     if glxinfo_cmd is None:
@@ -639,11 +639,11 @@ def setup_headless_xvfb(need_opengl=True, allow_virtualgl=True,
             result.headless = False
 
     # for an obscure unknown reason, we now need to use the offscreen mode of
-    # Qt, even,t through xvfb, otherwise it cannot build an OpenGL conext.
+    # Qt, even through xvfb, otherwise it cannot build an OpenGL context.
     from soma.qt_gui.qt_backend import Qt
     Qt.QCoreApplication.setAttribute(
         Qt.Qt.ApplicationAttribute.AA_ShareOpenGLContexts)
-    # QtWebEngine has very strict and difficult requiremnts. We have to
+    # QtWebEngine has very strict and difficult requirements. We have to
     # load it now.
     from soma.qt_gui.qt_backend import sip
     if Qt.QCoreApplication.instance() is not None:
@@ -724,7 +724,7 @@ def setup_headless(need_opengl=True, allow_virtualgl=True,
     QtCore.QCoreApplication.setAttribute(
         QtCore.Qt.ApplicationAttribute.AA_ShareOpenGLContexts)
     if hasattr(QtWidgets, 'QApplication'):
-        # QtWebEngine has very strict and difficult requiremnts. We have to
+        # QtWebEngine has very strict and difficult requirements. We have to
         # load it now.
         from soma.qt_gui.qt_backend import sip
         if QtCore.QCoreApplication.instance() is not None:
