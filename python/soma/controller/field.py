@@ -3,7 +3,7 @@ import re
 import sys
 import typing
 
-# Import allsupported types from typing
+# Import all supported types from typing
 from typing import (
     Any,
     Literal,
