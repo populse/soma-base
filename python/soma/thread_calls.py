@@ -36,7 +36,7 @@ exactly anything that can be called by python) is executed in a particular
 thread.
 
 For example, if you use PyMat (which is an interface between Python and a Matlab,
-see U{http://claymore.engineer.gvsu.edu/~steriana/Python} for more information)
+see U{https://pymat.sourceforge.net/} for more information)
 it is necessary that all calls to pymat.eval are done by the same thread that
 called pymat.open. If you want to use PyMat in a multi-threaded application,
 you will have to build appropriate calling mechanism as the one proposed in

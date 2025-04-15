@@ -35,7 +35,7 @@ This module defines only "constants" containing the names of the tags
 and the attributes used in XML minf format.
 
 * author: Yann Cointepas
-* organization: `NeuroSpin <http://www.neurospin.org>`_
+* organization: `CEA <http://www.cea.fr>`_
 * license: `CeCILL B <http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html>`_
 """
 

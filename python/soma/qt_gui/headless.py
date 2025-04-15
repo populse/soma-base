@@ -369,13 +369,13 @@ def on_parent_exit(signame):
     import signal
     from ctypes import cdll
 
-    # Constant taken from http://linux.die.net/include/linux/prctl.h
+    # Constant taken from https://linux.die.net/man/2/prctl
     PR_SET_PDEATHSIG = 1
 
     signum = getattr(signal, signame)
 
     def set_parent_exit_signal():
-        # http://linux.die.net/man/2/prctl
+        # https://linux.die.net/man/2/prctl
         result = cdll['libc.so.6'].prctl(PR_SET_PDEATHSIG, signum)
         if result != 0:
             raise PrCtlError('prctl failed with error code %s' % result)
@@ -608,7 +608,7 @@ def setup_headless_xvfb(need_opengl=True, allow_virtualgl=True,
                               'performance '
                               'will be slow. To get faster results, and if X '
                               'server connection can be obtained, consider '
-                              'installing VirtualGL (http://virtualgl.org) '
+                              'installing VirtualGL (https://virtualgl.org) '
                               'and running again before loading QtGui.')
                 else:
                     print('Mesa not found.')

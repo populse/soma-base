@@ -28,7 +28,7 @@
 #
 # ---------------------------------------------------------------------------------------------
 # docs and latest version available for download at
-#   http://rsgalloway.github.com/qrangeslider
+#   https://rsgalloway.github.com/qrangeslider
 # ------------------------------------------------------------------------
 
 __author__ = "Ryan Galloway <ryan@rsgalloway.com>"
