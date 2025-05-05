@@ -1,36 +1,4 @@
 # -*- coding: utf-8 -*-
-#  This software and supporting documentation are distributed by
-#      Institut Federatif de Recherche 49
-#      CEA/NeuroSpin, Batiment 145,
-#      91191 Gif-sur-Yvette cedex
-#      France
-#
-# This software is governed by the CeCILL license version 2 under
-# French law and abiding by the rules of distribution of free software.
-# You can  use, modify and/or redistribute the software under the
-# terms of the CeCILL license version 2 as circulated by CEA, CNRS
-# and INRIA at the following URL "http://www.cecill.info".
-#
-# As a counterpart to the access to the source code and  rights to copy,
-# modify and redistribute granted by the license, users are provided only
-# with a limited warranty  and the software's author,  the holder of the
-# economic rights,  and the successive licensors  have only  limited
-# liability.
-#
-# In this respect, the user's attention is drawn to the risks associated
-# with loading,  using,  modifying and/or developing or reproducing the
-# software by the user in light of its specific status of free software,
-# that may mean  that it is complicated to manipulate,  and  that  also
-# therefore means  that it is reserved for developers  and  experienced
-# professionals having in-depth computer knowledge. Users are therefore
-# encouraged to load and test the software's suitability as regards their
-# requirements in conditions enabling the security of their systems and/or
-# data to be ensured and,  more generally, to use and operate it in the
-# same conditions as regards security.
-#
-# The fact that you are presently reading this means that you have had
-# knowledge of the CeCILL license version 2 and that you accept its terms.
-
 """
 This module enables to make a function to be executed in qt thread (main thread).
 It is useful when you want to call qt functions from another thread.
@@ -43,6 +11,7 @@ It enables to do thread safe calls because all tasks sent are executed in the sa
 
 __docformat__ = "restructuredtext en"
 
+import atexit
 import sys
 import threading
 import six
@@ -74,8 +43,23 @@ class FakeQtThreadCall(QObject):
     call = staticmethod(call)
 
 
-class QtThreadCall(QObject, singleton.Singleton):
+# QThreadCall used to be a class deriving from Singleton
+# and QObject. This led to very strange bugs that where
+# related to Qt but too difficult to understand. Finally,
+# the class was renamed to _QThreadCall and is no more a
+# Singleton. For backward compatibility with existing code,
+# QThreadCall is now a function that manages the singleton
+# creation.
+qt_thread_call_instance = None
+def QtThreadCall():
+    global qt_thread_call_instance
 
+    if not qt_thread_call_instance:
+        qt_thread_call_instance = _QtThreadCall()
+    return qt_thread_call_instance
+
+
+class _QtThreadCall(QObject):
     """
     This object enables to send tasks to be executed by qt thread (main
     thread).
@@ -97,15 +81,8 @@ class QtThreadCall(QObject, singleton.Singleton):
         timer to wake this object periodically
     """
 
-    def __new__(cls, *args, **kwargs):
-        # we muse re-do what is done in Singleton.__new__
-        if '_singleton_instance' not in cls.__dict__:
-            cls._singleton_instance = QObject.__new__(cls)
-            cls._post_new_(cls, *args, **kwargs)
-        return cls._singleton_instance
-
-    def __singleton_init__(self):
-        super().__singleton_init__()
+    def __init__(self):
+        super().__init__()
         self.lock = threading.RLock()
         self.actions = []
         # look for the main thread
@@ -118,15 +95,6 @@ class QtThreadCall(QObject, singleton.Singleton):
         if not mainthreadfound:
             print('Warning: main thread not found')
             self.mainThread = threading.current_thread()
-
-    def __getattr__(self, attr):
-        # this seems useless and adds an overhead,
-        # however in PyQt6, not defining this __getattr__ method leads to a
-        # recursive loop and a segfault after the object is initialized
-        # (it keeps looking for a __pyqtSignature__ attribute)
-        # Doing this, we prevent the crash. We do not have a clear understanding
-        # of the mechanism, however, we must admit.
-        return super().__getattr__(attr)
 
     def _postEvent(self):
         class QtThreadCallEvent(QEvent):
