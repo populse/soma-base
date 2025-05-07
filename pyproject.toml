@@ -1,6 +1,6 @@
 [project]
 name = "soma-base"
-version = "6.0.0b1"
+version = "6.0.0a1"
 authors = [
     {name = "Popolse Team", email = "contact@brainvisa.info"},
 ]
