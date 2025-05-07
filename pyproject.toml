@@ -1,0 +1,70 @@
+[project]
+name = "soma-base"
+version = "6.0.0b1"
+authors = [
+    {name = "Popolse Team", email = "contact@brainvisa.info"},
+]
+description = "soma-base: miscellaneous all-purpose classes and functions in Python."
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "CeCILL-B"}
+classifiers = [
+    "Intended Audience :: Developers",
+    "License :: OSI Approved",
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: SQL",
+    "Natural Language :: English",
+    "Topic :: Utilities",
+]
+
+dependencies = [
+    "populse-db >=3.0.7",
+    "pydantic <2",
+    "pycryptodome",
+    "argparse",
+]
+
+[project.optional-dependencies]
+doc = [
+    "sphinx >=1.0",
+]
+
+[project.urls]
+homepage = "https://populse.github.io/soma-base/"
+repository = "https://github.com/populse/soma-base"
+
+[build-system]
+requires = ["setuptools >= 61.0","setuptools-scm>=8.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["python"]
+
+[tool.brainvisa-cmake]
+test_commands = ["python -m soma.tests --verbose"]
+
+[tool.pixi.workspace]
+channels = ["conda-forge"]
+platforms = ["linux-64"]
+
+[tool.pixi.pypi-dependencies]
+soma-base = { path = ".", editable = true }
+build = "*"
+
+[tool.pixi.environments]
+default = { solve-group = "default" }
+doc = { features = ["doc"], solve-group = "default" }
+
+[tool.pixi.tasks]
+
+[tool.pixi.dependencies]
+python="*"
+pip = "*"
+pytest = "*"
+twine = "*"

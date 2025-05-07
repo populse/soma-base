@@ -13,16 +13,10 @@ BRAINVISA_SHARE
 import os
 from pathlib import Path
 
-import soma.info
+import soma
 
-full_version = ".".join(
-    [
-        str(soma.info.version_major),
-        str(soma.info.version_minor),
-        str(soma.info.version_micro),
-    ]
-)
-short_version = ".".join([str(soma.info.version_major), str(soma.info.version_minor)])
+full_version = soma.__version__
+short_version = ".".join(full_version.split(".")[:2])
 
 fullVersion = full_version
 shortVersion = short_version
