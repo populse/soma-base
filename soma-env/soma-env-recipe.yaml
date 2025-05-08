@@ -5,7 +5,6 @@ soma-env:
   publication: neuro-forge
   components:
     - soma-base
-    - soma-workflow
 
   internal-dependencies:
     - populse-db
