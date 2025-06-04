@@ -177,17 +177,18 @@ class AttributeValueEvent(Event):
             # method. Get the underlying method to inspect it
             pcallback = getattr(callback.proxy, callback.method)
         signature = inspect.signature(pcallback)
-        if len(signature.parameters) == 0:
+        positional_parameters = tuple(p for p in signature.parameters.values() if p.default == p.empty)
+        if len(positional_parameters) == 0:
             return partial(AttributeValueEvent.normalized_callback0, callback)
-        elif len(signature.parameters) == 1:
+        elif len(positional_parameters) == 1:
             return partial(AttributeValueEvent.normalized_callback1, callback)
-        elif len(signature.parameters) == 2:
+        elif len(positional_parameters) == 2:
             return partial(AttributeValueEvent.normalized_callback2, callback)
-        elif len(signature.parameters) == 3:
+        elif len(positional_parameters) == 3:
             return partial(AttributeValueEvent.normalized_callback3, callback)
-        elif len(signature.parameters) == 4:
+        elif len(positional_parameters) == 4:
             return partial(AttributeValueEvent.normalized_callback4, callback)
-        elif len(signature.parameters) == 5:
+        elif len(positional_parameters) == 5:
             return callback
         raise ValueError("Invalid callback signature")
 
