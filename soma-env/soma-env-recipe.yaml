@@ -25,6 +25,7 @@ requirements:
     - libgl
     - libopengl
     - traits<7
+    - font-ttf-noto
 
 tests:
   - script: "python -m soma.tests"

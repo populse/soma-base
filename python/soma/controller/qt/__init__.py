@@ -1,4 +1,4 @@
-import typing
+import functools
 import weakref
 
 from soma.qt_gui.qt_backend import Qt, QtCore
@@ -19,6 +19,42 @@ class ReadOnlyCheckBox(Qt.QCheckBox):
             super().keyPressEvent(event)
 
 
+def path_dialog_callback(
+    parent_ref=None,
+    caption=None,
+    output=False,
+    directory=False,
+    filter="",
+    text_widget=None,
+):
+    if parent_ref:
+        parent = parent_ref()
+    else:
+        parent = None
+    if output:
+        result = Qt.QFileDialog.getSaveFileName(
+            parent=parent,
+            caption=caption or ("Select directory" if directory else "Select file"),
+            filter=filter,
+            options=Qt.QFileDialog.DontUseNativeDialog,
+        )[0]
+    else:
+        if directory:
+            result = Qt.QFileDialog.getExistingDirectory(
+                parent=parent,
+                caption=caption or "Select directory",
+                options=Qt.QFileDialog.DontUseNativeDialog,
+            )
+        else:
+            result = Qt.QFileDialog.getOpenFileName(
+                parent=parent,
+                caption=caption or "Select file",
+                filter=filter,
+                options=Qt.QFileDialog.DontUseNativeDialog,
+            )[0]
+    text_widget.setText(result)
+
+
 class ControllerWidget(Qt.QScrollArea):
     _field_to_widget_methods = {
         str: "add_str_widget",
@@ -26,6 +62,8 @@ class ControllerWidget(Qt.QScrollArea):
         float: "add_str_widget",
         bool: "add_bool_widget",
         "Literal": "add_literal_widget",
+        "File": "add_path_widget",
+        "Directory": "add_path_widget",
     }
 
     valid_style_sheet = ""
@@ -205,3 +243,58 @@ class ControllerWidget(Qt.QScrollArea):
         )
         if not self.read_only:
             literal_widget.currentTextChanged.connect(update_controller)
+
+    def add_path_widget(self, controller, field, parent_widget, row):
+        label_widget = self.create_label_widget(field, parent_widget)
+        path_widget = Qt.QWidget(parent=parent_widget)
+        layout = Qt.QHBoxLayout(path_widget)
+        layout.setContentsMargins(0, 0, 0, 0)
+        text_widget = TimeredQLineEdit(parent=path_widget)
+        text_widget_proxy = weakref.proxy(text_widget)
+        layout.addWidget(text_widget)
+        if not self.read_only:
+            button = Qt.QToolButton(path_widget)
+            button.setText("📂")
+            button.setFont(Qt.QFont("Noto Color Emoji"))
+            button.setSizePolicy(Qt.QSizePolicy.Minimum, Qt.QSizePolicy.Minimum)
+            button.setFocusPolicy(QtCore.Qt.NoFocus)
+            button.setFocusProxy(text_widget)
+            layout.addWidget(button)
+            button.clicked.connect(
+                functools.partial(
+                    path_dialog_callback,
+                    directory=field.is_directory(),
+                    output=field.is_output(),
+                    parent_ref=weakref.ref(self),
+                    text_widget=text_widget_proxy,
+                )
+            )
+        else:
+            text_widget.setReadOnly(True)
+        parent_widget.content_layout.addWidget(label_widget, row, 0, 1, 1)
+        parent_widget.content_layout.addWidget(path_widget, row, 1, 1, 1)
+
+        def update_widget(new_value, text_widget=text_widget_proxy):
+            text_widget.setText(new_value)
+
+        def update_controller(
+            text_widget=text_widget_proxy,
+            controller=weakref.proxy(controller),
+            field=field,
+        ):
+            try:
+                value = text_widget.text()
+                setattr(controller, field.name, value)
+                text_widget.setStyleSheet(self.valid_style_sheet)
+            except Exception:
+                text_widget.setStyleSheet(self.invalid_style_sheet)
+
+        value = getattr(controller, field.name, "")
+        text_widget.setText(f"{value}")
+
+        controller.on_attribute_change.add(
+            update_widget,
+            field.name,
+        )
+        if not self.read_only:
+            text_widget.userModification.connect(update_controller)
