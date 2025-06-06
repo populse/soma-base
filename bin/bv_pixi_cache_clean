@@ -1,0 +1,111 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+import os
+import os.path as osp
+import pathlib
+import shutil
+import sys
+import argparse
+
+
+def get_rattler_cache_dir():
+    cdir = os.environ.get('XDG_CACHE_HOME')
+    if cdir is None:
+        home = pathlib.Path.home()
+        cdir = str(home / '.cache')
+    return f'{cdir}/rattler/cache'
+
+
+def nlinks(dirname):
+    todo = [dirname]
+    nlinks = 0
+    while todo:
+        dirname = todo.pop(0)
+        for f in os.listdir(dirname):
+            fname = osp.join(dirname, f)
+            if osp.isdir(fname):
+                todo.append(fname)
+            else:
+                if not osp.islink(fname):
+                    n = os.stat(fname, follow_symlinks=False).st_nlink
+                    if nlinks == 0:
+                        nlinks = n
+                    else:
+                        nlinks = max((nlinks, n))
+                    if nlinks >= 2:
+                        return nlinks
+    return nlinks
+
+
+def get_cache_pkgs(cache_dir=None):
+    if cache_dir is None:
+        cache_dir = get_rattler_cache_dir()
+    pkg_dir = osp.join(cache_dir, 'pkgs')
+    pkgs = {}
+    files = []
+    for p in os.listdir(pkg_dir):
+        if p.endswith('.lock'):
+            if not osp.exists(osp.join(pkg_dir, p[:-5])):
+                # orphan .lock
+                print('rm', osp.join(pkg_dir, p))
+                os.unlink(osp.join(pkg_dir, p))
+                continue
+            key = p[:-5].rsplit('-', 2)[0]
+            pkgs[key] = []
+        else:
+            files.append(p)
+    sep = '-_.'
+    for p in files:
+        n = len(p)
+        for s in range(n, -1, -1):
+            if s == n or p[s] in sep:
+                name = p[:s]
+                if name in pkgs:
+                    fullp = osp.join(pkg_dir, p)
+                    # print(fullp, ':', nlinks(fullp))
+                    pkgs[name].append((fullp, nlinks(fullp)))
+                    break
+    return pkgs
+
+
+def clean_pkgs_cache(cache_dir=None, dry_run=False):
+    pkgs = get_cache_pkgs(cache_dir)
+    for pkg in sorted(pkgs.keys()):
+        files = pkgs[pkg]
+        for f in files:
+            if f[1] == 1:  # 1 ref hard link
+                print('rm', f[0])
+                if not dry_run:
+                    shutil.rmtree(f[0])
+                    if osp.exists(f'{f[0]}.lock'):
+                        os.unlink(f'{f[0]}.lock')
+
+        #if len(files) >= 2:
+            #print(pkg, ':', len(files))
+            #for f in sorted(files)[:-1]:
+                #print('rm', f)
+                #if not dry_run:
+                    #shutil.rmtree(f)
+                    #if osp.exists(f'{f}.lock'):
+                        #os.unlink(f'{f}.lock')
+        #elif len(files) == 0:
+            #print('empty:', pkg)
+
+
+def main():
+
+    parser = argparse.ArgumentParser(
+        description='Clean pixi/rattler-build cache, by keeping only the latest version of each package. Experimental. Some packages are actually used in several versions in several pixi environments, thus using this script may remove files which could be still useful, and result in additional download and files duplication, so use it carefully, at your own risk. We advise using the --dry-run option.')
+    parser.add_argument(
+        '--dry-run', action='store_true',
+        help='Do not actually remove any file: just print what would be done.')
+
+    args = parser.parse_args(sys.argv[1:])
+
+    clean_pkgs_cache(dry_run=args.dry_run)
+
+
+if __name__ == '__main__':
+
+    main()
