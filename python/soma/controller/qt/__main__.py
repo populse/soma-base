@@ -1,7 +1,7 @@
 import sys
 
 from soma.qt_gui.qt_backend import Qt
-from soma.controller.qt import ControllerWidget
+from soma.controller.qt import ControllerWidget, ManyControllersWidget
 
 from soma.controller import (
     Controller,
@@ -71,6 +71,10 @@ controller.on_attribute_change.add(echo)
 app = Qt.QApplication(sys.argv)
 rw = ControllerWidget(controller)
 ro = ControllerWidget(controller, read_only=True)
+rwm = ManyControllersWidget([VisibleController() for i in range(50)])
+rwm.resizeColumnsToContents()
+rwm.resizeRowsToContents()
 ro.show()
 rw.show()
+rwm.show()
 app.exec_()

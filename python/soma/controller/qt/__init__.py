@@ -1,6 +1,6 @@
-import functools
 import weakref
 
+from soma.utils.weak_proxy import proxy_method
 from soma.controller import type_str, literal_values
 from soma.qt_gui.qt_backend import Qt, QtCore
 from soma.qt_gui.timered_widgets import TimeredQLineEdit
@@ -8,8 +8,11 @@ from soma.qt_gui.collapsible import CollapsibleWidget
 
 
 class ReadOnlyCheckBox(Qt.QCheckBox):
-    def __init__(self, label="", parent=None):
-        super().__init__(label, parent)
+    def __init__(self, label=None, parent=None):
+        if label is None:
+            super().__init__(parent)
+        else:
+            super().__init__(label, parent)
 
     def mousePressEvent(self, event):
         event.ignore()
@@ -22,11 +25,23 @@ class ReadOnlyCheckBox(Qt.QCheckBox):
 
 
 class QtLink:
-    def __init__(self, container_qt_link, field, list_index, container_widget):
+    def __init__(
+        self,
+        controller,
+        container_qt_link,
+        field,
+        list_index,
+        container_widget,
+        add_label,
+    ):
         self.container_qt_link = container_qt_link
         self.field = field
         self.list_index = list_index
-        self.controller = self.container_qt_link.controller
+        self.controller = controller
+        if add_label:
+            self.label = self.get_label()
+        else:
+            self.label = None
         self.create_qt_link(container_widget)
 
     def get_label(self):
@@ -56,13 +71,31 @@ class QtLink:
             getattr(self.controller, self.field.name)[self.list_index] = value
 
     @classmethod
-    def get_qt_link_class(cls, type):
+    def create(
+        cls,
+        controller,
+        type,
+        container_qt_link,
+        field,
+        list_index,
+        container_widget,
+        add_label,
+    ):
         qt_link_class = cls._field_to_widget_methods.get(type)
         if qt_link_class is None:
             full_type = type_str(type)
             main_type = full_type.split("[", 1)[0]
             qt_link_class = cls._field_to_widget_methods.get(main_type)
-        return qt_link_class
+        if qt_link_class:
+            return qt_link_class(
+                controller,
+                container_qt_link,
+                field,
+                list_index,
+                container_widget,
+                add_label,
+            )
+        return None
 
     @property
     def read_only(self):
@@ -75,30 +108,27 @@ class StrQtLink(QtLink):
     invalid_style_sheet = "background: #FFDCDC;"
 
     def create_qt_link(self, container_widget):
-        self.label_widget = self.create_label_widget(container_widget)
-        self.text_widget = TimeredQLineEdit(parent=container_widget)
-        self.text_widget.ignore_update = False
+        self.has_label = False
+        self.widget = TimeredQLineEdit(parent=container_widget)
+        self.widget.ignore_update = False
         if self.read_only:
-            self.text_widget.setReadOnly(True)
-        row = container_widget.controller_layout.rowCount()
-        container_widget.controller_layout.addWidget(self.label_widget, row, 0, 1, 1)
-        container_widget.controller_layout.addWidget(self.text_widget, row, 1, 1, 1)
+            self.widget.setReadOnly(True)
 
         self.update_widget()
 
         if self.list_index is None:
-            self.container_qt_link.controller.on_attribute_change.add(
-                self.update_widget,
+            self.controller.on_attribute_change.add(
+                proxy_method(self.update_widget),
                 self.field.name,
             )
         if not self.read_only:
-            self.text_widget.userModification.connect(self.update_controller)
+            self.widget.userModification.connect(proxy_method(self.update_controller))
 
     def get_widget_value(self):
-        return self.from_str(self.text_widget.text())
+        return self.from_str(self.widget.text())
 
     def set_widget_value(self, value):
-        self.text_widget.setText(self.to_str(value))
+        self.widget.setText(self.to_str(value))
 
     def from_str(self, text):
         if self.list_index is None:
@@ -110,19 +140,19 @@ class StrQtLink(QtLink):
         return str(value)
 
     def update_widget(self):
-        if not self.text_widget.ignore_update:
+        if not self.widget.ignore_update:
             self.set_widget_value(self.get_controller_value())
 
     def update_controller(self):
         try:
-            self.text_widget.ignore_update = True
+            self.widget.ignore_update = True
             try:
                 self.set_controller_value(self.get_widget_value())
             finally:
-                self.text_widget.ignore_update = False
-            self.text_widget.setStyleSheet(self.valid_style_sheet)
+                self.widget.ignore_update = False
+            self.widget.setStyleSheet(self.valid_style_sheet)
         except Exception:
-            self.text_widget.setStyleSheet(self.invalid_style_sheet)
+            self.widget.setStyleSheet(self.invalid_style_sheet)
 
 
 class ListNumberQtLink(StrQtLink):
@@ -136,28 +166,29 @@ class ListNumberQtLink(StrQtLink):
 
 class BoolQtLink(QtLink):
     def create_qt_link(self, container_widget):
-        label = self.get_label()
+        self.has_label = True
         if self.read_only:
-            self.widget = ReadOnlyCheckBox(label, parent=container_widget)
+            self.widget = ReadOnlyCheckBox(self.label, parent=container_widget)
         else:
-            self.widget = Qt.QCheckBox(label, parent=container_widget)
+            if self.label is None:
+                self.widget = Qt.QCheckBox(parent=container_widget)
+            else:
+                self.widget = Qt.QCheckBox(self.label, parent=container_widget)
         self.widget.setSizePolicy(Qt.QSizePolicy.Expanding, Qt.QSizePolicy.Fixed)
         doc = getattr(self.field, "doc", None)
         if doc:
             self.widget.setToolTip(doc)
-        row = container_widget.controller_layout.rowCount()
-        container_widget.controller_layout.addWidget(self.widget, row, 1, 1, 2)
 
         self.update_widget()
 
         if self.list_index is None:
-            self.container_qt_link.controller.on_attribute_change.add(
-                self.update_widget,
+            self.controller.on_attribute_change.add(
+                proxy_method(self.update_widget),
                 self.field.name,
             )
 
         if not self.read_only:
-            self.widget.stateChanged.connect(self.update_controller)
+            self.widget.stateChanged.connect(proxy_method(self.update_controller))
 
     def get_widget_value(self):
         return self.widget.isChecked()
@@ -168,13 +199,17 @@ class BoolQtLink(QtLink):
     def update_widget(self):
         self.set_widget_value(self.get_controller_value())
 
-    def update_controller(self):
+    def update_controller(self, ignore_value=None):
+        # The ignore_value parameter is necessary because the use of
+        # proxy_method in a Qt callback prevent Qt to detect that there is no
+        # parameter to the method. Therefore Qt send a value parameter (that
+        #  we want to ignore).
         self.set_controller_value(self.get_widget_value())
 
 
 class LiteralQtLink(QtLink):
     def create_qt_link(self, container_widget):
-        self.label_widget = self.create_label_widget(container_widget)
+        self.has_label = False
         if self.read_only:
             self.widget = Qt.QLabel("")
         else:
@@ -186,20 +221,17 @@ class LiteralQtLink(QtLink):
             for v in literal_values(type):
                 self.widget.addItem(str(v))
         self.widget.setSizePolicy(Qt.QSizePolicy.Expanding, Qt.QSizePolicy.Fixed)
-        row = container_widget.controller_layout.rowCount()
-        container_widget.controller_layout.addWidget(self.label_widget, row, 0, 1, 1)
-        container_widget.controller_layout.addWidget(self.widget, row, 1, 1, 1)
 
         self.update_widget()
 
         if self.list_index is None:
-            self.container_qt_link.controller.on_attribute_change.add(
-                self.update_widget,
+            self.controller.on_attribute_change.add(
+                proxy_method(self.update_widget),
                 self.field.name,
             )
 
         if not self.read_only:
-            self.widget.currentTextChanged.connect(self.update_controller)
+            self.widget.currentTextChanged.connect(proxy_method(self.update_controller))
 
     def get_widget_value(self):
         if self.read_only:
@@ -216,13 +248,17 @@ class LiteralQtLink(QtLink):
     def update_widget(self):
         self.set_widget_value(self.get_controller_value())
 
-    def update_controller(self):
+    def update_controller(self, ignore_value=None):
+        # The ignore_value parameter is necessary because the use of
+        # proxy_method in a Qt callback prevent Qt to detect that there is no
+        # parameter to the method. Therefore Qt send a value parameter (that
+        #  we want to ignore).
         self.set_controller_value(self.get_widget_value())
 
 
 class PathQtLink(QtLink):
     def create_qt_link(self, container_widget):
-        self.label_widget = self.create_label_widget(container_widget)
+        self.has_label = False
         self.widget = Qt.QWidget(parent=container_widget)
         layout = Qt.QHBoxLayout(self.widget)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -236,24 +272,22 @@ class PathQtLink(QtLink):
             self.button.setFocusPolicy(QtCore.Qt.NoFocus)
             self.button.setFocusProxy(self.text_widget)
             layout.addWidget(self.button)
-            self.button.clicked.connect(self.path_dialog)
+            self.button.clicked.connect(proxy_method(self.path_dialog))
         else:
             self.text_widget.setReadOnly(True)
-
-        row = container_widget.controller_layout.rowCount()
-        container_widget.controller_layout.addWidget(self.label_widget, row, 0, 1, 1)
-        container_widget.controller_layout.addWidget(self.widget, row, 1, 1, 1)
 
         self.update_widget()
 
         if self.list_index is None:
-            self.container_qt_link.controller.on_attribute_change.add(
-                self.update_widget,
+            self.controller.on_attribute_change.add(
+                proxy_method(self.update_widget),
                 self.field.name,
             )
 
         if not self.read_only:
-            self.text_widget.userModification.connect(self.update_controller)
+            self.text_widget.userModification.connect(
+                proxy_method(self.update_controller)
+            )
 
     def get_widget_value(self):
         return self.text_widget.text()
@@ -267,11 +301,17 @@ class PathQtLink(QtLink):
     def update_controller(self):
         self.set_controller_value(self.get_widget_value())
 
-    def path_dialog(self):
+    def path_dialog(self, ignore_value=None):
+        # The ignore_value parameter is necessary because the use of
+        # proxy_method in a Qt callback prevent Qt to detect that there is no
+        # parameter to the method. Therefore Qt send a value parameter (that
+        #  we want to ignore).
         if self.field.output:
             result = Qt.QFileDialog.getSaveFileName(
                 parent=self.widget,
-                caption=("Select directory" if self.field.is_directory() else "Select file"),
+                caption=(
+                    "Select directory" if self.field.is_directory() else "Select file"
+                ),
                 options=Qt.QFileDialog.DontUseNativeDialog,
             )[0]
         else:
@@ -292,37 +332,53 @@ class PathQtLink(QtLink):
 
 class ListQtLink(QtLink):
     def create_qt_link(self, container_widget):
+        self.has_label = True
         self.depth = self.container_qt_link.depth + 1
-        label = self.get_label()
-        self.widget = Qt.QWidget(parent=container_widget)
-        self.widget.controller_layout = Qt.QGridLayout(self.widget)
-        self.widget.controller_layout.setContentsMargins(0, 0, 0, 0)
-        self.collapsible_widget = CollapsibleWidget(
-            self.widget,
-            label=label,
+        self.grid_widget = Qt.QWidget(parent=container_widget)
+        self.grid_widget.controller_layout = Qt.QGridLayout(self.grid_widget)
+        self.grid_widget.controller_layout.setContentsMargins(0, 0, 0, 0)
+        self.widget = CollapsibleWidget(
+            self.grid_widget,
+            label=self.label,
             expanded=(self.container_qt_link.depth == 0),
             buttons_label=([] if self.read_only else ["+", "-"]),
             parent=container_widget,
         )
-        self.widget.setContentsMargins(
-            self.collapsible_widget.toggle_button.sizeHint().height(), 0, 0, 0
-        )
-        row = container_widget.controller_layout.rowCount()
-        container_widget.controller_layout.addWidget(
-            self.collapsible_widget, row, 0, 1, 2
+        self.grid_widget.setContentsMargins(
+            self.widget.toggle_button.sizeHint().height(), 0, 0, 0
         )
 
         value = self.get_controller_value()
         self.childs = [self.create_item_qt_link(i) for i in range(len(value))]
 
     def create_item_qt_link(self, list_index):
-        qt_link_class = QtLink.get_qt_link_class(self.field.subtypes()[0])
-        if qt_link_class:
-            return qt_link_class(self, self.field, list_index, self.widget)
-        else:
+        qt_link = QtLink.create(
+            self.controller,
+            self.field.subtypes()[0],
+            self,
+            self.field,
+            list_index,
+            self.grid_widget,
+            True,
+        )
+        if qt_link is None:
             print(
                 f"{self.field.name}[{list_index}] : {self.field.type} ({self.field.type_str()})"
             )
+        else:
+            row = self.grid_widget.controller_layout.rowCount()
+            if qt_link.has_label:
+                self.grid_widget.controller_layout.addWidget(
+                    qt_link.widget, row, 0, 1, 2
+                )
+            else:
+                label_widget = qt_link.create_label_widget(self.grid_widget)
+                self.grid_widget.controller_layout.addWidget(label_widget, row, 0, 1, 1)
+                self.grid_widget.controller_layout.addWidget(
+                    qt_link.widget, row, 1, 1, 1
+                )
+
+        return qt_link
 
     def get_widget_value(self):
         return [i.get_widget_value() for i in self.childs()]
@@ -330,43 +386,6 @@ class ListQtLink(QtLink):
     def set_widget_value(self, value):
         for c, v in zip(self.child, value):
             c.set_widget_value(v)
-
-
-class MainControllerQtLink:
-    def __init__(self, controller, read_only, filter, parent_widget):
-        self.controller = weakref.proxy(controller)
-        self.widget = Qt.QWidget(parent_widget)
-        hlayout = Qt.QVBoxLayout()
-        self.widget.controller_layout = Qt.QGridLayout()
-        hlayout.addLayout(self.widget.controller_layout)
-        hlayout.addStretch(1)
-        self.widget.setLayout(hlayout)
-        self.read_only = bool(read_only)
-        self.filter = filter
-        self.depth = 0
-
-        self.group_widgets = {}
-        self.childs = {
-            field.name: self.create_qt_link(field)
-            for field in controller.fields()
-            if not self.filter or self.filter(field)
-        }
-
-    def create_qt_link(self, field):
-        group = getattr(field, "group", None)
-        if group:
-            group_widget = self.group_widgets.get(group)
-            if group_widget is None:
-                # TODO: create group widget
-                group_widget = self.group_widgets[group] = self.widget
-            container_widget = group_widget
-        else:
-            container_widget = self.widget
-        qt_link_class = QtLink.get_qt_link_class(field.type)
-        if qt_link_class:
-            return qt_link_class(self, field, None, container_widget)
-        else:
-            print(f"{field.name} : {field.type} ({field.type_str()})")
 
 
 QtLink._field_to_widget_methods = {
@@ -384,10 +403,88 @@ QtLink._field_to_widget_methods = {
 
 
 class ControllerWidget(Qt.QScrollArea):
-
     def __init__(self, controller, read_only=False, filter=None, parent=None):
         super().__init__(parent=parent)
-        self.qt_link = MainControllerQtLink(controller, read_only, filter, self)
-        self.setWidget(self.qt_link.widget)
+        self.filter = filter
+        self.depth = 0
+
+        self.controller = weakref.proxy(controller)
+        self.widget = Qt.QWidget(parent)
+        hlayout = Qt.QVBoxLayout()
+        self.widget.controller_layout = Qt.QGridLayout()
+        hlayout.addLayout(self.widget.controller_layout)
+        hlayout.addStretch(1)
+        self.widget.setLayout(hlayout)
+        self.read_only = bool(read_only)
+
+        self.group_widgets = {}
+        self.childs = {
+            field.name: self.create_qt_link(field)
+            for field in controller.fields()
+            if not self.filter or self.filter(field)
+        }
+
+        self.setWidget(self.widget)
         self.setWidgetResizable(True)
 
+    def create_qt_link(self, field):
+        group = getattr(field, "group", None)
+        if group:
+            group_widget = self.group_widgets.get(group)
+            if group_widget is None:
+                # TODO: create group widget
+                group_widget = self.group_widgets[group] = self.widget
+            container_widget = group_widget
+        else:
+            container_widget = self.widget
+        qt_link = QtLink.create(
+            self.controller, field.type, self, field, None, container_widget, True
+        )
+        if qt_link is None:
+            print(f"{field.name} : {field.type} ({field.type_str()})")
+        else:
+            row = container_widget.controller_layout.rowCount()
+            if qt_link.has_label:
+                container_widget.controller_layout.addWidget(
+                    qt_link.widget, row, 0, 1, 2
+                )
+            else:
+                label_widget = qt_link.create_label_widget(container_widget)
+                container_widget.controller_layout.addWidget(label_widget, row, 0, 1, 1)
+                container_widget.controller_layout.addWidget(
+                    qt_link.widget, row, 1, 1, 1
+                )
+        return qt_link
+
+
+class ManyControllersWidget(Qt.QTableWidget):
+    def __init__(self, controllers, read_only=False, filter=None, parent=None):
+        h_headers = [str(i) for i in range(len(controllers))]
+        v_headers = [
+            field.name
+            for field in controllers[0].fields()
+            if not filter or filter(field)
+        ]
+        super().__init__(len(v_headers), len(h_headers), parent=parent)
+        self.read_only = read_only
+        self.filter = filter
+        self.depth = 0
+
+        self.setHorizontalHeaderLabels(h_headers)
+        self.setVerticalHeaderLabels(v_headers)
+
+        self.qt_links = {}
+        column = 0
+        for controller in controllers:
+            row = 0
+            self.qt_links[controller] = []
+            for field_name in v_headers:
+                field = controller.field(field_name)
+                qt_link = QtLink.create(
+                    controller, field.type, self, field, None, self, False
+                )
+                self.qt_links[controller].append(qt_link)
+                if qt_link:
+                    self.setCellWidget(row, column, qt_link.widget)
+                row += 1
+            column += 1
