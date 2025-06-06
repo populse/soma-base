@@ -24,9 +24,9 @@ class CollapsibleWidget(Qt.QWidget):
         self.toggle_button.setStyleSheet("QPushButton { border: none; }")
         self.toggle_button.setCheckable(True)
 
-        bar = Qt.QWidget(parent=self)
-        hlayout = Qt.QHBoxLayout(bar)
-        header_line = Qt.QFrame(parent=self)
+        self.bar = Qt.QWidget(parent=self)
+        self.bar.hlayout = hlayout= Qt.QHBoxLayout(self.bar)
+        self.header_line = header_line = Qt.QFrame(parent=self)
         header_line.setFrameShape(Qt.QFrame.HLine)
         header_line.setFrameShadow(Qt.QFrame.Sunken)
         header_line.setSizePolicy(Qt.QSizePolicy.Expanding, Qt.QSizePolicy.Maximum)
@@ -35,7 +35,7 @@ class CollapsibleWidget(Qt.QWidget):
         hlayout.setContentsMargins(0, 0, 0, 0)
         self.buttons = []
         for icon in buttons_label:
-            button = Qt.QToolButton(parent=bar)
+            button = Qt.QToolButton(parent=self.bar)
             button.setText(icon)
             hlayout.addWidget(button)
             self.buttons.append(button)
@@ -45,7 +45,7 @@ class CollapsibleWidget(Qt.QWidget):
         self.main_layout.setVerticalSpacing(0)
         self.main_layout.setContentsMargins(0, 0, 0, 0)
         self.main_layout.addWidget(self.toggle_button, 0, 0, 1, 1, QtCore.Qt.AlignLeft)
-        self.main_layout.addWidget(bar, 0, 2, 1, 1)
+        self.main_layout.addWidget(self.bar, 0, 2, 1, 1)
         self.setLayout(self.main_layout)
         self.setSizePolicy(Qt.QSizePolicy.MinimumExpanding, Qt.QSizePolicy.Minimum)
         self.toggle_button.clicked.connect(self.toggle_expand)
@@ -57,7 +57,7 @@ class CollapsibleWidget(Qt.QWidget):
 
     def toggle_expand(self, expanded):
         arrow = "▼" if expanded else "▶"
-        self.toggle_button.setText(f"{self.label}  {arrow}")
+        self.toggle_button.setText(f"{self.label or ''}  {arrow}")
         self.toggle_button.setChecked(expanded)
         if expanded:
             for button in self.buttons:
