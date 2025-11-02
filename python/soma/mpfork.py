@@ -5,12 +5,21 @@ Run worker functions in separate processes.
 
 The use case is somewhat similar to what can be done using either :class:`queue.Queue <Queue.Queue>` and threads, or using :mod:`multiprocessing`. That is: run a number of independent job functions, dispatched over a number of worker threads/processes.
 
-The mpfork module is useful in cases the above methods cannot work:
+The mpfork and mpfork2 modules are useful in cases the above methods cannot work:
 
 * threading in python is globally mainly inefficient because of the GIL.
 * :mod:`multiprocessing` makes heavy use of pickles to pass objects and parameters, and there are cases we are using objects which cannot be pickled, or which pickling generates heavy IO traffic (large data objects)
 
+mpfork and mpfork2
+
 The method here is based on the queue / thread schema, but uses fork() to actually execute the workers in a separate process. Only results are passed through pickles, so the worker return results must be picklable, but not the input arguments and objects.
+
+* mpfork forks from a worker thread. This is the most efficient, but fork and thread are not easily mixable: only the current thread is left running in the forked process, all other ones are stopped. However locks left in other threads may block the entire process. In such cases, or if the main thread is running graphical objects and an event loop (like Qt), expect mpfork to lock.
+In such a case, please consider using mpfork2 instead.
+
+* mpfork2 forks from the main thread, earlier than mpfork (basically then workers are instantiated), which make it more stable. Compared to mpfork, workers need to be manually started using Worker.start(), and jobs input data need to be transfered via pickles. Hoxever large data may be stored in the calling object before forking.
+
+* in case workers need to perform graphical or GPU renderings, the fork mode of mpfork2 will also not be sufficient, because event loops often need threads and locks, and because graphical resources will not be duplicated and allocated in the forked process. In this situation, mpfork2 offers a "spawn" mode, which doesn't use fork() (and thus might workk on non-unix systems). Here, a new process has to be started, and initialized in the worker process before jobs can be run. This is done by passing `fork_mode="spawn"` to allocate_workers(), and also passing an init function and parameters, using `init_child_function=(function, args, kwargs)`. The function and args need to be picklable.
 
 Use:
 
