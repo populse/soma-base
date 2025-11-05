@@ -74,6 +74,7 @@ import tempfile
 import sys
 import subprocess
 import shutil
+from .mpfork import available_cpu_count
 try:
     import cpickle as pickle
 except ImportError:
@@ -385,8 +386,8 @@ def allocate_workers(q, result, nworker=0, max_workers=0, *args, **kwargs):
     nworker: int
         number of worker threads (jobs which will run in parallel). A positive
         number (1, 2...) will be used as is, 0 means all available CPU cores
-        (see :func:`multiprocessing.cpu_count`), and a negative number means
-        all CPU cores except this given number.
+        (see :func:`soma.mpfork.available_cpu_count`), and a negative number
+        means all CPU cores except this given number.
     max_workers: int
         max number of workers: if nworker is 0, the number of CPU cores is
         used,
@@ -422,9 +423,9 @@ def allocate_workers(q, result, nworker=0, max_workers=0, *args, **kwargs):
         kwargs = dict(kwargs)
         del kwargs['spawn_prefixes']
     if nworker == 0:
-        nworker = multiprocessing.cpu_count()
+        nworker = available_cpu_count()
     elif nworker < 0:
-        nworker = multiprocessing.cpu_count() + nworker
+        nworker = available_cpu_count() + nworker
         if nworker < 1:
             nworker = 1
     if max_workers > 0 and nworker > max_workers:
@@ -509,9 +510,9 @@ def select_gpu_prefix_for_workers(gpu_workers=0, max_workers=0):
     gpu_prefixes = {}
     if isinstance(nworker, int):
         if nworker == 0:
-            nworker = multiprocessing.cpu_count()
+            nworker = available_cpu_count()
         elif nworker < 0:
-            nworker = multiprocessing.cpu_count() + nworker
+            nworker = available_cpu_count() + nworker
             if nworker < 1:
                 nworker = 1
         if max_workers > 0 and nworker > max_workers:
@@ -530,9 +531,9 @@ def select_gpu_prefix_for_workers(gpu_workers=0, max_workers=0):
                 cmd = gpu_list[g]
                 gpu_prefixes[g] = [cmd] * ng
     else:  # workers by gpu
-        ncpu = multiprocessing.cpu_count()
+        ncpu = available_cpu_count()
         if max_workers > 0:
-            ncpu = min((multiprocessing.cpu_count(), max_workers))
+            ncpu = min((available_cpu_count(), max_workers))
         if gpu_list:
             nworker = {k: v for k, v in nworker.items() if k in gpu_list}
         taken = 0

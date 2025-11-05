@@ -61,19 +61,56 @@ In case of error, the job result will be an exception with stack information: (e
 Availability: Unix
 '''
 
-from __future__ import print_function
-from __future__ import absolute_import
 import multiprocessing
 import threading
-import queue
 import os
 import tempfile
 import sys
+import glob
+import re
 from six.moves import range
 try:
     import cpickle as pickle
 except ImportError:
     import pickle
+
+
+_available_cpu = None
+
+
+def available_cpu_count():
+    ''' Available CPU cores for user.
+
+    Based on func:`multiprocessing.cpu_count`, but tries to also read CPU
+    quotas from /etc/systemd/system/user-*.d
+    '''
+    global _available_cpu
+
+    if _available_cpu is not None:
+        return _available_cpu
+
+    count = multiprocessing.cpu_count()
+    # find CPU quotas
+    sysd_files = glob.glob('/etc/systemd/system/user-*.d/*.conf')
+
+    found = False
+    for cfile in sysd_files:
+        with open(cfile) as f:
+            for line in f.readlines():
+                if 'CPUQuota' in line:
+                    r = re.match('CPUQuota=(.*)%', line)
+                    if r:
+                        cpuq = int(int(r.group(1)) / 100)
+                        if cpuq < count:
+                            count = cpuq
+                            found = True
+                            break
+        if found:
+            break
+
+    _available_cpu = count
+    return _available_cpu
+
 
 def run_job(f, *args, **kwargs):
     ''' Internal function, runs the function in a remote process.
@@ -186,7 +223,7 @@ def allocate_workers(q, nworker=0, thread_only=False, *args, **kwargs):
     nworker: int
         number of worker threads (jobs which will run in parallel). A positive
         number (1, 2...) will be used as is, 0 means all available CPU cores
-        (see :func:`multiprocessing.cpu_count`), and a negative number means
+        (see :func:`available_cpu_count`), and a negative number means
         all CPU cores except this given number.
     args, kwargs:
         additional arguments will be passed to the job function(s) after
@@ -199,9 +236,9 @@ def allocate_workers(q, nworker=0, thread_only=False, *args, **kwargs):
         running the worker loop function. Threads are already started (ie.
     '''
     if nworker == 0:
-        nworker = multiprocessing.cpu_count()
+        nworker = available_cpu_count()
     elif nworker < 0:
-        nworker = multiprocessing.cpu_count() + nworker
+        nworker = available_cpu_count() + nworker
         if nworker < 1:
             nworker = 1
     workers = []
