@@ -187,6 +187,11 @@ class Worker:
         q = self.queue
         while True:
             item = q.get()
+            if isinstance(item, tuple) and len(item) == 2 \
+                    and isinstance(item[0], (int, float)) \
+                    and isinstance(item[1], (tuple, list, type(None))):
+                # item is a tuple (priority, job) in a PriorityQueue
+                item = item[1]
             if item is None:
                 self.run_job(None)  # send end of worker to the child
                 q.task_done()
