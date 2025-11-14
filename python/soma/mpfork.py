@@ -209,7 +209,8 @@ def worker(q, thread_only, *args, **kwargs):
             sys.stdout.flush()
 
 
-def allocate_workers(q, nworker=0, thread_only=False, *args, **kwargs):
+def allocate_workers(q, nworker=0, thread_only=False, max_workers=0, *args,
+                     **kwargs):
     ''' Utility function to allocate worker threads.
 
     Parameters
@@ -225,6 +226,11 @@ def allocate_workers(q, nworker=0, thread_only=False, *args, **kwargs):
         number (1, 2...) will be used as is, 0 means all available CPU cores
         (see :func:`available_cpu_count`), and a negative number means
         all CPU cores except this given number.
+    max_workers: int
+        max number of workers: if nworker is 0, the number of CPU cores is
+        used,
+        but might exceed the number of actual jobs to be done. To limit this,
+        you can use the number of jobs (if known) here. 0 means no limit.
     args, kwargs:
         additional arguments will be passed to the job function(s) after
         individual jobs arguments: they are args common to all jobs (if any)
@@ -241,6 +247,8 @@ def allocate_workers(q, nworker=0, thread_only=False, *args, **kwargs):
         nworker = available_cpu_count() + nworker
         if nworker < 1:
             nworker = 1
+    if max_workers > 0 and nworker > max_workers:
+        nworker = max_workers
     workers = []
     for i in range(nworker):
         w = threading.Thread(target=worker, args=(q, thread_only) + args,
