@@ -19,7 +19,9 @@ requirements:
     - pyqt
     - pyqtwebengine
     - numpy
-    - ipykernel
+    - ipykernel <7
+    - qtconsole
+    - notebook
     - six
     - pycryptodome
     - pandas
