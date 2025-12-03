@@ -66,7 +66,6 @@ _sip_api_set = False
 qt_backend = None
 make_compatible_qt5 = False
 headless = False
-need_opengl = True
 
 
 class QtImporter(object):
@@ -125,12 +124,13 @@ class QtImporter(object):
         imp_module_name = module_name
         headless_res = None
 
-        if headless and module_name not in ("sip", "QtCore", "QtGui"):
+        global headless
+
+        if headless and module_name not in ('sip', 'QtCore', 'QtGui'):
             # we use ..headless instead of .headless because we have
             # modified __package__
-            from ..headless import setup_headless
-
-            headless_res = setup_headless(need_opengl=need_opengl)
+            from .. import headless as qt_headless
+            headless_res = qt_headless.setup_headless(need_opengl=None)
 
         if make_compatible_qt5:
             if module_name == "QtWidgets":
@@ -444,11 +444,12 @@ def set_headless(headless_mode=True, needs_opengl=None):
     see :mod:`headless`
 
     if needs_opengl is None (default), don't change the currently set value'
-    """
-    global headless, need_opengl
+    '''
+    from .. import headless as qt_headless
+    global headless
     headless = headless_mode
-    if need_opengl is not None:
-        need_opengl = needs_opengl
+    if needs_opengl is not None:
+        qt_headless.needs_opengl = needs_opengl
 
 
 def load_sip_module(backend=None):

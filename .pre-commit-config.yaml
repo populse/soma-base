@@ -9,7 +9,7 @@ exclude: |
 
 repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
+    rev: v6.0.0
     hooks:
     -   id: check-added-large-files
     -   id: check-case-conflict
@@ -28,7 +28,7 @@ repos:
     -   id: trailing-whitespace
 
 -   repo: https://github.com/pycqa/flake8
-    rev: 7.1.2
+    rev: 7.3.0
     hooks:
     -   id: flake8
         name: flake8 under python3

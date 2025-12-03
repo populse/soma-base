@@ -57,6 +57,7 @@ original_display = None
 display = None
 force_virtualgl = True
 headless_initialized = None
+needs_opengl = True
 
 
 def terminate_virtual_display():
@@ -590,9 +591,13 @@ def setup_headless_xvfb(need_opengl=True, allow_virtualgl=True,
                         mesa_lib = ctypes.CDLL(mesa, ctypes.RTLD_GLOBAL)
                         preload = f'{glapi}:{mesa}'
                     os.environ['LD_PRELOAD'] = preload
+                    old_ldp = os.getenv('LD_LIBRARY_PATH')
+                    ldp = os.path.dirname(mesa)
                     os.environ['LD_LIBRARY_PATH'] \
-                        = os.path.dirname(mesa) + ':' \
-                        + os.getenv('LD_LIBRARY_PATH')
+                        = os.path.dirname(mesa)
+                    if old_ldp is not None:
+                        ldp += ':' + old_ldp
+                    os.environ['LD_LIBRARY_PATH'] = ldp
                     # re-run Xvfb using new path
                     virtual_display_proc.terminate()
                     virtual_display_proc.wait()
@@ -662,7 +667,7 @@ def setup_headless_xvfb(need_opengl=True, allow_virtualgl=True,
     return result
 
 
-def setup_headless(need_opengl=True, allow_virtualgl=True,
+def setup_headless(need_opengl=None, allow_virtualgl=True,
                    force_virtualgl=force_virtualgl):
 
     class Result(object):
@@ -681,6 +686,12 @@ def setup_headless(need_opengl=True, allow_virtualgl=True,
     global headless_initialized
     if headless_initialized is not None:
         return headless_initialized
+
+    global needs_opengl
+    if need_opengl is None:
+        need_opengl = needs_opengl
+    else:
+        needs_opengl = need_opengl
 
     result = Result()
     result.virtual_display_proc = virtual_display_proc

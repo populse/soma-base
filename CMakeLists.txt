@@ -13,6 +13,9 @@ set( SOMA-BASE_DEFINITIONS "-DUSE_SOMA_CONFIG" )
 
 BRAINVISA_COPY_PYTHON_DIRECTORY( "${CMAKE_CURRENT_SOURCE_DIR}/python"
                                  ${PROJECT_NAME} )
+BRAINVISA_COPY_DIRECTORY( "${CMAKE_CURRENT_SOURCE_DIR}/bin"
+                          "bin"
+                          ${PROJECT_NAME} )
 
 find_package( Sphinx )
 BRAINVISA_GENERATE_SPHINX_DOC( "doc/sphinx"
