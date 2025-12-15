@@ -439,7 +439,7 @@ def set_qt_backend(backend=None, pyqt_api=1, compatible_qt5=None):
 
 
 def set_headless(headless_mode=True, needs_opengl=None):
-    """Configure to use the headless mode.
+    '''Configure to use the headless mode.
 
     see :mod:`headless`
 
