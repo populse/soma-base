@@ -74,7 +74,7 @@ def rmtree(filename, dry_run=False):
     todo = [filename]
     while todo:
         filename = todo.pop(0)
-        if osp.isdir(filename):
+        if osp.isdir(filename) and not osp.islink(filename):
             content = [osp.join(filename, f) for f in os.listdir(filename)]
             if len(content) != 0:
                 if dry_run:
@@ -83,7 +83,7 @@ def rmtree(filename, dry_run=False):
                 else:
                     todo = content + [filename] + todo
             else:
-                size += os.lstat(filename).st_size
+                size += os.stat(filename).st_size
                 if not dry_run:
                     os.rmdir(filename)
         else:
@@ -94,6 +94,8 @@ def rmtree(filename, dry_run=False):
 
 
 def pretty_size(size):
+    if size == 0:
+        return '0 B'
     units = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB']
     nz = int(math.floor(math.log(size) / math.log(10) + 0.0001) / 3)
     if nz >= len(units):
@@ -112,13 +114,15 @@ def clean_pkgs_cache(cache_dir=None, dry_run=False):
         files = pkgs[pkg]
         for f in files:
             if f[1] == 1:  # 1 ref hard link
-                print('rm', f[0])
-                size += rmtree(f[0], dry_run=dry_run)
+                print('rm', f[0], end='')
+                psize = rmtree(f[0], dry_run=dry_run)
                 lockf = f'{f[0]}.lock'
                 if osp.exists(lockf):
-                    size += os.lstat(lockf).st_size
+                    psize += os.lstat(lockf).st_size
                     if not dry_run:
                         os.unlink(lockf)
+                size += psize
+                print(f'\t{pretty_size(psize)}')
     print('removed:', pretty_size(size))
 
 
