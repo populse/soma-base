@@ -4,9 +4,9 @@
 import os
 import os.path as osp
 import pathlib
-import shutil
 import sys
 import argparse
+import math
 
 
 def get_rattler_cache_dir():
@@ -69,28 +69,57 @@ def get_cache_pkgs(cache_dir=None):
     return pkgs
 
 
+def rmtree(filename, dry_run=False):
+    size = 0
+    todo = [filename]
+    while todo:
+        filename = todo.pop(0)
+        if osp.isdir(filename):
+            content = [osp.join(filename, f) for f in os.listdir(filename)]
+            if len(content) != 0:
+                if dry_run:
+                    todo = content + todo
+                    size += os.lstat(filename).st_size
+                else:
+                    todo = content + [filename] + todo
+            else:
+                size += os.lstat(filename).st_size
+                if not dry_run:
+                    os.rmdir(filename)
+        else:
+            size += os.lstat(filename).st_size
+            if not dry_run:
+                os.unlink(filename)
+    return size
+
+
+def pretty_size(size):
+    units = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB']
+    nz = int(math.floor(math.log(size) / math.log(10) + 0.0001) / 3)
+    if nz >= len(units):
+        nz = len(units) - 1
+    rsz = size / math.exp(nz * 3 * math.log(10))
+    ssz = f'{rsz:.1f}'
+    if ssz.endswith('.0'):
+        ssz = ssz[:-2]
+    return f'{ssz} {units[nz]}'
+
+
 def clean_pkgs_cache(cache_dir=None, dry_run=False):
     pkgs = get_cache_pkgs(cache_dir)
+    size = 0
     for pkg in sorted(pkgs.keys()):
         files = pkgs[pkg]
         for f in files:
             if f[1] == 1:  # 1 ref hard link
                 print('rm', f[0])
-                if not dry_run:
-                    shutil.rmtree(f[0])
-                    if osp.exists(f'{f[0]}.lock'):
-                        os.unlink(f'{f[0]}.lock')
-
-        #if len(files) >= 2:
-            #print(pkg, ':', len(files))
-            #for f in sorted(files)[:-1]:
-                #print('rm', f)
-                #if not dry_run:
-                    #shutil.rmtree(f)
-                    #if osp.exists(f'{f}.lock'):
-                        #os.unlink(f'{f}.lock')
-        #elif len(files) == 0:
-            #print('empty:', pkg)
+                size += rmtree(f[0], dry_run=dry_run)
+                lockf = f'{f[0]}.lock'
+                if osp.exists(lockf):
+                    size += os.lstat(lockf).st_size
+                    if not dry_run:
+                        os.unlink(lockf)
+    print('removed:', pretty_size(size))
 
 
 def main():
