@@ -14,7 +14,7 @@ import sys
 
 version_major = 6
 version_minor = 0
-version_micro = 4
+version_micro = 5
 version_extra = ''
 _version_major = version_major
 _version_minor = version_minor
