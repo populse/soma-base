@@ -1,6 +1,6 @@
 # soma-base
 [//]: [![](https://travis-ci.org/populse/soma-base.svg?branch=master)](https://travis-ci.org/populse/soma-base)
-[![](https://ci.appveyor.com/api/projects/status/ddfnffj4kq2msi1u?svg=true)](https://ci.appveyor.com/project/denisri/soma-base/branch/master)
+[![Build status](https://img.shields.io/appveyor/build/denisri/soma-base/master.svg)](https://ci.appveyor.com/project/denisri/soma-base/branch/master)
 [![](https://codecov.io/github/populse/soma-base/coverage.svg?branch=master)](https://codecov.io/github/populse/soma-base)
 [![](https://img.shields.io/badge/license-CeCILL--B-blue.svg)](https://github.com/populse/soma-base/blob/master/LICENSE.en)
 [![](https://img.shields.io/pypi/v/soma-base.svg)](https://pypi.python.org/pypi/soma-base/)
