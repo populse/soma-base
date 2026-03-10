@@ -14,7 +14,6 @@ soma-env:
 requirements:
   run:
     - python >=3.9
-    - pydantic <2
     - pyqt
     - pyqtwebengine
     - numpy
