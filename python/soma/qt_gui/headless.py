@@ -302,7 +302,7 @@ def start_xvfb(displaynum=None):
     if shutil.which('Xvfb') is None:
         return None
     if displaynum is None:
-        for tdisplay in range(99, 200):
+        for tdisplay in range(1000, 2000):
             if not os.path.exists('/tmp/.X11-unix/X%d' % tdisplay) \
                     and not os.path.exists('/tmp/.X%d-lock' % tdisplay):
                 break
@@ -325,7 +325,7 @@ def start_xpra(displaynum=None):
     if shutil.which('xpra') is None:
         return None
     if displaynum is None:
-        for tdisplay in range(100):
+        for tdisplay in range(1000, 2000):
             if not os.path.exists('/tmp/.X11-unix/X%d' % tdisplay) \
                     and not os.path.exists('/tmp/.X%d-lock' % tdisplay):
                 break
