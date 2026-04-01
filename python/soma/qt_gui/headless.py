@@ -302,7 +302,7 @@ def start_xvfb(displaynum=None):
     if shutil.which('Xvfb') is None:
         return None
     if displaynum is None:
-        for tdisplay in range(100):
+        for tdisplay in range(99, 200):
             if not os.path.exists('/tmp/.X11-unix/X%d' % tdisplay) \
                     and not os.path.exists('/tmp/.X%d-lock' % tdisplay):
                 break
@@ -311,6 +311,7 @@ def start_xvfb(displaynum=None):
     else:
         tdisplay = int(displaynum)
     xvfb = Popen(['Xvfb', '-screen', '0', '1280x1024x24',
+                  '-nolisten', 'tcp',
                   '+extension', 'GLX', ':%d' % tdisplay],
                  preexec_fn=on_parent_exit('SIGINT'))
     if xvfb:
