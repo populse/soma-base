@@ -131,6 +131,35 @@ The dictionary may contain:
 
         The attributes values here are used both to replace attributes values in the current file path pattern, and to select the matching rule when attributes values are given externally (hm, to be checked actually).
 
+    Special rules have a different shape/meaning:
+
+    *.process_attributes*: dict
+    assign attributes values to all parameters in the process in this context.
+
+    *.skip_generic*: bool
+    if true, the search for rules in more generic definitions of a process are
+    skipped, thus the constrained definition is the final one.
+
+    We use it to reuse and specialize processes in a pipeline, ex::
+
+        "Morphologist.SulciSkeleton_left": {
+            ".process_attributes": {"side": "L"}
+        }
+        "Morphologist.SulciSkeleton_right": {
+            ".process_attributes": {"side": "R"}
+        }
+        "OtherPipeline.SulciSkeleton": {
+            ".skip_generic": true,  # don't look for the SulciSkeleton process
+            "skeleton": [[
+                "<subject>/<subject>_skeleton", "images"
+            ]]
+        }
+        "SulciSkeleton": {
+            "skeleton": [[
+                "<subject>/segmentation/<subject>_skeleton_<side>", "images"
+            ]]
+        }
+
 A FOM file is a JSON file (actually a JSON/YAML extended file, to allow comments within it), which should be placed in a common directory where the FOM manager will look for it (``share/foms/``)
 
 How to use FOMS
@@ -656,22 +685,32 @@ class FileOrganizationModels(object):
                         rules = self.shared_patterns[rules[1:-1]]
                     parameter_rules = []
                     process_dict[parameter] = parameter_rules
-                    for rule in rules:
-                        if len(rule) == 2:
-                            pattern, formats = rule
-                            rule_attributes = {}
-                        else:
-                            try:
-                                pattern, formats, rule_attributes = rule
-                            except Exception as e:
-                                print('error in FOM: %s, process: %s, param: '
-                                    '%s, rule:'
-                                    % (fom_name, process, parameter), rule)
-                                raise
+                    if isinstance(rules, dict):
+                        # a special rule ".process_attributes" has the shape
+                        # of a dict with directly attr values.
+                        # Here we record them.
+                        rule_attributes = {}
                         rule_attributes['fom_process'] = process
                         rule_attributes['fom_parameter'] = parameter
-                        parameter_rules.append(
-                            [pattern, formats, rule_attributes])
+                        parameter_rules = rules
+                        process_dict[parameter] = parameter_rules
+                    else:
+                        for rule in rules:
+                            if len(rule) == 2:
+                                pattern, formats = rule
+                                rule_attributes = {}
+                            else:
+                                try:
+                                    pattern, formats, rule_attributes = rule
+                                except Exception as e:
+                                    print('error in FOM: %s, process: %s, param: '
+                                        '%s, rule:'
+                                        % (fom_name, process, parameter), rule)
+                                    raise
+                            rule_attributes['fom_process'] = process
+                            rule_attributes['fom_parameter'] = parameter
+                            parameter_rules.append(
+                                [pattern, formats, rule_attributes])
             new_patterns = OrderedDict()
             self._expand_json_patterns(
                 process_patterns, new_patterns, {'fom_name': fom_name})
@@ -747,6 +786,11 @@ class FileOrganizationModels(object):
         for key, value in six.iteritems(json_patterns):
             if key.startswith('fom_') and key != 'fom_dummy':
                 continue
+            if key.startswith('.'):
+                # special rules ".process_attributes" and
+                # ".skip_generic" are taken differently
+                parent[key] = value
+                continue
             if key_attribute:
                 attributes[key_attribute] = key
                 self.attribute_definitions[key_attribute].setdefault(
@@ -810,6 +854,11 @@ class FileOrganizationModels(object):
 
     def _parse_patterns(self, patterns, dest_patterns):
         for key, value in six.iteritems(patterns):
+            if key.startswith('.'):
+                # special rules .process_attributes and .skip_generic
+                # are stored without further parsing
+                dest_patterns[key] = value
+                continue
             if isinstance(value, dict):
                 self._parse_patterns(
                     value, dest_patterns.setdefault(key, OrderedDict()))
