@@ -175,17 +175,20 @@ def test_glx(need_opengl=True, glxinfo_cmd=None, xdpyinfo_cmd=None, timeout=5.):
         glxinfo = ''
         t0 = time.time()
         t1 = 0
+        glx_timeout = timeout
+        if glx_timeout == 0:
+            glx_timeout = 10.
         while glxinfo == '' and t1 <= timeout:
             # universal_newlines = open stdout/stderr in text mode (Unicode)
             process = Popen(glxinfo_cmd, stdout=subprocess.PIPE,
                             stderr=subprocess.PIPE,
                             universal_newlines=True)
             try:
-                glxinfo, glxerr = process.communicate(timeout=5)
+                glxinfo, glxerr = process.communicate(timeout=timeout)
             except subprocess.TimeoutExpired:
                 process.kill()
                 glxinfo, glxerr = process.communicate()
-                raise subprocess.TimeoutExpired(process.args, 5,
+                raise subprocess.TimeoutExpired(process.args, glx_timeout,
                                                 output=glxinfo)
             retcode = process.poll()
 
@@ -374,7 +377,8 @@ def start_xvfb(displaynum=None, need_opengl=False, glxinfo_cmd=None,
                         xdpyinfo_cmd=xdpyinfo_cmd, timeout=timeout)
                 finally:
                     timeout = 5  # after 1st run, it should start faster
-                break
+                if not need_opengl or glx:
+                    break
         except Exception:
             if xvfb is not None:
                 xvfb.terminate()
