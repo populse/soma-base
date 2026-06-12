@@ -147,9 +147,10 @@ def test_glx(need_opengl=True, glxinfo_cmd=None, xdpyinfo_cmd=None, timeout=5.):
     ----------
     need_opengl: bool
         if False, the function just returns None
-    glxinfo_cmd: str or list
+    glxinfo_cmd: str or list or 0
         glxinfo command: may be a string ('glxinfo') or a list, which allows
-        running it through a wrapper, ex: ['vglrun', 'glxinfo']
+        running it through a wrapper, ex: ['vglrun', 'glxinfo']. Giving 0 means
+        that xdpyinfo will not be attempted.
     xdpyinfo_cmd: str or list
         xdpyinfo command: may be a string ('xdpyinfo') or a list, which allows
         running it through a wrapper, ex: ['vglrun', 'xdpyinfo']. xdpyinfo is
@@ -188,8 +189,6 @@ def test_glx(need_opengl=True, glxinfo_cmd=None, xdpyinfo_cmd=None, timeout=5.):
             except subprocess.TimeoutExpired:
                 process.kill()
                 glxinfo, glxerr = process.communicate()
-                raise subprocess.TimeoutExpired(process.args, glx_timeout,
-                                                output=glxinfo)
             retcode = process.poll()
 
             if retcode != 0:
@@ -205,9 +204,11 @@ def test_glx(need_opengl=True, glxinfo_cmd=None, xdpyinfo_cmd=None, timeout=5.):
                 return 2
 
     # here glxinfo has not been used or is not working
+    if xdpyinfo_cmd == 0:
+        return 0
     if xdpyinfo_cmd is None:
         xdpyinfo_cmd = shutil.which('xdpyinfo')
-    dpyinfo = u''
+    dpyinfo = ''
     t0 = time.time()
     t1 = 0
     while dpyinfo == u'' and t1 <= timeout:
@@ -618,6 +619,7 @@ def setup_headless_xvfb(need_opengl=True, allow_virtualgl=True,
 
         if need_opengl:
             result.glx = glx
+            # print('GLX:', glx)
 
             gl_libs = set()
             if not glx:
@@ -645,12 +647,8 @@ def setup_headless_xvfb(need_opengl=True, allow_virtualgl=True,
                         disp = ""  # will fail but the command will run
                     if glxinfo_cmd:
                         vglglxinfo_cmd = [vgl, '-d', disp, glxinfo_cmd]
-                    if xdpyinfo_cmd:
-                        vglxdpyinfo_cmd = [vgl, '-d', disp, xdpyinfo_cmd]
                     if test_glx(True, glxinfo_cmd=vglglxinfo_cmd,
-                                xdpyinfo_cmd=vglxdpyinfo_cmd, timeout=0):
-                        print('VirtualGL should work.')
-
+                                xdpyinfo_cmd=0, timeout=0):
                         glx = setup_virtualGL()
                         result.virtualgl = glx
 
@@ -660,7 +658,6 @@ def setup_headless_xvfb(need_opengl=True, allow_virtualgl=True,
                         else:
                             print('But VirtualGL could not be loaded...')
 
-                        # test_opengl(verbose=True)
             else:
                 print('Too dangerous to use VirtualGL: QCoreApplication is '
                       'instantiated, or GLX is not completely OK, or OpenGL '
