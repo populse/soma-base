@@ -197,8 +197,8 @@ def test_glx(need_opengl=True, glxinfo_cmd=None, xdpyinfo_cmd=None, timeout=5.):
                     break
                 time.sleep(0.01)
                 t1 = time.time() - t0
-        if glxinfo != u'' or t1 > timeout:
-            if u' GLX Visuals' not in glxinfo:
+        if glxinfo != '' or t1 > timeout:
+            if ' GLX Visuals' not in glxinfo:
                 return 0
             else:
                 return 2
@@ -211,7 +211,7 @@ def test_glx(need_opengl=True, glxinfo_cmd=None, xdpyinfo_cmd=None, timeout=5.):
     dpyinfo = ''
     t0 = time.time()
     t1 = 0
-    while dpyinfo == u'' and t1 <= timeout:
+    while dpyinfo == '' and t1 <= timeout:
         try:
             # universal_newlines = open stdout/stderr in text mode (Unicode)
             dpyinfo = check_output(xdpyinfo_cmd,
@@ -641,7 +641,6 @@ def setup_headless_xvfb(need_opengl=True, allow_virtualgl=True,
                 if vgl:
                     print('VirtualGL found.')
                     vglglxinfo_cmd = None
-                    vglxdpyinfo_cmd = None
                     disp = original_display
                     if disp is None:
                         disp = ""  # will fail but the command will run
@@ -657,6 +656,9 @@ def setup_headless_xvfb(need_opengl=True, allow_virtualgl=True,
                                   'this is optimal.' % virtual_display)
                         else:
                             print('But VirtualGL could not be loaded...')
+                            glx = result.glx
+                    else:
+                        print('VirtualGL is not working properly.')
 
             else:
                 print('Too dangerous to use VirtualGL: QCoreApplication is '
@@ -664,6 +666,7 @@ def setup_headless_xvfb(need_opengl=True, allow_virtualgl=True,
                       'libs are loaded.')
 
             if not glx and not gl_libs:
+                print('looking for software Mesa libs')
                 # try Mesa, if found
                 mesa = find_mesa()
                 if mesa:
