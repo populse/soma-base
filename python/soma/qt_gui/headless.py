@@ -72,6 +72,14 @@ def terminate_virtual_display():
 
     if virtual_display_proc is not None:
 
+        from soma.qt_gui.qt_backend import QtCore
+
+        # make sure to close/delete Qt application (and all widgets)
+        if QtCore.QCoreApplication.instance() is not None:
+            QtCore.QCoreApplication.instance().quit()
+            qapp = QtCore.QCoreApplication([])
+            del qapp
+
         virtual_display_proc.terminate()
         virtual_display_proc.wait()
         virtual_display_proc = None
