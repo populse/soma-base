@@ -12,10 +12,12 @@
 # to "bv", then running: "command <params>" is equivalent of running
 # "bv command <params>".
 
-if [ -x "$PIXI_PROJECT_ROOT" ]; then
-    echo The bv command has been invoked inside an active Pixi project.
-    echo As its role is precisely to activate the project, this is useless.
-    exit 1
+if [ -x "$PIXI_PROJECT_ROOT" -a "$(which python)" = "$PIXI_PROJECT_ROOT/.pixi/envs/default/bin/python" ]; then
+    # echo The bv command has been invoked inside an active Pixi project.
+    # echo As its role is precisely to activate the project, this is useless.
+
+    # try direct run
+    exec "$@"
 fi
 
 ME=$0
@@ -78,7 +80,9 @@ done
 
 export PS1="$PIXI_PROMPT \[\e]0;\u@\h: \w\a\]${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$ "
 
-. "$PIXI_PROJECT_ROOT/activate.sh"
+if [ -f "$PIXI_PROJECT_ROOT/activate.sh" ]; then
+    . "$PIXI_PROJECT_ROOT/activate.sh"
+fi
 
 # echo exec "$SHORT_ME" $OPTIONS "$@"
 exec "$SHORT_ME" $OPTIONS "$@"

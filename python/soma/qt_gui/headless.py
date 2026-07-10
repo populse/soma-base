@@ -44,12 +44,14 @@ For OpenGL settings, it is more complex than that: the program must specify whet
 
 from soma import subprocess
 import os
+import os.path as osp
 from soma.subprocess import Popen, check_output
 import time
 import ctypes
 import sys
 import shutil
 import atexit
+import tempfile
 
 virtual_display = 'xvfb'
 virtual_display_proc = None
@@ -58,6 +60,7 @@ display = None
 force_virtualgl = True
 headless_initialized = None
 needs_opengl = True
+temp_paths = []
 
 
 def terminate_virtual_display():
@@ -65,31 +68,44 @@ def terminate_virtual_display():
     global virtual_display_proc
     global original_display
     global display
+    global temp_paths
 
-    if virtual_display_proc is None:
-        return
+    if virtual_display_proc is not None:
 
-    virtual_display_proc.terminate()
-    virtual_display_proc.wait()
-    virtual_display_proc = None
+        from soma.qt_gui.qt_backend import QtCore
 
-    if original_display:
-        os.environ['DISPLAY'] = original_display
-    else:
-        del os.environ['DISPLAY']
+        # make sure to close/delete Qt application (and all widgets)
+        if QtCore.QCoreApplication.instance() is not None:
+            QtCore.QCoreApplication.instance().quit()
+            qapp = QtCore.QCoreApplication([])
+            del qapp
 
-    if virtual_display == 'xpra':
-        subprocess.call(['xpra', 'stop', str(display)])
+        virtual_display_proc.terminate()
+        virtual_display_proc.wait()
+        virtual_display_proc = None
+
+        if original_display:
+            os.environ['DISPLAY'] = original_display
+        else:
+            del os.environ['DISPLAY']
+
+        if virtual_display == 'xpra':
+            subprocess.call(['xpra', 'stop', str(display)])
+
+    for p in temp_paths:
+        shutil.rmtree(p)
+    temp_paths = []
 
 
-# this is not needed any longer for Xvfb, since on_parent_exit() is passed
+# for Xvfb, on_parent_exit() is passed
 # to Popen, but xpra needs to stop the corresponding server
+# and we also need to cleanup temp files
 #
 # anyway we need to set it up at startup, begore Qt is initialized
 # to have the correct call order for atexit funtions.
 # see https://github.com/The-Compiler/pytest-xvfb/issues/11
-if virtual_display_proc is not None:
-    atexit.register(terminate_virtual_display)
+# if virtual_display_proc is not None:
+atexit.register(terminate_virtual_display)
 
 
 def setup_virtualGL():
@@ -131,15 +147,18 @@ def setup_virtualGL():
     return True
 
 
-def test_glx(glxinfo_cmd=None, xdpyinfo_cmd=None, timeout=5.):
+def test_glx(need_opengl=True, glxinfo_cmd=None, xdpyinfo_cmd=None, timeout=5.):
     ''' Test the presence of the GLX module in the X server, by running
     glxinfo or xdpyinfo command
 
     Parameters
     ----------
-    glxinfo_cmd: str or list
+    need_opengl: bool
+        if False, the function just returns None
+    glxinfo_cmd: str or list or 0
         glxinfo command: may be a string ('glxinfo') or a list, which allows
-        running it through a wrapper, ex: ['vglrun', 'glxinfo']
+        running it through a wrapper, ex: ['vglrun', 'glxinfo']. Giving 0 means
+        that xdpyinfo will not be attempted.
     xdpyinfo_cmd: str or list
         xdpyinfo command: may be a string ('xdpyinfo') or a list, which allows
         running it through a wrapper, ex: ['vglrun', 'xdpyinfo']. xdpyinfo is
@@ -155,6 +174,8 @@ def test_glx(glxinfo_cmd=None, xdpyinfo_cmd=None, timeout=5.):
     2 if GLX is recognized trough glxinfo (trustable), 1 if GLX is recognized
     through xdpyinfo (not always trustable), 0 otherwise.
     '''
+    if not need_opengl:
+        return None
     if glxinfo_cmd is None:
         glxinfo_cmd = shutil.which('glxinfo')
         if glxinfo_cmd is not None:
@@ -163,18 +184,19 @@ def test_glx(glxinfo_cmd=None, xdpyinfo_cmd=None, timeout=5.):
         glxinfo = ''
         t0 = time.time()
         t1 = 0
+        glx_timeout = timeout
+        if glx_timeout == 0:
+            glx_timeout = 10.
         while glxinfo == '' and t1 <= timeout:
             # universal_newlines = open stdout/stderr in text mode (Unicode)
             process = Popen(glxinfo_cmd, stdout=subprocess.PIPE,
                             stderr=subprocess.PIPE,
                             universal_newlines=True)
             try:
-                glxinfo, glxerr = process.communicate(timeout=5)
+                glxinfo, glxerr = process.communicate(timeout=timeout)
             except subprocess.TimeoutExpired:
                 process.kill()
                 glxinfo, glxerr = process.communicate()
-                raise subprocess.TimeoutExpired(process.args, 5,
-                                                output=glxinfo)
             retcode = process.poll()
 
             if retcode != 0:
@@ -183,19 +205,21 @@ def test_glx(glxinfo_cmd=None, xdpyinfo_cmd=None, timeout=5.):
                     break
                 time.sleep(0.01)
                 t1 = time.time() - t0
-        if glxinfo != u'' or t1 > timeout:
-            if u' GLX Visuals' not in glxinfo:
+        if glxinfo != '' or t1 > timeout:
+            if ' GLX Visuals' not in glxinfo:
                 return 0
             else:
                 return 2
 
     # here glxinfo has not been used or is not working
+    if xdpyinfo_cmd == 0:
+        return 0
     if xdpyinfo_cmd is None:
         xdpyinfo_cmd = shutil.which('xdpyinfo')
-    dpyinfo = u''
+    dpyinfo = ''
     t0 = time.time()
     t1 = 0
-    while dpyinfo == u'' and t1 <= timeout:
+    while dpyinfo == '' and t1 <= timeout:
         try:
             # universal_newlines = open stdout/stderr in text mode (Unicode)
             dpyinfo = check_output(xdpyinfo_cmd,
@@ -298,62 +322,139 @@ def find_mesa():
     return None
 
 
-def start_xvfb(displaynum=None):
+def find_free_x_servernum(tdisplay=1000):
+    while True:
+        if not os.path.exists('/tmp/.X11-unix/X%d' % tdisplay) \
+                and not os.path.exists('/tmp/.X%d-lock' % tdisplay):
+            break
+        tdisplay += 1
+    return tdisplay
+
+
+def get_x_mcookie():
+    mcookie_cmd = shutil.which('mcookie')
+    if mcookie_cmd is not None:
+        mcookie = check_output('mcookie').decode()
+    else:
+        import hashlib
+        import random
+        mcookie = hashlib.md5(random.randbytes(256)).hexdigest()
+    return mcookie
+
+
+def start_xvfb(displaynum=None, need_opengl=False, glxinfo_cmd=None,
+               xdpyinfo_cmd=None):
     if shutil.which('Xvfb') is None:
-        return None
+        return None, None
     if displaynum is None:
-        for tdisplay in range(100):
-            if not os.path.exists('/tmp/.X11-unix/X%d' % tdisplay) \
-                    and not os.path.exists('/tmp/.X%d-lock' % tdisplay):
-                break
-        else:
-            raise RuntimeError('Too many X servers')
+        tdisplay = find_free_x_servernum(1000)
     else:
         tdisplay = int(displaynum)
-    xvfb = Popen(['Xvfb', '-screen', '0', '1280x1024x24',
-                  '+extension', 'GLX', ':%d' % tdisplay],
-                 preexec_fn=on_parent_exit('SIGINT'))
-    if xvfb:
-        global display
-        display = tdisplay
+    xvfb = None
+    glx = None
+    timeout = 20
+    mcookie = get_x_mcookie()
+    tmp_x_dir = tempfile.mkdtemp(prefix='xvfb-soma_')
+    global temp_paths
+    temp_paths.append(tmp_x_dir)
+    authfile = osp.join(tmp_x_dir, 'Xauthority')
+    with open(authfile, 'w'):  # create empty file
+        pass
+    env = dict(os.environ)
+    env['XAUTHORITY'] = authfile
 
-    return xvfb
+    while tdisplay < 2000:
+        subprocess.check_call(['xauth', 'add', f':{tdisplay}', '.',
+                               f'{mcookie}'], env=env)
+        try:
+            xvfb = Popen(['Xvfb', '-screen', '0', '1280x1024x24',
+                          '-nolisten', 'tcp',
+                          '+extension', 'GLX', ':%d' % tdisplay,
+                          '-auth', authfile],
+                         preexec_fn=on_parent_exit('SIGINT'))
+            if xvfb:
+                global display
+                display = tdisplay
+
+                print('using DISPLAY=:%s' % display)
+                os.environ['DISPLAY'] = ':%s' % display
+                os.environ['XAUTHORITY'] = authfile
+
+                try:
+                    glx = test_glx(
+                        need_opengl=need_opengl, glxinfo_cmd=glxinfo_cmd,
+                        xdpyinfo_cmd=xdpyinfo_cmd, timeout=timeout)
+                finally:
+                    timeout = 5  # after 1st run, it should start faster
+                if not need_opengl or glx:
+                    break
+        except Exception:
+            if xvfb is not None:
+                xvfb.terminate()
+                xvfb.wait()
+                xvfb = None
+        tdisplay += 1
+
+    return xvfb, glx
 
 
-def start_xpra(displaynum=None):
+def start_xpra(displaynum=None, need_opengl=False, glxinfo_cmd=None,
+               xdpyinfo_cmd=None):
     if shutil.which('xpra') is None:
-        return None
+        return None, None
     if displaynum is None:
-        for tdisplay in range(100):
-            if not os.path.exists('/tmp/.X11-unix/X%d' % tdisplay) \
-                    and not os.path.exists('/tmp/.X%d-lock' % tdisplay):
-                break
-        else:
-            raise RuntimeError('Too many X servers')
+        tdisplay = find_free_x_servernum(1000)
     else:
-        tdisplay = str(displaynum)
-    xpra = Popen(['xpra', 'start', ':%d' % tdisplay,],
-                 preexec_fn=on_parent_exit('SIGINT'))
-    if xpra:
-        global display
-        display = tdisplay
+        tdisplay = int(displaynum)
+    xpra = None
+    glx = None
+    timeout = 20
+    while tdisplay < 2000:
+        try:
+            xpra = Popen(['xpra', 'start', ':%d' % tdisplay,],
+                          preexec_fn=on_parent_exit('SIGINT'))
+            if xpra:
+                global display
+                display = tdisplay
 
-    return xpra
+                print('using DISPLAY=:%s' % display)
+                os.environ['DISPLAY'] = ':%s' % display
+
+                try:
+                    glx = test_glx(
+                        need_opengl=need_opengl, glxinfo_cmd=glxinfo_cmd,
+                        xdpyinfo_cmd=xdpyinfo_cmd, timeout=timeout)
+                finally:
+                    timeout = 5  # after 1st run, it should start faster
+                break
+        except Exception:
+            if xpra is not None:
+                xpra.terminate()
+                xpra.wait()
+                xpra = None
+        tdisplay += 1
+
+    return xpra, glx
 
 
-def start_virtual_display(display=None):
+def start_virtual_display(display=None, need_opengl=False, glxinfo_cmd=None,
+                          xdpyinfo_cmd=None):
     global virtual_display
     global virtual_display_proc
 
     if virtual_display == 'xvfb':
-        virtual_display_proc = start_xvfb(display)
+        virtual_display_proc, glx = start_xvfb(
+            display, need_opengl=need_opengl, glxinfo_cmd=glxinfo_cmd,
+            xdpyinfo_cmd=xdpyinfo_cmd)
         if virtual_display_proc is not None:
-            return virtual_display_proc
+            return virtual_display_proc, glx
         else:
             virtual_display = 'xpra'
     if virtual_display == 'xpra':
-        virtual_display_proc = start_xpra(display)
-    return virtual_display_proc
+        virtual_display_proc, glx = start_xpra(
+            display, need_opengl=need_opengl, glxinfo_cmd=glxinfo_cmd,
+            xdpyinfo_cmd=xdpyinfo_cmd)
+    return virtual_display_proc, glx
 
 
 class PrCtlError(Exception):
@@ -503,6 +604,8 @@ def setup_headless_xvfb(need_opengl=True, allow_virtualgl=True,
     use_xvfb = True
     glxinfo_cmd = shutil.which('glxinfo')
     xdpyinfo_cmd = shutil.which('xdpyinfo')
+    original_display = os.environ.get('DISPLAY', None)
+    result.original_display = original_display
     # if not xdpyinfo_cmd:
     # not a X client, probably not Linux
     # use_xvfb = False
@@ -511,23 +614,20 @@ def setup_headless_xvfb(need_opengl=True, allow_virtualgl=True,
         use_xvfb = False
 
     if use_xvfb:
-        virtual_display_proc = start_virtual_display()
+        virtual_display_proc, glx = start_virtual_display(
+            need_opengl=need_opengl, glxinfo_cmd=glxinfo_cmd,
+            xdpyinfo_cmd=xdpyinfo_cmd)
 
     if virtual_display_proc is not None:
         global display
 
-        original_display = os.environ.get('DISPLAY', None)
-        print('using DISPLAY=:%s' % display)
-        os.environ['DISPLAY'] = ':%s' % display
-
-        result.original_display = original_display
         result.display = display
         result.virtual_display_proc = virtual_display_proc
         result.headless = True
 
         if need_opengl:
-            glx = test_glx(glxinfo_cmd=glxinfo_cmd, xdpyinfo_cmd=xdpyinfo_cmd)
             result.glx = glx
+            # print('GLX:', glx)
 
             gl_libs = set()
             if not glx:
@@ -549,18 +649,13 @@ def setup_headless_xvfb(need_opengl=True, allow_virtualgl=True,
                 if vgl:
                     print('VirtualGL found.')
                     vglglxinfo_cmd = None
-                    vglxdpyinfo_cmd = None
                     disp = original_display
                     if disp is None:
                         disp = ""  # will fail but the command will run
                     if glxinfo_cmd:
                         vglglxinfo_cmd = [vgl, '-d', disp, glxinfo_cmd]
-                    if xdpyinfo_cmd:
-                        vglxdpyinfo_cmd = [vgl, '-d', disp, xdpyinfo_cmd]
-                    if test_glx(glxinfo_cmd=vglglxinfo_cmd,
-                                xdpyinfo_cmd=vglxdpyinfo_cmd, timeout=0):
-                        print('VirtualGL should work.')
-
+                    if test_glx(True, glxinfo_cmd=vglglxinfo_cmd,
+                                xdpyinfo_cmd=0, timeout=0):
                         glx = setup_virtualGL()
                         result.virtualgl = glx
 
@@ -569,14 +664,17 @@ def setup_headless_xvfb(need_opengl=True, allow_virtualgl=True,
                                   'this is optimal.' % virtual_display)
                         else:
                             print('But VirtualGL could not be loaded...')
+                            glx = result.glx
+                    else:
+                        print('VirtualGL is not working properly.')
 
-                        # test_opengl(verbose=True)
             else:
                 print('Too dangerous to use VirtualGL: QCoreApplication is '
                       'instantiated, or GLX is not completely OK, or OpenGL '
                       'libs are loaded.')
 
             if not glx and not gl_libs:
+                print('looking for software Mesa libs')
                 # try Mesa, if found
                 mesa = find_mesa()
                 if mesa:
@@ -605,7 +703,7 @@ def setup_headless_xvfb(need_opengl=True, allow_virtualgl=True,
                         display=display)
                     result.virtual_display_proc = virtual_display_proc
                     #self.mesa_lib = mesa_lib
-                    glx = test_glx(glxinfo_cmd, xdpyinfo_cmd)
+                    glx = test_glx(True, glxinfo_cmd, xdpyinfo_cmd)
                     result.glx = glx
                     result.mesa = True
                     if glx:
@@ -636,7 +734,7 @@ def setup_headless_xvfb(need_opengl=True, allow_virtualgl=True,
 
         if not use_xvfb:
             if xdpyinfo_cmd:
-                glx = test_glx(glxinfo_cmd, xdpyinfo_cmd, 0)
+                glx = test_glx(True, glxinfo_cmd, xdpyinfo_cmd, 0)
                 result.glx = glx
                 if not glx:
                     raise RuntimeError('GLX extension missing')
