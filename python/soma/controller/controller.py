@@ -434,7 +434,21 @@ class Controller(HasTraits):
                     elif tr and isinstance(tr.trait_type, Tuple):
                         setattr(self, trait_name, tuple(value))
                     else:
-                        setattr(self, trait_name, value)
+                        try:
+                            setattr(self, trait_name, value)
+                        except traits.TraitError:
+                            if isinstance(value, str) and (
+                                    value.endswith('/')
+                                    or value.endswith('\\')
+                                    or value.endswith('/.')
+                                    or value.endswith('\\.')):
+                                # remove trailing / or /. in a dir name
+                                if value[-1] == '.':
+                                    setattr(self, trait_name, value[:-2])
+                                else:
+                                    setattr(self, trait_name, value[:-1])
+                            else:
+                                raise
 
     def copy(self, with_values=True):
         """ Copy traits definitions to a new Controller object
