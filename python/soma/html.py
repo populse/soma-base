@@ -1,4 +1,3 @@
-
 #  This software and supporting documentation are distributed by
 #      Institut Federatif de Recherche 49
 #      CEA/NeuroSpin, Batiment 145,
@@ -65,9 +64,9 @@ def htmlEscape(msg):
         _htmlEscape = {
             codepoint: '&' + name + ';'
             for codepoint, name
-            in six.iteritems(six.moves.html_entities.codepoint2name)
+            in six.moves.html_entities.codepoint2name.items()
         }
-    if not isinstance(msg, six.string_types):
+    if not isinstance(msg, str):
         # htmlEscape is sometimes used on non-string types (as print) like
         # tuples or dicts
         msg = str(msg)
@@ -89,8 +88,8 @@ def lesserHtmlEscape(msg):
         _lesserHtmlEscape = {
             codepoint: '&' + name + ';'
             for codepoint, name
-            in six.iteritems(six.moves.html_entities.codepoint2name)
-            if six.unichr(codepoint) not in ('"', 'é', 'à', 'è', 'â',
+            in six.moves.html_entities.codepoint2name.items()
+            if chr(codepoint) not in ('"', 'é', 'à', 'è', 'â',
                                              'ê', 'ô', 'î', 'û', 'ù',
                                              'ö', )
         }

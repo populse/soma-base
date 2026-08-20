@@ -1,4 +1,3 @@
-
 '''
 Run worker functions in separate processes.
 
@@ -260,7 +259,7 @@ class Worker:
                 # print('waiting for job')
                 # sys.stdout.flush()
                 try:
-                    with open(self.fifo, 'r') as f:
+                    with open(self.fifo) as f:
                         # print('reading fifo')
                         # sys.stdout.flush()
                         cmd = f.readline()
@@ -355,7 +354,7 @@ class Worker:
         # wait for end of execution and read output
         # print('read from', os.getpid(), ':', self.fifo)
         # sys.stdout.flush()
-        with open(self.fifo, 'r') as f:
+        with open(self.fifo) as f:
             answer = f.readline()
             # print('answer:', answer)
             # sys.stdout.flush()

@@ -1,4 +1,3 @@
-
 #  This software and supporting documentation are distributed by
 #      Institut Federatif de Recherche 49
 #      CEA/NeuroSpin, Batiment 145,
@@ -46,10 +45,9 @@ SortedDictionary if python version < 2.7.
 
 __docformat__ = "restructuredtext en"
 
-from collections import OrderedDict  # noqa: F824
+from collections import OrderedDict as OrderedDict
 import inspect
-import six
-from six.moves import collections_abc
+from collections import abc
 from soma.undefined import Undefined
 
 
@@ -81,7 +79,7 @@ class SortedDictionary(dict):
         if len(args) == 1 and (
                 isinstance(args[0], list)
                 or inspect.isgenerator(args[0])
-                or (isinstance(args[0], collections_abc.ItemsView))):
+                or (isinstance(args[0], abc.ItemsView))):
             elements = args[0]  # dict / OrderedDict compatibility
         else:
             elements = args
@@ -104,10 +102,7 @@ class SortedDictionary(dict):
         list
             sorted list of (key, value) pairs
         '''
-        if six.PY2:
-            return list(self.iteritems())
-        else:
-            return self.iteritems()
+        return self.iteritems()
 
     def values(self):
         '''
@@ -116,10 +111,7 @@ class SortedDictionary(dict):
         values: list
             sorted list of values
         '''
-        if six.PY2:
-            return list(self.itervalues())
-        else:
-            return self.itervalues()
+        return self.itervalues()
 
     def __setitem__(self, key, value):
         if key not in self:
@@ -260,7 +252,7 @@ class SortedDictionary(dict):
                                for k, v in self.iteritems()) + '}'
 
     def update(self, dict_obj):
-        for k, v in six.iteritems(dict_obj):
+        for k, v in dict_obj.items():
             self[k] = v
 
     def copy(self):

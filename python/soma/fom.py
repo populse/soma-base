@@ -1,4 +1,3 @@
-
 '''
 File Organization Model (FOM)
 =============================
@@ -185,9 +184,6 @@ import stat
 import sys
 import time
 
-import six
-from six.moves import range
-
 try:
     import bz2
 except ImportError:
@@ -232,7 +228,7 @@ def deep_update(update, original):
     Recursively update a dict.
     Subdict's won't be overwritten but also updated.
     '''
-    for key, value in six.iteritems(original):
+    for key, value in original.items():
         if not key in update:
             update[key] = value
         elif isinstance(value, dict):
@@ -248,7 +244,7 @@ def read_json(file_name):
     appropriate a warning about yaml not being installed.
     '''
     try:
-        with open(file_name, 'r') as f:
+        with open(file_name) as f:
             return json_reader.load(f, object_pairs_hook=OrderedDict)
     except ValueError as e:
         if json_reader.__name__ != 'yaml':
@@ -282,8 +278,7 @@ class DirectoryAsDict:
         st_content = self.cache.get_directory(self.directory)
         if st_content is not None:
             st, content = st_content
-            for i in six.iteritems(content):
-                yield i
+            yield from content.items()
         else:
             try:
                 listdir = os.listdir(self.directory)
@@ -371,7 +366,7 @@ class DirectoryAsDict:
             debug.info('%s files=%d, directories=%d, size=%d'
                        % (time.asctime(), files + links, directories, files_size))
         count += 1
-        for name, content in six.iteritems(dirdict):
+        for name, content in dirdict.items():
             path_size += len(name)
             st, content = content
             if st:
@@ -435,10 +430,10 @@ class DirectoriesCache:
                 with bz2.BZ2File(path, 'r') as f:
                     result.directories = json.load(f)
             except OSError:
-                with open(path, 'r') as f:
+                with open(path) as f:
                     result.directories = json.load(f)
         else:
-            with open(path, 'r') as f:
+            with open(path) as f:
                 result.directories = json.load(f)
         return result
 
@@ -609,7 +604,7 @@ class FileOrganizationModels:
         # Update attribute definitions
         attribute_definitions = json_dict.get('attribute_definitions')
         if attribute_definitions:
-            for attribute, definition in six.iteritems(attribute_definitions):
+            for attribute, definition in attribute_definitions.items():
                 existing_definition = self.attribute_definitions.get(
                     attribute)
                 values = definition.get('values')
@@ -653,7 +648,7 @@ class FileOrganizationModels:
             while stack:
                 name, pattern = stack.pop()
                 if isinstance(pattern, list):
-                    if pattern and isinstance(pattern[0], six.string_types):
+                    if pattern and isinstance(pattern[0], str):
                         pattern[0] = self._expand_shared_pattern(pattern[0])
                     else:
                         for i in pattern:
@@ -678,11 +673,11 @@ class FileOrganizationModels:
 
         if processes:
             process_patterns = OrderedDict()
-            for process, parameters in six.iteritems(processes):
+            for process, parameters in processes.items():
                 process_dict = OrderedDict()
                 process_patterns[process] = process_dict
-                for parameter, rules in six.iteritems(parameters):
-                    if isinstance(rules, six.string_types):
+                for parameter, rules in parameters.items():
+                    if isinstance(rules, str):
                         rules = self.shared_patterns[rules[1:-1]]
                     parameter_rules = []
                     process_dict[parameter] = parameter_rules
@@ -744,11 +739,11 @@ class FileOrganizationModels:
                             continue
                     elif format not in rule_formats:
                         if debug:
-                            debug.debug('selected_rules: -- format %s not in %s' % (repr(
+                            debug.debug('selected_rules: -- format {} not in {}'.format(repr(
                                 format), repr(rule_formats)))
                         continue
                 keep = True
-                for attribute, selection_value in six.iteritems(selection):
+                for attribute, selection_value in selection.items():
                     if attribute == 'format':
                         continue
                     rule_value = rule_attributes.get(attribute)
@@ -763,16 +758,15 @@ class FileOrganizationModels:
                         debug.debug('selected_rules: ++')
                     yield (rule_pattern, rule_attributes)
         else:
-            for rule in self.rules:
-                yield rule
+            yield from self.rules
 
     def _expand_json_patterns(self, json_patterns, parent, parent_attributes):
         attributes = parent_attributes.copy()
         attributes.update(json_patterns.get('fom_attributes', {}))
-        for attribute, value in six.iteritems(attributes):
+        for attribute, value in attributes.items():
             if attribute not in self.attribute_definitions:
                 self.attribute_definitions[
-                    attribute] = {'values': set((value,))}
+                    attribute] = {'values': {value}}
             else:
                 values = self.attribute_definitions[
                     attribute].setdefault('values', set())
@@ -784,7 +778,7 @@ class FileOrganizationModels:
             # raise ValueError( 'Attribute "%s" must be declared in
             # attribute_definitions' % key_attribute )
 
-        for key, value in six.iteritems(json_patterns):
+        for key, value in json_patterns.items():
             if key.startswith('fom_') and key != 'fom_dummy':
                 continue
             if key.startswith('.'):
@@ -808,7 +802,7 @@ class FileOrganizationModels:
                         rule_attributes = attributes.copy()
                     else:
                         pattern, format_list, rule_attributes = rule
-                        for attribute, value in six.iteritems(rule_attributes):
+                        for attribute, value in rule_attributes.items():
                             definition = self.attribute_definitions.setdefault(
                                 attribute, {})
                             values = definition.setdefault('values', set())
@@ -820,7 +814,7 @@ class FileOrganizationModels:
 
                     # Expand format_list
                     rule_formats = []
-                    if isinstance(format_list, six.string_types):
+                    if isinstance(format_list, str):
                         format_list = [format_list]
                     if format_list:
                         for format in format_list:
@@ -854,7 +848,7 @@ class FileOrganizationModels:
                     rules.append([pattern, rule_attributes])
 
     def _parse_patterns(self, patterns, dest_patterns):
-        for key, value in six.iteritems(patterns):
+        for key, value in patterns.items():
             if key.startswith('.'):
                 # special rules .process_attributes and .skip_generic
                 # are stored without further parsing
@@ -934,10 +928,10 @@ class PathToAttributes:
                         values = attribute_type.get('values')
                         if values and not attribute_type.get('fom_open_value', True):
                             regex.append(
-                                '(?P<%s>%s)' % (attribute, '|'.join('(?:' + re.escape(i) + ')' for i in values)))
+                                '(?P<{}>{})'.format(attribute, '|'.join('(?:' + re.escape(i) + ')' for i in values)))
                         else:
                             regex.append(
-                                '(?P<%s>%s)' % (attribute, attribute_re))
+                                f'(?P<{attribute}>{attribute_re})')
                         attributes_found.add(attribute)
                     last_end = match.end()
                 last = pattern[last_end:]
@@ -968,12 +962,12 @@ class PathToAttributes:
     def _pprint(self, file, node, indent):
         if node:
             print('  ' * indent + '{', file=file)
-            for pattern, rules_subpattern in six.iteritems(node):
+            for pattern, rules_subpattern in node.items():
                 ext_rules, subpattern = rules_subpattern
                 print('  ' * (indent + 1) + repr(pattern) + ': { (', file=file)
                 if ext_rules:
                     print('  ' * (indent + 1) + '{', file=file)
-                    for ext, rules in six.iteritems(ext_rules):
+                    for ext, rules in ext_rules.items():
                         print('  ' * \
                             (indent + 2) + repr(ext) + ': ', repr(rules),
                           file=file)
@@ -987,12 +981,12 @@ class PathToAttributes:
             print('  ' * indent + '{}', file=file, end=' ')
 
     def parse_directory(self, dirdict, single_match=False, all_unknown=False, log=None):
-        if isinstance(dirdict, six.string_types):
+        if isinstance(dirdict, str):
             dirdict = DirectoryAsDict.paths_to_dict(dirdict)
         return self._parse_directory(dirdict, [([], self.hierarchical_patterns, {})], single_match, all_unknown, log)
 
     def _parse_directory(self, dirdict, parsing_list, single_match, all_unknown, log):
-        for name, content in six.iteritems(dirdict):
+        for name, content in dirdict.items():
             st, content = content
             # Split extension on left most dot
             l = name.split('.')
@@ -1015,7 +1009,7 @@ class PathToAttributes:
                         pattern_attributes) + ' ' + repr(list(hierarchical_patterns.keys())))
                 branch_matched = False
                 for pattern, rules_subpattern \
-                        in six.iteritems(hierarchical_patterns):
+                        in hierarchical_patterns.items():
                     stop_parsing = False
                     for name_no_ext, ext in possible_extension_split:
                         ext_rules, subpattern = rules_subpattern
@@ -1023,7 +1017,7 @@ class PathToAttributes:
                         match = re.match(pattern, name_no_ext)
                         if log:
                             log.debug(
-                                'try %s for %s' % (repr(pattern), repr(name_no_ext)))
+                                f'try {pattern!r} for {name_no_ext!r}')
                         if match:
                             if log:
                                 log.debug('match ' + pattern)
@@ -1040,8 +1034,7 @@ class PathToAttributes:
                                 stop_parsing = single_match
                                 full_path = path + [name]
                                 if log:
-                                    log.debug('directory matched: %s %s' % (
-                                        repr(full_path), (repr([i[0] for i in six.iteritems(content)]) if content else None)))
+                                    log.debug(f'directory matched: {full_path!r} {repr([i[0] for i in content.items()]) if content else None}')
                                 matched_directories.append(
                                     (full_path, subpattern, new_attributes))
                             else:
@@ -1078,30 +1071,27 @@ class PathToAttributes:
                             recurse_parsing_list.append(
                                 (full_path, subpattern, new_attributes))
             if recurse_parsing_list:
-                for i in self._parse_directory(content, recurse_parsing_list, single_match, all_unknown, log):
-                    yield i
+                yield from self._parse_directory(content, recurse_parsing_list, single_match, all_unknown, log)
             if not matched and all_unknown:
                 if log:
                     log.debug('-> ' + '/'.join(path + [name]) + ' None')
                 sent = True
                 yield path + [name], st, None
                 if content:
-                    for i in self._parse_unknown_directory(content, path + [name], log):
-                        yield i
+                    yield from self._parse_unknown_directory(content, path + [name], log)
             if not sent and all_unknown:
                 if log:
                     log.debug('-> ' + '/'.join(path + [name]) + ' None')
                 yield path + [name], st, None
 
     def _parse_unknown_directory(self, dirdict, path, log):
-        for name, content in six.iteritems(dirdict):
+        for name, content in dirdict.items():
             st, content = content
             if log:
                 log.debug('?-> ' + '/'.join(path + [name]) + ' None')
             yield path + [name], st, None
             if content is not None:
-                for i in self._parse_unknown_directory(content, path + [name], log):
-                    yield i
+                yield from self._parse_unknown_directory(content, path + [name], log)
 
     def parse_path(self, path, single_match=False, log=None):
         dirdict = DirectoryAsDict.paths_to_dict(path)
@@ -1127,10 +1117,10 @@ class AttributesToPaths:
         self._db.execute('PRAGMA synchronous = OFF;')
         self.all_attributes = tuple(
             i for i in self.foms.attribute_definitions if i != 'fom_formats')
-        self.default_values = dict(
-            (i, self.foms.attribute_definitions[i]['default_value']) for i in self.all_attributes if 'default_value' in self.foms.attribute_definitions[i])
-        self.non_discriminant_attributes = set(
-            i for i in self.all_attributes if not self.foms.attribute_definitions[i].get('discriminant', True))
+        self.default_values = {
+            i: self.foms.attribute_definitions[i]['default_value'] for i in self.all_attributes if 'default_value' in self.foms.attribute_definitions[i]}
+        self.non_discriminant_attributes = {
+            i for i in self.all_attributes if not self.foms.attribute_definitions[i].get('discriminant', True)}
         fom_format_index = self.all_attributes.index('fom_format')
         sql = 'CREATE TABLE rules ( %s, _fom_first, _fom_preferred_format, _fom_rule )' % ','.join(repr('_' + str(i))
                                 for i in self.all_attributes)
@@ -1142,7 +1132,7 @@ class AttributesToPaths:
         sql = 'CREATE INDEX rules_index ON rules (%s)' % ','.join(columns)
         self._db.execute(sql)
         for i in columns:
-            sql = 'CREATE INDEX rules%s_index ON rules (%s)' % (i, i)
+            sql = f'CREATE INDEX rules{i}_index ON rules ({i})'
             self._db.execute(sql)
         sql_insert = 'INSERT INTO rules VALUES ( %s )' % ','.join(
             '?' for i in range(len(self.all_attributes) + 3))
@@ -1151,8 +1141,8 @@ class AttributesToPaths:
             if debug:
                 debug.debug(
                     'pattern: ' + pattern + ' ' + repr(rule_attributes))
-            pattern_attributes = set((i if '|' not in i else i[: i.find('|')])
-                                     for i in self.foms._attributes_regex.findall(pattern))
+            pattern_attributes = {(i if '|' not in i else i[: i.find('|')])
+                                     for i in self.foms._attributes_regex.findall(pattern)}
             values = []
             for attribute in self.all_attributes:
                 value = rule_attributes.get(attribute)
@@ -1238,7 +1228,7 @@ class AttributesToPaths:
                     selection_attributes[attribute] = value
         columns = ['_fom_rule', '_fom_format'] + ['_' + i[0]
                                                   for i in default_values]
-        sql = 'SELECT %s FROM rules WHERE %s' % (','.join(columns), ' AND '.join(
+        sql = 'SELECT {} FROM rules WHERE {}'.format(','.join(columns), ' AND '.join(
             select))
         if debug:
             debug.debug('!sql! %s' %
@@ -1276,8 +1266,7 @@ class AttributesToPaths:
                 except KeyError:
                     continue
                 if debug:
-                    debug.debug('!single format! %s: %s' % (
-                        format, path))
+                    debug.debug(f'!single format! {format}: {path}')
                 r = self._join_directory(
                     path, rule_attributes,
                     selection_attributes)

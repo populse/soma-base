@@ -1,4 +1,3 @@
-import six
 
 
 class GraphNode:
@@ -208,7 +207,7 @@ class Graph:
 
         # Step 1
         nnil = []
-        for name, node in six.iteritems(self._nodes):
+        for name, node in self._nodes.items():
             if node.links_from_degree == 0:
                 nnil.append(node)
 

@@ -1,4 +1,3 @@
-
 #  This software and supporting documentation are distributed by
 #      Institut Federatif de Recherche 49
 #      CEA/NeuroSpin, Batiment 145,
@@ -88,7 +87,7 @@ class Uuid:
                                                  uuid[14:18] + uuid[19:23] +
                                                  uuid[24:36])
             except Exception:
-                raise ValueError("Invalid uuid string %s" % (repr(uuid), ))
+                raise ValueError(f"Invalid uuid string {uuid!r}")
 
     def __getnewargs__(self):
         return (str(self), )
@@ -118,7 +117,7 @@ class Uuid:
     def __eq__(self, other):
         if isinstance(other, Uuid):
             return self.__uuid == other.__uuid
-        elif isinstance(other, six.string_types):  # assume string-like object (str or unicode)
+        elif isinstance(other, str):  # assume string-like object (str or unicode)
             try:
                 uuid_other = Uuid(other)
             except ValueError:
@@ -130,7 +129,7 @@ class Uuid:
     def __ne__(self, other):
         if isinstance(other, Uuid):
             return self.__uuid != other.__uuid
-        elif isinstance(other, six.string_types):  # assume string-like object (str or unicode)
+        elif isinstance(other, str):  # assume string-like object (str or unicode)
             try:
                 uuid_other = Uuid(other)
             except ValueError:

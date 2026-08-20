@@ -1,9 +1,5 @@
-
-
 from importlib import import_module
 from pkgutil import iter_modules
-
-import six
 
 
 def find_subclasses_in_module(module_name, parent_class):
@@ -12,7 +8,7 @@ def find_subclasses_in_module(module_name, parent_class):
     given class or class name. If the module is a package, it also look
     into submodules.
     '''
-    if isinstance(parent_class, six.string_types):
+    if isinstance(parent_class, str):
         check = lambda item: (isinstance(item, type) and
                               item.__module__ == module_name and
                               parent_class in (i.__name__
@@ -21,8 +17,7 @@ def find_subclasses_in_module(module_name, parent_class):
         check = lambda item: (isinstance(item, type) and
                               item.__module__ == module_name and
                               issubclass(item, parent_class))
-    for i in find_items_in_module(module_name, check):
-        yield i
+    yield from find_items_in_module(module_name, check)
 
 
 def find_items_in_module(module_name, check):
@@ -36,15 +31,14 @@ def find_items_in_module(module_name, check):
     except ImportError:
         return
 
-    for i in six.itervalues(module.__dict__):
+    for i in module.__dict__.values():
         if check(i):
             yield i
     path = getattr(module, '__path__', None)
     if path:
         for importer, submodule_name, ispkg in iter_modules(path):
-            for j in find_items_in_module('%s.%s' %
-                    (module.__name__, submodule_name), check):
-                yield j
+            yield from find_items_in_module('%s.%s' %
+                    (module.__name__, submodule_name), check)
 
 
 class ClassFactory:

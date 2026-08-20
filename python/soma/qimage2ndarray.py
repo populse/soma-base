@@ -24,7 +24,6 @@ TODO:
 """
 
 import numpy
-from six.moves import range
 
 from soma.qt_gui.qt_backend.QtGui import QColor, QImage
 

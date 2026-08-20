@@ -1,4 +1,3 @@
-
 '''
 Run worker functions in separate processes.
 
@@ -67,8 +66,6 @@ import re
 import sys
 import tempfile
 import threading
-
-from six.moves import range
 
 try:
     import cpickle as pickle

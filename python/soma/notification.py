@@ -1,4 +1,3 @@
-
 #  This software and supporting documentation are distributed by
 #      Institut Federatif de Recherche 49
 #      CEA/NeuroSpin, Batiment 145,
@@ -43,8 +42,6 @@ callbacks (*i.e* Python callables) that will all be called by a single
 __docformat__ = "restructuredtext en"
 
 
-import six
-from six.moves import range
 
 from soma.functiontools import checkParameterCount, numberOfParameterRange
 from soma.sorted_dictionary import SortedDictionary
@@ -441,7 +438,7 @@ class ObservableAttributes:
         if not checkedObjects == None:
             checkedObjects.add(self)
 
-        for name, notifier in six.iteritems(self._onAttributeChange):
+        for name, notifier in self._onAttributeChange.items():
             notifier.delayNotification(ignoreDoubles)
         self._onAnyAttributeChange.delayNotification(ignoreDoubles)
 
@@ -477,7 +474,7 @@ class ObservableAttributes:
         if not checkedObjects == None:
             checkedObjects.add(self)
 
-        for name, notifier in six.iteritems(self._onAttributeChange):
+        for name, notifier in self._onAttributeChange.items():
             notifier.restartNotification()
         self._onAnyAttributeChange.restartNotification()
         # Recursively restart notification

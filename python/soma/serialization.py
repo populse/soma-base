@@ -1,7 +1,5 @@
 import sys
 
-import six
-
 '''
 Framework to serialize/deserialize Python objects in JSON. The main
 feature of this framework is that deserialization of a JSON value requires
@@ -78,7 +76,7 @@ def from_json(json_serialization):
     '''
     if json_serialization is None:
         return None
-    elif isinstance(json_serialization, six.string_types):
+    elif isinstance(json_serialization, str):
         callable = find_factory(json_serialization)
         return callable()
     elif isinstance(json_serialization, list):
