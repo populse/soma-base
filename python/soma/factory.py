@@ -1,11 +1,9 @@
-# -*- coding: utf-8 -*-
 
-from __future__ import absolute_import
-from __future__ import print_function
 
-import six
 from importlib import import_module
 from pkgutil import iter_modules
+
+import six
 
 
 def find_subclasses_in_module(module_name, parent_class):
@@ -49,7 +47,7 @@ def find_items_in_module(module_name, check):
                 yield j
 
 
-class ClassFactory(object):
+class ClassFactory:
     '''
     *ClassFactory* is the base class for creating factories that can look
     for classes in Python modules and create instances.

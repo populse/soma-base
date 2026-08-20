@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 
 #  This software and supporting documentation are distributed by
 #      Institut Federatif de Recherche 49
@@ -43,14 +42,14 @@ This module contains functions and classes related to sqlite databases.
 __docformat__ = "restructuredtext en"
 
 
+import sqlite3
 import sys
 import threading
-import sqlite3
 
 #------------------------------------------------------------------------------
 
 
-class ThreadSafeSQLiteConnection(object):
+class ThreadSafeSQLiteConnection:
 
     '''
     Python wrapping of SQLite do not allow sharing of database connection between
@@ -67,7 +66,7 @@ class ThreadSafeSQLiteConnection(object):
         system. These parameters are stored to allow to create a separate
         SQLite connection for any thread with get_connection().
         '''
-        super(ThreadSafeSQLiteConnection, self).__init__()
+        super().__init__()
         self.__args = args
         self.__kwargs = kwargs
         self._instanceLock = threading.RLock()

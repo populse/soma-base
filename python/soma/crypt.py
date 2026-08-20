@@ -1,15 +1,14 @@
-# -*- coding: utf-8 -*-
 '''
 Functions to manage private/public keys encryption.
 This module needs Crypto module.
 '''
 
-from __future__ import absolute_import
-from Crypto.Cipher import PKCS1_OAEP
-from Crypto.PublicKey import RSA
 from base64 import b64decode, b64encode
+
 import Crypto
 import six
+from Crypto.Cipher import PKCS1_OAEP
+from Crypto.PublicKey import RSA
 from six.moves import range
 
 if [int(x) for x in Crypto.__version__.split('.')] < [2, 1]:

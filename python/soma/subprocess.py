@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 
 #  This software and supporting documentation are distributed by
 #      Institut Federatif de Recherche 49
@@ -41,54 +40,7 @@ Import subprocess32 or subprocess API depending on python version and what is
 available on the system.
 '''
 
-from __future__ import absolute_import
-import sys
-
-if sys.version_info[:2] >= (3, 2):
-    # in python >= 3.2, subprocess32 is not needed as it is the builtin
-    # subprocess module
-    from subprocess import *
-else:
-    try:
-        def __initialize_zmq():
-            # It is necessary to first import zmq from the system if it is
-            # installed otherwise the one embedded with subprocess32 is loaded
-            # and it can lead to compatibility issue
-            import zmq
-
-        __initialize_zmq()
-
-        del __initialize_zmq
-
-    except ImportError:
-        pass
-
-    try:
-        # It is necessary to replace subprocess by subprocess32 to fix issue
-        # in subprocess start
-        # Import in current module all that is defined in subprocess module
-        from subprocess32 import *
-
-        def __initialize_subprocess32():
-            import subprocess32
-            import subprocess as _subprocess
-            if hasattr(_subprocess, '_args_from_interpreter_flags'):
-                # get this private function which is used somewhere in
-                # multiprocessing
-                subprocess32._args_from_interpreter_flags \
-                    = _subprocess._args_from_interpreter_flags
-            del _subprocess
-            import sys
-            sys.modules['subprocess'] = sys.modules['subprocess32']
-
-        __initialize_subprocess32()
-        del __initialize_subprocess32
-
-    except ImportError:
-        from subprocess import *
-
-        def __initialize_subprocess():
-            import subprocess
-
-        __initialize_subprocess()
-        del __initialize_subprocess
+# in python >= 3.2, subprocess32 is not needed as it is the builtin
+# subprocess module
+# thus this file is obsolete and left for backward compatibility.
+from subprocess import *  # noqa: F402

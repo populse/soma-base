@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 
 #  This software and supporting documentation are distributed by
 #      Institut Federatif de Recherche 49
@@ -42,15 +41,14 @@ Some useful functions to manage file or directorie names.
 
 __docformat__ = "restructuredtext en"
 
-import os
-import platform
 import fnmatch
 import glob
 import hashlib
+import os
 import re
 import shutil
+
 import six
-import sys
 
 
 def split_path(path):
@@ -204,7 +202,7 @@ def parse_query_string(path):
                  for k, v in six.iteritems(qs_parsed)])
 
 
-class QueryStringParamUpdateMode(object):
+class QueryStringParamUpdateMode:
     REPLACE = 0
     APPEND = 1
     REMOVE = 2

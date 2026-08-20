@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 
 #  This software and supporting documentation are distributed by
 #      Institut Federatif de Recherche 49
@@ -32,9 +31,8 @@
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL-B license and that you accept its terms.
 
-from __future__ import absolute_import
-import os
 import errno
+import os
 
 
 def mkdir(dirname, mode=0o777):

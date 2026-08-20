@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 
 #  This software and supporting documentation are distributed by
 #      Institut Federatif de Recherche 49
@@ -71,7 +70,7 @@ Information
 '''
 
 
-from __future__ import absolute_import
-from soma.singleton import Singleton
-from soma.application import Application
-from soma.controller import Controller
+
+from soma.application import Application  # noqa: F401
+from soma.controller import Controller  # noqa: F401
+from soma.singleton import Singleton  # noqa: F401

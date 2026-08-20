@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 
 #  This software and supporting documentation are distributed by
 #      Institut Federatif de Recherche 49
@@ -44,18 +43,14 @@ In addition OrderedDict is provided here, either as the standard
 collections.OrderedDict class if python version >= 2.7, or based on
 SortedDictionary if python version < 2.7.
 '''
-from __future__ import print_function
 
-from __future__ import absolute_import
 __docformat__ = "restructuredtext en"
 
-from collections import OrderedDict
-import sys
-import six
+from collections import OrderedDict  # noqa: F824
 import inspect
-from soma.undefined import Undefined
-
+import six
 from six.moves import collections_abc
+from soma.undefined import Undefined
 
 
 class SortedDictionary(dict):
@@ -81,7 +76,7 @@ class SortedDictionary(dict):
         '''
         Initialize the dictionary with a list of (key, value) pairs.
         '''
-        super(SortedDictionary, self).__init__()
+        super().__init__()
         self.sortedKeys = []
         if len(args) == 1 and (
                 isinstance(args[0], list)
@@ -132,10 +127,10 @@ class SortedDictionary(dict):
                 # this happens during pickle.load() with python3
                 self.sortedKeys = []
             self.sortedKeys.append(key)
-        super(SortedDictionary, self).__setitem__(key, value)
+        super().__setitem__(key, value)
 
     def __delitem__(self, key):
-        super(SortedDictionary, self).__delitem__(key)
+        super().__delitem__(key)
         self.sortedKeys.remove(key)
 
     def __getstate__(self):
@@ -190,7 +185,7 @@ class SortedDictionary(dict):
         if key in self:
             raise KeyError(key)
         self.sortedKeys.insert(index, key)
-        super(SortedDictionary, self).__setitem__(key, value)
+        super().__setitem__(key, value)
 
     def index(self, key):
         """
@@ -208,7 +203,7 @@ class SortedDictionary(dict):
         Remove all items from dictionary
         '''
         del self.sortedKeys[:]
-        super(SortedDictionary, self).clear()
+        super().clear()
 
     def sort(self, key=None, reverse=False):
         """Sorts the dictionary using key function key.
@@ -244,16 +239,16 @@ class SortedDictionary(dict):
 
     def pop(self, key, default=Undefined):
         if default is Undefined:
-            result = super(SortedDictionary, self).pop(key)
+            result = super().pop(key)
         else:
-            result = super(SortedDictionary, self).pop(key, Undefined)
+            result = super().pop(key, Undefined)
             if result is Undefined:
                 return default
         self.sortedKeys.remove(key)
         return result
 
     def popitem(self):
-        result = super(SortedDictionary, self).popitem()
+        result = super().popitem()
         try:
             self.sortedKeys.remove(result[0])
         except ValueError:

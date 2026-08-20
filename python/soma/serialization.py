@@ -1,8 +1,6 @@
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import
 import sys
-import six
 
+import six
 
 '''
 Framework to serialize/deserialize Python objects in JSON. The main
@@ -13,7 +11,7 @@ contains a reference to a factory that is responsible to build the Python
 object given its JSON.
 '''
 
-class JSONSerializable(object):
+class JSONSerializable:
     '''
     Instances of classes deriving from `JSONSerializable` can be serialized
     in a JSON compatible object with :meth:`to_json` method. This JSON object
@@ -51,7 +49,7 @@ def to_json(object):
     if serializer is None:
         if object is None:
             return None
-        raise ValueError('Cannot serialize in JSON object of type {0}'.format(type(object)))
+        raise ValueError(f'Cannot serialize in JSON object of type {type(object)}')
     else:
         return serializer()
 
@@ -121,9 +119,9 @@ def find_factory(reference):
     try:
         __import__(module_name)
     except ImportError as e:
-        raise ValueError('{0} is not a valid reference to a factory: {1}'.format(reference, e))
+        raise ValueError(f'{reference} is not a valid reference to a factory: {e}')
     module = sys.modules[module_name]
     factory = getattr(module, item_name, None)
     if factory is None:
-        raise ValueError('{0} is not a valid reference to a factory: module {1} has no attribute {2}'.format(reference, module_name, item_name))
+        raise ValueError(f'{reference} is not a valid reference to a factory: module {module_name} has no attribute {item_name}')
     return factory

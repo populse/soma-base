@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 
 '''
 File Organization Model (FOM)
@@ -176,17 +175,19 @@ At lower level, they are used through several classes:
 
 '''
 
-import sys
+import json
 import os
 import os.path as osp
-import stat
-import time
-import re
 import pprint
+import re
 import sqlite3
-import json
+import stat
+import sys
+import time
+
 import six
 from six.moves import range
+
 try:
     import bz2
 except ImportError:
@@ -194,11 +195,10 @@ except ImportError:
 
 from collections import OrderedDict
 
-
 try:
     import yaml
 
-    class json_reader(object):
+    class json_reader:
 
         '''
         This class has a single static method load that loads an
@@ -225,6 +225,7 @@ except ImportError:
     import json as json_reader
 
 from soma.path import split_path
+
 
 def deep_update(update, original):
     '''
@@ -258,11 +259,11 @@ def read_json(file_name):
                          (file_name, str(e), extra_msg))
 
 
-class DirectoryAsDict(object):
+class DirectoryAsDict:
 
     def __new__(cls, directory, cache=None):
         if osp.isdir(directory):
-            return super(DirectoryAsDict, cls).__new__(cls, directory, cache)
+            return super().__new__(cls, directory, cache)
         else:
             with open(directory) as f:
                 return json.load(f)
@@ -396,7 +397,7 @@ class DirectoryAsDict(object):
                 count)
 
 
-class DirectoriesCache(object):
+class DirectoriesCache:
 
     def __init__(self):
         self.directories = {}
@@ -433,7 +434,7 @@ class DirectoriesCache(object):
             try:
                 with bz2.BZ2File(path, 'r') as f:
                     result.directories = json.load(f)
-            except IOError:
+            except OSError:
                 with open(path, 'r') as f:
                     result.directories = json.load(f)
         else:
@@ -442,7 +443,7 @@ class DirectoriesCache(object):
         return result
 
 
-class FileOrganizationModelManager(object):
+class FileOrganizationModelManager:
 
     '''
     Manage the discovery and instantiation of available FileOrganizationModel
@@ -546,7 +547,7 @@ class FileOrganizationModelManager(object):
         return result
 
 
-class FileOrganizationModels(object):
+class FileOrganizationModels:
 
     def __init__(self):
         self._directories_regex = re.compile(r'{([A-Za-z][A-Za-z0-9_]*)}')
@@ -702,7 +703,7 @@ class FileOrganizationModels(object):
                             else:
                                 try:
                                     pattern, formats, rule_attributes = rule
-                                except Exception as e:
+                                except Exception:
                                     print('error in FOM: %s, process: %s, param: '
                                         '%s, rule:'
                                         % (fom_name, process, parameter), rule)
@@ -895,7 +896,7 @@ class FileOrganizationModels(object):
             pprint.pprint(getattr(self, i), out)
 
 
-class PathToAttributes(object):
+class PathToAttributes:
 
     '''
     Utility class for file paths -> attributes set transformation.
@@ -1110,7 +1111,7 @@ class PathToAttributes(object):
                 yield (p, s, a)
 
 
-class AttributesToPaths(object):
+class AttributesToPaths:
 
     '''
     Utility class for attributes set -> file paths transformation.
@@ -1467,8 +1468,8 @@ if __name__ == '__main__':
         preferred_formats=fomr, directories=directories,
         debug=logging)
     d = {
-        'protocol': u'subjects', 'analysis': 'default_analysis', 'fom_parameter': 'head_mesh',
-        'acquisition': 'default_acquisition', 'subject': u'002_S_0816_S18402_I40732', 'fom_format': 'fom_preferred'}
+        'protocol': 'subjects', 'analysis': 'default_analysis', 'fom_parameter': 'head_mesh',
+        'acquisition': 'default_acquisition', 'subject': '002_S_0816_S18402_I40732', 'fom_format': 'fom_preferred'}
     for p, a in atp.find_paths(d, debug=logging):
         print('->', repr(p), a)
     # for parameter in fom.patterns[ 'morphologistSimp.SimplifiedMorphologist' ]:

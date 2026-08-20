@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 
 #  This software and supporting documentation are distributed by
 #      Institut Federatif de Recherche 49
@@ -39,11 +38,10 @@ Utility functions for HTML format.
 * organization: NeuroSpin
 * license: `CeCILL B <http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html>`_
 '''
-from __future__ import absolute_import
 __docformat__ = "restructuredtext en"
 
+
 import six
-import sys
 
 #------------------------------------------------------------------------------
 #: mapping of characters to be escaped for HTML
@@ -65,7 +63,7 @@ def htmlEscape(msg):
     global _htmlEscape
     if _htmlEscape is None:
         _htmlEscape = {
-            codepoint: u'&' + name + u';'
+            codepoint: '&' + name + ';'
             for codepoint, name
             in six.iteritems(six.moves.html_entities.codepoint2name)
         }
@@ -89,12 +87,12 @@ def lesserHtmlEscape(msg):
     global _lesserHtmlEscape
     if _lesserHtmlEscape is None:
         _lesserHtmlEscape = {
-            codepoint: u'&' + name + u';'
+            codepoint: '&' + name + ';'
             for codepoint, name
             in six.iteritems(six.moves.html_entities.codepoint2name)
-            if six.unichr(codepoint) not in (u'"', u'é', u'à', u'è', u'â',
-                                             u'ê', u'ô', u'î', u'û', u'ù',
-                                             u'ö', )
+            if six.unichr(codepoint) not in ('"', 'é', 'à', 'è', 'â',
+                                             'ê', 'ô', 'î', 'û', 'ù',
+                                             'ö', )
         }
     msg = six.ensure_text(msg)
     return msg.translate(_lesserHtmlEscape)

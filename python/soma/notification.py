@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 
 #  This software and supporting documentation are distributed by
 #      Institut Federatif de Recherche 49
@@ -41,22 +40,21 @@ callbacks (*i.e* Python callables) that will all be called by a single
 * organization: NeuroSpin
 * license: `CeCILL B <http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html>`_
 '''
-from __future__ import absolute_import
 __docformat__ = "restructuredtext en"
+
 
 import six
 from six.moves import range
-import sys
 
-from soma.translation import translate as _
 from soma.functiontools import checkParameterCount, numberOfParameterRange
-from soma.undefined import Undefined
 from soma.sorted_dictionary import SortedDictionary
+from soma.translation import translate as _
+from soma.undefined import Undefined
 
 #-------------------------------------------------------------------------
 
 
-class Notifier(object):
+class Notifier:
 
     '''
     Register a series of functions (or Notifier instances) which are all called
@@ -189,7 +187,7 @@ class Notifier(object):
 
 
 #-------------------------------------------------------------------------
-class ReorderedCall(object):
+class ReorderedCall:
 
     '''
     **todo:** documentation
@@ -279,7 +277,7 @@ class VariableParametersNotifier(Notifier):
 
 
 #-------------------------------------------------------------------------
-class ObservableAttributes(object):
+class ObservableAttributes:
 
     '''
     ObservableAttributes allows to track modification of attributes at
@@ -294,7 +292,7 @@ class ObservableAttributes(object):
         #: this notifier.
 #    self.__dict__[ '_onAnyAttributeChange' ] = \
 #      self._createAttributeNotifier()
-        super(ObservableAttributes, self).__setattr__('_onAnyAttributeChange',
+        super().__setattr__('_onAnyAttributeChange',
                                                       self._createAttributeNotifier())
 
         #: Dictionary whose keys are attribute names and values are
@@ -302,9 +300,9 @@ class ObservableAttributes(object):
         #: modified, the corresponding L{VariableParametersNotifier} is notified.
         #: Use L{self.onAttributeChange} to register a function on these notifiers.
 #    self.__dict__[ '_onAttributeChange' ] = {}
-        super(ObservableAttributes, self).__setattr__(
+        super().__setattr__(
             '_onAttributeChange', {})
-        super(ObservableAttributes, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     @staticmethod
     def _createAttributeNotifier():
@@ -346,7 +344,7 @@ class ObservableAttributes(object):
         :meth:`notifyAttributeChange`.
         '''
         oldValue = getattr(self, name, Undefined)
-        super(ObservableAttributes, self).__setattr__(name, value)
+        super().__setattr__(name, value)
         if value != oldValue:
             self.notifyAttributeChange(name, value, oldValue)
 
@@ -356,7 +354,7 @@ class ObservableAttributes(object):
         with ``newValue = :class:`Undefined` ``.
         '''
         oldValue = getattr(self, name, Undefined)
-        super(ObservableAttributes, self).__delattr__(name)
+        super().__delattr__(name)
         self.notifyAttributeChange(name, Undefined, oldValue)
         # Delete notifier for the deleted attribute
         self._onAttributeChange.pop(name, None)
@@ -547,7 +545,7 @@ class ObservableList(list):
         # - super(superClass, self).method(...)
         # It's better to use the second way because if derived class inherits from several classes,
         # super will try to find the method in other super classes before
-        super(ObservableList, self).__init__()
+        super().__init__()
         # views can register update callbacks on this notifier
         # to be aware of any change in the model
         # On change, this object calls Notifier.notify(args)
@@ -614,14 +612,14 @@ class ObservableList(list):
         Notifies an insert action.
         """
         index = len(self)
-        super(ObservableList, self).append(elem)
+        super().append(elem)
         self.onChangeNotifier.notify(self.INSERT_ACTION, [elem], index)
 
     def extend(self, l):
         """Adds the content of the list l at the end of current list.
         Notifies an insert action. """
         index = len(self)
-        super(ObservableList, self).extend(l)
+        super().extend(l)
         self.onChangeNotifier.notify(self.INSERT_ACTION, l, index)
 
     def insert(self, pos, elem):
@@ -629,14 +627,14 @@ class ObservableList(list):
         Notifies an insert action.
         """
         index = self.getPositiveIndex(pos)
-        super(ObservableList, self).insert(pos, elem)
+        super().insert(pos, elem)
         self.onChangeNotifier.notify(self.INSERT_ACTION, [elem], index)
 
     def remove(self, elem):
         """Removes the first occurrence of elem in the list.
 
         Notifies a remove action. """
-        super(ObservableList, self).remove(elem)
+        super().remove(elem)
         self.onChangeNotifier.notify(self.REMOVE_ACTION, [elem])
 
     def pop(self, pos=None):
@@ -652,10 +650,10 @@ class ObservableList(list):
         """
         if pos is not None:
             index = self.getPositiveIndex(pos)
-            elem = super(ObservableList, self).pop(pos)
+            elem = super().pop(pos)
         else:
             index = len(self) - 1
-            elem = super(ObservableList, self).pop()
+            elem = super().pop()
         self.onChangeNotifier.notify(self.REMOVE_ACTION, [elem], index)
         return elem
 
@@ -669,14 +667,14 @@ class ObservableList(list):
         key: function
             key function: elem->key
         """
-        super(ObservableList, self).sort(key=key, reverse=reverse)
+        super().sort(key=key, reverse=reverse)
         # all the elements of the list could be modified
         self.onChangeNotifier.notify(self.MODIFY_ACTION, self, 0)
 
     def reverse(self):
         """Inverses the order of the list.
         Notifies a modify action."""
-        super(ObservableList, self).reverse()
+        super().reverse()
         self.onChangeNotifier.notify(self.MODIFY_ACTION, self, 0)
 
     def __setitem__(self, key, value):
@@ -687,7 +685,7 @@ class ObservableList(list):
             l[key] = value
         """
         index = self.getPositiveIndex(key)
-        super(ObservableList, self).__setitem__(key, value)
+        super().__setitem__(key, value)
         self.onChangeNotifier.notify(self.MODIFY_ACTION, [value], index)
 
     def __delitem__(self, key):
@@ -698,7 +696,7 @@ class ObservableList(list):
             del l[key]
         """
         index = self.getPositiveIndex(key)
-        super(ObservableList, self).__delitem__(key)
+        super().__delitem__(key)
         self.onChangeNotifier.notify(self.REMOVE_ACTION, [], index)
 
     def __setslice__(self, i, j, seq):
@@ -713,7 +711,7 @@ class ObservableList(list):
         """
         indexI = self.getIndexInRange(i)
         indexJ = self.getIndexInRange(j)
-        super(ObservableList, self).__setslice__(i, j, seq)
+        super().__setslice__(i, j, seq)
         # if the interval is empty, action is insertion at the first position
         if indexI >= indexJ:
             self.onChangeNotifier.notify(self.INSERT_ACTION, seq, indexI)
@@ -748,7 +746,7 @@ class ObservableList(list):
         indexI = self.getIndexInRange(i)
         indexJ = self.getIndexInRange(j)
         seq = self[indexI:indexJ]
-        super(ObservableList, self).__delslice__(i, j)
+        super().__delslice__(i, j)
         # if the interval is empty, the list is not modified
         if indexI < indexJ:
             self.onChangeNotifier.notify(self.REMOVE_ACTION, seq, indexI)
@@ -758,7 +756,7 @@ class ObservableList(list):
 
         Notifies insert action."""
         index = len(self)
-        newList = super(ObservableList, self).__iadd__(l)
+        newList = super().__iadd__(l)
         self.onChangeNotifier.notify(self.INSERT_ACTION, l, index)
         return newList
 
@@ -767,7 +765,7 @@ class ObservableList(list):
 
         Notifies insert action."""
         index = len(self)
-        newList = super(ObservableList, self).__imul__(n)
+        newList = super().__imul__(n)
         self.onChangeNotifier.notify(self.INSERT_ACTION, self[index:], index)
         return newList
 
@@ -858,7 +856,7 @@ class ObservableSortedDictionary(SortedDictionary):
         Initialize the dictionary with a list of ( key, value ) pairs.
         '''
         self.onChangeNotifier = Notifier()
-        super(ObservableSortedDictionary, self).__init__(*args)
+        super().__init__(*args)
 
     def __getnewargs__(self):
         """Returns the args to pass to the __init__ method to construct this object.
@@ -893,7 +891,7 @@ class ObservableSortedDictionary(SortedDictionary):
 
     def __setitem__(self, key, value):
         insertion = key not in self
-        super(ObservableSortedDictionary, self).__setitem__(key, value)
+        super().__setitem__(key, value)
         if insertion:
             self.onChangeNotifier.notify(
                 self.INSERT_ACTION, [value], len(self) - 1)
@@ -903,7 +901,7 @@ class ObservableSortedDictionary(SortedDictionary):
 
     def __delitem__(self, key):
         index = self.sortedKeys.index(key)
-        super(ObservableSortedDictionary, self).__delitem__(key)
+        super().__delitem__(key)
         self.onChangeNotifier.notify(self.REMOVE_ACTION, [], index)
 
     def insert(self, index, key, value):
@@ -924,14 +922,14 @@ class ObservableSortedDictionary(SortedDictionary):
         index: integer
             index of C{key} in the sorted keys
         '''
-        super(ObservableSortedDictionary, self).insert(index, key, value)
+        super().insert(index, key, value)
         self.onChangeNotifier.notify(self.INSERT_ACTION, [value], index)
 
     def clear(self):
         '''
         Removes all items from dictionary
         '''
-        super(ObservableSortedDictionary, self).clear()
+        super().clear()
         self.onChangeNotifier.notify(self.REMOVE_ACTION, list(self.values()), 0)
 
     def sort(self, key=None, reverse=False):
@@ -944,7 +942,7 @@ class ObservableSortedDictionary(SortedDictionary):
         key: function
             key function key->key
         """
-        super(ObservableSortedDictionary, self).sort(key=key, reverse=reverse)
+        super().sort(key=key, reverse=reverse)
         self.onChangeNotifier.notify(self.MODIFY_ACTION, list(self.values()), 0)
 
 
@@ -1026,7 +1024,7 @@ class EditableTree(ObservableAttributes, ObservableSortedDictionary):
         enabled: bool
         """
         dictContent = [(i.id, i) for i in content]
-        super(EditableTree, self).__init__(*dictContent)
+        super().__init__(*dictContent)
         if name is None:
             self.name = self.defaultName
             self.unnamed = True
@@ -1204,7 +1202,7 @@ class EditableTree(ObservableAttributes, ObservableSortedDictionary):
         """
 
         def __init__(self, name=None, id=None, icon=None, tooltip=None, copyEnabled=True, modifiable=True, delEnabled=True, visible=True, enabled=True, *args):
-            super(EditableTree.Item, self).__init__(*args)
+            super().__init__(*args)
             self.icon = icon
             self.name = name
             if id is None:
@@ -1250,7 +1248,6 @@ class EditableTree(ObservableAttributes, ObservableSortedDictionary):
 
         def isLeaf(self):
             """Must be redefined in subclasses to say if the item is a leaf"""
-            pass
 
         def setAllModificationsEnabled(self, bool):
             """Recursively enables or disables item's modification."""
@@ -1298,7 +1295,7 @@ class EditableTree(ObservableAttributes, ObservableSortedDictionary):
             # EditableTree.Item.__init__(self, name, icon, tooltip,
             # copyEnabled, modifiable, delEnabled)
             dictContent = [(i.id, i) for i in content]
-            super(EditableTree.Branch, self).__init__(name, id, icon, tooltip,
+            super().__init__(name, id, icon, tooltip,
                                                       copyEnabled, modifiable, delEnabled, visible, enabled, *dictContent)
             if name is None:
                 self.name = self.defaultName
@@ -1427,7 +1424,7 @@ class EditableTree(ObservableAttributes, ObservableSortedDictionary):
         """A tree item that cannot have children items"""
 
         def __init__(self, name="new", id=None, icon=None, tooltip=None, copyEnabled=True, modifiable=True, delEnabled=True, visible=True, enabled=True):
-            super(EditableTree.Leaf, self).__init__(
+            super().__init__(
                 name, id, icon, tooltip, copyEnabled, modifiable, delEnabled, visible, enabled)
 
         def isLeaf(self):

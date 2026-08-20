@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 '''
 Singleton pattern.
 '''
@@ -8,7 +7,7 @@ import atexit
 __docformat__ = 'restructuredtext en'
 
 
-class Singleton(object):
+class Singleton:
 
     '''
     Implements the singleton pattern. A class deriving from ``Singleton`` can
@@ -67,7 +66,7 @@ class Singleton(object):
 
     def __new__(cls, *args, **kwargs):
         if '_singleton_instance' not in cls.__dict__:
-            cls._singleton_instance = super(Singleton, cls).__new__(cls)
+            cls._singleton_instance = super().__new__(cls)
             cls._post_new_(cls, *args, **kwargs)
         return cls._singleton_instance
 

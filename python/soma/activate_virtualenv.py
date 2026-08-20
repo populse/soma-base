@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Soma-base - Copyright (C) CEA, 2013
 # Distributed under the terms of the CeCILL-B license, as published by
@@ -26,9 +25,9 @@ can be set to use a specific *virtualenv* install of *cubicweb*:
     env SOMA_VIRTUALENV=/path/to/virtualenv python /path/to/script.py
 '''
 
-from __future__ import absolute_import
-import soma.importer
 import os
+
+import soma.importer
 
 venv = os.environ.get('SOMA_VIRTUALENV')
 if venv:

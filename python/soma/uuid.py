@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 
 #  This software and supporting documentation are distributed by
 #      Institut Federatif de Recherche 49
@@ -39,19 +38,18 @@ Universal unique identifier.
 - organization: NeuroSpin
 - license: `CeCILL B <http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html>`_
 '''
-from __future__ import absolute_import
 import six
+
 __docformat__ = "epytext en"
 
-import struct
-import random
 import binascii
-import sys
+import random
+import struct
 
 #-------------------------------------------------------------------------
 
 
-class Uuid(object):
+class Uuid:
 
     '''
     An Uuid instance is a universal unique identifier. It is a 128 bits
@@ -100,8 +98,8 @@ class Uuid(object):
             # this should not happen, but has been seen in some places
             import warnings
             warnings.warn('soma.uuid.Uuid: self.__uuid is not of type bytes, '
-                          'but {0}. This is not supposed to happen.'
-                          .format(type(self.__uuid)))
+                          f'but {type(self.__uuid)}. This is not supposed to happen.'
+                          )
             self.__uuid = bytes(self.__uuid, encoding='utf-8')
         return six.ensure_str(
             binascii.hexlify(self.__uuid[0:4]) + b'-' +

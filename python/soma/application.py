@@ -1,18 +1,17 @@
-# -*- coding: utf-8 -*-
 __docformat__ = "restructuredtext en"
 
 
 import os
-import sys
 import platform
+import sys
 import traceback
 from os.path import dirname
 
 os.environ['ETS_TOOLKIT'] = 'qt4'
-from traits.api import ReadOnly, Directory, List, Instance
+from traits.api import Directory, List, ReadOnly
 
-from soma.singleton import Singleton
 from soma.controller import Controller
+from soma.singleton import Singleton
 
 #-------------------------------------------------------------------------
 
@@ -30,7 +29,7 @@ class Application(Singleton, Controller):
 
     def __singleton_init__(self, name=None, version=None, *args, **kwargs):
         '''Replaces __init__ in Singleton.'''
-        super(Application, self).__singleton_init__(*args, **kwargs)
+        super().__singleton_init__(*args, **kwargs)
         # Warning : Traits bug
         # Using the trait Directory() might instantiate a QApplication (seems to depend on the
         # traits release). If it is declared in the class, the QApplication is instantiated at

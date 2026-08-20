@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 
 '''
 Run worker functions in separate processes.
@@ -67,14 +66,15 @@ In case of error, the job result will be an exception with stack information: (e
 Availability: Unix
 '''
 
-import multiprocessing
-import threading
 import os
-import tempfile
-import sys
-import subprocess
 import shutil
+import subprocess
+import sys
+import tempfile
+import threading
+
 from .mpfork import available_cpu_count
+
 try:
     import cpickle as pickle
 except ImportError:
@@ -320,7 +320,6 @@ class Worker:
             # print('exiting child process', os.getpid())
             # sys.stdout.flush()
             os._exit(0)
-        pass
 
     def run_job(self, function, *args, **kwargs):
         ''' Internal function, runs the function in the remote process.
@@ -431,8 +430,7 @@ def allocate_workers(q, result, nworker=0, max_workers=0, *args, **kwargs):
         nworker = available_cpu_count()
     elif nworker < 0:
         nworker = available_cpu_count() + nworker
-        if nworker < 1:
-            nworker = 1
+        nworker = max(nworker, 1)
     if max_workers > 0 and nworker > max_workers:
         nworker = max_workers
     workers = []
@@ -518,8 +516,7 @@ def select_gpu_prefix_for_workers(gpu_workers=0, max_workers=0):
             nworker = available_cpu_count()
         elif nworker < 0:
             nworker = available_cpu_count() + nworker
-            if nworker < 1:
-                nworker = 1
+            nworker = max(nworker, 1)
         if max_workers > 0 and nworker > max_workers:
             nworker = max_workers
         if not gpu_list:

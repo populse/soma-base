@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 
 #  This software and supporting documentation are distributed by
 #      Institut Federatif de Recherche 49
@@ -40,11 +39,11 @@ Utility classes and functions for Python import and sip namespace renaming.
 * license: `CeCILL B <http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html>`_
 '''
 
-import sys
 import importlib
+import sys
+
 from soma.functiontools import partial
 from soma.singleton import Singleton
-
 
 __docformat__ = "restructuredtext en"
 
@@ -129,7 +128,7 @@ class ExtendedImporter(Singleton):
             extendedModule.applyRules()
 
 
-class ExtendedModule(object):
+class ExtendedModule:
 
     '''
     Register a series of rules to apply during the import process of the
@@ -193,7 +192,7 @@ class ExtendedModule(object):
                 handler.__call__(self, referedModule)
 
 
-class GenericHandlers(object):
+class GenericHandlers:
 
     '''
     Static generic handlers used as import rules.
@@ -272,7 +271,7 @@ class GenericHandlers(object):
                     # skip namespace objects
                     if name not in __namespaces__:
                         childObject.__module__ = newName
-                except Exception as e:
+                except Exception:
                     pass
                 try:
                     d = object.__getattribute__(childObject, '__dict__')
@@ -319,7 +318,7 @@ class GenericHandlers(object):
             del locals[key]
 
 
-class ExtendedImporterHelper(object):
+class ExtendedImporterHelper:
 
     '''
     Static methods declared to help extended import process.

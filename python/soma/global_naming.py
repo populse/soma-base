@@ -1,8 +1,6 @@
-# -*- coding: utf-8 -*-
 
-from __future__ import absolute_import
 import re
-from inspect import isfunction, isclass, ismethod
+from inspect import isclass, isfunction, ismethod
 from weakref import WeakKeyDictionary
 
 from soma.singleton import Singleton
@@ -13,7 +11,7 @@ class GlobalNaming(Singleton):
     """
 
     def __singleton_init__(self):
-        super(GlobalNaming, self).__singleton_init__()
+        super().__singleton_init__()
         self._global_name_re = re.compile(
             r'(([A-Za-z][A-Za-z0-9_.]*)\.([A-Za-z0-9_]+))(\(\))?((\.)([A-Za-z][A-Za-z0-9_.]+))?')
         self._names = WeakKeyDictionary()

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 
 #  This software and supporting documentation are distributed by
 #      Institut Federatif de Recherche 49
@@ -74,7 +73,7 @@ def string_to_list(s):
 def list_to_string(l):
     """
     """
-    return ' '.join((quote_string(i) for i in l))
+    return ' '.join(quote_string(i) for i in l)
 
 
 def quote_string(unquoted):

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 
 '''
 Run worker functions in separate processes.
@@ -61,14 +60,16 @@ In case of error, the job result will be an exception with stack information: (e
 Availability: Unix
 '''
 
-import multiprocessing
-import threading
-import os
-import tempfile
-import sys
 import glob
+import multiprocessing
+import os
 import re
+import sys
+import tempfile
+import threading
+
 from six.moves import range
+
 try:
     import cpickle as pickle
 except ImportError:
@@ -96,7 +97,7 @@ def available_cpu_count():
     found = False
     for cfile in sysd_files:
         with open(cfile) as f:
-            for line in f.readlines():
+            for line in f:
                 if 'CPUQuota' in line:
                     r = re.match('CPUQuota=(.*)%', line)
                     if r:
@@ -245,8 +246,7 @@ def allocate_workers(q, nworker=0, thread_only=False, max_workers=0, *args,
         nworker = available_cpu_count()
     elif nworker < 0:
         nworker = available_cpu_count() + nworker
-        if nworker < 1:
-            nworker = 1
+        nworker = max(nworker, 1)
     if max_workers > 0 and nworker > max_workers:
         nworker = max_workers
     workers = []
