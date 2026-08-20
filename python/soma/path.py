@@ -1,4 +1,3 @@
-
 #  This software and supporting documentation are distributed by
 #      Institut Federatif de Recherche 49
 #      CEA/NeuroSpin, Batiment 145,
@@ -47,8 +46,6 @@ import hashlib
 import os
 import re
 import shutil
-
-import six
 
 
 def split_path(path):
@@ -172,7 +169,7 @@ def strict_urlparse(path):
     drive letter in windows paths. The standard urlparse changes 'Z:/some/path'
     to 'z:/some/path'
     '''
-    from six.moves.urllib import parse as urlparse
+    from urllib import parse as urlparse
     url_parsed = urlparse.urlparse(path)
     if len(url_parsed.scheme) == 1 and url_parsed.scheme >= 'a' \
             and url_parsed.scheme <= 'z' and path[1] == ':' \
@@ -193,13 +190,13 @@ def parse_query_string(path):
     Example
     =======
     '''
-    from six.moves.urllib import parse as urlparse
+    from urllib import parse as urlparse
 
     url_parsed = urlparse.urlparse(path)
     qs_parsed = urlparse.parse_qs(url_parsed.query)
 
     return dict([(k, v[0]) if isinstance(v, list) and len(v) == 1 else (k, v) \
-                 for k, v in six.iteritems(qs_parsed)])
+                 for k, v in qs_parsed.items()])
 
 
 class QueryStringParamUpdateMode:
@@ -306,7 +303,7 @@ def update_query_string(
 
         '/dir1/file1?param1=val1&param1=newval1&param2=val2&param2=newval2&paramN=valN&param3=newval3'
     '''
-    from six.moves.urllib import parse as urllib
+    from urllib import parse as urllib
     urlparse = urllib
 
     # Convert params_update_mode to a dictionary that contains the update mode
@@ -327,7 +324,7 @@ def update_query_string(
             else:
                 params_update_mode[p] = QueryStringParamUpdateMode.APPEND
 
-    elif isinstance(params_update_mode, six.string_types):
+    elif isinstance(params_update_mode, str):
         # A parameter name was given directly
         default_update_mode = QueryStringParamUpdateMode.REPLACE
         params_update_mode = dict(((params_update_mode,
@@ -355,11 +352,11 @@ def update_query_string(
     url_params = urlparse.parse_qs(url_parsed.query)
 
     if isinstance(params, (list, tuple)):
-        params = dict([(p, '') for p in params])
+        params = {p: '' for p in params}
 
 
     # Update parameters dictionary
-    for p, v in six.iteritems(params):
+    for p, v in params.items():
         update_mode = params_update_mode.get(
             p,
             default_update_mode
@@ -408,7 +405,7 @@ def find_in_path(file, path=None):
     '''
     if path is None:
         path = os.environ.get('PATH').split(os.pathsep)
-    elif isinstance(path, six.string_types):
+    elif isinstance(path, str):
         var = os.environ.get(path)
         if var is None:
             var = path
