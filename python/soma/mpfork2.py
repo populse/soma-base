@@ -376,7 +376,7 @@ class Worker:
         return result
 
 
-def allocate_workers(q, result, nworker=0, max_workers=0, *args, **kwargs):
+def allocate_workers(q, result, nworker=0, *args, max_workers=0, **kwargs):
     ''' Utility function to allocate worker threads.
 
     Parameters

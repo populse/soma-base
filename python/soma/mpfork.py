@@ -207,7 +207,7 @@ def worker(q, thread_only, *args, **kwargs):
             sys.stdout.flush()
 
 
-def allocate_workers(q, nworker=0, thread_only=False, max_workers=0, *args,
+def allocate_workers(q, nworker=0, *args, thread_only=False, max_workers=0,
                      **kwargs):
     ''' Utility function to allocate worker threads.
 
@@ -215,15 +215,15 @@ def allocate_workers(q, nworker=0, thread_only=False, max_workers=0, *args,
     ----------
     q: :class:`Queue <Queue.Queue>` instance
         the jobs queue which will be fed with jobs for processing
-    thread_only: bool
-        if True, workers will run jobs in the worker thread, not using a
-        separate process. This flag thus allows to choose a threaded or
-        multiprocessing implementation.
     nworker: int
         number of worker threads (jobs which will run in parallel). A positive
         number (1, 2...) will be used as is, 0 means all available CPU cores
         (see :func:`available_cpu_count`), and a negative number means
         all CPU cores except this given number.
+    thread_only: bool
+        if True, workers will run jobs in the worker thread, not using a
+        separate process. This flag thus allows to choose a threaded or
+        multiprocessing implementation.
     max_workers: int
         max number of workers: if nworker is 0, the number of CPU cores is
         used,
