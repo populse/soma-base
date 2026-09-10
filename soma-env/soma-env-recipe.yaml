@@ -18,7 +18,7 @@ requirements:
     - pyqtwebengine
     - numpy
     - ipykernel <7
-    - qtconsole
+    - qtconsole-base
     - notebook
     - six
     - pycryptodome
@@ -26,7 +26,7 @@ requirements:
     - libgl
     - libopengl
     - traits<7
-    - fontconfig <2.18  # fontconfig 2.18 and qt-webengine 5.15.15 cause a core dump in QWebEngineView widget
+    # - fontconfig <2.18  # fontconfig 2.18 and qt-webengine 5.15.15 cause a core dump in QWebEngineView widget
 
 tests:
   - script: "python -m soma.tests"
