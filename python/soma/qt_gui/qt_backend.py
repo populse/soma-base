@@ -402,12 +402,12 @@ def set_qt_backend(backend=None, pyqt_api=1, compatible_qt5=None):
             # __import__(backend + '.QtGui')
             qt_backend = test_backend
             break
-        except ImportError:
+        except (ImportError, ModuleNotFoundError):
             pass
-        if qt_backend is None:
-            # all fail: re-raise the exception
-            qt_module = __import__(backend)
-            __import__(test_backend + '.QtCore')
+    if qt_backend is None:
+        # all fail: re-raise the exception
+        qt_module = __import__(backend)
+        __import__(test_backend + '.QtCore')
 
     sip = load_sip_module(qt_backend)
 
