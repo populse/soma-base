@@ -13,9 +13,9 @@ soma-env:
 
 requirements:
   run:
-    - python >=3.9
-    - pyqt
-    - pyqtwebengine
+    - python >=3.11
+    - pyqt6
+    # - pyqtwebengine
     - numpy
     - ipykernel <7
     - qtconsole-base
