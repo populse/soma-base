@@ -147,7 +147,8 @@ def setup_virtualGL():
     return True
 
 
-def test_glx(need_opengl=True, glxinfo_cmd=None, xdpyinfo_cmd=None, timeout=5.):
+def test_glx(need_opengl=True, glxinfo_cmd=None, xdpyinfo_cmd=None,
+             timeout=5.):
     ''' Test the presence of the GLX module in the X server, by running
     glxinfo or xdpyinfo command
 
@@ -193,7 +194,8 @@ def test_glx(need_opengl=True, glxinfo_cmd=None, xdpyinfo_cmd=None, timeout=5.):
                             stderr=subprocess.PIPE,
                             universal_newlines=True)
             try:
-                glxinfo, glxerr = process.communicate(timeout=timeout)
+                glxinfo, glxerr = process.communicate(
+                    timeout=timeout if timeout != 0 else None)
             except subprocess.TimeoutExpired:
                 process.kill()
                 glxinfo, glxerr = process.communicate()
