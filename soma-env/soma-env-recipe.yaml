@@ -27,6 +27,7 @@ requirements:
     - libopengl
     - traits<7
     - fontconfig <2.18  # fontconfig 2.18 and qt-webengine 5.15.15 cause a core dump in QWebEngineView widget
+    - regex
 
 tests:
   - script: "python -m soma.tests"
