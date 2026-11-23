@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # SOMA - Copyright (C) CEA, 2015
 # Distributed under the terms of the CeCILL-B license, as published by
@@ -8,7 +7,6 @@
 #
 
 # System import
-from __future__ import absolute_import
 import sys
 import types
 from textwrap import wrap
@@ -26,7 +24,6 @@ import traits.api
 # Global parameters
 _type_to_trait_id = {
     int: "Int",
-    six.text_type: "Unicode",
     str: "Str",
     bytes: "Bytes",
     float: "Float"
@@ -84,11 +81,11 @@ def get_trait_desc(trait_name, trait, def_val=None, use_wrap=True):
             trait_id[0] += ' (filename: input)'
 
     # Add the trait name (bold)
-    manhelpstr = ["{0}".format(trait_name)]
+    manhelpstr = [f"{trait_name}"]
 
     # Get the default value string representation
     if def_val not in ["", None]:
-        def_val = ", default value: {0}".format(repr(def_val))
+        def_val = f", default value: {repr(def_val)}"
     else:
         def_val = ""
 
@@ -100,9 +97,9 @@ def get_trait_desc(trait_name, trait, def_val=None, use_wrap=True):
 
     # Get the default parameter representation: trait type of default
     # value if specified
-    line = "{0}".format(trait.info())
+    line = f"{trait.info()}"
     #if not trait.output:
-    line += " ({0} - {1}{2})".format(trait_id, dtype, def_val)
+    line += f" ({trait_id} - {dtype}{def_val})"
 
     # Wrap the string properly
     if use_wrap:
@@ -157,7 +154,7 @@ def is_trait_value_defined(value):
 
     # Check if the trait value is not valid
     if (value is None or value is traits.api.Undefined or
-       (isinstance(value, six.string_types) and value == "")):
+       (isinstance(value, str) and value == "")):
 
         is_valid = False
 
@@ -268,8 +265,8 @@ def trait_ids(trait, modules=set()):
             return [main_id]
 
         # FIXME may recurse indefinitely if the trait is recursive
-        inner_id = '_'.join((trait_ids(i, modules)[0]
-                             for i in handler.inner_traits()))
+        inner_id = '_'.join(trait_ids(i, modules)[0]
+                             for i in handler.inner_traits())
         if not inner_id:
             klass = getattr(handler, 'klass', None)
             if klass is not None:

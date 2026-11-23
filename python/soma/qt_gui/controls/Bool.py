@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # SOMA - Copyright (C) CEA, 2015
 # Distributed under the terms of the CeCILL-B license, as published by
@@ -8,7 +7,6 @@
 #
 
 # System import
-from __future__ import absolute_import
 import logging
 from functools import partial
 
@@ -24,7 +22,7 @@ import sip
 import traits.api as traits
 
 
-class BoolControlWidget(object):
+class BoolControlWidget:
 
     """ Control to set or unset an option.
     """
@@ -160,8 +158,8 @@ class BoolControlWidget(object):
             setattr(controller_widget.controller, control_name,
                     new_trait_value)
             logger.debug(
-                "'BoolControlWidget' associated controller trait '{0}' has "
-                "been updated with value '{1}'.".format(
+                "'BoolControlWidget' associated controller trait '{}' has "
+                "been updated with value '{}'.".format(
                     control_name, new_trait_value))
 
     @staticmethod
@@ -210,7 +208,7 @@ class BoolControlWidget(object):
             new_controller_checked = Qt.Qt.PartiallyChecked
         control_instance.setCheckState(new_controller_checked)
         logger.debug("'BoolControlWidget' has been updated with value "
-                     "'{0}'.".format(new_controller_value))
+                     "'{}'.".format(new_controller_value))
 
     @classmethod
     def connect(cls, controller_widget, control_name, control_instance):
@@ -259,7 +257,7 @@ class BoolControlWidget(object):
             # Store the trait - control connection we just build
             control_instance._controller_connections = (
                 widget_hook, controller_hook)
-            logger.debug("Add 'String' connection: {0}.".format(
+            logger.debug("Add 'String' connection: {}.".format(
                 control_instance._controller_connections))
 
             # Update the control connection status

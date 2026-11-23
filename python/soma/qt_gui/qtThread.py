@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 This module enables to make a function to be executed in qt thread (main thread).
 It is useful when you want to call qt functions from another thread.
@@ -232,7 +231,7 @@ class _QtThreadCall(QObject):
                 raise
 
 
-class MainThreadLife(object):
+class MainThreadLife:
     '''This wrapper class ensures the contained object is deleted in the main
     thread, and not in the current non-GUI thread. The principle is the
     following:
@@ -271,7 +270,7 @@ class MainThreadLife(object):
         del widget # OK
     '''
     def __init__(self, obj_life=None, *args, **kwargs):
-        super(MainThreadLife, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         if obj_life is not None:
             self._obj_life = obj_life
 

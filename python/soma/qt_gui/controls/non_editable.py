@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # SOMA - Copyright (C) CEA, 2015
 # Distributed under the terms of the CeCILL-B license, as published by
@@ -8,14 +7,13 @@
 #
 
 # System import
-from __future__ import absolute_import
 import traits.api as traits
 # Soma import
 from soma.qt_gui.qt_backend import Qt
 import sip
 
 
-class NonEditableControlWidget(object):
+class NonEditableControlWidget:
 
     """ Displays that a control cannot be edited or seen. This is used for
     unknown types.

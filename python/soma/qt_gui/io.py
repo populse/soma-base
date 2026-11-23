@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #  This software and supporting documentation are distributed by
 #      Institut Federatif de Recherche 49
 #      CEA/NeuroSpin, Batiment 145,
@@ -34,9 +33,7 @@
 """
 Utils for socket communication
 """
-from __future__ import print_function
 
-from __future__ import absolute_import
 import threading
 import socket
 import errno
@@ -44,7 +41,7 @@ import time
 import sys
 
 import six
-import six.moves.queue as queue
+import queue as queue
 
 from soma.qt_gui.qt_backend.QtCore import QObject, QSocketNotifier
 
@@ -98,7 +95,7 @@ class Socket(QObject):
         port: int
             port that the socket server listens
         """
-        super(Socket, self).__init__()
+        super().__init__()
         self.dest = host
         self.port = port
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -197,14 +194,14 @@ class Socket(QObject):
                 try:
                     msg = self._messages.get(True, timeout)
                 except queue.Empty as e:
-                    raise IOError(
+                    raise OSError(
                         errno.ETIMEDOUT,  'socket communication timed out')
             finally:
                 self.lock.release()
         else:
             try:
                 msg = self.readMessage(timeout)
-            except IOError as e:
+            except OSError as e:
                 if e.errno == errno.EPIPE:
                     # The socket has been closed
                     # Return to avoid infinite loop
@@ -242,7 +239,7 @@ class Socket(QObject):
             while n < msglen:
                 try:
                     n += self.socket.send(msg[n:])
-                except socket.error as e:
+                except OSError as e:
                     if e.errno == errno.EWOULDBLOCK:
                         time.sleep(0.02)
                     else:
@@ -268,7 +265,7 @@ class Socket(QObject):
                     self.lock.release()
                 if self.notifyenabled:
                     self.messageHandler()
-            except IOError as e:
+            except OSError as e:
                 if e.errno != errno.ETIMEDOUT:
                     self.close()
                     # raise
@@ -300,16 +297,16 @@ class Socket(QObject):
                     e = IOError(
                         errno.EPIPE, 'socket communication interrupted')
                     raise e
-            except socket.error as e:
+            except OSError as e:
                 if e.errno == errno.EWOULDBLOCK:
                     char = b''
                     time.sleep(0.02)
                     waitedTime += 0.02
                     if waitedTime >= timeout:
-                        raise IOError(
+                        raise OSError(
                             errno.ETIMEDOUT, 'socket communication timed out')
                 else:
-                    raise IOError(
+                    raise OSError(
                         errno.EPIPE, 'socket communication interrupted')
         return six.ensure_str(msg)
 

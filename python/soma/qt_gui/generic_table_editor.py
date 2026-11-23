@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright CEA and IFR 49 (2000-2005)
 #
 #  This software and supporting documentation were developed by
@@ -187,8 +186,8 @@ class GenericTableEditor(QWidget):
         col_types = pd.Series([self.data[col].dtype for col in self.data])
         col_types = col_types.replace(
             {"object": "varchar", "float64": "float", "int64": "integer"})
-        self.col_types = [t for t in col_types]
-        self.buf_table = [l for l in self.data.itertuples(index=False)]
+        self.col_types = [*col_types]
+        self.buf_table = [*self.data.itertuples(index=False)]
         self.gui_table.setColumnCount(self.data.shape[1])
         self.gui_table.setRowCount(self.data.shape[0])
 

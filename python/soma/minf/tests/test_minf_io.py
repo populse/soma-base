@@ -1,7 +1,3 @@
-# -*- coding: utf-8 -*-
-from __future__ import print_function
-
-from __future__ import absolute_import
 import unittest
 import shutil
 import os
@@ -24,7 +20,7 @@ class TestMinfIO(unittest.TestCase):
         d = {
             'titi': {'bubu': '50', 'turlute': 12},
             'toto': 'val"u\'e',
-            'tutu': [0, 1, 2, [u'papa', 5]]}
+            'tutu': [0, 1, 2, ['papa', 5]]}
         minf_file = os.path.join(self.directory, 'minf_xml_file.minf')
         minf.writeMinf(minf_file, (d,))
         dd = minf.readMinf(minf_file)
@@ -34,7 +30,7 @@ class TestMinfIO(unittest.TestCase):
         d = {
             'titi': {'bubu': '50', 'turlute': 12},
             'toto': 'val"u\'e',
-            'tutu': [0, 1, 2, [u'papa', 5]]}
+            'tutu': [0, 1, 2, ['papa', 5]]}
         minf_file = os.path.join(self.directory, 'minf_py_file.minf')
         open(minf_file, 'w').write('attributes = ' + repr(d) + '\n')
         dd = minf.readMinf(minf_file)

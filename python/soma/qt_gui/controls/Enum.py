@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # SOMA - Copyright (C) CEA, 2015
 # Distributed under the terms of the CeCILL-B license, as published by
@@ -8,7 +7,6 @@
 #
 
 # System import
-from __future__ import absolute_import
 import logging
 from functools import partial
 import sys
@@ -25,7 +23,7 @@ import traits.api as traits
 import sip
 
 
-class EnumControlWidget(object):
+class EnumControlWidget:
 
     """ Control to select a value from a list.
     """
@@ -120,7 +118,7 @@ class EnumControlWidget(object):
 
         # Set the enum list items to the widget
         for item in widget._choices:
-            widget.addItem(six.text_type(item))
+            widget.addItem(str(item))
 
         # Select the default value
         # If the default value is not in the enum list, pick the first item
@@ -173,8 +171,8 @@ class EnumControlWidget(object):
             setattr(controller_widget.controller, control_name,
                     new_trait_value)
             logger.debug(
-                "'EnumControlWidget' associated controller trait '{0}' "
-                " has been updated with value '{1}'.".format(
+                "'EnumControlWidget' associated controller trait '{}' "
+                " has been updated with value '{}'.".format(
                     control_name, new_trait_value))
 
     @staticmethod
@@ -219,7 +217,7 @@ class EnumControlWidget(object):
             control_instance.setCurrentIndex(
                 control_instance._choices.index(new_controller_value))
         logger.debug("'EnumControlWidget' has been updated with value "
-                     "'{0}'.".format(new_controller_value))
+                     "'{}'.".format(new_controller_value))
 
     @classmethod
     def connect(cls, controller_widget, control_name, control_instance):
@@ -265,7 +263,7 @@ class EnumControlWidget(object):
         # Store the trait - control connection we just build
         control_instance._controller_connections = (
             widget_hook, controller_hook)
-        logger.debug("Add 'Enum' connection: {0}.".format(
+        logger.debug("Add 'Enum' connection: {}.".format(
             control_instance._controller_connections))
 
     @staticmethod

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # SOMA - Copyright (C) CEA, 2015
 # Distributed under the terms of the CeCILL-B license, as published by
@@ -8,8 +7,6 @@
 #
 
 # System import
-from __future__ import absolute_import
-from __future__ import print_function
 import logging
 import os
 import sys
@@ -88,7 +85,7 @@ class ScrollControllerWidget(Qt.QScrollArea):
             the current user level: some traits may be marked with a non-zero userlevel, and will only be visible if the ControllerWidget userlevel is more than (or equal) the trait level.
         """
         # Inheritance
-        super(ScrollControllerWidget, self).__init__(parent)
+        super().__init__(parent)
 
         self.user_data = user_data
 
@@ -142,7 +139,7 @@ class DeletableLineEdit(QtGui.QWidget):
     buttonPressed = QtCore.Signal()
 
     def __init__(self, text=None, parent=None):
-        super(DeletableLineEdit, self).__init__(parent)
+        super().__init__(parent)
         layout = QtGui.QHBoxLayout()
         self.setLayout(layout)
         delete_button = QtGui.QToolButton()
@@ -212,7 +209,7 @@ class ControllerWidget(QtGui.QWidget):
             the current user level: some traits may be marked with a non-zero userlevel, and will only be visible if the ControllerWidget userlevel is more than (or equal) the trait level.
         """
         # Inheritance
-        super(ControllerWidget, self).__init__(parent)
+        super().__init__(parent)
 
         self._userlevel = userlevel
 
@@ -298,8 +295,8 @@ class ControllerWidget(QtGui.QWidget):
         valid = True
 
         # Go through all the controller widget controls
-        for control_name, control_groups in six.iteritems(self._controls):
-            for group_name, control in six.iteritems(control_groups):
+        for control_name, control_groups in self._controls.items():
+            for group_name, control in control_groups.items():
 
                 # Unpack the control item
                 trait, control_class, control_instance, control_label = control
@@ -329,8 +326,8 @@ class ControllerWidget(QtGui.QWidget):
         widget user defined parameters.
         """
         # Go through all the controller widget controls
-        for control_name, control_groups in six.iteritems(self._controls):
-            for group_name, control in six.iteritems(control_groups):
+        for control_name, control_groups in self._controls.items():
+            for group_name, control in control_groups.items():
 
                 # Unpack the control item
                 trait, control_class, control_instance, control_label = control
@@ -346,8 +343,8 @@ class ControllerWidget(QtGui.QWidget):
         the controller traits values.
         """
         # Go through all the controller widget controls
-        for control_name, control_groups in six.iteritems(self._controls):
-            for group_name, control in six.iteritems(control_groups):
+        for control_name, control_groups in self._controls.items():
+            for group_name, control in control_groups.items():
 
                 # Unpack the control item
                 trait, control_class, control_instance, control_label = control
@@ -368,15 +365,15 @@ class ControllerWidget(QtGui.QWidget):
         if not self.connected:
 
             # Go through all the controller widget controls
-            for control_name, control_groups in six.iteritems(self._controls):
-                for group_name, control in six.iteritems(control_groups):
+            for control_name, control_groups in self._controls.items():
+                for group_name, control in control_groups.items():
 
                     # Unpack the control item
                     trait, control_class, control_instance, control_label \
                         = control
 
                     # Call the current control specific connection method
-                    logger.debug("Connecting control '{0}: {1}'...".format(
+                    logger.debug("Connecting control '{}: {}'...".format(
                         control_name, control_instance))
                     control_class.connect(self, control_name, control_instance)
 
@@ -408,8 +405,8 @@ class ControllerWidget(QtGui.QWidget):
             return
         keys_connect = {}
         # Go through all the controller widget controls
-        for control_name, control_groups in six.iteritems(self._controls):
-            for group_name, control in six.iteritems(control_groups):
+        for control_name, control_groups in self._controls.items():
+            for group_name, control in control_groups.items():
                 hook1 = partial(self.__class__._key_modified,
                                 weakref.proxy(self), control_name)
                 hook2 = partial(self.__class__._delete_key,
@@ -439,8 +436,8 @@ class ControllerWidget(QtGui.QWidget):
                 groups_vibility_changed, 'visible_groups', remove=True)
 
         # Go through all the controller widget controls
-        for control_name, control_groups in six.iteritems(controls):
-            for group_name, control in six.iteritems(control_groups):
+        for control_name, control_groups in controls.items():
+            for group_name, control in control_groups.items():
 
                 # Unpack the control item
                 trait, control_class, control_instance, control_label \
@@ -471,8 +468,8 @@ class ControllerWidget(QtGui.QWidget):
                     remove=True)
 
             # Go through all the controller widget controls
-            for control_name, control_groups in six.iteritems(self._controls):
-                for group_name, control in six.iteritems(control_groups):
+            for control_name, control_groups in self._controls.items():
+                for group_name, control in control_groups.items():
 
                     # Unpack the control item
                     trait, control_class, control_instance, control_label \
@@ -489,7 +486,7 @@ class ControllerWidget(QtGui.QWidget):
             self.connected = False
 
     def disconnect_keys(self):
-        for control_name, connections in six.iteritems(self._keys_connections):
+        for control_name, connections in self._keys_connections.items():
             label_widget, hook1, hook2 = connections
             label_widget.userModification.disconnect(hook1)
             label_widget.buttonPressed.disconnect(hook2)
@@ -512,13 +509,13 @@ class ControllerWidget(QtGui.QWidget):
 
         # Go through all the controller widget controls
         to_remove_controls = []
-        for control_name, control_groups in six.iteritems(self._controls):
-            for group_name, control in six.iteritems(control_groups):
+        for control_name, control_groups in self._controls.items():
+            for group_name, control in control_groups.items():
 
                 # Message
                 logger.debug(
-                    "Check if we need to update '{0}': trait in '{1}' "
-                    "different from '{2}'?".format(
+                    "Check if we need to update '{}': trait in '{}' "
+                    "different from '{}'?".format(
                         control_name, control, user_traits.get(control_name)))
 
                 # Unpack the control item
@@ -548,7 +545,7 @@ class ControllerWidget(QtGui.QWidget):
 
         # Delete all dead controls from the class '_controls' intern parameter
         for control_name in to_remove_controls:
-            logger.debug("Delete control '{0}'.".format(control_name))
+            logger.debug(f"Delete control '{control_name}'.")
             del self._controls[control_name]
 
         # Recreate all the layout controls associated with the controller
@@ -574,8 +571,8 @@ class ControllerWidget(QtGui.QWidget):
         At the end the controls with wrong values will be colored in red.
         """
         # Go through all the controller widget controls
-        for control_name, control_groups in six.iteritems(self._controls):
-            for group_name, control in six.iteritems(control_groups):
+        for control_name, control_groups in self._controls.items():
+            for group_name, control in control_groups.items():
 
                 # Unpack the control item
                 trait, control_class, control_instance, control_label = control
@@ -595,23 +592,23 @@ class ControllerWidget(QtGui.QWidget):
         if self.select_controls is None:
             selected_traits = all_traits
         elif self.select_controls == "inputs":
-            selected_traits = dict(
-                (trait_name, trait)
-                for trait_name, trait in six.iteritems(all_traits)
-                if not trait.output)
+            selected_traits = {
+                trait_name: trait
+                for trait_name, trait in all_traits.items()
+                if not trait.output}
         elif self.select_controls == "outputs":
-            selected_traits = dict(
-                (trait_name, trait)
-                for trait_name, trait in six.iteritems(all_traits)
-                if trait.output)
+            selected_traits = {
+                trait_name: trait
+                for trait_name, trait in all_traits.items()
+                if trait.output}
         else:
             raise Exception(
-                "Unrecognized 'select_controls' option '{0}'. Valid "
+                "Unrecognized 'select_controls' option '{}'. Valid "
                 "options are 'inputs' or 'outputs'.".format(self.select_controls))
 
         # Go through all the controller user traits
-        skipped = set(['visible_groups'])
-        for trait_name, trait in six.iteritems(selected_traits):
+        skipped = {'visible_groups'}
+        for trait_name, trait in selected_traits.items():
             if trait_name in skipped:
                 continue
             # Create the widget
@@ -645,7 +642,7 @@ class ControllerWidget(QtGui.QWidget):
             # accessible in the user interface.
             if control_class is None:
                 logger.error(
-                    "No control defined for trait '{0}': {1}. This "
+                    "No control defined for trait '{}': {}. This "
                     "parameter will not be accessible in the "
                     "user interface.".format(trait_name, trait_ids(trait)))
                 return
@@ -689,7 +686,7 @@ class ControllerWidget(QtGui.QWidget):
         # already inserted in the grid layout, just unpack the values
         # contained in the private '_controls' class parameter
         else:
-            for group, control in six.iteritems(control_groups):
+            for group, control in control_groups.items():
                 _, _, control_instance, control_label = control
                 control_instances.append(control_instance)
                 if control_label:
@@ -814,7 +811,7 @@ class ControllerWidget(QtGui.QWidget):
         #protected = ''
         #if self.controller.is_parameter_protected(trait_name):
             #protected = ' - modified'
-        tooltip = "<b>%s</b> (%s)" % (trait_name, type_name)
+        tooltip = f"<b>{trait_name}</b> ({type_name})"
         if trait.desc:
             tooltip += "<b>:</b> " + trait.desc
         if control_label:
@@ -857,7 +854,7 @@ class ControllerWidget(QtGui.QWidget):
             # others
             if nb_of_labels > 2:
                 logger.error("To many labels associated with control "
-                              "'{0}': {1}. Only consider the two first "
+                              "'{}': {}. Only consider the two first "
                               "labels and skip the others".format(
                                   trait_name, control_label))
 
@@ -898,7 +895,7 @@ class ControllerWidget(QtGui.QWidget):
         """
         control_groups = self._controls[old_key]
         control_labels = []
-        for group_name, control in six.iteritems(control_groups):
+        for group_name, control in control_groups.items():
             print('group_name:', group_name, ', control:', control)
             if isinstance(control[3], list):
                 control_labels += control[3]
@@ -953,7 +950,7 @@ class ControllerWidget(QtGui.QWidget):
 
     def groups_vibility_changed(self):
         visible_groups = self.controller.visible_groups or set()
-        for group, group_widget in six.iteritems(self._groups):
+        for group, group_widget in self._groups.items():
             if group in visible_groups:
                 show = True
             else:

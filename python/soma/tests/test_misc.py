@@ -1,11 +1,6 @@
-# -*- coding: utf-8 -*-
-
-from __future__ import print_function
-
 # obsolete modules which seem never to be used:
 #
 
-from __future__ import absolute_import
 import unittest
 import os
 import sys
@@ -68,7 +63,7 @@ class TestSomaMisc(unittest.TestCase):
     def test_singleton(self):
         class ASingleton(singleton.Singleton):
             def __singleton_init__(self):
-                super(ASingleton, self).__singleton_init__()
+                super().__singleton_init__()
                 self._shared_num = 12
 
         self.assertRaises(ValueError, ASingleton.get_instance)
@@ -89,8 +84,8 @@ class TestSomaMisc(unittest.TestCase):
                 open(pubfile, 'wb').write(public_key)
                 open(privfile, 'wb').write(private_key)
 
-                msg = u'I write a super secret message that nobody should '\
-                    'see, never.'.encode('utf-8')
+                msg = b'I write a super secret message that nobody should '\
+                    b'see, never.'
                 crypt_msg = crypt.encrypt_RSA(pubfile, msg)
                 self.assertTrue(crypt_msg != msg)
                 uncrypt_msg = crypt.decrypt_RSA(privfile, crypt_msg)
@@ -116,7 +111,7 @@ class TestSomaMisc(unittest.TestCase):
         def other_func(x, y, z, t):
             return x + y + z + t
 
-        class TmpObject(object):
+        class TmpObject:
             def meth(self, x, y, z, t):
                 return x + y + z + t
 
@@ -130,7 +125,7 @@ class TestSomaMisc(unittest.TestCase):
                           functiontools.checkParameterCount, other_func, 3)
 
     def test_drange(self):
-        l = [x for x in functiontools.drange(2.5, 4.8, 0.6)]
+        l = [*functiontools.drange(2.5, 4.8, 0.6)]
         self.assertEqual(l, [2.5, 3.1, 3.7, 4.3])
 
     def test_archive(self):
@@ -142,7 +137,7 @@ class TestSomaMisc(unittest.TestCase):
             dir1 = os.path.join(d, 'subdir')
             fullfile2 = os.path.join(dir1, 'archive2.txt')
             os.mkdir(dir1)
-            open(fullfile2, 'w').write(u'bebert is happy')
+            open(fullfile2, 'w').write('bebert is happy')
             for ext in ('.zip', '.tar', '.tgz', 'tar.bz2'):
                 arfile = os.path.join(d, 'archive' + ext)
                 open(arfile, 'wb').write(b'bloblop')
@@ -164,8 +159,8 @@ class TestSomaMisc(unittest.TestCase):
                         unpacked, 'archive.bop'), 'rb').read()
                     self.assertEqual(content1, b'bloblop')
                     content2 = open(os.path.join(
-                        unpacked, 'subdir', 'archive2.txt'), 'r').read()
-                    self.assertEqual(content2, u'bebert is happy')
+                        unpacked, 'subdir', 'archive2.txt')).read()
+                    self.assertEqual(content2, 'bebert is happy')
                 finally:
                     try:
                         shutil.rmtree(unpacked)

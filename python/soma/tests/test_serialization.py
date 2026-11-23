@@ -1,8 +1,3 @@
-# -*- coding: utf-8 -*-
-
-from __future__ import print_function
-
-from __future__ import absolute_import
 import sys
 import unittest
 import json
@@ -26,7 +21,7 @@ class TestSerializable(JSONSerializable):
                 [self.a, self.b]]
 
     def __str__(self):
-        return 'TestSerializable({0}, {1}'.format(self.a, self.b)
+        return f'TestSerializable({self.a}, {self.b}'
 
 def test_serializable(a=None, b=None):
     return TestSerializable(a, b)

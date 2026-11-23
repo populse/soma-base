@@ -1,8 +1,3 @@
-# -*- coding: utf-8 -*-
-
-from __future__ import print_function
-
-from __future__ import absolute_import
 import unittest
 import shutil
 import os
@@ -155,7 +150,7 @@ class TestController(unittest.TestCase):
         self.assertEqual(manhelp[1], "    No description.")
 
     def test_trait_utils3(self):
-        class Blop(object):
+        class Blop:
             pass
         trait = traits.CTrait(0)
         trait.handler = traits.Instance(Blop())

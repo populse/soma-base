@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # SOMA - Copyright (C) CEA, 201
 # Distributed under the terms of the CeCILL-B license, as published by
@@ -8,7 +7,6 @@
 #
 
 # System import
-from __future__ import absolute_import
 import logging
 import os
 from functools import partial
@@ -28,7 +26,7 @@ from soma.qt_gui.controller_widget import get_ref, weak_proxy
 import sip
 
 
-class FileControlWidget(object):
+class FileControlWidget:
 
     """ Control to enter a file.
     """
@@ -250,7 +248,7 @@ class FileControlWidget(object):
             # Set the control value to the controller associated trait
             try:
                 if new_trait_value not in (None, traits.Undefined):
-                    new_trait_value = six.text_type(new_trait_value)
+                    new_trait_value = str(new_trait_value)
                 setattr(controller_widget.controller, control_name,
                         new_trait_value)
                 fail = False
@@ -262,8 +260,8 @@ class FileControlWidget(object):
                         control_name)
 
             logger.debug(
-                "'FileControlWidget' associated controller trait '{0}' has"
-                " been updated with value '{1}'.".format(
+                "'FileControlWidget' associated controller trait '{}' has"
+                " been updated with value '{}'.".format(
                     control_name, new_trait_value))
         if fail and reset_invalid_value:
             # invalid, reset GUI to older value
@@ -308,9 +306,9 @@ class FileControlWidget(object):
             controller_widget.controller, control_name, "")
 
         # Set the trait value to the string control
-        control_instance.path.setText(six.text_type(new_controller_value))
+        control_instance.path.setText(str(new_controller_value))
         logger.debug("'FileControlWidget' has been updated with value "
-                     "'{0}'.".format(new_controller_value))
+                     "'{}'.".format(new_controller_value))
 
     @classmethod
     def connect(cls, controller_widget, control_name, control_instance):
@@ -368,7 +366,7 @@ class FileControlWidget(object):
             # Store the trait - control connection we just build
             control_instance._controller_connections = (
                 widget_hook, widget_hook2, controller_hook)
-            logger.debug("Add 'File' connection: {0}.".format(
+            logger.debug("Add 'File' connection: {}.".format(
                 control_instance._controller_connections))
 
             # Update the control connection status
@@ -436,7 +434,7 @@ class FileControlWidget(object):
         current_control_value = os.getcwd()
         if FileControlWidget.is_valid(control_instance):
             current_control_value \
-                = six.text_type(control_instance.path.text())
+                = str(control_instance.path.text())
 
         # get widget via a __self__ in a method, because control_instance may
         # be a weakproxy.
@@ -463,4 +461,4 @@ class FileControlWidget(object):
                 QtGui.QFileDialog.DontUseNativeDialog)
 
         # Set the selected file path to the path sub control
-        control_instance.path.set_value(six.text_type(fname))
+        control_instance.path.set_value(str(fname))

@@ -52,7 +52,7 @@ if [ ! -e "$FONTCONFIG_LOCAL/conf/fontconfig" ]; then
     mkdir -p "$FONTCONFIG_LOCAL/fontconfig_cache"
     if [ -f /etc/fonts/fonts.conf ]; then
         sed "s/^.*<cachedir.*$//" /etc/fonts/fonts.conf > "$FONTCONFIG_LOCAL/conf/fontconfig/fonts.conf"
-        sed -i "/^.*<\!-- Font cache directory list.*$/a\\\t<cachedir>$FONTCONFIG_LOCAL\/fontconfig_cache<\/cachedir>" "$FONTCONFIG_LOCAL/conf/fontconfig/fonts.conf"
+        sed -i "/^.*<\\!-- Font cache directory list.*$/a\\\t<cachedir>$FONTCONFIG_LOCAL\\/fontconfig_cache<\\/cachedir>" "$FONTCONFIG_LOCAL/conf/fontconfig/fonts.conf"
     else
         # this does not work actually if /etc/fonts/fonts.conf exists
         cat << EOF > "$FONTCONFIG_LOCAL/conf/fontconfig/fonts.conf"
@@ -97,7 +97,7 @@ with open(pixi_toml) as f:
                 print('end scripts')
                 endscripts = len(pixitoml_contents) - 1
                 scripts_content[0] = scripts_content[0].split('=', 1)[1]
-                scripts_l = ''.join((line.strip() for line in scripts_content))
+                scripts_l = ''.join(line.strip() for line in scripts_content)
                 scripts_content = eval(scripts_l)
                 print('scripts:', repr(scripts_content))
                 if 'activate.sh' in scripts_content:

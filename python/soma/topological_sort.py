@@ -1,5 +1,3 @@
-
-
 class GraphNode:
     """ Simple Graph Node Structure
 

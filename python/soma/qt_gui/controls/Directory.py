@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import
 import os
 import sys
 import logging
@@ -99,7 +97,7 @@ class DirectoryControlWidget(FileControlWidget):
         # Get the current directory
         current_control_value = os.path.join(os.getcwd(), os.pardir)
         if DirectoryControlWidget.is_valid(control_instance):
-            current_control_value = six.text_type(control_instance.path.text())
+            current_control_value = str(control_instance.path.text())
 
         # Create a dialog to select a directory
         folder = qt_backend.getExistingDirectory(
@@ -108,4 +106,4 @@ class DirectoryControlWidget(FileControlWidget):
                 | QtGui.QFileDialog.DontUseNativeDialog)
 
         # Set the selected directory to the path sub control
-        control_instance.path.setText(six.text_type(folder))
+        control_instance.path.setText(str(folder))

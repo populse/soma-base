@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 #  This software and supporting documentation are distributed by
 #      Institut Federatif de Recherche 49
 #      CEA/NeuroSpin, Batiment 145,
@@ -39,8 +37,6 @@ Utility classes and functions for Python callable.
 * organization: `NeuroSpin <http://www.neurospin.org>`_
 * license: `CeCILL B <http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html>`_
 '''
-from __future__ import absolute_import
-from six.moves import zip
 import six
 __docformat__ = "restructuredtext en"
 
@@ -53,13 +49,13 @@ getfullargspec = getattr(inspect, 'getfullargspec',
 from soma.translation import translate as _
 
 #-------------------------------------------------------------------------
-class Empty(object):
+class Empty:
     pass
 
 #-------------------------------------------------------------------------
 
 
-class SomaPartial(object):
+class SomaPartial:
 
     '''
     This is a reimplementation of :py:func:`functools.partial`, which adds
@@ -158,7 +154,7 @@ def getArgumentsSpecification(callable):
             d.update(callable.keywords)
 
         if len(d):
-            defaults = tuple((d[i] for i in args[-len(d):]))
+            defaults = tuple(d[i] for i in args[-len(d):])
         else:
             defaults = d
 
@@ -191,7 +187,7 @@ def getCallableString(callable):
     if inspect.isfunction(callable):
         name = _('function %s') % (callable.__name__, )
     elif inspect.ismethod(callable):
-        name = _('method %s') % (six.get_method_self(callable).__class__.__name__ + '.' +
+        name = _('method %s') % (callable.__self__.__class__.__name__ + '.' +
                                  callable.__name__, )
     elif inspect.isclass(callable):
         name = _('class %s') % (callable.__name__, )

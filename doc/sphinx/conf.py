@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # totor documentation build configuration file, created by
 # sphinx-quickstart on Mon Jan 24 17:33:44 2011.
@@ -11,7 +10,6 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-from __future__ import absolute_import
 import sys, os
 import soma.info
 import soma
@@ -58,8 +56,8 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'Soma-base'
-copyright = u'2011, IFR49.org'
+project = 'Soma-base'
+copyright = '2011, IFR49.org'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -199,8 +197,8 @@ htmlhelp_basename = 'somabase'
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'somabase.tex', u'Soma-base Documentation',
-   u'someone', 'manual'),
+  ('index', 'somabase.tex', 'Soma-base Documentation',
+   'someone', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of

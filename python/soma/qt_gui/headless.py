@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 ''' soma.qt_gui.headless module implements a headless (off-screen) version of
 Qt with OpenGL enabled, and some helper functions. The normal way to use it is via the :mod:`soma.qt_gui.qt_backend` module::
 
@@ -202,7 +200,7 @@ def test_glx(need_opengl=True, glxinfo_cmd=None, xdpyinfo_cmd=None,
             retcode = process.poll()
 
             if retcode != 0:
-                if u'unable to open display' not in glxerr:
+                if 'unable to open display' not in glxerr:
                     # failed for another reason: probably GLX is not working
                     break
                 time.sleep(0.01)
@@ -229,7 +227,7 @@ def test_glx(need_opengl=True, glxinfo_cmd=None, xdpyinfo_cmd=None,
         except Exception as e:
             time.sleep(0.01)
             t1 = time.time() - t0
-    if u'GLX' not in dpyinfo:
+    if 'GLX' not in dpyinfo:
         return 0
     else:
         return 1
@@ -560,7 +558,7 @@ def setup_headless_xvfb(need_opengl=True, allow_virtualgl=True,
     global virtual_display
     global original_display
 
-    class Result(object):
+    class Result:
         def __init__(self):
             self.virtual_display_proc = None
             self.original_display = None
@@ -770,7 +768,7 @@ def setup_headless_xvfb(need_opengl=True, allow_virtualgl=True,
 def setup_headless(need_opengl=None, allow_virtualgl=True,
                    force_virtualgl=force_virtualgl):
 
-    class Result(object):
+    class Result:
         def __init__(self):
             self.virtual_display_proc = None
             self.original_display = None

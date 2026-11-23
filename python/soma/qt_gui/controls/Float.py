@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # SOMA - Copyright (C) CEA, 2015
 # Distributed under the terms of the CeCILL-B license, as published by
@@ -8,8 +7,6 @@
 #
 
 # System import
-from __future__ import absolute_import
-from __future__ import print_function
 import logging
 import re
 import sys
@@ -54,9 +51,9 @@ class FloatControlWidget(StrControlWidget):
         # Get the control current value: format the float string
         # Valid float strings are: +1, -1, 1, 1.1
         control_text = control_instance.text()
-        if type(control_text) not in (str, six.text_type):
+        if type(control_text) not in (str, str):
             # old QString with PyQt API v1
-            control_text = six.text_type(control_text)
+            control_text = str(control_text)
         control_value = control_text.replace(".", "", 1)
         control_value = re.sub("^([-+])", "", control_value, count=1)
 
@@ -127,8 +124,8 @@ class FloatControlWidget(StrControlWidget):
                 setattr(controller_widget.controller, control_name,
                         new_trait_value)
                 logger.debug(
-                    "'FloatControlWidget' associated controller trait '{0}' "
-                    "has been updated with value '{1}'.".format(
+                    "'FloatControlWidget' associated controller trait '{}' "
+                    "has been updated with value '{}'.".format(
                         control_name, new_trait_value))
                 return
             except traits.TraitError as e:
@@ -144,7 +141,7 @@ class FloatControlWidget(StrControlWidget):
             if old_trait_value is traits.Undefined:
                 control_instance.setText("")
             else:
-                control_instance.setText(six.text_type(old_trait_value))
+                control_instance.setText(str(old_trait_value))
 
     @staticmethod
     def update_controller_widget(controller_widget, control_name,
@@ -186,6 +183,6 @@ class FloatControlWidget(StrControlWidget):
         if new_controller_value is traits.Undefined:
             control_instance.setText("")
         else:
-            control_instance.setText(six.text_type(new_controller_value))
+            control_instance.setText(str(new_controller_value))
         logger.debug("'FloatControlWidget' has been updated with value "
-                     "'{0}'.".format(new_controller_value))
+                     "'{}'.".format(new_controller_value))

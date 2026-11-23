@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 This module contains some classes to manage python tests.
 
@@ -15,7 +14,6 @@ is done by modifying attributes at the class level (so that setUpClass can
 know in which mode it is).
 """
 
-from __future__ import absolute_import
 import os
 import argparse
 
@@ -119,7 +117,7 @@ class BaseSomaTestCase(unittest.TestCase):
     _private_run_data_dir = None
 
     def __init__(self, testName):
-        super(BaseSomaTestCase, self).__init__(testName)
+        super().__init__(testName)
         if self.test_mode == run_mode and not self.base_run_data_dir:
             msg_fmt = \
                 "base_run_data_dir must be provided when using '%s' mode"
@@ -159,11 +157,11 @@ class SomaTestCaseWithoutRefFiles(BaseSomaTestCase):
     """
 
     def __init__(self, testName):
-        super(SomaTestCaseWithoutRefFiles, self).__init__(testName)
+        super().__init__(testName)
         if self.test_mode == ref_mode:
             msg_fmt = "Test %s should not be run in '%s' mode"
             msg = msg_fmt % (self.__class__.__name__, ref_mode)
-            raise EnvironmentError(msg)
+            raise OSError(msg)
 
 
 # Should we skip all tests in ref mode (all computation in setUp_ref_mode?)
@@ -197,7 +195,7 @@ class SomaTestCase(BaseSomaTestCase):
             msg_fmt = \
                 "base_ref_data_dir must be provided for test %s"
             msg = msg_fmt % cls.__name__
-            raise EnvironmentError(msg)
+            raise OSError(msg)
         if cls.test_mode == ref_mode:
             try:
                 os.makedirs(cls.private_ref_data_dir())

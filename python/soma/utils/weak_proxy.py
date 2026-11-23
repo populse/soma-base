@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 #  This software and supporting documentation are distributed by
 #      Institut Federatif de Recherche 49
 #      CEA/NeuroSpin, Batiment 145,
@@ -37,7 +35,6 @@
 We build such a proxy by setting a :func:`weakref.ref` object in the proxy (actually in the object itself).
 '''
 
-from __future__ import absolute_import
 import weakref
 
 def get_ref(obj):
@@ -77,7 +74,7 @@ def weak_proxy(obj, callback=None):
     return wr
 
 
-class proxy_method(object):
+class proxy_method:
     ''' Indirect proxy for a bound method
 
     It replaces a bound method, ie ``a.method`` with a proxy callable which

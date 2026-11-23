@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 '''
 This module contains tools to replace a Qt application which will propose to
 open a Qtconsole jupyter shell from within the application (like the anatomist

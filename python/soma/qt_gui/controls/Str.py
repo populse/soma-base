@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # SOMA - Copyright (C) CEA, 2015
 # Distributed under the terms of the CeCILL-B license, as published by
@@ -8,7 +7,6 @@
 #
 
 # System import
-from __future__ import absolute_import
 import logging
 from functools import partial
 import traits.api as traits
@@ -26,7 +24,7 @@ from soma.utils.weak_proxy import weak_proxy
 import sip
 
 
-class StrControlWidget(object):
+class StrControlWidget:
 
     """ Control to enter a string.
     """
@@ -198,7 +196,7 @@ class StrControlWidget(object):
             # Get the control value
             new_trait_value = control_instance.value()
             if new_trait_value not in (traits.Undefined, None):
-                new_trait_value = six.text_type(new_trait_value)
+                new_trait_value = str(new_trait_value)
 
             # value is manually modified: protect it
             if (hasattr(controller_widget.controller, control_name)
@@ -209,8 +207,8 @@ class StrControlWidget(object):
             setattr(controller_widget.controller, control_name,
                     new_trait_value)
             logger.debug(
-                "'FloatControlWidget' associated controller trait '{0}' has "
-                "been updated with value '{1}'.".format(
+                "'FloatControlWidget' associated controller trait '{}' has "
+                "been updated with value '{}'.".format(
                     control_name, new_trait_value))
         elif reset_invalid_value:
             # invalid, reset GUI to older value
@@ -256,7 +254,7 @@ class StrControlWidget(object):
         # Set the trait value to the string control
         control_instance.set_value(new_controller_value)
         logger.debug("'StrControlWidget' has been updated with value "
-                     "'{0}'.".format(new_controller_value))
+                     "'{}'.".format(new_controller_value))
 
     @classmethod
     def connect(cls, controller_widget, control_name, control_instance):
@@ -313,7 +311,7 @@ class StrControlWidget(object):
             # Store the trait - control connection we just build
             control_instance._controller_connections = (
                 widget_hook, widget_hook2, controller_hook)
-            logger.debug("Add 'String' connection: {0} / {1}.".format(
+            logger.debug("Add 'String' connection: {} / {}.".format(
                 control_name, control_instance))
 
             # Update the control connection status

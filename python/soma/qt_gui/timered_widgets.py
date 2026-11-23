@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 #  This software and supporting documentation are distributed by
 #      Institut Federatif de Recherche 49
 #      CEA/NeuroSpin, Batiment 145,
@@ -41,7 +39,6 @@ modification only after an inactivity period.
 * organization: NeuroSpin
 * license: `CeCILL B <http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html>`_
 '''
-from __future__ import absolute_import
 __docformat__ = "restructuredtext en"
 
 from soma.qt_gui.qt_backend import QtCore, QtGui, Qt
@@ -169,9 +166,9 @@ class TimeredQLineEdit(QPredefLineEdit):
         '''
         timerInterval = kwargs.pop('timerInterval', None)
         if kwargs:
-            super(TimeredQLineEdit, self).__init__(*args, **kwargs)
+            super().__init__(*args, **kwargs)
         else:
-            super(TimeredQLineEdit, self).__init__(*args)
+            super().__init__(*args)
         self.__timer = QLineEditModificationTimer(self,
                                                   timerInterval=timerInterval)
         self.__timer.userModification.connect(self.userModification)
@@ -190,8 +187,8 @@ class TimeredQLineEdit(QPredefLineEdit):
 
     def close(self):
         self.__timer.close()
-        super(TimeredQLineEdit, self).close()
+        super().close()
 
     def set_value(self, value):
-        super(TimeredQLineEdit, self).set_value(value)
+        super().set_value(value)
         self.userModification.emit()

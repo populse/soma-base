@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 #  This software and supporting documentation are distributed by
 #      Institut Federatif de Recherche 49
 #      CEA/NeuroSpin, Batiment 145,
@@ -39,12 +37,10 @@ Writing of XML minf format.
 * organization: `NeuroSpin <http://www.neurospin.org>`_
 * license: `CeCILL B <http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html>`_
 '''
-from __future__ import absolute_import
 __docformat__ = "restructuredtext en"
 
 import codecs
 import six
-from six.moves import range
 from xml.sax.saxutils import quoteattr as xml_quoteattr
 from xml.sax.saxutils import escape as xml_escape
 from soma.translation import translate as _
@@ -63,8 +59,8 @@ import gc
 from soma.minf.xml_tags import *
 
 #: Replacement table for characters that are not allowed in XML
-xml_replacement = dict([(eval('"\\x' + ('0' + hex(i)[2:])[-2:] + '"'), '')
-                       for i in range(32)])
+xml_replacement = {eval('"\\x' + ('0' + hex(i)[2:])[-2:] + '"'): ''
+                       for i in range(32)}
 del xml_replacement['\x09']
 del xml_replacement['\x0a']
 del xml_replacement['\x0d']
@@ -138,8 +134,8 @@ class MinfXMLWriter(MinfWriter):
                 attributes[objectTypeAttribute] = minfNode.type
             if attributes:
                 attributes = ' ' + \
-                    ' '.join([n + '=' + xml_quoteattr(six.text_type(v))
-                             for n, v in six.iteritems(attributes)])
+                    ' '.join([n + '=' + xml_quoteattr(str(v))
+                             for n, v in attributes.items()])
             else:
                 attributes = ''
             self._encodeAndWriteLine('<' + tag + attributes + '>', level)
@@ -152,7 +148,7 @@ class MinfXMLWriter(MinfWriter):
                     self._encodeAndWriteLine('</' + tag + '>', level)
                     break
                 elif naming:
-                    if isinstance(minfNode, six.string_types):
+                    if isinstance(minfNode, str):
                         self._write(
                             minfNodeIterator, Undefined, level + 1, minfNode)
                     elif minfNode is None:
@@ -175,8 +171,8 @@ class MinfXMLWriter(MinfWriter):
         else:
             if attributes:
                 attributesXML = ' ' + \
-                    ' '.join([n + '=' + xml_quoteattr(six.text_type(v))
-                             for n, v in six.iteritems(attributes)])
+                    ' '.join([n + '=' + xml_quoteattr(str(v))
+                             for n, v in attributes.items()])
             else:
                 attributesXML = ''
             if minfNode is None:
@@ -189,12 +185,12 @@ class MinfXMLWriter(MinfWriter):
                 else:
                     self._encodeAndWriteLine(
                         '<' + falseTag + attributesXML + '/>', level)
-            elif isinstance(minfNode, (float,) + six.integer_types):
-                self._encodeAndWriteLine('<' + numberTag + attributesXML + '>' + six.text_type(minfNode) + '</' +
+            elif isinstance(minfNode, (float,) + (int,)):
+                self._encodeAndWriteLine('<' + numberTag + attributesXML + '>' + str(minfNode) + '</' +
                                          numberTag + '>', level)
-            elif isinstance(minfNode, six.string_types):
+            elif isinstance(minfNode, str):
 
-                if type(minfNode) is six.binary_type:
+                if type(minfNode) is bytes:
                     try:
                         minfNode = minfNode.decode("utf-8")
                     except UnicodeDecodeError:

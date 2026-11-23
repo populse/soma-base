@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # SOMA - Copyright (C) CEA, 2015
 # Distributed under the terms of the CeCILL-B license, as published by
@@ -12,7 +11,6 @@ import os
 import logging
 from functools import partial
 import six
-from six.moves import range
 
 # Define the logger
 logger = logging.getLogger(__name__)
@@ -49,7 +47,7 @@ class ListController(Controller):
     pass
 
 
-class ListControlWidget(object):
+class ListControlWidget:
 
     """ Control to enter a list of items.
     """
@@ -86,7 +84,7 @@ class ListControlWidget(object):
         # Go through all the controller widget controls
         controller_widget = control_instance.controller_widget
         for control_name, control_groups \
-                in six.iteritems(controller_widget._controls):
+                in controller_widget._controls.items():
 
             if not control_groups:
                 continue
@@ -176,8 +174,8 @@ class ListControlWidget(object):
                 inner_trait = traits.Str()
         else:
             raise Exception(
-                "Expect only one inner trait in List control. Trait '{0}' "
-                "inner trait is '{1}'.".format(control_name,
+                "Expect only one inner trait in List control. Trait '{}' "
+                "inner trait is '{}'.".format(control_name,
                                                trait.handler.inner_traits()))
 
         if control_value is traits.Undefined:
@@ -372,8 +370,8 @@ class ListControlWidget(object):
 
         controller_widget._updating = updating
         logger.debug(
-            "'ListControlWidget' associated controller trait '{0}' has "
-            "been updated with value '{1}'.".format(
+            "'ListControlWidget' associated controller trait '{}' has "
+            "been updated with value '{}'.".format(
                 control_name, new_trait_value))
 
     @staticmethod
@@ -381,16 +379,16 @@ class ListControlWidget(object):
         '''Performs recursively update_controller() on list elements to
         make the Controller instance values match values in widgets.
         '''
-        for k, groups in six.iteritems(controller_widget._controls):
-            for g, ctrl in six.iteritems(groups):
+        for k, groups in controller_widget._controls.items():
+            for g, ctrl in groups.items():
                 ctrl[1].update_controller(controller_widget, k,
                                           control_instance,
                                           reset_invalid_value=True)
                 if ctrl[1] is ListControlWidget:
                     frame = ctrl[2]
                     sub_cw = frame.controller_widget
-                    for sub_k, sub_groups in six.iteritems(sub_cw._controls):
-                        for sub_g, sub_ctrl in six.iteritems(sub_groups):
+                    for sub_k, sub_groups in sub_cw._controls.items():
+                        for sub_g, sub_ctrl in sub_groups.items():
                             sub_ctrl[1].update_controller(
                                 sub_cw, sub_k, sub_ctrl[2],
                                 reset_invalid_value=True)
@@ -507,7 +505,7 @@ class ListControlWidget(object):
 
                 logger.debug(
                     "'ListControlWidget' inner controller has been updated:"
-                    "old size '{0}', new size '{1}'.".format(
+                    "old size '{}', new size '{}'.".format(
                         len_widget, len(trait_value)))
 
             # Restore the previous list controller connection status
@@ -581,15 +579,15 @@ class ListControlWidget(object):
             # Update the list connection status
             control_instance._controller_connections = (
                 list_controller_hook, controller_hook)
-            logger.debug("Add 'List' connection: {0}.".format(
+            logger.debug("Add 'List' connection: {}.".format(
                 control_instance._controller_connections))
 
             # Connect also all list items
             inner_controls = control_instance.controller_widget._controls
             for (inner_control_name,
-                 inner_control_groups) in six.iteritems(inner_controls):
+                 inner_control_groups) in inner_controls.items():
                 for group, inner_control \
-                        in six.iteritems(inner_control_groups):
+                        in inner_control_groups.items():
 
                     # Unpack the control item
                     inner_control_instance = inner_control[2]
@@ -644,9 +642,9 @@ class ListControlWidget(object):
             # Disconnect also all list items
             inner_controls = control_instance.controller_widget._controls
             for (inner_control_name,
-                 inner_control_groups) in six.iteritems(inner_controls):
+                 inner_control_groups) in inner_controls.items():
                 for group, inner_control \
-                        in six.iteritems(inner_control_groups):
+                        in inner_control_groups.items():
 
                     # Unpack the control item
                     inner_control_instance = inner_control[2]
@@ -701,7 +699,7 @@ class ListControlWidget(object):
             control_instance._controller_connections[0]()
 
         # control_instance.controller_widget.update_controller_widget()
-        logger.debug("Add 'ListControlWidget' '{0}' new trait "
+        logger.debug("Add 'ListControlWidget' '{}' new trait "
                      "callback.".format(trait_name))
 
     @staticmethod
@@ -928,7 +926,7 @@ class ListValuesEditor(QtGui.QDialog):
 
     def __init__(self, parent, controller_widget, control_name):
 
-        super(ListValuesEditor, self).__init__(parent)
+        super().__init__(parent)
 
         self.controller_widget = controller_widget
         self.control_name = control_name

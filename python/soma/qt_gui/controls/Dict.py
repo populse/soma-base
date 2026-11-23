@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # SOMA - Copyright (C) CEA, 2015
 # Distributed under the terms of the CeCILL-B license, as published by
@@ -8,7 +7,6 @@
 #
 
 # System import
-from __future__ import absolute_import
 import os
 import logging
 from functools import partial
@@ -45,7 +43,7 @@ class DictController(Controller):
     pass
 
 
-class DictControlWidget(object):
+class DictControlWidget:
 
     """ Control to enter a dict of items.
     """
@@ -78,7 +76,7 @@ class DictControlWidget(object):
         # Go through all the controller widget controls
         controller_widget = control_instance.controller_widget
         for control_name, control_groups \
-                in six.iteritems(controller_widget._controls):
+                in controller_widget._controls.items():
 
             if not control_groups:
                 continue
@@ -154,8 +152,8 @@ class DictControlWidget(object):
         # (List), whereas trait.handler.inner_trait is always a method
         if len(trait.handler.inner_traits()) != 2:
             raise Exception(
-                "Expect two inner traits in Dict control. Trait '{0}' "
-                "inner traits are '{1}'.".format(
+                "Expect two inner traits in Dict control. Trait '{}' "
+                "inner traits are '{}'.".format(
                     control_name, trait.inner_traits))
         inner_trait = trait.handler.inner_traits()[1]
 
@@ -191,7 +189,7 @@ class DictControlWidget(object):
         # Create a new controller that contains length 'control_value' inner
         # trait elements
         controller = DictController()
-        for name, inner_control_values in six.iteritems(control_value):
+        for name, inner_control_values in control_value.items():
             controller.add_trait(str(name), inner_trait)
             setattr(controller, str(name), inner_control_values)
 
@@ -257,9 +255,9 @@ class DictControlWidget(object):
             synchronize with the controller
         """
         # Get the dict widget inner controller values
-        new_trait_value = dict([
-            (name, getattr(control_instance.controller, name))
-            for name in control_instance.controller.user_traits()])
+        new_trait_value = {
+            name: getattr(control_instance.controller, name)
+            for name in control_instance.controller.user_traits()}
 
         protected = controller_widget.controller.is_parameter_protected(
             control_name)
@@ -277,8 +275,8 @@ class DictControlWidget(object):
             if not protected:
                 controller_widget.controller.unprotect_parameter(control_name)
         logger.debug(
-            "'DictControlWidget' associated controller trait '{0}' has "
-            "been updated with value '{1}'.".format(
+            "'DictControlWidget' associated controller trait '{}' has "
+            "been updated with value '{}'.".format(
                 control_name, new_trait_value))
 
     @classmethod
@@ -355,7 +353,7 @@ class DictControlWidget(object):
                     user_traits_changed = True
 
             # Update the controller associated with the current control
-            for trait_name, value in six.iteritems(trait_value):
+            for trait_name, value in trait_value.items():
                 setattr(control_instance.controller, trait_name, value)
 
             # Connect the inner dict controller
@@ -367,7 +365,7 @@ class DictControlWidget(object):
 
                 logger.debug(
                     "'DictControlWidget' inner controller has been updated:"
-                    "old size '{0}', new size '{1}'.".format(
+                    "old size '{}', new size '{}'.".format(
                         len(widget_traits), len(trait_value)))
 
             # Restore the previous dict controller connection status
@@ -435,15 +433,15 @@ class DictControlWidget(object):
             # Update the dict connection status
             control_instance._controller_connections = (
                 dict_controller_hook, controller_hook)
-            logger.debug("Add 'Dict' connection: {0}.".format(
+            logger.debug("Add 'Dict' connection: {}.".format(
                 control_instance._controller_connections))
 
             # Connect also all dict items
             inner_controls = control_instance.controller_widget._controls
             for (inner_control_name,
-                 inner_control_groups) in six.iteritems(inner_controls):
+                 inner_control_groups) in inner_controls.items():
                 for group, inner_control \
-                        in six.iteritems(inner_control_groups):
+                        in inner_control_groups.items():
 
                     # Unpack the control item
                     inner_control_instance = inner_control[2]
@@ -498,9 +496,9 @@ class DictControlWidget(object):
             # Disconnect also all dict items
             inner_controls = control_instance.controller_widget._controls
             for (inner_control_name,
-                 inner_control_groups) in six.iteritems(inner_controls):
+                 inner_control_groups) in inner_controls.items():
                 for group, inner_control \
-                        in six.iteritems(inner_control_groups):
+                        in inner_control_groups.items():
 
                     # Unpack the control item
                     inner_control_instance = inner_control[2]
@@ -554,7 +552,7 @@ class DictControlWidget(object):
         # update interface
         control_instance.controller_widget.update_controls()
 
-        logger.debug("Add 'DictControlWidget' '{0}' new trait "
+        logger.debug("Add 'DictControlWidget' '{}' new trait "
                      "callback.".format(trait_name))
 
     @staticmethod

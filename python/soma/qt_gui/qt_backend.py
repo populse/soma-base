@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Soma-base - Copyright (C) CEA, 2013
 # Distributed under the terms of the CeCILL-B license, as published by
@@ -64,7 +63,7 @@ make_compatible_qt5 = False
 headless = False
 
 
-class QtImporter(object):
+class QtImporter:
     debug_done = False
 
     def find_spec(self, fullname, path=None, target=None):
@@ -157,9 +156,9 @@ class QtImporter(object):
             psmods = []
             base = name.split('.')[:-1]
             qt_mod = sys.modules[qt_backend]
-            mods = set([x.split('.')[0]
+            mods = {x.split('.')[0]
                         for x in os.listdir(os.path.dirname(qt_mod.__file__))
-                        if not x.startswith('_')])
+                        if not x.startswith('_')}
             if 'Qt' in mods:
                 # PyQt5 + sip6 brings a Qt module, but which is empty. We thus
                 # need to re-populate it as in PyQt6, but here the module

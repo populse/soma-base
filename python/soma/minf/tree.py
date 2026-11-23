@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 #  This software and supporting documentation are distributed by
 #      Institut Federatif de Recherche 49
 #      CEA/NeuroSpin, Batiment 145,
@@ -41,8 +39,6 @@ A minf tree is always accessed via an iterator on its content. This content is c
 * organization: `NeuroSpin <http://www.neurospin.org>`_
 * license: `CeCILL B <http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html>`_
 '''
-from __future__ import absolute_import
-from six.moves import range
 __docformat__ = "restructuredtext en"
 
 import types
@@ -54,9 +50,9 @@ from soma.minf.error import MinfError
 try:
     from soma.signature.api import HasSignature, Sequence
 except ImportError:
-    class HasSignature(object):
+    class HasSignature:
         pass
-    class Sequence(object):
+    class Sequence:
         pass
 
 #: Type name of a minf structure.
@@ -71,7 +67,7 @@ dictStructure = 'dict'
 
 
 #------------------------------------------------------------------------------
-class StartStructure(object):
+class StartStructure:
 
     '''
     When iterating over a minf tree, a L{StartStructure} indicate the beginning of
@@ -122,13 +118,13 @@ class StartStructure(object):
             l = ['identifier="' + self.identifier + '"']
         else:
             l = []
-        l += [six.text_type(i) + '="' + six.text_type(j) +
-              '"' for i, j in six.iteritems(self.attributes)]
+        l += [str(i) + '="' + str(j) +
+              '"' for i, j in self.attributes.items()]
         return '<' + self.type + ' ' + ', '.join(l) + '>'
 
 
 #------------------------------------------------------------------------------
-class EndStructure(object):
+class EndStructure:
 
     '''
     When iterating over a minf tree, an L{EndStructure} indicate the end of
@@ -143,7 +139,7 @@ class EndStructure(object):
 
 
 #------------------------------------------------------------------------------
-class Reference(object):
+class Reference:
 
     '''
     EXPERIMENTAl: the reference system is not fully functional.
@@ -177,7 +173,7 @@ def createMinfReducer(name):
 
 
 #------------------------------------------------------------------------------
-class MinfReducer(object):
+class MinfReducer:
 
     '''
     Class to convert a Python object into a minf tree.
@@ -188,7 +184,7 @@ class MinfReducer(object):
     #: todo: documentation
     _defaultClassReducer = {}
 
-    class DefaultObjectReducer(object):
+    class DefaultObjectReducer:
 
         def __init__(self, structureName):
             self.structureName = structureName
@@ -201,7 +197,7 @@ class MinfReducer(object):
                                or getattr(object, '__getinitargs__', None))
                 if not getinitargs:
                     raise TypeError(
-                        'Object of type {0} cannot be serialized by MinfReducer'
+                        'Object of type {} cannot be serialized by MinfReducer'
                         .format(type(object))
                     )
                 args = getinitargs()
@@ -212,14 +208,11 @@ class MinfReducer(object):
             yield start
             for item in args:
                 yield None
-                for minfNode in reducer.reduce(item):
-                    yield minfNode
+                yield from reducer.reduce(item)
             if kwargs:
-                for key, value in six.iteritems(kwargs):
-                    for minfNode in reducer.reduce(key):
-                        yield minfNode
-                    for minfNode in reducer.reduce(value):
-                        yield minfNode
+                for key, value in kwargs.items():
+                    yield from reducer.reduce(key)
+                    yield from reducer.reduce(value)
             end = EndStructure(self.structureName)
             yield end
 
@@ -230,7 +223,7 @@ class MinfReducer(object):
         self._allReducers[name] = self
 
     def getTypeReducer(self, classOrName):
-        if not isinstance(classOrName, six.string_types):
+        if not isinstance(classOrName, str):
             className = classOrName.__module__ + '.' + classOrName.__name__
         else:
             className = classOrName
@@ -253,8 +246,7 @@ class MinfReducer(object):
     def reduce(self, *args):
         for o in args:
             typeReducer = self.getTypeReducer(o.__class__)
-            for minfNode in typeReducer(self, o):
-                yield minfNode
+            yield from typeReducer(self, o)
 
     def atomReducer(reducer, atom):
         return (atom, )
@@ -265,8 +257,7 @@ class MinfReducer(object):
             yield StartStructure(listStructure, length=len(sequence))
         except TypeError:
             yield StartStructure(listStructure)
-        for minfNode in reducer.reduce(*sequence):
-            yield minfNode
+        yield from reducer.reduce(*sequence)
         yield EndStructure(listStructure)
     sequenceReducer = staticmethod(sequenceReducer)
 
@@ -275,16 +266,14 @@ class MinfReducer(object):
             yield StartStructure(dictStructure)
         except TypeError:
             yield StartStructure(dictStructure)
-        for key, value in six.iteritems(dict):
-            for minfNode in reducer.reduce(key):
-                yield minfNode
-            for minfNode in reducer.reduce(value):
-                yield minfNode
+        for key, value in dict.items():
+            yield from reducer.reduce(key)
+            yield from reducer.reduce(value)
         yield EndStructure(dictStructure)
     dictReducer = staticmethod(dictReducer)
 
     def hasSignatureNonDefaultValues(o):
-        it = six.iteritems(o.signature)
+        it = o.signature.items()
         next(it)
         for key, sigItem in it:
             value = getattr(o, key, Undefined)
@@ -307,8 +296,7 @@ class MinfReducer(object):
     hasSignatureToDict = staticmethod(hasSignatureToDict)
 
     def hasSignatureReducer(reducer, o):
-        for minfNode in reducer.reduce(MinfReducer.hasSignatureToDict(o)):
-            yield minfNode
+        yield from reducer.reduce(MinfReducer.hasSignatureToDict(o))
     hasSignatureReducer = staticmethod(hasSignatureReducer)
 
     def registerAtomType(self, cls):
@@ -328,7 +316,7 @@ class MinfReducer(object):
 
         @returns: string or None
         '''
-        if isinstance(value, six.class_types):
+        if isinstance(value, type):
             # value is a class
             cls = value
         else:
@@ -353,14 +341,14 @@ def createMinfExpander(name):
 
 
 #------------------------------------------------------------------------------
-class MinfExpander(object):
+class MinfExpander:
 
     '''
     Class to convert a minf tree into a Python object.
     '''
     _allExpanders = {}
 
-    class DefaultObjectExpander(object):
+    class DefaultObjectExpander:
 
         def __init__(self, factory):
             self.factory = factory

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # SOMA - Copyright (C) CEA, 2015
 # Distributed under the terms of the CeCILL-B license, as published by
@@ -7,7 +6,6 @@
 # for details.
 #
 
-from __future__ import absolute_import
 import string
 import sys
 
@@ -50,7 +48,7 @@ def load_objects(module_name, object_name=None, allowed_instances=None):
             insert_tool(tools, getattr(module, object_name),
                         allowed_instances)
         except ImportError as e:
-            raise Exception("Could not import {0}: {1}".format(object_name,
+            raise Exception("Could not import {}: {}".format(object_name,
                                                                e))
     else:
         for tool_name in dir(module):
@@ -60,7 +58,7 @@ def load_objects(module_name, object_name=None, allowed_instances=None):
                 insert_tool(tools, getattr(module, tool_name),
                             allowed_instances)
             except ImportError as e:
-                raise Exception("Could not import {0}: {1}".format(
+                raise Exception("Could not import {}: {}".format(
                                 tool_name, e))
 
     return tools

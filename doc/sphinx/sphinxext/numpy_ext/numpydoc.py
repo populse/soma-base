@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 ========
 numpydoc
@@ -16,7 +15,6 @@ It will:
 .. [1] https://github.com/numpy/numpy/blob/master/doc/HOWTO_DOCUMENT.rst.txt
 
 """
-from __future__ import division, absolute_import, print_function
 
 import os, sys, re, pydoc
 import sphinx
@@ -30,7 +28,7 @@ if sphinx.__version__ < '1.0.1':
 from .docscrape_sphinx import get_doc_object, SphinxDocString
 from sphinx.util.compat import Directive
 
-sixu = lambda s: six.text_type(s, 'unicode_escape')
+sixu = lambda s: str(s, 'unicode_escape')
 
 
 def mangle_docstrings(app, what, name, obj, options, lines,
@@ -48,7 +46,7 @@ def mangle_docstrings(app, what, name, obj, options, lines,
         lines[:] = title_re.sub(sixu(''), sixu("\n").join(lines)).split(sixu("\n"))
     else:
         doc = get_doc_object(obj, what, sixu("\n").join(lines), config=cfg)
-        doc = six.text_type(doc)
+        doc = str(doc)
         lines[:] = doc.split(sixu("\n"))
 
     if app.config.numpydoc_edit_link and hasattr(obj, '__name__') and \
@@ -92,7 +90,7 @@ def mangle_signature(app, what, name, obj, options, sig, retann):
         'initializes x; see ' in pydoc.getdoc(obj.__init__))):
         return '', ''
 
-    if not (isinstance(obj, collections.Callable) or hasattr(obj, '__argspec_is_invalid_')): return
+    if not (isinstance(obj, collections.abc.Callable) or hasattr(obj, '__argspec_is_invalid_')): return
     if not hasattr(obj, '__doc__'): return
 
     doc = SphinxDocString(pydoc.getdoc(obj))
@@ -126,11 +124,11 @@ from docutils.statemachine import ViewList
 from sphinx.domains.c import CDomain
 from sphinx.domains.python import PythonDomain
 
-class ManglingDomainBase(object):
+class ManglingDomainBase:
     directive_mangling_map = {}
 
     def __init__(self, *a, **kw):
-        super(ManglingDomainBase, self).__init__(*a, **kw)
+        super().__init__(*a, **kw)
         self.wrap_mangling_directives()
 
     def wrap_mangling_directives(self):

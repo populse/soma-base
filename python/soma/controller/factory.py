@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # SOMA - Copyright (C) CEA, 2015
 # Distributed under the terms of the CeCILL-B license, as published by
@@ -12,7 +11,6 @@ factories (i.e. a function that create something for an object) taking into
 account classes hierarchy but without storing anything in the objects classes.
 '''
 
-from __future__ import absolute_import
 
 from weakref import WeakKeyDictionary
 
@@ -29,7 +27,7 @@ class MetaFactories(type):
         return type.__new__(mcs, name, bases, dictionary)
 
 
-class Factories(object):
+class Factories:
 
     '''
     This is the base class for managing association between any Python object
@@ -49,7 +47,7 @@ class Factories(object):
     _global_factories = {}
 
     def __init__(self):
-        super(Factories, self).__init__()
+        super().__init__()
         self._factories = WeakKeyDictionary()
 
     @classmethod

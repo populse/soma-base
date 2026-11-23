@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # SOMA - Copyright (C) CEA, 2015
 # Distributed under the terms of the CeCILL-B license, as published by
@@ -7,10 +6,8 @@
 # for details.
 #
 
-from __future__ import print_function
 
 # System import
-from __future__ import absolute_import
 import sys
 import logging
 
@@ -53,7 +50,7 @@ class TestControls(Controller):
         """" Initialize the TestControls class.
         """
         # Inheritance
-        super(TestControls, self).__init__()
+        super().__init__()
 
         # Set some default values
         self.l = [3.2, 0.5]

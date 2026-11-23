@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 #  This software and supporting documentation are distributed by
 #      Institut Federatif de Recherche 49
 #      CEA/NeuroSpin, Batiment 145,
@@ -39,7 +37,6 @@ Reading of XML minf format.
 * organization: `NeuroSpin <http://www.neurospin.org>`_
 * license: `CeCILL B <http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html>`_
 '''
-from __future__ import absolute_import
 import six
 __docformat__ = "restructuredtext en"
 
@@ -88,18 +85,18 @@ class MinfXMLReader(MinfReader, ErrorHandler):
 
         def startElement(self, name, attrs):
             # Convert to builtin Python types
-            name = six.text_type(name)
-            attrs = dict([(six.text_type(i[0]), six.text_type(i[1]))
-                         for i in attrs.items()])
+            name = str(name)
+            attrs = {str(i[0]): str(i[1])
+                         for i in attrs.items()}
             self.parser._stack.append(name)
             self.parser._handler.startElement(self.parser, name, attrs)
 
         def endElement(self, name):
-            self.parser._handler.endElement(self.parser, six.text_type(name))
+            self.parser._handler.endElement(self.parser, str(name))
             self.parser._stack.pop()
 
         def characters(self, content):
-            self.parser._handler.characters(self.parser, six.text_type(content))
+            self.parser._handler.characters(self.parser, str(content))
 
     def reduction(self, source):
         self._nodesToProduce = []
@@ -156,7 +153,7 @@ class MinfXMLReader(MinfReader, ErrorHandler):
 
     def fatalError(self, error):
         raise MinfError(_('XML parse error: %s') %
-                       (six.text_type(error), ) + ' (stack = ' +
+                       (str(error), ) + ' (stack = ' +
                         ','.join(['"' + i + '"' for i in self._stack]) + ')')
 
     def checkNoMoreAttributes(self, attributes):
@@ -166,7 +163,7 @@ class MinfXMLReader(MinfReader, ErrorHandler):
 
 
 #------------------------------------------------------------------------------
-class XMLHandler(object):
+class XMLHandler:
 
     def __init__(self, parser, parent, name, attributes):
         self.parent = parent
@@ -219,7 +216,7 @@ class NumberXMLHandler(XMLHandler):
 
     def endElement(self, parser, name):
         stringValue = ''.join(self._stringValue)
-        ttypes = six.integer_types + (float,)
+        ttypes = (int,) + (float,)
         for ttype in ttypes:
             try:
                 value = ttype(stringValue)

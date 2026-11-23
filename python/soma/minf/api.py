@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 #  This software and supporting documentation are distributed by
 #      Institut Federatif de Recherche 49
 #      CEA/NeuroSpin, Batiment 145,
@@ -111,10 +109,7 @@ def minfFormat(source):
     opened_source_file = None
     try:
         if not hasattr(source, 'readline'):
-            if six.PY2:
-                opened_source_file = open(source)
-            else:
-                opened_source_file = open(source, encoding='UTF-8')
+            opened_source_file = open(source, encoding='UTF-8')
 
             source = BufferAndFile(opened_source_file)
         elif not isinstance(source, BufferAndFile):
@@ -133,7 +128,7 @@ def minfFormat(source):
             gunzipSource = gzip.GzipFile(source.name)
             try:
                 start = gunzipSource.read(5)
-            except IOError:
+            except OSError:
                 start = ''
             if start != '<?xml':
                 raise MinfError(_('Invalid minf file: %s') % (source.name, ))
@@ -155,14 +150,14 @@ def _setTarget(target, source):
     try:
         from soma.signature.api import HasSignature
     except ImportError:
-        class HasSignature(object):
+        class HasSignature:
             pass
     if isinstance(source, dict):
         if isinstance(target, dict):
             target.update(source)
             return True
         elif isinstance(target, HasSignature):
-            for k, v in six.iteritems(source):
+            for k, v in source.items():
                 attrTarget = getattr(target, k, Undefined)
                 if attrTarget is Undefined:
                     setattr(target, k, v)
@@ -211,10 +206,7 @@ def iterateMinf(source, targets=None, stop_on_error=True, exceptions=[]):
     for encoding in try_encodings:
         opened_source_file = None
         if not hasattr(initial_source, 'readline'):
-            if six.PY2:
-                opened_source_file = open(initial_source)
-            else:
-                opened_source_file = open(initial_source, encoding=encoding)
+            opened_source_file = open(initial_source, encoding=encoding)
             source = BufferAndFile(opened_source_file)
         elif not isinstance(source, BufferAndFile):
             source.seek(0)
@@ -232,7 +224,7 @@ def iterateMinf(source, targets=None, stop_on_error=True, exceptions=[]):
                 except Exception:
                     d = {'nan': None}
                 try:
-                    six.exec_(source.read().replace("\r\n", "\n"), d)
+                    exec(source.read().replace("\r\n", "\n"), d)
                 except Exception as e:
                     x = source
                     if hasattr(source, '_BufferAndFile__file'):
@@ -375,11 +367,11 @@ from soma.uuid import Uuid
 minf_2_0_reducer = MinfReducer('minf_2.0')
 minf_2_0_reducer.registerAtomType(None.__class__)
 minf_2_0_reducer.registerAtomType(bool)
-for t in six.integer_types:
+for t in (int,):
     minf_2_0_reducer.registerAtomType(t)
 minf_2_0_reducer.registerAtomType(float)
 minf_2_0_reducer.registerAtomType(str)
-minf_2_0_reducer.registerAtomType(six.text_type)  # unicode in Python 2
+minf_2_0_reducer.registerAtomType(str)  # unicode in Python 2
 minf_2_0_reducer.registerAtomType(XHTML)
 minf_2_0_reducer.registerClass(list, minf_2_0_reducer.sequenceReducer)
 minf_2_0_reducer.registerClass(tuple, minf_2_0_reducer.sequenceReducer)

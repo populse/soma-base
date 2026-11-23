@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # SOMA - Copyright (C) CEA, 2015
 # Distributed under the terms of the CeCILL-B license, as published by
@@ -8,7 +7,6 @@
 #
 
 # System import
-from __future__ import absolute_import
 import logging
 from functools import partial
 import sys
@@ -26,7 +24,7 @@ import traits.api as traits
 import sip
 
 
-class CompoundControlWidget(object):
+class CompoundControlWidget:
 
     """ Control to select a value from compound/either traits.
     """
@@ -330,7 +328,7 @@ class CompoundControlWidget(object):
             control_instance.type_combo.setCurrentIndex(type_id)
 
         logger.debug("'CompoundControlWidget' has been updated with value "
-                     "'{0}'.".format(new_controller_value))
+                     "'{}'.".format(new_controller_value))
 
     @staticmethod
     def type_id_for(handlers, value):
@@ -384,7 +382,7 @@ class CompoundControlWidget(object):
 
         # Store the trait - control connection we just build
         control_instance._controller_connections = (controller_hook, )
-        logger.debug("Add 'Compound' connection: {0} / {1}".format(
+        logger.debug("Add 'Compound' connection: {} / {}".format(
             control_name, control_instance))
 
     @staticmethod

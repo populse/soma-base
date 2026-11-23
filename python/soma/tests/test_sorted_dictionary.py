@@ -1,8 +1,3 @@
-# -*- coding: utf-8 -*-
-
-from __future__ import print_function
-
-from __future__ import absolute_import
 import unittest
 import shutil
 import os
@@ -20,9 +15,9 @@ class TestSortedDictionary(unittest.TestCase):
         d1 = SortedDictionary(
             ('titi', {'bubu': '50', 'turlute': 12}),
             ('toto', 'val"u\'e'),
-            ('tutu', [0, 1, 2, [u'papa', 5]]))
+            ('tutu', [0, 1, 2, ['papa', 5]]))
         d2 = SortedDictionary(
-            ('tutu', [0, 1, 2, [u'papa', 5]]),
+            ('tutu', [0, 1, 2, ['papa', 5]]),
             ('toto', 'val"u\'e'),
             ('titi', {'bubu': '50', 'turlute': 12}))
 

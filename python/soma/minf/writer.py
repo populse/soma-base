@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 #  This software and supporting documentation are distributed by
 #      Institut Federatif de Recherche 49
 #      CEA/NeuroSpin, Batiment 145,
@@ -64,7 +62,7 @@ class RegisterMinfWriterClass(type):
 
 
 #------------------------------------------------------------------------------
-class MinfWriter(six.with_metaclass(RegisterMinfWriterClass, object)):
+class MinfWriter(metaclass=RegisterMinfWriterClass):
 
     '''
     Class derived from MinfWriter are responsible of writing a specific format of

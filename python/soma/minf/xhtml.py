@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 #  This software and supporting documentation are distributed by
 #      Institut Federatif de Recherche 49
 #      CEA/NeuroSpin, Batiment 145,
@@ -40,7 +38,6 @@ can be saved in minf files.
 * organization: `NeuroSpin <http://www.neurospin.org>`_
 * license: `CeCILL B <http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html>`_
 '''
-from __future__ import absolute_import
 __docformat__ = "restructuredtext en"
 
 import types
@@ -62,7 +59,7 @@ from xml.sax.saxutils import quoteattr as xml_quoteattr
 #------------------------------------------------------------------------------
 
 
-class XHTML(object):
+class XHTML:
 
     '''
     Instances of L{XHTML} contains the structure of an XHTML tree and can be used
@@ -103,11 +100,11 @@ class XHTML(object):
                 # that can remove tags.
                 return item._contentXML(item.content)
             else:
-                result = '<' + six.text_type(item.tag)
+                result = '<' + str(item.tag)
                 if item.attributes:
                     result += ' ' + ' '.join(
-                        [six.text_type(a) + '="' + six.text_type(v) + '"'
-                         for a, v in six.iteritems(item.attributes)])
+                        [str(a) + '="' + str(v) + '"'
+                         for a, v in item.attributes.items()])
                 if item.content:
                     result += '>' + item._contentXML( item.content ) + '</' + \
                               str(item.tag) + '>'
@@ -156,7 +153,7 @@ class XHTML(object):
         @param item: value to convert in XML.
         @type  item: XHTML instance or unicode containing XML
         '''
-        if isinstance(item, six.string_types):
+        if isinstance(item, str):
             return item
         elif isinstance(item, XHTML):
             return item._itemXML(item)
@@ -172,11 +169,11 @@ class XHTML(object):
         @param item: value to convert in HTML.
         @type  item: XHTML instance or unicode containing HTML
         '''
-        if isinstance(item, six.string_types):
+        if isinstance(item, str):
             return item
         elif isinstance(item, XHTML):
             return item._contentXML(item.content)
         else:
             raise RuntimeError(
-                _('Cannot use XHTML converter for %s') % (six.text_type(item),))
+                _('Cannot use XHTML converter for %s') % (str(item),))
     html = staticmethod(html)

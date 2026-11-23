@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import
 import json
 import os
 import collections
@@ -21,7 +19,7 @@ class Study(Controller):
     """Class to write and save information about a process into JSON."""
 
     def __init__(self):
-        super(Study, self).__init__()
+        super().__init__()
         HasTraits.__init__(self)
         # Find foms available
         foms = Application().fom_manager.find_foms()
@@ -66,20 +64,20 @@ class Study(Controller):
             'output_fom', self.output_fom), ('shared_directory', self.shared_directory), ('spm_directory', self.spm_directory), ('format_image', self.format_image), ('format_mesh', self.format_mesh), ('process', self.process)])
         json_string = json.dumps(self.dico, indent=4, separators=(',', ': '))
         with open(os.path.join(self.output_directory, self.name_study + '.json'), 'w') as f:
-            f.write(six.text_type(json_string))
+            f.write(str(json_string))
 
     """Load and put on self.__dict__ OrderedDict"""
 
     def load(self, name_json):
         try:
-            with open(name_json, 'r') as json_data:
+            with open(name_json) as json_data:
                 self.__dict__ = json.load(
                     json_data, object_pairs_hook=collections.OrderedDict)
             for element in self.__dict__:
                 setattr(self, element, self.__dict__[element])
 
         # No file to load
-        except IOError:
+        except OSError:
             pass
 
     #"""Get number of run process and iterate"""
@@ -124,7 +122,7 @@ class Study(Controller):
         run['output'] = collections.OrderedDict()
         # dicti_sorted=SortedDictionary(*[(key,a[key]) for key in a])
 
-        for name, trait in six.iteritems(process.user_traits()):
+        for name, trait in process.user_traits().items():
             if trait.is_trait_type(File) is False:
                 run['parameters'][name] = getattr(process, name)
             elif trait.output is False:
@@ -137,7 +135,7 @@ class Study(Controller):
         json_string = json.dumps(dico, indent=4, separators=(',', ': '))
 
         with open(os.path.join(directory, name_run + '.json'), 'w') as f:
-            f.write(six.text_type(json_string))
+            f.write(str(json_string))
 
         # To incremente compteur runs
         self.save()

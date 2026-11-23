@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 def dict_to_table(data_dict, shape_dict):
     ''' Transform a dictionary into a table shape
     (list of list, each sublist having the same size)

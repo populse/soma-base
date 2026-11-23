@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # SOMA - Copyright (C) CEA, 2015
 # Distributed under the terms of the CeCILL-B license, as published by
@@ -8,7 +7,6 @@
 #
 
 # System import
-from __future__ import absolute_import
 import logging
 import sys
 import os
@@ -34,7 +32,7 @@ QtCore.QResource.registerResource(os.path.join(os.path.dirname(
 logger = logging.getLogger(__name__)
 
 
-class ControllerControlWidget(object):
+class ControllerControlWidget:
 
     """ Control to enter an instance of controller.
     """
@@ -67,7 +65,7 @@ class ControllerControlWidget(object):
         # Go through all the controller widget controls
         controller_widget = control_instance.controller_widget
         for control_name, control_groups \
-                in six.iteritems(controller_widget._controls):
+                in controller_widget._controls.items():
 
             if not control_groups:
                 continue
@@ -415,5 +413,5 @@ class ControllerControlWidget(object):
         # update the real underlying dict object
         control_instance.controller_widget.update_controller()
 
-        logger.debug("Add 'ControllerControlWidget' '{0}' new trait "
+        logger.debug("Add 'ControllerControlWidget' '{}' new trait "
                      "callback.".format(trait_name))

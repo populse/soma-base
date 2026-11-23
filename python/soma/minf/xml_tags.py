@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 #  This software and supporting documentation are distributed by
 #      Institut Federatif de Recherche 49
 #      CEA/NeuroSpin, Batiment 145,
@@ -43,20 +41,20 @@ and the attributes used in XML minf format.
 __docformat__ = "restructuredtext en"
 
 
-noneTag = u'none'
-trueTag = u'true'
-falseTag = u'false'
-numberTag = u'n'
-stringTag = u's'
-listTag = u'l'
-dictionaryTag = u'd'
-factoryTag = u'f'
-xhtmlTag = u'xhtml'
-minfTag = u'minf'
-referenceTag = u'ref'
+noneTag = 'none'
+trueTag = 'true'
+falseTag = 'false'
+numberTag = 'n'
+stringTag = 's'
+listTag = 'l'
+dictionaryTag = 'd'
+factoryTag = 'f'
+xhtmlTag = 'xhtml'
+minfTag = 'minf'
+referenceTag = 'ref'
 
-expanderAttribute = u'expander'
-lengthAttribute = u'length'
-nameAttribute = u'name'
-objectTypeAttribute = u'type'
-identifierAttribute = u'identifier'
+expanderAttribute = 'expander'
+lengthAttribute = 'length'
+nameAttribute = 'name'
+objectTypeAttribute = 'type'
+identifierAttribute = 'identifier'

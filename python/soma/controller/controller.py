@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # SOMA - Copyright (C) CEA, 2015
 # Distributed under the terms of the CeCILL-B license, as published by
@@ -8,7 +7,6 @@
 #
 
 # System import
-from __future__ import absolute_import
 import logging
 import six
 import sys
@@ -71,7 +69,7 @@ class Controller(HasTraits):
         user traits between instances.
         """
         # Inheritance
-        super(Controller, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         # Create a sorted dictionary with user parameters
         # The dictionary order correspond to the definition order
@@ -86,7 +84,7 @@ class Controller(HasTraits):
         if class_traits:
 
             sorted_names = []
-            for name, trait in six.iteritems(class_traits):
+            for name, trait in class_traits.items():
                 if self.is_user_trait(trait):
                     if getattr(trait, 'order', None):
                         # Only if trait.order exists AND trait.order is no None
@@ -104,7 +102,7 @@ class Controller(HasTraits):
                 # This step avoids us to share trait objects between
                 # instances.
                 if name in self.__base_traits__:
-                    logger.debug("Add class parameter '{0}'.".format(name))
+                    logger.debug(f"Add class parameter '{name}'.")
                     trait = class_traits[name]
                     self.add_trait(name, self._clone_trait(trait))
 
@@ -112,7 +110,7 @@ class Controller(HasTraits):
                 # add the user parameter to the '_user_traits' instance
                 # parameter
                 else:
-                    logger.debug("Add instance parameter '{0}'.".format(name))
+                    logger.debug(f"Add instance parameter '{name}'.")
                     self._user_traits[name] = class_traits[name]
 
     #
@@ -287,13 +285,13 @@ class Controller(HasTraits):
             a valid trait.
         """
         # Debug message
-        logger.debug("Adding trait '{0}'...".format(name))
+        logger.debug(f"Adding trait '{name}'...")
 
         # check trait default value inconsistencies
         trait = (self.checked_trait(trait[0]), ) + trait[1:]
 
         # Inheritance: create the instance trait attribute
-        super(Controller, self).add_trait(name, *trait)
+        super().add_trait(name, *trait)
 
         # Get the trait instance and if it is a user trait load the traits
         # to get it directly from the instance (as a property) and add it
@@ -347,10 +345,10 @@ class Controller(HasTraits):
             the trait name to remove.
         """
         # Debug message
-        logger.debug("Removing trait '{0}'...".format(name))
+        logger.debug(f"Removing trait '{name}'...")
 
         # Call the Traits remove_trait method
-        super(Controller, self).remove_trait(name)
+        super().remove_trait(name)
 
         # Remove name from the '_user_traits' without error if it
         # is not present
@@ -402,7 +400,7 @@ class Controller(HasTraits):
             for trait_name in self.user_traits():
                 if trait_name not in state_dict:
                     delattr(self, trait_name)
-        for trait_name, value in six.iteritems(state_dict):
+        for trait_name, value in state_dict.items():
             trait = self.trait(trait_name)
             if trait_name == 'protected_parameters' and trait is None:
                 HasTraits.add_trait(self, 'protected_parameters',
@@ -474,7 +472,7 @@ class Controller(HasTraits):
             # if the Controller class is subclassed and needs init parameters
             initargs = self.__getinitargs__()
         copied = self.__class__(*initargs)
-        for name, trait in six.iteritems(self.user_traits()):
+        for name, trait in self.user_traits().items():
             copied.add_trait(name, self._clone_trait(trait))
             if with_values:
                 setattr(copied, name, getattr(self, name))
@@ -576,7 +574,7 @@ class OpenKeyController(Controller):
     >>> print(dict_controller.export_to_dict())
     {}
     """
-    _reserved_names = set(['trait_added'])
+    _reserved_names = {'trait_added'}
 
     def __init__(self, value_trait=Any(), *args, **kwargs):
         """ Build an OpenKeyController controller.
@@ -586,8 +584,8 @@ class OpenKeyController(Controller):
         value_trait: Trait instance (optional, default: Any())
             trait type to be used when creating traits on the fly
         """
-        super(OpenKeyController, self).__init__(*args, **kwargs)
-        super(OpenKeyController, self).__setattr__('_value_trait', value_trait)
+        super().__init__(*args, **kwargs)
+        super().__setattr__('_value_trait', value_trait)
 
     def __setattr__(self, name, value):
         if not name.startswith('_') and name not in self.__dict__ \
@@ -595,13 +593,13 @@ class OpenKeyController(Controller):
                 and not name in OpenKeyController._reserved_names:
             cloned_trait = self._clone_trait(self._value_trait)
             self.add_trait(name, cloned_trait)
-        super(OpenKeyController, self).__setattr__(name, value)
+        super().__setattr__(name, value)
 
     def __delattr__(self, name):
         if self.trait(name):
             self.remove_trait(name)
         else:
-            super(OpenKeyController, self).__delattr__(name)
+            super().__delattr__(name)
 
     def __getinitargs__(self):
         return (self._value_trait, )
@@ -659,7 +657,7 @@ class ControllerTrait(TraitType):
             instance is an OpenKeyController, and in such case, take its value
             trait.
         """
-        super(ControllerTrait, self).__init__(None, **kwargs)
+        super().__init__(None, **kwargs)
         self.controller = controller
         self.default_value = controller
         if inner_trait is None and hasattr(controller, '_value_trait'):
@@ -669,7 +667,7 @@ class ControllerTrait(TraitType):
 
     def validate(self, object, name, value):
         if isinstance(value, Controller):
-            sup_inst = super(ControllerTrait, self)
+            sup_inst = super()
             if hasattr(sup_inst, 'validate'):
                 return sup_inst.validate(value)
             else:
@@ -720,7 +718,7 @@ def controller_to_dict(item, exclude_undefined=False,
     """
     if isinstance(item, Controller):
         result = dict_class()
-        for name, trait in six.iteritems(item.user_traits()):
+        for name, trait in item.user_traits().items():
             if exclude_transient and trait.transient:
                 continue
             value = getattr(item, name)
@@ -740,7 +738,7 @@ def controller_to_dict(item, exclude_undefined=False,
             result['protected_parameters'] = item.protected_parameters
     elif isinstance(item, dict):
         result = dict_class()
-        for name, value in six.iteritems(item):
+        for name, value in item.items():
             if (exclude_undefined and value is Undefined) \
                 or (exclude_none and value is None):
                 continue
@@ -770,7 +768,7 @@ try:
                 return list(obj) # {'__class__': 'traits.TraitSetObject',
                         #'items': list(obj)}
             if not isinstance(obj, Controller):
-                return super(JsonControllerEncoder, self).default(obj)
+                return super().default(obj)
             d = obj.export_to_dict(exclude_undefined=True,
                 exclude_transient=True,
                 exclude_none=True,
@@ -787,7 +785,7 @@ try:
                 self._old_object_hook = kwargs['object_hook']
                 kwargs = {k: v for k, v in kwargs.items()
                           if k != 'object_hook'}
-            super(JsonControllerDecoder, self).__init__(
+            super().__init__(
                 *args, object_hook=self.obj_hook, **kwargs)
 
         def obj_hook(self, obj):

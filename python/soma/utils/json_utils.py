@@ -1,14 +1,10 @@
-# -*- coding: utf-8 -*-
-
-from __future__ import print_function
-from __future__ import absolute_import
 from soma.controller import Controller
 import six
 
 try:
     from traits.api import Undefined
 except ImportError:
-    class Undefined(object):
+    class Undefined:
         pass
 
 def to_json(value):
@@ -31,7 +27,7 @@ def to_json(value):
     elif getattr(value, 'items', None):
         # (hasattr may answer True for HasTraits)
         new_value = {}
-        for key, item in six.iteritems(value):
+        for key, item in value.items():
             new_value[key] = to_json(item)
         value = new_value
     elif value is Undefined:
@@ -48,7 +44,7 @@ def from_json(value):
     '''
     if hasattr(value, 'items'):
         new_value = type(value)()
-        for key, item in six.iteritems(value):
+        for key, item in value.items():
             new_value[key] = from_json(item)
         return new_value
     if not isinstance(value, list):
@@ -61,5 +57,5 @@ def from_json(value):
     elif code == '<undefined>':
         return Undefined
     elif code == '<set>':
-        return set([from_json(x) for x in value[1:]])
+        return {from_json(x) for x in value[1:]}
     return [from_json(x) for x in value]

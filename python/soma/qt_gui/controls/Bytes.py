@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # SOMA - Copyright (C) CEA, 2015
 # Distributed under the terms of the CeCILL-B license, as published by
@@ -8,7 +7,6 @@
 #
 
 # System import
-from __future__ import absolute_import
 import logging
 from functools import partial
 import traits.api as traits
@@ -120,8 +118,8 @@ class BytesControlWidget(StrControlWidget):
             setattr(controller_widget.controller, control_name,
                     new_trait_value)
             logger.debug(
-                "'BytesControlWidget' associated controller trait '{0}' has "
-                "been updated with value '{1}'.".format(
+                "'BytesControlWidget' associated controller trait '{}' has "
+                "been updated with value '{}'.".format(
                     control_name, new_trait_value))
         elif reset_invalid_value:
             # invalid, reset GUI to older value

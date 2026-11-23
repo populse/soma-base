@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # ---------------------------------------------------------------------------------------------
 # Copyright (c) 2011-2012, Ryan Galloway (ryan@rsgalloway.com)
 #
@@ -32,7 +31,6 @@
 #   http://rsgalloway.github.com/qrangeslider
 # ------------------------------------------------------------------------
 
-from __future__ import absolute_import
 __author__ = "Ryan Galloway <ryan@rsgalloway.com>"
 __version__ = "0.1"
 
@@ -98,7 +96,7 @@ QRangeSlider > QSplitter::handle:pressed {
 userLevel = 99
 
 
-class Ui_Form(object):
+class Ui_Form:
 
     """default range slider form"""
 
@@ -137,7 +135,7 @@ class Ui_Form(object):
 class Element(QtGui.QGroupBox):
 
     def __init__(self, parent, main):
-        super(Element, self).__init__(parent)
+        super().__init__(parent)
         self.main = main
 
     def setStyleSheet(self, style):
@@ -170,7 +168,7 @@ class Head(Element):
     """area before the handle"""
 
     def __init__(self, parent, main):
-        super(Head, self).__init__(parent, main)
+        super().__init__(parent, main)
 
     def drawText(self, event, qp):
         qp.setPen(self.textColor())
@@ -182,7 +180,7 @@ class Tail(Element):
     """area after the handle"""
 
     def __init__(self, parent, main):
-        super(Tail, self).__init__(parent, main)
+        super().__init__(parent, main)
 
     def drawText(self, event, qp):
         qp.setPen(self.textColor())
@@ -194,7 +192,7 @@ class Handle(Element):
     """handle area"""
 
     def __init__(self, parent, main):
-        super(Handle, self).__init__(parent, main)
+        super().__init__(parent, main)
 
     def drawText(self, event, qp):
         qp.setPen(self.textColor())

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # SOMA - Copyright (C) CEA, 2015
 # Distributed under the terms of the CeCILL-B license, as published by
@@ -8,13 +7,10 @@
 #
 
 # System import
-from __future__ import print_function
 
-from __future__ import absolute_import
 import os
 import logging
 import six
-from six.moves import range
 
 # Define the logger
 logger = logging.getLogger(__name__)
@@ -43,7 +39,7 @@ QtCore.QResource.registerResource(os.path.join(os.path.dirname(
     os.path.dirname(__file__)), 'resources', 'widgets_icons.rcc'))
 
 
-class OffscreenListControlWidget(object):
+class OffscreenListControlWidget:
 
     """ Control to enter a list of items.
     """
@@ -136,8 +132,8 @@ class OffscreenListControlWidget(object):
         # (List), whereas trait.handler.inner_trait is always a method
         if len(trait.handler.inner_traits()) != 1:
             raise Exception(
-                "Expect only one inner trait in List control. Trait '{0}' "
-                "inner trait is '{1}'.".format(
+                "Expect only one inner trait in List control. Trait '{}' "
+                "inner trait is '{}'.".format(
                     control_name, trait.handler.inner_traits()))
         inner_trait = trait.handler.inner_traits()[0]
 
@@ -478,7 +474,7 @@ class OffscreenListControlWidget(object):
             # Update the list connection status
             control_instance._controller_connections = (
                 list_controller_hook, controller_hook)
-            logger.debug("Add 'List' connection: {0}.".format(
+            logger.debug("Add 'List' connection: {}.".format(
                 control_instance._controller_connections))
 
             # Update the list control connection status
@@ -525,9 +521,9 @@ class OffscreenListControlWidget(object):
             # Disconnect also all list items
             inner_controls = control_instance.controller_widget._controls
             for (inner_control_name,
-                 inner_control_groups) in six.iteritems(inner_controls):
+                 inner_control_groups) in inner_controls.items():
                 for group, inner_control \
-                        in six.iteritems(inner_control_groups):
+                        in inner_control_groups.items():
 
                     # Unpack the control item
                     inner_control_instance = inner_control[2]
@@ -632,4 +628,4 @@ class OneLineQTableWidget(QtGui.QTableWidget):
             + sum(self.getContentsMargins()[1:4:2])
         if self.height() != mheight:
             self.setFixedHeight(mheight)
-        super(OneLineQTableWidget, self).resizeEvent(event)
+        super().resizeEvent(event)
