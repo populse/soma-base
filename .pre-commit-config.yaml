@@ -22,6 +22,13 @@ repos:
     rev: 7.5.0
     hooks:
     -   id: flake8
-        name: flake8 under python3
-        language_version: python3
+        name: flake8 under python3.12
+        language_version: python3.12
         exclude: ^doc/sphinx/sphinxext/
+
+-   repo: https://github.com/asottile/pyupgrade
+    rev: v3.22.0
+    hooks:
+    -   id: pyupgrade
+        language_version: python3.12
+        args: ["--py39-plus"]  # Ensures compatibility with Python 3.9+

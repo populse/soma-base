@@ -1,26 +1,46 @@
-image: Visual Studio 2022
+# Disable the default automatic build phase
+build: off
 
 environment:
   matrix:
-    - PYTHON: "C:\\Python39"
-    - PYTHON: "C:\\Python311"
+    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2026
+      PYTHON: "C:\\Python312-x64"
 
-build: off
+    - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2404
+      PYTHON: "$HOME/venv3.12"
+
+    - APPVEYOR_BUILD_WORKER_IMAGE: macos-sonoma
+      PYTHON: "~/venv3.12"
 
 install:
-  - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
-  - "python -m pip install --upgrade pip"
-  - "pip install numpy six"
-  - "pip install six"
-  - "pip install traits"
-  - "pip install argparse"
-  - "pip install subprocess32"
-  - "python setup.py install"
-  - "SET PYTHONPATH=C:\\projects\\soma-base\\python;%PYTHONPATH%"
+  - cmd: echo "     ** windows build **"
+  - sh: if [[ $(uname -s) == Linux ]]; then echo "     ** linux build **"; fi
+  - sh: if [[ $(uname -s) == Darwin ]]; then echo "     ** macos build **"; fi
+
+  - cmd: set PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%
+  - sh: export PATH=~/venv3.12/bin:~/venv3.12/lib:$PATH
+
+  - python --version
+  - python -m pip install --upgrade pip
+  - python -m pip install six numpy traits
+  - python -m pip install .
+
+  - cmd: set PYTHONPATH=C:\\projects\\soma-base\\python;%PYTHONPATH%
+  - sh: if [[ $(uname -s) == Linux ]]; then export PYTHONPATH=/home/appveyor/projects/soma-base/python:$PYTHONPATH; fi
+  - sh: if [[ $(uname -s) == Darwin ]]; then export PYTHONPATH=/Users/appveyor/projects/soma-base/python:$PYTHONPATH; fi
+
+  - sh: if [[ $(uname -s) == Linux ]]; then python -m pip install coverage; fi  
 
 test_script:
-  - "python --version"
-  - "python -m soma.tests.test_soma_base"
+  - cmd: python -m soma.tests.test_soma_base -v
+  - sh: if [[ $(uname -s) == Darwin ]]; then python -m soma.tests.test_soma_base -v; fi
+  - sh: if [[ $(uname -s) == Linux ]]; then coverage run --source=soma -m soma.tests.test_soma_base -v; fi
+  - sh: if [[ $(uname -s) == Linux ]]; then coverage xml; fi
+
+after_test:
+  - sh: if [[ $(uname -s) == Linux ]]; then curl -fsSLo codecov https://uploader.codecov.io/latest/linux/codecov; fi
+  - sh: if [[ $(uname -s) == Linux ]]; then chmod +x codecov; fi
+  - sh: if [[ $(uname -s) == Linux ]]; then ./codecov -f "coverage.xml" -t "9836b858-797a-401e-ad8d-e8b51ba56371"; fi
 
 notifications:
   - provider: Email
